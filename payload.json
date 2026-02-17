@@ -1,0 +1,11 @@
+{
+  "title": "Teste Backend",
+  "description": "Teste via curl",
+  "start": "2026-02-20T14:00:00-03:00",
+  "end": "2026-02-20T15:00:00-03:00",
+  "clientFirstName": "Pedro",
+  "clientLastName": "Silva",
+  "clientEmail": "teste@email.com",
+  "clientPhone": "+55 11 99999-9999",
+  "clientAddress": "Rua Teste 123"
+}

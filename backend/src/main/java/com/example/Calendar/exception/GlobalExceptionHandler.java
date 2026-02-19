@@ -3,76 +3,74 @@ package com.example.Calendar.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private ResponseEntity<Map<String, Object>> build(HttpStatus status, String code, String message, HttpServletRequest req) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", Instant.now().toString());
-        body.put("status", status.value());
-        body.put("error", code);
-        body.put("message", message);
-        body.put("path", req.getRequestURI());
-        return ResponseEntity.status(status).body(body);
+    private ResponseEntity<ApiError> build(HttpStatus status, String code, String msg, HttpServletRequest req) {
+        return ResponseEntity
+                .status(status)
+                .body(new ApiError(status.value(), code, msg, req.getRequestURI()));
     }
 
-    // --- Google / IO ---
-    @ExceptionHandler(IOException.class)
-    public ResponseEntity<?> handleIO(IOException ex, HttpServletRequest req) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "GOOGLE_IO_ERROR",
-                "Erro de comunicação com Google Calendar.", req);
-    }
-
-    // --- Param inválido (ex: date=abc em LocalDate) ---
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<?> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
-        String name = ex.getName();
-        String msg = "Parâmetro inválido: " + name;
-        if ("date".equals(name)) msg = "date deve estar no formato yyyy-MM-dd";
-        if ("slotMinutes".equals(name)) msg = "slotMinutes deve ser um número inteiro";
-        return build(HttpStatus.BAD_REQUEST, "INVALID_PARAM", msg, req);
-    }
-
-    // --- Body inválido (DTO validation: @NotBlank etc.) ---
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
-        // mensagem simples (se quiser, depois montamos lista de campos)
-        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR",
-                "Campos obrigatórios ausentes ou inválidos.", req);
-    }
-
-    // --- 400 padrão ---
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<?> handleBadRequest(IllegalArgumentException ex, HttpServletRequest req) {
-        return build(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), req);
-    }
-
-    // --- 409 conflito (horário indisponível) ---
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<?> handleConflict(IllegalStateException ex, HttpServletRequest req) {
-        return build(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage(), req);
-    }
-
-    // --- 403 (token/admin) ---
-    @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<?> handleForbidden(SecurityException ex, HttpServletRequest req) {
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiError> forbidden(ForbiddenException ex, HttpServletRequest req) {
         return build(HttpStatus.FORBIDDEN, "FORBIDDEN", ex.getMessage(), req);
     }
 
-    // --- fallback 500 ---
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiError> notFound(NotFoundException ex, HttpServletRequest req) {
+        return build(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiError> conflict(ConflictException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiError> badRequest(BadRequestException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> typeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
+        // ex: date=abc
+        String name = ex.getName();
+        if ("date".equals(name)) {
+            return build(HttpStatus.BAD_REQUEST, "INVALID_PARAM", "date deve estar no formato yyyy-MM-dd", req);
+        }
+        return build(HttpStatus.BAD_REQUEST, "INVALID_PARAM", "Parâmetro inválido: " + name, req);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> unreadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "INVALID_JSON", "JSON inválido ou mal formatado.", req);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> validation(MethodArgumentNotValidException ex, HttpServletRequest req) {
+        String first = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(err -> err.getField() + ": " + err.getDefaultMessage())
+                .orElse("Dados inválidos.");
+        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", first, req);
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<ApiError> io(IOException ex, HttpServletRequest req) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "GOOGLE_IO", "Erro de comunicação com Google Calendar.", req);
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleGeneric(Exception ex, HttpServletRequest req) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
-                "Erro inesperado.", req);
+    public ResponseEntity<ApiError> generic(Exception ex, HttpServletRequest req) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Erro inesperado.", req);
     }
 }

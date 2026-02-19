@@ -15,29 +15,32 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url "https://maven.google.com" } // opcional
+    maven { url "https://maven.google.com" }
 }
 
 dependencies {
-    // Web
     implementation 'org.springframework.boot:spring-boot-starter-web'
-
-    // Validation (jakarta.validation)
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    // Lombok (opcional)
+    // opcional (remova se não usa)
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'com.h2database:h2'
+
+    // opcional (você está usando admin token header, mas security pode continuar simples)
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // Google Calendar API
+    // Google Calendar (atenção: versões antigas, mas se está funcionando, ok)
     implementation 'com.google.api-client:google-api-client:1.34.1'
     implementation 'com.google.api-client:google-api-client-jackson2:1.34.1'
     implementation 'com.google.oauth-client:google-oauth-client-jetty:1.34.1'
     implementation 'com.google.auth:google-auth-library-oauth2-http:0.20.0'
     implementation 'com.google.apis:google-api-services-calendar:v3-rev411-1.25.0'
 
-    // Testes
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.named('test') {

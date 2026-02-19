@@ -1,0 +1,23 @@
+# ===== Geral =====
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# ===== Backend (Gradle/Java) =====
+backend/.gradle/
+backend/build/
+backend/out/
+backend/bin/
+
+# se usar env local dentro do backend
+backend/.env
+backend/.env.*
+
+# ===== Frontend (Node) =====
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/.env
+frontend/.env.*

@@ -25,11 +25,26 @@ public class DummyCalendarClient implements CalendarClient {
         return ev;
     }
 
+    /**
+     * Deleta um evento.
+     *
+     * <p>Este método não faz nada, pois é uma implementação dummy.</p>
+     *
+     * @param eventId o ID do evento a ser deletado
+     * @throws IOException se houver um erro ao deletar o evento
+     */
     @Override
     public void deleteEvent(String eventId) throws IOException {
-        // noop
+        // noop, é dummy
     }
 
+    /**
+     * Atualiza um evento com base em um Servico.
+     *
+     * @param s o Servico a ser atualizado
+     * @return o evento atualizado
+     * @throws IOException se houver um erro ao atualizar o evento
+     */
     @Override
     public Event updateEvent(Servico s) throws IOException {
         Event ev = new Event();
@@ -41,10 +56,7 @@ public class DummyCalendarClient implements CalendarClient {
 
     @Override
     public Event getEvent(String eventId) throws IOException {
-        Event ev = new Event();
-        ev.setId(eventId);
-        ev.setSummary("dummy event");
-        return ev;
+        return null;
     }
 
     @Override

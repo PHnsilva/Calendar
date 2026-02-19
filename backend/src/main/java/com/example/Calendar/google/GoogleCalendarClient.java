@@ -1,49 +1,42 @@
 package com.example.Calendar.google;
 
 import com.example.Calendar.model.Servico;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.*;
-import com.google.api.client.util.DateTime;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * GoogleCalendarClient - versão com TAG + FILTRO (Opção 1)
+ * Opção 2: mesmo calendário do proprietário, mas eventos do sistema são
+ * marcados e filtrados.
  *
- * - Todos os eventos do sistema recebem extendedProperties.private.app = APP_TAG
- * - listEvents() retorna apenas eventos com a tag do app
- * - getEvent() também valida a tag (pra não vazar evento pessoal)
+ * - freeBusy: considera TUDO (pessoais + sistema)
+ * - listEvents: retorna SOMENTE eventos do sistema
+ * - delete/update/get: podem validar se é evento do sistema (opcional/seguro)
  */
 public class GoogleCalendarClient implements CalendarClient {
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
 
-    // >>> TAG DO APP (pode virar ENV se quiser)
-    private static final String APP_TAG_KEY = "app";
-    private static final String APP_TAG_VALUE =
-    System.getenv().getOrDefault("APP_TAG", "calendar-app");
-
+    // TAG fixa do sistema
+    private static final String APP_KEY = "appSource";
+    private static final String APP_VALUE = "calendar-backend"; // pode trocar o texto se quiser
 
     private final Calendar service;
     private final String calendarId;
 
-    public GoogleCalendarClient(
-            String clientId,
-            String clientSecret,
-            String refreshToken,
-            String calendarId,
-            String appName
-    ) throws GeneralSecurityException, IOException {
-
+    public GoogleCalendarClient(String clientId, String clientSecret, String refreshToken,
+            String calendarId, String appName) throws GeneralSecurityException, IOException {
         NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
         GoogleCredential credential = new GoogleCredential.Builder()
@@ -51,14 +44,12 @@ public class GoogleCalendarClient implements CalendarClient {
                 .setJsonFactory(JSON_FACTORY)
                 .setClientSecrets(clientId, clientSecret)
                 .build();
-
         credential.setRefreshToken(refreshToken);
-        credential.refreshToken(); // valida logo de cara
+        credential.refreshToken();
 
         this.service = new Calendar.Builder(httpTransport, JSON_FACTORY, credential)
                 .setApplicationName(appName)
                 .build();
-
         this.calendarId = calendarId;
     }
 
@@ -69,9 +60,9 @@ public class GoogleCalendarClient implements CalendarClient {
                 .setDescription(s.getDescription())
                 .setLocation(s.getClientAddress());
 
-        // extended properties (private) + TAG do app
+        // extended properties (inclui a TAG do sistema + dados do cliente)
         Map<String, String> ext = new HashMap<>();
-        ext.put(APP_TAG_KEY, APP_TAG_VALUE);
+        ext.put(APP_KEY, APP_VALUE);
 
         ext.put("clientFirstName", safe(s.getClientFirstName()));
         ext.put("clientLastName", safe(s.getClientLastName()));
@@ -81,35 +72,37 @@ public class GoogleCalendarClient implements CalendarClient {
 
         ev.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
 
-        // start/end com timezone
+        // start/end
         DateTime start = new DateTime(Date.from(s.getStart()));
         DateTime end = new DateTime(Date.from(s.getEnd()));
         ev.setStart(new EventDateTime().setDateTime(start).setTimeZone(ZONE.toString()));
         ev.setEnd(new EventDateTime().setDateTime(end).setTimeZone(ZONE.toString()));
 
         // attendee (cliente)
-        EventAttendee attendee = new EventAttendee()
-                .setEmail(s.getClientEmail())
-                .setDisplayName((safe(s.getClientFirstName()) + " " + safe(s.getClientLastName())).trim());
-        ev.setAttendees(Collections.singletonList(attendee));
+        if (s.getClientEmail() != null && !s.getClientEmail().isBlank()) {
+            EventAttendee attendee = new EventAttendee()
+                    .setEmail(s.getClientEmail())
+                    .setDisplayName((safe(s.getClientFirstName()) + " " + safe(s.getClientLastName())).trim());
+            ev.setAttendees(Collections.singletonList(attendee));
+        }
 
-        // lembrete exemplo
-        EventReminder emailReminder = new EventReminder().setMethod("email").setMinutes(24 * 60);
-        ev.setReminders(new Event.Reminders().setUseDefault(false).setOverrides(Collections.singletonList(emailReminder)));
-
+        // insere
         return service.events()
                 .insert(calendarId, ev)
-                .setSendUpdates("all")
+                .setSendUpdates("none")
                 .execute();
     }
 
     @Override
     public void deleteEvent(String eventId) throws IOException {
-        // opcional: validar tag antes de deletar, pra segurança extra
-        Event e = service.events().get(calendarId, eventId).execute();
-        if (!isAppEvent(e)) {
-            throw new IllegalArgumentException("Evento não pertence ao sistema");
+        Event e = getEvent(eventId);
+        if (e == null)
+            return; // já não existe
+
+        if (!isSystemEvent(e)) {
+            throw new IllegalArgumentException("Evento não pertence ao sistema (não será apagado).");
         }
+
         service.events().delete(calendarId, eventId).execute();
     }
 
@@ -117,47 +110,68 @@ public class GoogleCalendarClient implements CalendarClient {
     public Event updateEvent(Servico s) throws IOException {
         Event event = service.events().get(calendarId, s.getEventId()).execute();
 
-        // segurança: não atualizar evento pessoal
-        if (!isAppEvent(event)) {
-            throw new IllegalArgumentException("Evento não pertence ao sistema");
+        // Segurança extra: só atualiza se for evento do sistema
+        if (!isSystemEvent(event)) {
+            throw new IllegalArgumentException("Evento não pertence ao sistema (não será atualizado).");
         }
 
         event.setSummary(s.getTitle());
         event.setDescription(s.getDescription());
         event.setLocation(s.getClientAddress());
 
-        Map<String, String> ext =
-                (event.getExtendedProperties() != null && event.getExtendedProperties().getPrivate() != null)
-                        ? new HashMap<>(event.getExtendedProperties().getPrivate())
-                        : new HashMap<>();
-
-        // manter/forçar a TAG do app
-        ext.put(APP_TAG_KEY, APP_TAG_VALUE);
+        Map<String, String> ext = privateProps(event);
+        ext.put(APP_KEY, APP_VALUE); // garante a tag mesmo em update
 
         ext.put("clientFirstName", safe(s.getClientFirstName()));
         ext.put("clientLastName", safe(s.getClientLastName()));
         ext.put("clientEmail", safe(s.getClientEmail()));
         ext.put("clientPhone", safe(s.getClientPhone()));
         ext.put("clientAddress", safe(s.getClientAddress()));
+
         event.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
 
-        event.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(s.getStart()))).setTimeZone(ZONE.toString()));
-        event.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(s.getEnd()))).setTimeZone(ZONE.toString()));
+        EventDateTime start = new EventDateTime()
+                .setDateTime(new DateTime(Date.from(s.getStart())))
+                .setTimeZone(ZONE.toString());
+        EventDateTime end = new EventDateTime()
+                .setDateTime(new DateTime(Date.from(s.getEnd())))
+                .setTimeZone(ZONE.toString());
+        event.setStart(start);
+        event.setEnd(end);
 
         return service.events()
                 .update(calendarId, event.getId(), event)
-                .setSendUpdates("all")
+                .setSendUpdates("none")
                 .execute();
     }
 
     @Override
     public Event getEvent(String eventId) throws IOException {
-        Event e = service.events().get(calendarId, eventId).execute();
-        // se não for do app, trate como "não existe" pro seu sistema
-        if (!isAppEvent(e)) return null;
-        return e;
+        try {
+            Event e = service.events().get(calendarId, eventId)
+                    // garante que traz o status (defensivo)
+                    .setFields("id,status,summary,description,htmlLink,start,end,extendedProperties")
+                    .execute();
+
+            // Se o evento foi "apagado" e o Google manteve como cancelled, trate como
+            // inexistente
+            if (e != null && "cancelled".equalsIgnoreCase(e.getStatus())) {
+                return null;
+            }
+
+            return e;
+
+        } catch (GoogleJsonResponseException ex) {
+            if (ex.getStatusCode() == 404)
+                return null;
+            throw ex;
+        }
     }
 
+    /**
+     * IMPORTANTE: aqui é onde a separação acontece:
+     * listEvents retorna SOMENTE eventos criados pelo sistema (com a TAG).
+     */
     @Override
     public List<Event> listEvents(DateTime timeMin, DateTime timeMax) throws IOException {
         Events events = service.events().list(calendarId)
@@ -165,45 +179,58 @@ public class GoogleCalendarClient implements CalendarClient {
                 .setTimeMax(timeMax)
                 .setOrderBy("startTime")
                 .setSingleEvents(true)
+                .setShowDeleted(false) // <- evita retornar "cancelled"/deletados
+                .setFields("items(id,status,summary,description,htmlLink,start,end,extendedProperties),nextPageToken")
                 .execute();
 
         List<Event> items = events.getItems();
-        if (items == null) return Collections.emptyList();
+        if (items == null)
+            return Collections.emptyList();
 
-        // FILTRO: só eventos do app
-        return items.stream()
-                .filter(this::isAppEvent)
-                .collect(Collectors.toList());
+        List<Event> onlySystem = new ArrayList<>();
+        for (Event e : items) {
+            // defensivo: mesmo com showDeleted(false), filtre cancelados
+            if ("cancelled".equalsIgnoreCase(e.getStatus()))
+                continue;
+            if (isSystemEvent(e))
+                onlySystem.add(e);
+        }
+        return onlySystem;
     }
 
+    /**
+     * freeBusy NÃO filtra: precisa considerar eventos pessoais também,
+     * senão você deixa cliente marcar em cima de compromisso do proprietário.
+     */
     @Override
     public List<TimePeriod> freeBusy(DateTime timeMin, DateTime timeMax) throws IOException {
-        FreeBusyRequest request = new FreeBusyRequest()
-                .setTimeMin(timeMin)
-                .setTimeMax(timeMax)
-                .setItems(Collections.singletonList(new FreeBusyRequestItem().setId(calendarId)));
+        FreeBusyRequest request = new FreeBusyRequest();
+        request.setTimeMin(timeMin);
+        request.setTimeMax(timeMax);
+        request.setItems(Collections.singletonList(new FreeBusyRequestItem().setId(calendarId)));
 
         FreeBusyResponse resp = service.freebusy().query(request).execute();
         Map<String, FreeBusyCalendar> cals = resp.getCalendars();
-
         if (cals != null && cals.containsKey(calendarId)) {
             FreeBusyCalendar fb = cals.get(calendarId);
-            return fb.getBusy() != null ? fb.getBusy() : Collections.emptyList();
+            if (fb.getBusy() != null)
+                return fb.getBusy();
         }
         return Collections.emptyList();
     }
 
-    // =====================
-    // Helpers
-    // =====================
+    // -------- helpers --------
 
-    private boolean isAppEvent(Event e) {
-        if (e == null) return false;
-        Event.ExtendedProperties ep = e.getExtendedProperties();
-        if (ep == null) return false;
-        Map<String, String> priv = ep.getPrivate();
-        if (priv == null) return false;
-        return APP_TAG_VALUE.equals(priv.get(APP_TAG_KEY));
+    private boolean isSystemEvent(Event e) {
+        Map<String, String> ext = privateProps(e);
+        return APP_VALUE.equals(ext.get(APP_KEY));
+    }
+
+    private Map<String, String> privateProps(Event e) {
+        if (e.getExtendedProperties() == null)
+            return new HashMap<>();
+        Map<String, String> p = e.getExtendedProperties().getPrivate();
+        return (p == null) ? new HashMap<>() : new HashMap<>(p);
     }
 
     private String safe(String s) {

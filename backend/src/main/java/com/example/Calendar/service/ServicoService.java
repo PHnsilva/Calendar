@@ -1,14 +1,18 @@
 package com.example.Calendar.service;
 
+import com.example.Calendar.dto.ServicoCreateResponse;
 import com.example.Calendar.dto.ServicoRequest;
+import com.example.Calendar.dto.ServicoResponse;
+import com.example.Calendar.exception.BadRequestException;
+import com.example.Calendar.exception.ConflictException;
+import com.example.Calendar.exception.ForbiddenException;
+import com.example.Calendar.exception.NotFoundException;
 import com.example.Calendar.google.CalendarClient;
 import com.example.Calendar.model.Servico;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.TimePeriod;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.*;
@@ -16,37 +20,43 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ServicoService {
-    private static final Logger log = LoggerFactory.getLogger(ServicoService.class);
 
     private final CalendarClient calendar;
-    private final EmailService emailService;
     private final TokenUtil tokenUtil;
 
-    public ServicoService(CalendarClient calendar, EmailService emailService, TokenUtil tokenUtil) {
+    // regras simples (ajuste quando quiser)
+    private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
+    private static final int DEFAULT_DURATION_MINUTES = 60;
+    private static final Set<Integer> ALLOWED_MINUTES = Set.of(0, 30); // validação de minutos (00 ou 30)
+
+    public ServicoService(CalendarClient calendar, TokenUtil tokenUtil) {
         this.calendar = calendar;
-        this.emailService = emailService;
         this.tokenUtil = tokenUtil;
     }
 
-    public Servico create(ServicoRequest req) throws IOException {
-        ZoneId zone = ZoneId.of("America/Sao_Paulo");
+    public ServicoCreateResponse create(ServicoRequest req) throws IOException {
+        validateTime(req.getTime());
 
-        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), zone);
-        ZonedDateTime endZ = startZ.plusMinutes(60);
+        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
+        ZonedDateTime endZ = startZ.plusMinutes(DEFAULT_DURATION_MINUTES);
 
         Instant start = startZ.toInstant();
         Instant end = endZ.toInstant();
+        if (!end.isAfter(start))
+            throw new BadRequestException("Horário inválido");
 
-        if (!end.isAfter(start)) throw new IllegalArgumentException("Horário inválido");
-
-        // disponibilidade
+        // checar disponibilidade via freeBusy
         DateTime timeMin = new DateTime(Date.from(start));
         DateTime timeMax = new DateTime(Date.from(end));
-        List<TimePeriod> busy = calendar.freeBusy(timeMin, timeMax);
-        if (busy != null && !busy.isEmpty()) throw new IllegalStateException("Horário indisponível");
 
+        List<TimePeriod> busy = calendar.freeBusy(timeMin, timeMax);
+        if (busy != null && !busy.isEmpty()) {
+            throw new ConflictException("Horário indisponível");
+        }
+
+        // montar Servico (apenas para enviar ao CalendarClient)
         Servico s = new Servico();
-        s.setId(UUID.randomUUID().toString()); // só para resposta
+        s.setId(UUID.randomUUID().toString());
         s.setTitle(req.getServiceType());
         s.setDescription(req.getServiceType());
         s.setStart(start);
@@ -56,81 +66,137 @@ public class ServicoService {
         s.setClientEmail(req.getClientEmail());
         s.setClientPhone(req.getClientPhone());
         s.setClientAddress(req.getClientAddress());
-        s.setStatus("PENDENTE");
+        s.setStatus("AGENDADO");
 
         Event created = calendar.createEvent(s);
 
-        s.setEventId(created.getId());
-        s.setEventLink(created.getHtmlLink());
-        s.setStatus("AGENDADO");
+        String token = tokenUtil.generate(created.getId(), req.getClientEmail());
 
-        String token = tokenUtil.generate(s.getEventId(), s.getClientEmail());
-        String manageLink = System.getenv().getOrDefault("APP_BASE_URL", "http://localhost:8080")
-                + "/api/servicos/me?token=" + token;
+        // preencher o ServicoResponse (é aqui que ficam eventId/eventLink/etc)
+        ServicoResponse servico = new ServicoResponse();
+        servico.setEventId(created.getId());
+        servico.setEventLink(created.getHtmlLink());
+        servico.setServiceType(req.getServiceType());
+        servico.setStart(start);
+        servico.setEnd(end);
+        servico.setClientFirstName(req.getClientFirstName());
+        servico.setClientLastName(req.getClientLastName());
+        servico.setClientEmail(req.getClientEmail());
+        servico.setClientPhone(req.getClientPhone());
+        servico.setClientAddress(req.getClientAddress());
+        servico.setStatus("AGENDADO");
 
-        emailService.sendConfirmation(
-                s.getClientEmail(),
-                "Confirmação de agendamento",
-                "Seu agendamento está confirmado.",
-                manageLink
-        );
+        // wrapper de criação: servico + manageToken
+        ServicoCreateResponse out = new ServicoCreateResponse();
+        out.setServico(servico);
+        out.setManageToken(token);
 
-        return s;
+        return out;
     }
 
-    public Servico getByEventId(String eventId) throws IOException {
-        Event e = calendar.getEvent(eventId);
-        if (e == null) throw new IllegalArgumentException("Agendamento não encontrado");
-        return mapEventToServico(e);
-    }
-
-    public Servico updateByToken(String eventId, ServicoRequest req) throws IOException {
-        Event existing = calendar.getEvent(eventId);
-        if (existing == null) throw new IllegalArgumentException("Evento não encontrado");
-
-        ZoneId zone = ZoneId.of("America/Sao_Paulo");
-        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), zone);
-        ZonedDateTime endZ = startZ.plusMinutes(60);
-
-        Instant newStart = startZ.toInstant();
-        Instant newEnd = endZ.toInstant();
-
-        if (!newEnd.isAfter(newStart)) throw new IllegalArgumentException("Horário inválido");
-
-        DateTime timeMin = new DateTime(Date.from(newStart));
-        DateTime timeMax = new DateTime(Date.from(newEnd));
-        List<TimePeriod> busy = calendar.freeBusy(timeMin, timeMax);
-        if (busy == null) busy = Collections.emptyList();
-
-        // permitir se o busy for apenas o próprio evento no mesmo intervalo
-        Instant existingStart = extractInstant(existing.getStart());
-        Instant existingEnd = extractInstant(existing.getEnd());
-
-        boolean conflict = false;
-        for (TimePeriod tp : busy) {
-            if (tp.getStart() == null || tp.getEnd() == null) {
-                conflict = true;
-                break;
-            }
-            Instant busyStart = Instant.ofEpochMilli(tp.getStart().getValue());
-            Instant busyEnd = Instant.ofEpochMilli(tp.getEnd().getValue());
-
-            boolean equalsExisting = existingStart != null && existingEnd != null
-                    && busyStart.equals(existingStart) && busyEnd.equals(existingEnd);
-
-            if (!equalsExisting) {
-                conflict = true;
-                break;
-            }
+    public ServicoResponse getByToken(String token) throws IOException {
+        TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
+        if (vt == null) {
+            throw new ForbiddenException("Token inválido ou expirado");
         }
-        if (conflict) throw new IllegalStateException("Horário indisponível");
+
+        Event e = calendar.getEvent(vt.getEventId());
+
+        // IMPORTANTe: se foi deletado e virou "cancelled", vamos tratar como não
+        // encontrado
+        if (e == null || "cancelled".equalsIgnoreCase(e.getStatus())) {
+            throw new NotFoundException("Agendamento não encontrado");
+        }
+
+        // (extra segurança) confirmar que o email do token bate com o email salvo no
+        // evento
+        Map<String, String> ext = privateExt(e);
+        String email = ext.getOrDefault("clientEmail", "");
+
+        if (email.isBlank() || !vt.getClientEmail().equalsIgnoreCase(email)) {
+            throw new ForbiddenException("Token inválido");
+        }
+
+        return mapEventToResponse(e);
+    }
+
+    public List<ServicoResponse> listMy(String token) throws IOException {
+        TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
+        if (vt == null)
+            throw new ForbiddenException("Token inválido ou expirado");
+
+        // range simples: últimos 365 dias até +365 dias
+        ZonedDateTime from = ZonedDateTime.now(ZONE).minusDays(365);
+        ZonedDateTime to = ZonedDateTime.now(ZONE).plusDays(365);
+
+        List<Event> events = calendar.listEvents(
+                new DateTime(Date.from(from.toInstant())),
+                new DateTime(Date.from(to.toInstant())));
+
+        if (events == null)
+            return Collections.emptyList();
+
+        String myEmail = vt.getClientEmail().toLowerCase(Locale.ROOT);
+
+        return events.stream()
+                .filter(e -> myEmail.equals(privateExt(e).getOrDefault("clientEmail", "").toLowerCase(Locale.ROOT)))
+                .map(this::mapEventToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public ServicoResponse updateByToken(String eventId, String token, ServicoRequest req) throws IOException {
+        TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
+        if (vt == null || !vt.getEventId().equals(eventId))
+            throw new ForbiddenException("Token inválido");
+
+        Event existing = calendar.getEvent(eventId);
+        if (existing == null)
+            throw new NotFoundException("Agendamento não encontrado");
+
+        // confirmar email
+        String existingEmail = privateExt(existing).getOrDefault("clientEmail", "");
+        if (!vt.getClientEmail().equalsIgnoreCase(existingEmail)) {
+            throw new ForbiddenException("Token inválido");
+        }
+
+        validateTime(req.getTime());
+
+        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
+        ZonedDateTime endZ = startZ.plusMinutes(DEFAULT_DURATION_MINUTES);
+
+        Instant start = startZ.toInstant();
+        Instant end = endZ.toInstant();
+        if (!end.isAfter(start))
+            throw new BadRequestException("Horário inválido");
+
+        // checar conflito permitindo o próprio evento
+        DateTime timeMin = new DateTime(Date.from(start));
+        DateTime timeMax = new DateTime(Date.from(end));
+        List<TimePeriod> busy = calendar.freeBusy(timeMin, timeMax);
+        if (busy == null)
+            busy = Collections.emptyList();
+
+        Instant oldStart = instantFrom(existing.getStart());
+        Instant oldEnd = instantFrom(existing.getEnd());
+
+        boolean conflict = busy.stream().anyMatch(tp -> {
+            if (tp.getStart() == null || tp.getEnd() == null)
+                return true;
+            Instant bs = Instant.ofEpochMilli(tp.getStart().getValue());
+            Instant be = Instant.ofEpochMilli(tp.getEnd().getValue());
+            boolean isSelf = bs.equals(oldStart) && be.equals(oldEnd);
+            return !isSelf;
+        });
+
+        if (conflict)
+            throw new ConflictException("Horário indisponível");
 
         Servico s = new Servico();
         s.setEventId(eventId);
         s.setTitle(req.getServiceType());
         s.setDescription(req.getServiceType());
-        s.setStart(newStart);
-        s.setEnd(newEnd);
+        s.setStart(start);
+        s.setEnd(end);
         s.setClientFirstName(req.getClientFirstName());
         s.setClientLastName(req.getClientLastName());
         s.setClientEmail(req.getClientEmail());
@@ -139,64 +205,87 @@ public class ServicoService {
         s.setStatus("AGENDADO");
 
         Event updated = calendar.updateEvent(s);
-        return mapEventToServico(updated);
+        return mapEventToResponse(updated);
     }
 
-    public void cancelByToken(String eventId) throws IOException {
+    public void cancelByToken(String eventId, String token) throws IOException {
+        TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
+        if (vt == null || !vt.getEventId().equals(eventId))
+            throw new ForbiddenException("Token inválido");
+
         Event e = calendar.getEvent(eventId);
-        if (e == null) throw new IllegalArgumentException("Evento não encontrado");
+        if (e == null)
+            throw new NotFoundException("Agendamento não encontrado");
+
+        String email = privateExt(e).getOrDefault("clientEmail", "");
+        if (!vt.getClientEmail().equalsIgnoreCase(email)) {
+            throw new ForbiddenException("Token inválido");
+        }
+
         calendar.deleteEvent(eventId);
     }
 
-    public List<Servico> listAll() throws IOException {
-        ZoneId zone = ZoneId.of("America/Sao_Paulo");
-        ZonedDateTime from = ZonedDateTime.now(zone).minusDays(1);
-        ZonedDateTime to = ZonedDateTime.now(zone).plusYears(1);
+    public List<ServicoResponse> listAllAdmin() throws IOException {
+        // range admin: hoje-1d até +1 ano
+        ZonedDateTime from = ZonedDateTime.now(ZONE).minusDays(1);
+        ZonedDateTime to = ZonedDateTime.now(ZONE).plusYears(1);
 
-        DateTime timeMin = new DateTime(Date.from(from.toInstant()));
-        DateTime timeMax = new DateTime(Date.from(to.toInstant()));
+        List<Event> events = calendar.listEvents(
+                new DateTime(Date.from(from.toInstant())),
+                new DateTime(Date.from(to.toInstant())));
 
-        List<Event> events = calendar.listEvents(timeMin, timeMax);
-        if (events == null) return Collections.emptyList();
-
-        return events.stream().map(this::mapEventToServico).collect(Collectors.toList());
+        if (events == null)
+            return Collections.emptyList();
+        return events.stream().map(this::mapEventToResponse).collect(Collectors.toList());
     }
 
-    public void deleteById(String eventId) throws IOException {
+    public void deleteByIdAdmin(String eventId) throws IOException {
         Event e = calendar.getEvent(eventId);
-        if (e == null) throw new IllegalArgumentException("Not found");
-        calendar.deleteEvent(eventId);
+        if (e == null)
+            throw new NotFoundException("Agendamento não encontrado");
+
+        try {
+            calendar.deleteEvent(eventId);
+        } catch (IllegalArgumentException ex) {
+            // evento existe mas não é do sistema
+            throw new ForbiddenException(ex.getMessage());
+        }
     }
 
     public List<String> getAvailableSlots(LocalDate date, int slotMinutes) throws IOException {
+        if (slotMinutes <= 0)
+            throw new BadRequestException("slotMinutes deve ser > 0");
+
         LocalTime WORK_START = LocalTime.of(8, 0);
         LocalTime WORK_END = LocalTime.of(18, 0);
         LocalTime LUNCH_START = LocalTime.of(12, 0);
         LocalTime LUNCH_END = LocalTime.of(13, 0);
-        ZoneId zone = ZoneId.of("America/Sao_Paulo");
 
-        ZonedDateTime dayStart = ZonedDateTime.of(date, WORK_START, zone);
-        ZonedDateTime dayEnd = ZonedDateTime.of(date, WORK_END, zone);
+        ZonedDateTime dayStart = ZonedDateTime.of(date, WORK_START, ZONE);
+        ZonedDateTime dayEnd = ZonedDateTime.of(date, WORK_END, ZONE);
 
         DateTime timeMin = new DateTime(Date.from(dayStart.toInstant()));
         DateTime timeMax = new DateTime(Date.from(dayEnd.toInstant()));
 
         List<TimePeriod> busy = calendar.freeBusy(timeMin, timeMax);
-        if (busy == null) busy = Collections.emptyList();
+        if (busy == null)
+            busy = Collections.emptyList();
 
         List<ZonedDateTime> slots = new ArrayList<>();
         ZonedDateTime current = dayStart;
 
         while (!current.plusMinutes(slotMinutes).isAfter(dayEnd)) {
             LocalTime t = current.toLocalTime();
-            boolean inLunch = (t.equals(LUNCH_START) || (t.isAfter(LUNCH_START) && t.isBefore(LUNCH_END)));
+
+            boolean inLunch = !t.isBefore(LUNCH_START) && t.isBefore(LUNCH_END);
             if (!inLunch) {
                 Instant slotStart = current.toInstant();
                 Instant slotEnd = current.plusMinutes(slotMinutes).toInstant();
 
                 boolean conflict = false;
                 for (TimePeriod tp : busy) {
-                    if (tp.getStart() == null || tp.getEnd() == null) continue;
+                    if (tp.getStart() == null || tp.getEnd() == null)
+                        continue;
                     Instant busyStart = Instant.ofEpochMilli(tp.getStart().getValue());
                     Instant busyEnd = Instant.ofEpochMilli(tp.getEnd().getValue());
                     if (!(slotEnd.compareTo(busyStart) <= 0 || slotStart.compareTo(busyEnd) >= 0)) {
@@ -204,7 +293,8 @@ public class ServicoService {
                         break;
                     }
                 }
-                if (!conflict) slots.add(current);
+                if (!conflict)
+                    slots.add(current);
             }
             current = current.plusMinutes(slotMinutes);
         }
@@ -212,29 +302,46 @@ public class ServicoService {
         return slots.stream().map(z -> z.toOffsetDateTime().toString()).collect(Collectors.toList());
     }
 
-    // helpers
-    private Instant extractInstant(EventDateTime edt) {
-        if (edt == null) return null;
+    // ---------------- helpers ----------------
+
+    private void validateTime(LocalTime time) {
+        if (time == null)
+            throw new BadRequestException("time é obrigatório");
+        if (!ALLOWED_MINUTES.contains(time.getMinute())) {
+            throw new BadRequestException("Minutos inválidos. Use 00 ou 30.");
+        }
+    }
+
+    private Map<String, String> privateExt(Event e) {
+        if (e.getExtendedProperties() == null)
+            return Collections.emptyMap();
+        if (e.getExtendedProperties().getPrivate() == null)
+            return Collections.emptyMap();
+        return e.getExtendedProperties().getPrivate();
+    }
+
+    private Instant instantFrom(EventDateTime edt) {
+        if (edt == null)
+            return null;
         DateTime dt = edt.getDateTime();
-        if (dt == null) dt = edt.getDate();
-        if (dt == null) return null;
+        if (dt == null)
+            dt = edt.getDate();
+        if (dt == null)
+            return null;
         return Instant.ofEpochMilli(dt.getValue());
     }
 
-    private Servico mapEventToServico(Event e) {
-        Servico s = new Servico();
+    private ServicoResponse mapEventToResponse(Event e) {
+        ServicoResponse s = new ServicoResponse();
         s.setEventId(e.getId());
         s.setEventLink(e.getHtmlLink());
-        s.setTitle(e.getSummary());
-        s.setDescription(e.getDescription());
 
-        s.setStart(extractInstant(e.getStart()));
-        s.setEnd(extractInstant(e.getEnd()));
+        // Summary = serviceType
+        s.setServiceType(e.getSummary() == null ? "" : e.getSummary());
+        s.setStart(instantFrom(e.getStart()));
+        s.setEnd(instantFrom(e.getEnd()));
 
-        Map<String, String> ext = (e.getExtendedProperties() != null && e.getExtendedProperties().getPrivate() != null)
-                ? e.getExtendedProperties().getPrivate()
-                : Collections.emptyMap();
-
+        Map<String, String> ext = privateExt(e);
         s.setClientFirstName(ext.getOrDefault("clientFirstName", ""));
         s.setClientLastName(ext.getOrDefault("clientLastName", ""));
         s.setClientEmail(ext.getOrDefault("clientEmail", ""));

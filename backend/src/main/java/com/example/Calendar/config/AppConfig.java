@@ -19,27 +19,6 @@ public class AppConfig {
     }
 
     @Bean
-    public CalendarClient calendarClient() {
-        String clientId = System.getenv("GOOGLE_CLIENT_ID");
-        String clientSecret = System.getenv("GOOGLE_CLIENT_SECRET");
-        String refreshToken = System.getenv("GOOGLE_REFRESH_TOKEN");
-        String calendarId = System.getenv().getOrDefault("GOOGLE_CALENDAR_ID", "primary");
-        String appName = System.getenv().getOrDefault("APP_NAME", "MeuApp");
-
-        if (isBlank(clientId) || isBlank(clientSecret) || isBlank(refreshToken)) {
-            return new DummyCalendarClient();
-        }
-
-        try {
-            return new GoogleCalendarClient(clientId, clientSecret, refreshToken, calendarId, appName);
-        } catch (Exception e) {
-            System.err.println("Falha ao iniciar GoogleCalendarClient: " + e.getMessage());
-            e.printStackTrace();
-            return new DummyCalendarClient();
-        }
-    }
-
-    @Bean
     public ServicoService servicoService(CalendarClient calendarClient, TokenUtil tokenUtil) {
         return new ServicoService(calendarClient, tokenUtil);
     }

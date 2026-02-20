@@ -23,6 +23,8 @@ public class ServicoService {
 
     private final CalendarClient calendar;
     private final TokenUtil tokenUtil;
+    private final ScheduleRules rules = new ScheduleRules(LocalDate.parse(
+            System.getenv().getOrDefault("CYCLE_START", "2026-02-01")));
 
     // regras simples (ajuste quando quiser)
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
@@ -34,8 +36,32 @@ public class ServicoService {
         this.tokenUtil = tokenUtil;
     }
 
+    private void validateDateWindow(LocalDate requestedDate) {
+        LocalDate today = LocalDate.now(ZONE);
+
+        if (requestedDate == null) {
+            throw new BadRequestException("date é obrigatório");
+        }
+        if (requestedDate.isBefore(today)) {
+            throw new BadRequestException("Data inválida: não pode ser no passado");
+        }
+
+        YearMonth ymReq = YearMonth.from(requestedDate);
+        YearMonth ymNow = YearMonth.from(today);
+        YearMonth ymNext = ymNow.plusMonths(1);
+
+        if (!ymReq.equals(ymNow) && !ymReq.equals(ymNext)) {
+            throw new BadRequestException("Data inválida: apenas mês atual ou próximo");
+        }
+    }
+
     public ServicoCreateResponse create(ServicoRequest req) throws IOException {
+        validateDateWindow(req.getDate());
         validateTime(req.getTime());
+        validateTime(req.getTime());
+        if (rules.isOffDay(req.getDate())) {
+            throw new BadRequestException("Dia indisponível (folga do proprietário).");
+        }
 
         ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
         ZonedDateTime endZ = startZ.plusMinutes(DEFAULT_DURATION_MINUTES);
@@ -125,9 +151,8 @@ public class ServicoService {
         if (vt == null)
             throw new ForbiddenException("Token inválido ou expirado");
 
-        // range simples: últimos 365 dias até +365 dias
-        ZonedDateTime from = ZonedDateTime.now(ZONE).minusDays(365);
-        ZonedDateTime to = ZonedDateTime.now(ZONE).plusDays(365);
+        ZonedDateTime from = ZonedDateTime.now(ZONE).withDayOfMonth(1).toLocalDate().atStartOfDay(ZONE);
+        ZonedDateTime to = from.plusMonths(2);
 
         List<Event> events = calendar.listEvents(
                 new DateTime(Date.from(from.toInstant())),
@@ -145,6 +170,8 @@ public class ServicoService {
     }
 
     public ServicoResponse updateByToken(String eventId, String token, ServicoRequest req) throws IOException {
+        validateDateWindow(req.getDate());
+        validateTime(req.getTime());
         TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
         if (vt == null || !vt.getEventId().equals(eventId))
             throw new ForbiddenException("Token inválido");
@@ -226,9 +253,8 @@ public class ServicoService {
     }
 
     public List<ServicoResponse> listAllAdmin() throws IOException {
-        // range admin: hoje-1d até +1 ano
-        ZonedDateTime from = ZonedDateTime.now(ZONE).minusDays(1);
-        ZonedDateTime to = ZonedDateTime.now(ZONE).plusYears(1);
+        ZonedDateTime from = ZonedDateTime.now(ZONE).withDayOfMonth(1).toLocalDate().atStartOfDay(ZONE);
+        ZonedDateTime to = from.plusMonths(2);
 
         List<Event> events = calendar.listEvents(
                 new DateTime(Date.from(from.toInstant())),
@@ -253,8 +279,11 @@ public class ServicoService {
     }
 
     public List<String> getAvailableSlots(LocalDate date, int slotMinutes) throws IOException {
+        validateDateWindow(date);
         if (slotMinutes <= 0)
             throw new BadRequestException("slotMinutes deve ser > 0");
+        if (rules.isOffDay(date))
+            return List.of();
 
         LocalTime WORK_START = LocalTime.of(8, 0);
         LocalTime WORK_END = LocalTime.of(18, 0);

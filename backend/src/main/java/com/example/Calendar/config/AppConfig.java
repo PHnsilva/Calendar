@@ -3,8 +3,13 @@ package com.example.Calendar.config;
 import com.example.Calendar.google.CalendarClient;
 import com.example.Calendar.google.DummyCalendarClient;
 import com.example.Calendar.google.GoogleCalendarClient;
+import com.example.Calendar.integrations.DummyWhatsAppClient;
+import com.example.Calendar.integrations.WhatsAppClient;
+import com.example.Calendar.service.InMemoryVerificationStore;
 import com.example.Calendar.service.ServicoService;
 import com.example.Calendar.service.TokenUtil;
+import com.example.Calendar.service.VerificationService;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -42,6 +47,27 @@ public class AppConfig {
     @Bean
     public ServicoService servicoService(CalendarClient calendarClient, TokenUtil tokenUtil) {
         return new ServicoService(calendarClient, tokenUtil);
+    }
+
+    @Bean
+    public InMemoryVerificationStore inMemoryVerificationStore() {
+        return new InMemoryVerificationStore();
+    }
+
+    @Bean
+    public WhatsAppClient whatsAppClient(AppProperties props) {
+        // por enquanto dummy (depois troca pro real)
+        return new DummyWhatsAppClient();
+    }
+
+    @Bean
+    public VerificationService verificationService(
+            CalendarClient calendarClient,
+            TokenUtil tokenUtil,
+            InMemoryVerificationStore store,
+            WhatsAppClient whatsAppClient,
+            AppProperties props) {
+        return new VerificationService(calendarClient, tokenUtil, store, whatsAppClient, props);
     }
 
     private boolean isBlank(String s) {

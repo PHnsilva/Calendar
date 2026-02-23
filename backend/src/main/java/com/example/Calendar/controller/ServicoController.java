@@ -1,4 +1,4 @@
-package com.example.Calendar.Controller;
+package com.example.Calendar.controller;
 
 import com.example.Calendar.dto.ServicoCreateResponse;
 import com.example.Calendar.dto.ServicoRequest;

@@ -23,6 +23,13 @@ public class VerificationController {
         return new VerifyStartResponse(r.verificationId(), r.expiresInSeconds(), r.resendAfterSeconds());
     }
 
+    // NOVO: reenviar código para o mesmo verificationId (respeitando resendAfter)
+    @PostMapping("/resend")
+    public VerifyStartResponse resend(@Valid @RequestBody VerifyResendRequest req) {
+        var r = verificationService.resend(req.getVerificationId());
+        return new VerifyStartResponse(r.verificationId(), r.expiresInSeconds(), r.resendAfterSeconds());
+    }
+
     @PostMapping("/confirm")
     public VerifyConfirmResponse confirm(@Valid @RequestBody VerifyConfirmRequest req) throws IOException {
         verificationService.confirm(req.getVerificationId(), req.getCode());

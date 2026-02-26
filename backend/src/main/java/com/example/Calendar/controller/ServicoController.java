@@ -27,7 +27,6 @@ public class ServicoController {
         this.service = service;
         this.tokenUtil = tokenUtil;
         this.adminToken = System.getenv("ADMIN_TOKEN"); // sem default
-
     }
 
     // PUBLIC
@@ -38,13 +37,11 @@ public class ServicoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // retorna 1 agendamento (do token: eventId + email)
     @GetMapping("/me")
     public ResponseEntity<ServicoResponse> getByToken(@RequestParam String token) throws IOException {
         return ResponseEntity.ok(service.getByToken(token));
     }
 
-    // lista agendamentos do cliente (pelo email do token)
     @GetMapping("/my")
     public ResponseEntity<List<ServicoResponse>> listMy(@RequestParam String token) throws IOException {
         return ResponseEntity.ok(service.listMy(token));
@@ -105,5 +102,4 @@ public class ServicoController {
 
         return ResponseEntity.ok(service.getAvailableSlots(date, slotMinutes));
     }
-
 }

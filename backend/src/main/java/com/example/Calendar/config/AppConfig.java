@@ -1,20 +1,21 @@
 package com.example.Calendar.config;
 
 import com.example.Calendar.google.CalendarClient;
-import com.example.Calendar.google.DummyCalendarClient;
-import com.example.Calendar.google.GoogleCalendarClient;
 import com.example.Calendar.integrations.DummyWhatsAppClient;
 import com.example.Calendar.integrations.WhatsAppClient;
-import com.example.Calendar.service.InMemoryVerificationStore;
-import com.example.Calendar.service.ServicoService;
-import com.example.Calendar.service.TokenUtil;
-import com.example.Calendar.service.VerificationService;
-
+import com.example.Calendar.integrations.supabase.SupabaseClient;
+import com.example.Calendar.service.*;
+import com.example.Calendar.service.store.*;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class AppConfig {
+
+    // ===== util =====
 
     @Bean
     public TokenUtil tokenUtil() {
@@ -23,31 +24,23 @@ public class AppConfig {
         return new TokenUtil(secret, ttl);
     }
 
-    @Bean
-    public CalendarClient calendarClient() {
-        String clientId = System.getenv("GOOGLE_CLIENT_ID");
-        String clientSecret = System.getenv("GOOGLE_CLIENT_SECRET");
-        String refreshToken = System.getenv("GOOGLE_REFRESH_TOKEN");
-        String calendarId = System.getenv().getOrDefault("GOOGLE_CALENDAR_ID", "primary");
-        String appName = System.getenv().getOrDefault("APP_NAME", "MeuApp");
-
-        if (isBlank(clientId) || isBlank(clientSecret) || isBlank(refreshToken)) {
-            return new DummyCalendarClient();
-        }
-
-        try {
-            return new GoogleCalendarClient(clientId, clientSecret, refreshToken, calendarId, appName);
-        } catch (Exception e) {
-            System.err.println("Falha ao iniciar GoogleCalendarClient: " + e.getMessage());
-            e.printStackTrace();
-            return new DummyCalendarClient();
-        }
-    }
+    // ===== HTTP clients =====
 
     @Bean
-    public ServicoService servicoService(CalendarClient calendarClient, TokenUtil tokenUtil) {
-        return new ServicoService(calendarClient, tokenUtil);
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
+
+    // ===== WhatsApp =====
+
+    @Bean
+    public WhatsAppClient whatsAppClient(AppProperties props) {
+        // por enquanto dummy
+        return new DummyWhatsAppClient();
+    }
+
+    // ===== InMemory stores =====
+    // (precisa desses beans, a menos que você tenha @Component nas classes)
 
     @Bean
     public InMemoryVerificationStore inMemoryVerificationStore() {
@@ -55,22 +48,112 @@ public class AppConfig {
     }
 
     @Bean
-    public WhatsAppClient whatsAppClient(AppProperties props) {
-        // por enquanto dummy (depois troca pro real)
-        return new DummyWhatsAppClient();
+    public InMemoryPendingStore inMemoryPendingStore() {
+        return new InMemoryPendingStore();
+    }
+
+    @Bean
+    public InMemoryHistoryStore inMemoryHistoryStore() {
+        return new InMemoryHistoryStore();
+    }
+
+    // ===== Supabase (somente quando habilitado) =====
+    // NÃO retorna null
+
+    @Bean
+    @ConditionalOnProperty(name = "supabase.enabled", havingValue = "true")
+    public SupabaseClient supabaseClient(RestTemplate http, AppProperties props) {
+        return new SupabaseClient(http, props.getSupabaseUrl(), props.getSupabaseKey(), props.getSupabaseSchema());
+    }
+
+    // ===== Store abstractions (Supabase se existir, senão InMemory) =====
+
+    @Bean
+    public VerificationStore verificationStore(
+            AppProperties props,
+            ObjectProvider<SupabaseClient> supabaseClientProvider,
+            InMemoryVerificationStore mem
+    ) {
+        SupabaseClient sb = supabaseClientProvider.getIfAvailable();
+        if (props.isSupabaseEnabled() && sb != null) {
+            return new SupabaseVerificationStore(sb, props.getTableVerification());
+        }
+        return mem;
+    }
+
+    @Bean
+    public PendingStore pendingStore(
+            AppProperties props,
+            ObjectProvider<SupabaseClient> supabaseClientProvider,
+            InMemoryPendingStore mem
+    ) {
+        SupabaseClient sb = supabaseClientProvider.getIfAvailable();
+        if (props.isSupabaseEnabled() && sb != null) {
+            return new SupabasePendingStore(sb, props.getTablePending());
+        }
+        return mem;
+    }
+
+    @Bean
+    public HistoryStore historyStore(
+            AppProperties props,
+            ObjectProvider<SupabaseClient> supabaseClientProvider,
+            InMemoryHistoryStore mem
+    ) {
+        SupabaseClient sb = supabaseClientProvider.getIfAvailable();
+        if (props.isSupabaseEnabled() && sb != null) {
+            return new SupabaseHistoryStore(sb, props.getTableHistory());
+        }
+        return mem;
+    }
+
+    // ===== Services =====
+
+    @Bean
+    public ServicoService servicoService(
+            CalendarClient calendarClient,
+            TokenUtil tokenUtil,
+            VerificationService verificationService,
+            AppProperties props
+    ) {
+        return new ServicoService(calendarClient, tokenUtil, verificationService, props);
     }
 
     @Bean
     public VerificationService verificationService(
             CalendarClient calendarClient,
             TokenUtil tokenUtil,
-            InMemoryVerificationStore store,
+            VerificationStore verificationStore,
             WhatsAppClient whatsAppClient,
-            AppProperties props) {
-        return new VerificationService(calendarClient, tokenUtil, store, whatsAppClient, props);
+            AppProperties props
+    ) {
+        return new VerificationService(calendarClient, tokenUtil, verificationStore, whatsAppClient, props);
     }
 
-    private boolean isBlank(String s) {
-        return s == null || s.trim().isEmpty();
+    @Bean
+    public RecoveryService recoveryService(
+            VerificationStore verificationStore,
+            PendingStore pendingStore,
+            HistoryStore historyStore,
+            WhatsAppClient whatsAppClient,
+            AppProperties props,
+            ServicoService servicoService
+    ) {
+        return new RecoveryService(verificationStore, pendingStore, historyStore, whatsAppClient, props, servicoService);
+    }
+
+    @Bean
+    public CepService cepService(RestTemplate restTemplate, AppProperties props) {
+        return new CepService(restTemplate, props);
+    }
+
+    @Bean
+    public InternalCleanupService internalCleanupService(
+            CalendarClient calendarClient,
+            PendingStore pendingStore,
+            VerificationStore verificationStore,
+            HistoryStore historyStore
+    ) {
+        return new InternalCleanupService(calendarClient, pendingStore, verificationStore, historyStore);
     }
 }

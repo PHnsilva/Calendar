@@ -6,26 +6,26 @@ import com.example.Calendar.exception.ForbiddenException;
 import com.example.Calendar.exception.NotFoundException;
 import com.example.Calendar.google.CalendarClient;
 import com.example.Calendar.integrations.WhatsAppClient;
-import com.example.Calendar.service.TokenUtil.VerifiedToken;
+import com.example.Calendar.model.Servico;
+import com.example.Calendar.service.store.VerificationStore;
 import com.google.api.services.calendar.model.Event;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 
 public class VerificationService {
 
     private final CalendarClient calendarClient;
     private final TokenUtil tokenUtil;
-    private final InMemoryVerificationStore store;
+    private final VerificationStore store;
     private final WhatsAppClient whatsAppClient;
     private final AppProperties props;
 
     public VerificationService(
             CalendarClient calendarClient,
             TokenUtil tokenUtil,
-            InMemoryVerificationStore store,
+            VerificationStore store,
             WhatsAppClient whatsAppClient,
             AppProperties props
     ) {
@@ -39,28 +39,39 @@ public class VerificationService {
     public record StartResult(String verificationId, long expiresInSeconds, long resendAfterSeconds) {}
 
     public StartResult start(String token, String phoneRaw) throws IOException {
-        VerifiedToken vt = tokenUtil.verify(token);
+        TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
         if (vt == null) throw new ForbiddenException("Token inválido ou expirado");
 
         String eventId = vt.getEventId();
         Event ev = calendarClient.getEvent(eventId);
         if (ev == null) throw new NotFoundException("Agendamento não encontrado");
 
+        Map<String, String> ext = privateExt(ev);
+        if (isExpiredPending(ext)) {
+            throw new NotFoundException("Agendamento não encontrado");
+        }
+
+        String status = ext.getOrDefault("status", "PENDING_PHONE");
+        if (!"PENDING_PHONE".equalsIgnoreCase(status)) {
+            throw new BadRequestException("Agendamento já confirmado");
+        }
+
         String phoneDigits = normalizePhone(phoneRaw);
 
-        // atualiza telefone no evento (permite edição no modal)
-        setPrivate(ev, "clientPhone", phoneDigits);
+        Servico s = fromEvent(ev);
+        s.setClientPhone(phoneDigits);
+        s.setStatus("PENDING_PHONE");
 
-        // garante status pendente
-        String status = getPrivate(ev, "status");
-        if (status == null || status.isBlank()) setPrivate(ev, "status", "PENDING_PHONE");
+        String pe = ext.get("pendingExpiresAt");
+        if (pe != null && pe.matches("\\d+")) {
+            s.setPendingExpiresAt(Instant.ofEpochSecond(Long.parseLong(pe)));
+        }
 
-        // salva update
-        // (depende de como seu CalendarClient faz update: por Servico ou por Event.
-        //  se seu client só atualiza por Servico, a gente ajusta quando você mandar seus arquivos.)
+        calendarClient.updateEvent(s);
 
-        // cria sessão e envia
-        var sess = store.create(eventId, phoneDigits,
+        VerificationStore.Session sess = store.create(
+                eventId,
+                phoneDigits,
                 props.getOtpTtl().toSeconds(),
                 props.getOtpResendAfter().toSeconds()
         );
@@ -70,42 +81,108 @@ public class VerificationService {
         return new StartResult(sess.verificationId, props.getOtpTtl().toSeconds(), props.getOtpResendAfter().toSeconds());
     }
 
+    public StartResult resend(String verificationId) {
+        VerificationStore.Session sess = store.get(verificationId);
+        if (sess == null) throw new BadRequestException("verificationId inválido");
+        if (sess.isExpired()) throw new BadRequestException("Código expirou");
+        if (!sess.canResend()) throw new BadRequestException("Aguarde para reenviar o código");
+
+        whatsAppClient.sendCode(sess.phoneDigits, sess.code);
+
+        return new StartResult(
+                sess.verificationId,
+                Math.max(0, sess.expiresAtEpochSec - Instant.now().getEpochSecond()),
+                Math.max(0, sess.resendAllowedAtEpochSec - Instant.now().getEpochSecond())
+        );
+    }
+
     public void confirm(String verificationId, String code) throws IOException {
-        var sess = store.get(verificationId);
+        VerificationStore.Session sess = store.get(verificationId);
         if (sess == null) throw new BadRequestException("Código inválido");
         if (sess.isExpired()) throw new BadRequestException("Código expirou");
-
         if (!sess.code.equals(code)) throw new BadRequestException("Código inválido");
 
-        Event ev = calendarClient.getEvent(sess.eventId);
+        Event ev = calendarClient.getEvent(sess.scopeId);
         if (ev == null) throw new NotFoundException("Agendamento não encontrado");
 
-        setPrivate(ev, "status", "CONFIRMED");
-        setPrivate(ev, "phoneVerifiedAt", String.valueOf(Instant.now().getEpochSecond()));
+        Map<String, String> ext = privateExt(ev);
+        if (isExpiredPending(ext)) {
+            throw new NotFoundException("Agendamento não encontrado");
+        }
 
-        // persistir update (ajustaremos quando você mandar seu CalendarClient/Service)
+        Servico s = fromEvent(ev);
+        s.setStatus("CONFIRMED");
+        s.setPhoneVerifiedAt(Instant.now());
+        s.setPendingExpiresAt(null);
+
+        calendarClient.updateEvent(s);
 
         store.delete(verificationId);
     }
 
     private static String normalizePhone(String phone) {
-        return phone == null ? "" : phone.replaceAll("\\D", "");
+        String d = (phone == null) ? "" : phone.replaceAll("\\D", "");
+        if (d.length() < 10 || d.length() > 11) throw new BadRequestException("Telefone inválido");
+        return d;
     }
 
-    private static String getPrivate(Event ev, String key) {
-        if (ev.getExtendedProperties() == null) return null;
-        Map<String, String> p = ev.getExtendedProperties().getPrivate();
-        if (p == null) return null;
-        return p.get(key);
+    private static Map<String, String> privateExt(Event e) {
+        if (e.getExtendedProperties() == null) return java.util.Collections.emptyMap();
+        if (e.getExtendedProperties().getPrivate() == null) return java.util.Collections.emptyMap();
+        return e.getExtendedProperties().getPrivate();
     }
 
-    private static void setPrivate(Event ev, String key, String value) {
-        if (ev.getExtendedProperties() == null) {
-            ev.setExtendedProperties(new Event.ExtendedProperties());
+    private static boolean isExpiredPending(Map<String, String> ext) {
+        String status = ext.getOrDefault("status", "");
+        if (!"PENDING_PHONE".equalsIgnoreCase(status)) return false;
+
+        String pe = ext.get("pendingExpiresAt");
+        if (pe == null || !pe.matches("\\d+")) return false;
+
+        long exp = Long.parseLong(pe);
+        return Instant.now().getEpochSecond() > exp;
+    }
+
+    private static Servico fromEvent(Event e) {
+        Map<String, String> ext = privateExt(e);
+
+        Servico s = new Servico();
+        s.setEventId(e.getId());
+
+        String serviceType = ext.getOrDefault("serviceType", "");
+        if (serviceType.isBlank()) serviceType = (e.getSummary() == null ? "" : e.getSummary());
+        s.setTitle(serviceType);
+
+        s.setDescription(e.getDescription() == null ? "" : e.getDescription());
+
+        if (e.getStart() != null && e.getStart().getDateTime() != null) {
+            s.setStart(Instant.ofEpochMilli(e.getStart().getDateTime().getValue()));
         }
-        Map<String, String> p = ev.getExtendedProperties().getPrivate();
-        if (p == null) p = new HashMap<>();
-        p.put(key, value);
-        ev.getExtendedProperties().setPrivate(p);
+        if (e.getEnd() != null && e.getEnd().getDateTime() != null) {
+            s.setEnd(Instant.ofEpochMilli(e.getEnd().getDateTime().getValue()));
+        }
+
+        s.setClientFirstName(ext.getOrDefault("clientFirstName", ""));
+        s.setClientLastName(ext.getOrDefault("clientLastName", ""));
+        s.setClientEmail(ext.getOrDefault("clientEmail", ""));
+        s.setClientPhone(ext.getOrDefault("clientPhone", ""));
+
+        s.setClientCep(ext.getOrDefault("clientCep", ""));
+        s.setClientStreet(ext.getOrDefault("clientStreet", ""));
+        s.setClientNeighborhood(ext.getOrDefault("clientNeighborhood", ""));
+        s.setClientNumber(ext.getOrDefault("clientNumber", ""));
+        s.setClientComplement(ext.getOrDefault("clientComplement", ""));
+        s.setClientCity(ext.getOrDefault("clientCity", ""));
+        s.setClientState(ext.getOrDefault("clientState", ""));
+
+        s.setStatus(ext.getOrDefault("status", "PENDING_PHONE"));
+
+        String pe = ext.get("pendingExpiresAt");
+        if (pe != null && pe.matches("\\d+")) s.setPendingExpiresAt(Instant.ofEpochSecond(Long.parseLong(pe)));
+
+        String pv = ext.get("phoneVerifiedAt");
+        if (pv != null && pv.matches("\\d+")) s.setPhoneVerifiedAt(Instant.ofEpochSecond(Long.parseLong(pv)));
+
+        return s;
     }
 }

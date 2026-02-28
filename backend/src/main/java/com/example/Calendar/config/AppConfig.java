@@ -2,6 +2,7 @@ package com.example.Calendar.config;
 
 import com.example.Calendar.google.CalendarClient;
 import com.example.Calendar.integrations.DummyWhatsAppClient;
+import com.example.Calendar.integrations.MetaWhatsAppClient;
 import com.example.Calendar.integrations.WhatsAppClient;
 import com.example.Calendar.integrations.supabase.SupabaseClient;
 import com.example.Calendar.service.*;
@@ -11,6 +12,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
+import com.example.Calendar.integrations.google.GoogleRoutesClient;
+import com.example.Calendar.service.RoutesService;
 
 @Configuration
 public class AppConfig {
@@ -33,12 +36,28 @@ public class AppConfig {
 
     // ===== WhatsApp =====
 
-    @Bean
-    public WhatsAppClient whatsAppClient(AppProperties props) {
-        // por enquanto dummy
+@Bean
+public WhatsAppClient whatsAppClient(RestTemplate http, AppProperties props) {
+    if (!props.isWhatsappEnabled()) {
         return new DummyWhatsAppClient();
     }
 
+    // Fail-soft aqui (pra não quebrar dev): se faltar config, ainda usa dummy
+    // Se quiser fail-fast em prod, a gente ajusta depois com APP_ENV.
+    if (props.getWhatsappToken().isBlank()
+            || props.getWhatsappPhoneNumberId().isBlank()
+            || props.getWhatsappTemplateName().isBlank()) {
+        return new DummyWhatsAppClient();
+    }
+
+    return new MetaWhatsAppClient(
+            http,
+            props.getWhatsappToken(),
+            props.getWhatsappPhoneNumberId(),
+            props.getWhatsappTemplateName(),
+            props.getWhatsappLanguage()
+    );
+}
     // ===== InMemory stores =====
     // (precisa desses beans, a menos que você tenha @Component nas classes)
 
@@ -72,8 +91,7 @@ public class AppConfig {
     public VerificationStore verificationStore(
             AppProperties props,
             ObjectProvider<SupabaseClient> supabaseClientProvider,
-            InMemoryVerificationStore mem
-    ) {
+            InMemoryVerificationStore mem) {
         SupabaseClient sb = supabaseClientProvider.getIfAvailable();
         if (props.isSupabaseEnabled() && sb != null) {
             return new SupabaseVerificationStore(sb, props.getTableVerification());
@@ -85,8 +103,7 @@ public class AppConfig {
     public PendingStore pendingStore(
             AppProperties props,
             ObjectProvider<SupabaseClient> supabaseClientProvider,
-            InMemoryPendingStore mem
-    ) {
+            InMemoryPendingStore mem) {
         SupabaseClient sb = supabaseClientProvider.getIfAvailable();
         if (props.isSupabaseEnabled() && sb != null) {
             return new SupabasePendingStore(sb, props.getTablePending());
@@ -98,8 +115,7 @@ public class AppConfig {
     public HistoryStore historyStore(
             AppProperties props,
             ObjectProvider<SupabaseClient> supabaseClientProvider,
-            InMemoryHistoryStore mem
-    ) {
+            InMemoryHistoryStore mem) {
         SupabaseClient sb = supabaseClientProvider.getIfAvailable();
         if (props.isSupabaseEnabled() && sb != null) {
             return new SupabaseHistoryStore(sb, props.getTableHistory());
@@ -114,8 +130,7 @@ public class AppConfig {
             CalendarClient calendarClient,
             TokenUtil tokenUtil,
             VerificationService verificationService,
-            AppProperties props
-    ) {
+            AppProperties props) {
         return new ServicoService(calendarClient, tokenUtil, verificationService, props);
     }
 
@@ -125,8 +140,7 @@ public class AppConfig {
             TokenUtil tokenUtil,
             VerificationStore verificationStore,
             WhatsAppClient whatsAppClient,
-            AppProperties props
-    ) {
+            AppProperties props) {
         return new VerificationService(calendarClient, tokenUtil, verificationStore, whatsAppClient, props);
     }
 
@@ -137,9 +151,9 @@ public class AppConfig {
             HistoryStore historyStore,
             WhatsAppClient whatsAppClient,
             AppProperties props,
-            ServicoService servicoService
-    ) {
-        return new RecoveryService(verificationStore, pendingStore, historyStore, whatsAppClient, props, servicoService);
+            ServicoService servicoService) {
+        return new RecoveryService(verificationStore, pendingStore, historyStore, whatsAppClient, props,
+                servicoService);
     }
 
     @Bean
@@ -152,8 +166,25 @@ public class AppConfig {
             CalendarClient calendarClient,
             PendingStore pendingStore,
             VerificationStore verificationStore,
-            HistoryStore historyStore
-    ) {
+            HistoryStore historyStore) {
         return new InternalCleanupService(calendarClient, pendingStore, verificationStore, historyStore);
     }
+
+    @Bean
+    public GoogleRoutesClient googleRoutesClient(RestTemplate http, AppProperties props) {
+        // só cria com key (evita NPE). Se quiser fail-fast em prod, a gente faz depois.
+        String key = props.getGoogleMapsApiKey();
+        return new GoogleRoutesClient(http, key, props.getGoogleRoutesFieldMask(), props.isGoogleRoutesTraffic());
+    }
+
+    @Bean
+    public RoutesService routesService(
+            CalendarClient calendarClient,
+            TokenUtil tokenUtil,
+            GoogleRoutesClient googleRoutesClient,
+            AppProperties props) {
+        boolean enabled = props.isGoogleMapsEnabled() && !props.getGoogleMapsApiKey().isBlank();
+        return new RoutesService(calendarClient, tokenUtil, googleRoutesClient, enabled);
+    }
+
 }

@@ -14,32 +14,31 @@ public class CalendarClientConfig {
         String clientId = env("GOOGLE_CLIENT_ID");
         String clientSecret = env("GOOGLE_CLIENT_SECRET");
         String refreshToken = env("GOOGLE_REFRESH_TOKEN");
-        String calendarId = env("GOOGLE_CALENDAR_ID");
-        String appName = envOr("GOOGLE_APP_NAME", "calendar-backend");
+        String calendarId = envOr("GOOGLE_CALENDAR_ID", "primary");
+        String appName = envOr("APP_NAME", "MeuApp");
 
         boolean hasGoogle =
                 notBlank(clientId) &&
                 notBlank(clientSecret) &&
-                notBlank(refreshToken) &&
-                notBlank(calendarId);
+                notBlank(refreshToken);
 
         if (!hasGoogle) {
-            // fallback DEMO (não quebra o projeto sem credenciais)
             return new DummyCalendarClient();
         }
 
         try {
             return new GoogleCalendarClient(clientId, clientSecret, refreshToken, calendarId, appName);
         } catch (Exception ex) {
-            // fallback seguro (evita crash)
             return new DummyCalendarClient();
         }
     }
 
     private static String env(String k) { return System.getenv(k); }
+
     private static String envOr(String k, String def) {
         String v = System.getenv(k);
         return (v == null || v.isBlank()) ? def : v;
     }
+
     private static boolean notBlank(String v) { return v != null && !v.isBlank(); }
 }

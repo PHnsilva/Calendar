@@ -3,7 +3,7 @@ package com.example.Calendar.config;
 import com.example.Calendar.util.LocationNormalizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-
+import java.time.LocalDate;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -13,6 +13,9 @@ public class AppProperties {
 
     @Value("${app.zone:America/Sao_Paulo}")
     private String zone;
+
+    @Value("${app.schedule.cycleStart:}")
+    private String scheduleCycleStart;
 
     // ====== LEGADO (compat) ======
     @Value("${app.service.city:}")
@@ -236,5 +239,18 @@ public class AppProperties {
 
     public String getWhatsappLanguage() {
         return whatsappLanguage == null ? "pt_BR" : whatsappLanguage.trim();
+    }
+
+    public LocalDate getScheduleCycleStart() {
+        String v = (scheduleCycleStart == null) ? "" : scheduleCycleStart.trim();
+        if (v.isBlank())
+            return null;
+        try {
+            // esperado: yyyy-MM-dd
+            return LocalDate.parse(v);
+        } catch (Exception e) {
+            // se configurar errado, melhor falhar “soft” e deixar logável
+            return null;
+        }
     }
 }

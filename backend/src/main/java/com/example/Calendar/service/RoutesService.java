@@ -30,9 +30,7 @@ public class RoutesService {
     }
 
     public RouteComputeResponse computeByToken(String token, double originLat, double originLng) throws IOException {
-        if (!enabled) {
-            throw new ForbiddenException("Rotas desabilitadas");
-        }
+        if (!enabled) throw new ForbiddenException("Rotas desabilitadas");
 
         TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
         if (vt == null) throw new ForbiddenException("Token inválido ou expirado");
@@ -42,7 +40,19 @@ public class RoutesService {
 
         String destination = extractDestinationAddress(ev);
         Map<String, Object> api = routesClient.computeRoutes(originLat, originLng, destination);
+        return mapToResponse(api);
+    }
 
+    // ✅ NOVO: admin calcula rota por eventId (sem token do cliente)
+    public RouteComputeResponse computeByEventIdAdmin(String eventId, double originLat, double originLng) throws IOException {
+        if (!enabled) throw new ForbiddenException("Rotas desabilitadas");
+        if (eventId == null || eventId.isBlank()) throw new BadRequestException("eventId é obrigatório");
+
+        Event ev = calendarClient.getEvent(eventId);
+        if (ev == null) throw new BadRequestException("Agendamento não encontrado");
+
+        String destination = extractDestinationAddress(ev);
+        Map<String, Object> api = routesClient.computeRoutes(originLat, originLng, destination);
         return mapToResponse(api);
     }
 
@@ -81,10 +91,7 @@ public class RoutesService {
         RouteComputeResponse out = new RouteComputeResponse();
         out.setPrimary(toOption(routes.get(0)));
 
-        if (routes.size() > 1) {
-            out.setAlternative(toOption(routes.get(1)));
-        }
-
+        if (routes.size() > 1) out.setAlternative(toOption(routes.get(1)));
         return out;
     }
 

@@ -67,10 +67,12 @@ public class ServicoController {
 
     @GetMapping("/admin")
     public ResponseEntity<List<ServicoResponse>> listAll(
-            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String header) throws IOException {
+            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String header,
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to) throws IOException {
 
         AdminTokenGuard.require(header);
-        return ResponseEntity.ok(service.listAllAdmin());
+        return ResponseEntity.ok(service.listAllAdmin(from, to));
     }
 
     @DeleteMapping("/admin/{eventId}")

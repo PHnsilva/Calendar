@@ -276,20 +276,50 @@ public class ServicoService {
         calendar.deleteEvent(eventId);
     }
 
-    public List<ServicoResponse> listAllAdmin() throws IOException {
-        cleanupExpiredPendings();
+public List<ServicoResponse> listAllAdmin() throws IOException {
+    cleanupExpiredPendings();
 
-        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
-        ZonedDateTime from = base.minusMonths(1);
-        ZonedDateTime to = base.plusMonths(2);
+    ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
+    ZonedDateTime from = base.minusMonths(1);
+    ZonedDateTime to = base.plusMonths(2);
 
-        List<Event> events = calendar.listEvents(
-                new DateTime(Date.from(from.toInstant())),
-                new DateTime(Date.from(to.toInstant())));
-        if (events == null) return Collections.emptyList();
+    return listEventsBetween(from, to);
+}
 
-        return events.stream().map(this::mapEventToResponse).collect(Collectors.toList());
+public List<ServicoResponse> listAllAdmin(LocalDate fromDate, LocalDate toDate) throws IOException {
+    if (fromDate == null && toDate == null) {
+        return listAllAdmin();
     }
+
+    LocalDate resolvedFrom = (fromDate != null) ? fromDate : toDate;
+    LocalDate resolvedTo = (toDate != null) ? toDate : fromDate;
+
+    if (resolvedFrom == null || resolvedTo == null) {
+        throw new BadRequestException("Parâmetros inválidos");
+    }
+    if (resolvedFrom.isAfter(resolvedTo)) {
+        throw new BadRequestException("Parâmetros inválidos: from deve ser <= to");
+    }
+
+    cleanupExpiredPendings(resolvedFrom, resolvedTo);
+
+    ZonedDateTime from = resolvedFrom.atStartOfDay(ZONE);
+    ZonedDateTime to = resolvedTo.plusDays(1).atStartOfDay(ZONE); // fim inclusivo no dia
+
+    return listEventsBetween(from, to);
+}
+
+private List<ServicoResponse> listEventsBetween(ZonedDateTime from, ZonedDateTime to) throws IOException {
+    List<Event> events = calendar.listEvents(
+            new DateTime(Date.from(from.toInstant())),
+            new DateTime(Date.from(to.toInstant()))
+    );
+    if (events == null) return Collections.emptyList();
+
+    return events.stream()
+            .map(this::mapEventToResponse)
+            .collect(Collectors.toList());
+}
 
     public void deleteByIdAdmin(String eventId) throws IOException {
         Event e = calendar.getEvent(eventId);
@@ -454,23 +484,31 @@ public class ServicoService {
         return Instant.now().getEpochSecond() > exp;
     }
 
-    private void cleanupExpiredPendings() throws IOException {
-        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
-        ZonedDateTime from = base.minusMonths(1);
-        ZonedDateTime to = base.plusMonths(2);
+   private void cleanupExpiredPendings() throws IOException {
+    ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
+    cleanupExpiredPendings(base.minusMonths(1), base.plusMonths(2));
+}
 
-        List<Event> events = calendar.listEvents(
-                new DateTime(Date.from(from.toInstant())),
-                new DateTime(Date.from(to.toInstant())));
-        if (events == null) return;
+private void cleanupExpiredPendings(LocalDate fromDate, LocalDate toDate) throws IOException {
+    ZonedDateTime from = fromDate.atStartOfDay(ZONE);
+    ZonedDateTime to = toDate.plusDays(1).atStartOfDay(ZONE); // fim inclusivo no dia
+    cleanupExpiredPendings(from, to);
+}
 
-        for (Event e : events) {
-            Map<String, String> ext = privateExt(e);
-            if (isExpiredPending(ext)) {
-                calendar.deleteEvent(e.getId());
-            }
+private void cleanupExpiredPendings(ZonedDateTime from, ZonedDateTime to) throws IOException {
+    List<Event> events = calendar.listEvents(
+            new DateTime(Date.from(from.toInstant())),
+            new DateTime(Date.from(to.toInstant()))
+    );
+    if (events == null) return;
+
+    for (Event e : events) {
+        Map<String, String> ext = privateExt(e);
+        if (isExpiredPending(ext)) {
+            calendar.deleteEvent(e.getId());
         }
     }
+}
 
     private boolean hasActivePendingForPhone(String phoneDigits) throws IOException {
         ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));

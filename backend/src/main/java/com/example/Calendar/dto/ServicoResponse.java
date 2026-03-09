@@ -14,8 +14,16 @@ public class ServicoResponse {
     private String clientLastName;
     private String clientEmail;
     private String clientPhone;
-    private String clientAddress;
 
+    private String clientCep;
+    private String clientStreet;
+    private String clientNeighborhood;
+    private String clientNumber;
+    private String clientComplement;
+    private String clientCity;
+    private String clientState;
+
+    private String clientAddressLine;
     private String status;
 
     public String getEventId() { return eventId; }
@@ -45,8 +53,29 @@ public class ServicoResponse {
     public String getClientPhone() { return clientPhone; }
     public void setClientPhone(String clientPhone) { this.clientPhone = clientPhone; }
 
-    public String getClientAddress() { return clientAddress; }
-    public void setClientAddress(String clientAddress) { this.clientAddress = clientAddress; }
+    public String getClientCep() { return clientCep; }
+    public void setClientCep(String clientCep) { this.clientCep = clientCep; }
+
+    public String getClientStreet() { return clientStreet; }
+    public void setClientStreet(String clientStreet) { this.clientStreet = clientStreet; }
+
+    public String getClientNeighborhood() { return clientNeighborhood; }
+    public void setClientNeighborhood(String clientNeighborhood) { this.clientNeighborhood = clientNeighborhood; }
+
+    public String getClientNumber() { return clientNumber; }
+    public void setClientNumber(String clientNumber) { this.clientNumber = clientNumber; }
+
+    public String getClientComplement() { return clientComplement; }
+    public void setClientComplement(String clientComplement) { this.clientComplement = clientComplement; }
+
+    public String getClientCity() { return clientCity; }
+    public void setClientCity(String clientCity) { this.clientCity = clientCity; }
+
+    public String getClientState() { return clientState; }
+    public void setClientState(String clientState) { this.clientState = clientState; }
+
+    public String getClientAddressLine() { return clientAddressLine; }
+    public void setClientAddressLine(String clientAddressLine) { this.clientAddressLine = clientAddressLine; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

@@ -14,7 +14,11 @@ public interface CalendarClient {
     void deleteEvent(String eventId) throws IOException;
 
     Event getEvent(String eventId) throws IOException;
+
+
     List<Event> listEvents(DateTime timeMin, DateTime timeMax) throws IOException;
+    
+    List<Event> listEventsByPhone(DateTime timeMin, DateTime timeMax, String phoneDigits) throws IOException;
 
     List<TimePeriod> freeBusy(DateTime timeMin, DateTime timeMax) throws IOException;
 }

@@ -20,6 +20,20 @@ public class GlobalExceptionHandler {
                 .body(new ApiError(status.value(), code, msg, req.getRequestURI()));
     }
 
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiError> missingParam(
+            org.springframework.web.bind.MissingServletRequestParameterException ex,
+            jakarta.servlet.http.HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "INVALID_PARAM",
+                ex.getParameterName() + " é obrigatório", req);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> illegalArg(IllegalArgumentException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), req);
+    }
+
+
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ApiError> forbidden(ForbiddenException ex, HttpServletRequest req) {
         return build(HttpStatus.FORBIDDEN, "FORBIDDEN", ex.getMessage(), req);

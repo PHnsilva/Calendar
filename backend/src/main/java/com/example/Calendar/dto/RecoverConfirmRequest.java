@@ -9,7 +9,7 @@ public class RecoverConfirmRequest {
     private String verificationId;
 
     @NotBlank
-    @Pattern(regexp = "^\\d{6}$", message = "código deve ter 6 dígitos")
+    @Pattern(regexp = "^\\d{3}$", message = "código deve ter 3 dígitos")
     private String code;
 
     public String getVerificationId() { return verificationId; }

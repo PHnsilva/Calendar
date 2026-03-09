@@ -19,7 +19,7 @@ public class SupabaseVerificationStore implements VerificationStore {
     public Session create(String scopeId, String phoneDigits, long otpTtlSeconds, long resendAfterSeconds) {
         long now = Instant.now().getEpochSecond();
         String verificationId = "vfy_" + UUID.randomUUID();
-        String code = random6();
+        String code = random3();
 
         long exp = now + otpTtlSeconds;
         long resendAt = now + resendAfterSeconds;
@@ -43,9 +43,9 @@ public class SupabaseVerificationStore implements VerificationStore {
                 table,
                 Map.of("verification_id", verificationId),
                 1,
-                null
-        );
-        if (rows == null || rows.isEmpty()) return null;
+                null);
+        if (rows == null || rows.isEmpty())
+            return null;
 
         Map r = rows.get(0);
 
@@ -55,8 +55,7 @@ public class SupabaseVerificationStore implements VerificationStore {
                 str(r.get("phone_digits")),
                 str(r.get("code")),
                 longv(r.get("expires_at")),
-                longv(r.get("resend_allowed_at"))
-        );
+                longv(r.get("resend_allowed_at")));
     }
 
     @Override
@@ -67,18 +66,27 @@ public class SupabaseVerificationStore implements VerificationStore {
     @Override
     public void cleanupExpired() {
         long now = Instant.now().getEpochSecond();
-        // PostgREST: delete where expires_at < now -> não tem lt nativo no helper acima.
+        // PostgREST: delete where expires_at < now -> não tem lt nativo no helper
+        // acima.
         // Mantemos sem cleanup aqui; faz cleanup via endpoint interno quando precisar.
     }
 
-    private static String random6() {
-        int n = (int)(Math.random() * 900000) + 100000;
-        return String.valueOf(n);
+    private static String random3() {
+        int n = (int) (Math.random() * 1000);
+        return String.format("%03d", n);
     }
 
-    private static String str(Object o) { return o == null ? "" : String.valueOf(o); }
+    private static String str(Object o) {
+        return o == null ? "" : String.valueOf(o);
+    }
+
     private static long longv(Object o) {
-        if (o == null) return 0L;
-        try { return Long.parseLong(String.valueOf(o)); } catch (Exception e) { return 0L; }
+        if (o == null)
+            return 0L;
+        try {
+            return Long.parseLong(String.valueOf(o));
+        } catch (Exception e) {
+            return 0L;
+        }
     }
 }

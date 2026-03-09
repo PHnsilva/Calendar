@@ -5,6 +5,7 @@ public class AdminStatementItem {
     private String date;
     private String description;
     private String amount;
+    private long amountCents;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -17,4 +18,7 @@ public class AdminStatementItem {
 
     public String getAmount() { return amount; }
     public void setAmount(String amount) { this.amount = amount; }
+
+    public long getAmountCents() { return amountCents; }
+    public void setAmountCents(long amountCents) { this.amountCents = amountCents; }
 }

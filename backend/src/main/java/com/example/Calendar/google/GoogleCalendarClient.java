@@ -1,20 +1,35 @@
 package com.example.Calendar.google;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import com.example.Calendar.model.Servico;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.model.*;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.time.ZoneId;
-import java.util.*;
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventAttendee;
+import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.Events;
+import com.google.api.services.calendar.model.FreeBusyCalendar;
+import com.google.api.services.calendar.model.FreeBusyRequest;
+import com.google.api.services.calendar.model.FreeBusyRequestItem;
+import com.google.api.services.calendar.model.FreeBusyResponse;
+import com.google.api.services.calendar.model.TimePeriod;
+import java.time.Instant;
 
 public class GoogleCalendarClient implements CalendarClient {
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
@@ -23,6 +38,9 @@ public class GoogleCalendarClient implements CalendarClient {
     // TAG fixa do sistema
     private static final String APP_KEY = "appSource";
     private static final String APP_VALUE = "calendar-backend";
+    private static final String ENTITY_TYPE_KEY = "entityType";
+    private static final String ENTITY_TYPE_BOOKING = "booking";
+    private static final String ENTITY_TYPE_AVAILABILITY_BLOCK = "availability-block";
 
     private final Calendar service;
     private final String calendarId;
@@ -32,8 +50,7 @@ public class GoogleCalendarClient implements CalendarClient {
             String clientSecret,
             String refreshToken,
             String calendarId,
-            String appName
-    ) throws GeneralSecurityException, IOException {
+            String appName) throws GeneralSecurityException, IOException {
         NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
         GoogleCredential credential = new GoogleCredential.Builder()
@@ -51,6 +68,36 @@ public class GoogleCalendarClient implements CalendarClient {
     }
 
     @Override
+    public Event createAvailabilityBlockEvent(String blockType, Instant start, Instant end, String reason)
+            throws IOException {
+        Event ev = new Event()
+                .setSummary(buildAvailabilityBlockSummary(blockType, reason))
+                .setDescription(safe(reason));
+
+        Map<String, String> ext = new HashMap<>();
+        ext.put(APP_KEY, APP_VALUE);
+        ext.put(ENTITY_TYPE_KEY, ENTITY_TYPE_AVAILABILITY_BLOCK);
+        ext.put("blockType", safe(blockType).trim().toUpperCase(Locale.ROOT));
+        ext.put("blockReason", safe(reason));
+        ext.put("createdAt", String.valueOf(Instant.now().getEpochSecond()));
+
+        ev.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
+        ev.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(start))).setTimeZone(ZONE.toString()));
+        ev.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(end))).setTimeZone(ZONE.toString()));
+
+        return service.events()
+                .insert(calendarId, ev)
+                .setSendUpdates("none")
+                .execute();
+    }
+
+    private String buildAvailabilityBlockSummary(String blockType, String reason) {
+        String prefix = "DAY".equalsIgnoreCase(blockType) ? "[Bloqueio de dia]" : "[Bloqueio de horário]";
+        String r = safe(reason);
+        return r.isBlank() ? prefix : prefix + " " + r;
+    }
+
+    @Override
     public Event createEvent(Servico s) throws IOException {
         Event ev = new Event()
                 .setSummary(withStatusInSummary(s.getTitle(), s.getStatus()))
@@ -59,6 +106,8 @@ public class GoogleCalendarClient implements CalendarClient {
 
         Map<String, String> ext = new HashMap<>();
         ext.put(APP_KEY, APP_VALUE);
+
+        ext.put(ENTITY_TYPE_KEY, ENTITY_TYPE_BOOKING);
 
         // guardar "serviceType" limpo (pra reconstruir sem sufixo no summary)
         ext.put("serviceType", safe(s.getTitle()));
@@ -111,7 +160,8 @@ public class GoogleCalendarClient implements CalendarClient {
     @Override
     public void deleteEvent(String eventId) throws IOException {
         Event e = getEvent(eventId);
-        if (e == null) return;
+        if (e == null)
+            return;
 
         if (!isSystemEvent(e)) {
             throw new IllegalArgumentException("Evento não pertence ao sistema (não será apagado).");
@@ -134,7 +184,7 @@ public class GoogleCalendarClient implements CalendarClient {
 
         Map<String, String> ext = privateProps(event);
         ext.put(APP_KEY, APP_VALUE);
-
+        ext.put(ENTITY_TYPE_KEY, ENTITY_TYPE_BOOKING);
         ext.put("serviceType", safe(s.getTitle()));
         ext.put("status", safe(s.getStatus()));
 
@@ -203,45 +253,79 @@ public class GoogleCalendarClient implements CalendarClient {
             return e;
 
         } catch (GoogleJsonResponseException ex) {
-            if (ex.getStatusCode() == 404) return null;
+            if (ex.getStatusCode() == 404)
+                return null;
             throw ex;
         }
     }
 
-   @Override
-public List<Event> listEvents(DateTime timeMin, DateTime timeMax) throws IOException {
-    Events events = service.events().list(calendarId)
-            .setTimeMin(timeMin)
-            .setTimeMax(timeMax)
-            .setOrderBy("startTime")
-            .setSingleEvents(true)
-            .setShowDeleted(false)
-            .setFields("items(id,status,summary,description,location,htmlLink,start,end,attendees,extendedProperties),nextPageToken")
-            .execute();
-
-    List<Event> items = events.getItems();
-    if (items == null) return Collections.emptyList();
-
-    List<Event> onlySystem = new ArrayList<>();
-    for (Event e : items) {
-        if ("cancelled".equalsIgnoreCase(e.getStatus())) continue;
-        if (isSystemEvent(e)) onlySystem.add(e);
+    @Override
+    public List<Event> listEvents(DateTime timeMin, DateTime timeMax) throws IOException {
+        return listSystemEvents(timeMin, timeMax);
     }
-    return onlySystem;
-}
 
-@Override
-public List<Event> listEventsByPhone(DateTime timeMin, DateTime timeMax, String phoneDigits) throws IOException {
-    List<Event> items = listEvents(timeMin, timeMax); // já filtra só eventos do sistema
-    if (items == null || items.isEmpty()) return Collections.emptyList();
-
-    List<Event> out = new ArrayList<>();
-    for (Event e : items) {
-        Map<String, String> ext = privateProps(e);
-        if (phoneDigits.equals(ext.getOrDefault("clientPhone", ""))) out.add(e);
+    @Override
+    public List<Event> listBookingEvents(DateTime timeMin, DateTime timeMax) throws IOException {
+        List<Event> items = listSystemEvents(timeMin, timeMax);
+        List<Event> out = new ArrayList<>();
+        for (Event e : items) {
+            if (isBookingEvent(e))
+                out.add(e);
+        }
+        return out;
     }
-    return out;
-}
+
+    @Override
+    public List<Event> listAvailabilityBlockEvents(DateTime timeMin, DateTime timeMax) throws IOException {
+        List<Event> items = listSystemEvents(timeMin, timeMax);
+        List<Event> out = new ArrayList<>();
+        for (Event e : items) {
+            if (isAvailabilityBlockEvent(e))
+                out.add(e);
+        }
+        return out;
+    }
+
+    @Override
+    public List<Event> listEventsByPhone(DateTime timeMin, DateTime timeMax, String phoneDigits) throws IOException {
+        List<Event> items = listBookingEvents(timeMin, timeMax);
+        if (items == null || items.isEmpty())
+            return Collections.emptyList();
+
+        List<Event> out = new ArrayList<>();
+        for (Event e : items) {
+            Map<String, String> ext = privateProps(e);
+            if (phoneDigits.equals(ext.getOrDefault("clientPhone", "")))
+                out.add(e);
+        }
+        return out;
+    }
+
+    private List<Event> listSystemEvents(DateTime timeMin, DateTime timeMax) throws IOException {
+        Events events = service.events().list(calendarId)
+                .setTimeMin(timeMin)
+                .setTimeMax(timeMax)
+                .setOrderBy("startTime")
+                .setSingleEvents(true)
+                .setShowDeleted(false)
+                .setFields(
+                        "items(id,status,summary,description,location,htmlLink,start,end,attendees,extendedProperties),nextPageToken")
+                .execute();
+
+        List<Event> items = events.getItems();
+        if (items == null)
+            return Collections.emptyList();
+
+        List<Event> onlySystem = new ArrayList<>();
+        for (Event e : items) {
+            if ("cancelled".equalsIgnoreCase(e.getStatus()))
+                continue;
+            if (isSystemEvent(e))
+                onlySystem.add(e);
+        }
+        return onlySystem;
+    }
+
     @Override
     public List<TimePeriod> freeBusy(DateTime timeMin, DateTime timeMax) throws IOException {
         FreeBusyRequest request = new FreeBusyRequest();
@@ -253,7 +337,8 @@ public List<Event> listEventsByPhone(DateTime timeMin, DateTime timeMax, String 
         Map<String, FreeBusyCalendar> cals = resp.getCalendars();
         if (cals != null && cals.containsKey(calendarId)) {
             FreeBusyCalendar fb = cals.get(calendarId);
-            if (fb.getBusy() != null) return fb.getBusy();
+            if (fb.getBusy() != null)
+                return fb.getBusy();
         }
         return Collections.emptyList();
     }
@@ -266,7 +351,8 @@ public List<Event> listEventsByPhone(DateTime timeMin, DateTime timeMax, String 
     }
 
     private Map<String, String> privateProps(Event e) {
-        if (e.getExtendedProperties() == null) return new HashMap<>();
+        if (e.getExtendedProperties() == null)
+            return new HashMap<>();
         Map<String, String> p = e.getExtendedProperties().getPrivate();
         return (p == null) ? new HashMap<>() : new HashMap<>(p);
     }
@@ -279,8 +365,10 @@ public List<Event> listEventsByPhone(DateTime timeMin, DateTime timeMax, String 
         String t = safe(title);
         String st = safe(status).toUpperCase(Locale.ROOT);
 
-        if ("PENDING_PHONE".equals(st)) return t + " (Pendente confirmação)";
-        if ("CONFIRMED".equals(st)) return t + " (Confirmado)";
+        if ("PENDING_PHONE".equals(st))
+            return t + " (Pendente confirmação)";
+        if ("CONFIRMED".equals(st))
+            return t + " (Confirmado)";
         return t;
     }
 
@@ -295,11 +383,28 @@ public List<Event> listEventsByPhone(DateTime timeMin, DateTime timeMax, String 
         String cep = safe(s.getClientCep());
 
         String base = street + ", " + num;
-        if (!comp.isBlank()) base += " - " + comp;
+        if (!comp.isBlank())
+            base += " - " + comp;
 
         String tail = " - " + neigh + " - " + city + "/" + state;
-        if (!cep.isBlank()) tail += " CEP: " + cep;
+        if (!cep.isBlank())
+            tail += " CEP: " + cep;
 
         return (base + tail).trim();
     }
+
+    private boolean isBookingEvent(Event e) {
+        String entityType = entityTypeOf(e);
+        return entityType.isBlank() || ENTITY_TYPE_BOOKING.equals(entityType);
+    }
+
+    private boolean isAvailabilityBlockEvent(Event e) {
+        return ENTITY_TYPE_AVAILABILITY_BLOCK.equals(entityTypeOf(e));
+    }
+
+    private String entityTypeOf(Event e) {
+        Map<String, String> ext = privateProps(e);
+        return safe(ext.get(ENTITY_TYPE_KEY)).trim().toLowerCase(Locale.ROOT);
+    }
+
 }

@@ -11,7 +11,10 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 public class InternalCleanupService {
 
@@ -46,7 +49,6 @@ public class InternalCleanupService {
         int cal = cleanupExpiredPendingsInCalendar();
         int pend = pendingStore.deleteExpired(now);
 
-        // InMemory remove expirados; Supabase default = no-op
         verificationStore.cleanupExpired();
 
         int hist = 0;
@@ -63,7 +65,7 @@ public class InternalCleanupService {
         ZonedDateTime from = base.minusMonths(1);
         ZonedDateTime to = base.plusMonths(2);
 
-        List<Event> events = calendar.listEvents(
+        List<Event> events = calendar.listBookingEvents(
                 new DateTime(Date.from(from.toInstant())),
                 new DateTime(Date.from(to.toInstant()))
         );

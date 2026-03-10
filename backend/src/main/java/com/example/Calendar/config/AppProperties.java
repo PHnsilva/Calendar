@@ -3,8 +3,9 @@ package com.example.Calendar.config;
 import com.example.Calendar.util.LocationNormalizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import java.time.LocalDate;
+
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,7 @@ public class AppProperties {
     @Value("${app.service.state:}")
     private String serviceState;
 
-    // ====== NOVO (A) ======
+    // ====== NOVO ======
     @Value("${app.service.allowedCities:}")
     private String allowedCitiesCsv;
 
@@ -48,6 +49,11 @@ public class AppProperties {
     @Value("${app.otp.resendAfterSeconds:3}")
     private long otpResendAfterSeconds;
 
+    // ====== ADMIN ======
+
+    @Value("${app.admin.bulkCancel.maxItems:200}")
+    private int adminBulkCancelMaxItems;
+
     // ====== WhatsApp ======
     @Value("${whatsapp.enabled:false}")
     private boolean whatsappEnabled;
@@ -58,6 +64,12 @@ public class AppProperties {
     @Value("${whatsapp.phoneNumberId:}")
     private String whatsappPhoneNumberId;
 
+    @Value("${whatsapp.templateName:}")
+    private String whatsappTemplateName;
+
+    @Value("${whatsapp.language:pt_BR}")
+    private String whatsappLanguage;
+
     // ====== Supabase ======
     @Value("${supabase.enabled:false}")
     private boolean supabaseEnabled;
@@ -65,7 +77,6 @@ public class AppProperties {
     @Value("${supabase.url:}")
     private String supabaseUrl;
 
-    // use service key no backend
     @Value("${supabase.key:}")
     private String supabaseKey;
 
@@ -81,6 +92,7 @@ public class AppProperties {
     @Value("${supabase.table.history_records:history_records}")
     private String tableHistory;
 
+    // ====== Google Routes ======
     @Value("${google.maps.enabled:false}")
     private boolean googleMapsEnabled;
 
@@ -92,12 +104,6 @@ public class AppProperties {
 
     @Value("${google.maps.routes.fieldMask:routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline}")
     private String googleRoutesFieldMask;
-
-    @Value("${whatsapp.templateName:}")
-    private String whatsappTemplateName;
-
-    @Value("${whatsapp.language:pt_BR}")
-    private String whatsappLanguage;
 
     public String getZone() {
         return zone;
@@ -113,8 +119,7 @@ public class AppProperties {
 
     public Set<String> getAllowedCitiesNormalized() {
         String csv = (allowedCitiesCsv == null ? "" : allowedCitiesCsv.trim());
-        if (csv.isBlank())
-            return Collections.emptySet();
+        if (csv.isBlank()) return Collections.emptySet();
 
         return Arrays.stream(csv.split(","))
                 .map(String::trim)
@@ -175,6 +180,10 @@ public class AppProperties {
         return Duration.ofSeconds(otpResendAfterSeconds);
     }
 
+    public int getAdminBulkCancelMaxItems() {
+        return Math.max(1, Math.min(adminBulkCancelMaxItems, 1000));
+    }
+
     public boolean isWhatsappEnabled() {
         return whatsappEnabled;
     }
@@ -187,10 +196,18 @@ public class AppProperties {
         return whatsappPhoneNumberId == null ? "" : whatsappPhoneNumberId.trim();
     }
 
-    // Supabase getters
+    public String getWhatsappTemplateName() {
+        return whatsappTemplateName == null ? "" : whatsappTemplateName.trim();
+    }
+
+    public String getWhatsappLanguage() {
+        return whatsappLanguage == null ? "pt_BR" : whatsappLanguage.trim();
+    }
+
     public boolean isSupabaseEnabled() {
-        return supabaseEnabled && supabaseUrl != null && !supabaseUrl.isBlank() && supabaseKey != null
-                && !supabaseKey.isBlank();
+        return supabaseEnabled
+                && supabaseUrl != null && !supabaseUrl.isBlank()
+                && supabaseKey != null && !supabaseKey.isBlank();
     }
 
     public String getSupabaseUrl() {
@@ -233,23 +250,12 @@ public class AppProperties {
         return googleRoutesFieldMask == null ? "" : googleRoutesFieldMask.trim();
     }
 
-    public String getWhatsappTemplateName() {
-        return whatsappTemplateName == null ? "" : whatsappTemplateName.trim();
-    }
-
-    public String getWhatsappLanguage() {
-        return whatsappLanguage == null ? "pt_BR" : whatsappLanguage.trim();
-    }
-
     public LocalDate getScheduleCycleStart() {
         String v = (scheduleCycleStart == null) ? "" : scheduleCycleStart.trim();
-        if (v.isBlank())
-            return null;
+        if (v.isBlank()) return null;
         try {
-            // esperado: yyyy-MM-dd
             return LocalDate.parse(v);
         } catch (Exception e) {
-            // se configurar errado, melhor falhar “soft” e deixar logável
             return null;
         }
     }

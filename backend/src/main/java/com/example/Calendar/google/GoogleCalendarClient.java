@@ -1,16 +1,5 @@
 package com.example.Calendar.google;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 import com.example.Calendar.model.Servico;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -20,27 +9,25 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.model.Event;
-import com.google.api.services.calendar.model.EventAttendee;
-import com.google.api.services.calendar.model.EventDateTime;
-import com.google.api.services.calendar.model.Events;
-import com.google.api.services.calendar.model.FreeBusyCalendar;
-import com.google.api.services.calendar.model.FreeBusyRequest;
-import com.google.api.services.calendar.model.FreeBusyRequestItem;
-import com.google.api.services.calendar.model.FreeBusyResponse;
-import com.google.api.services.calendar.model.TimePeriod;
+import com.google.api.services.calendar.model.*;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.util.*;
 
 public class GoogleCalendarClient implements CalendarClient {
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
 
-    // TAG fixa do sistema
     private static final String APP_KEY = "appSource";
     private static final String APP_VALUE = "calendar-backend";
+
     private static final String ENTITY_TYPE_KEY = "entityType";
     private static final String ENTITY_TYPE_BOOKING = "booking";
-    private static final String ENTITY_TYPE_AVAILABILITY_BLOCK = "availability-block";
+    private static final String ENTITY_TYPE_AVAILABILITY_RULE = "availability-rule";
+    private static final String ENTITY_TYPE_LEGACY_AVAILABILITY_BLOCK = "availability-block";
 
     private final Calendar service;
     private final String calendarId;
@@ -50,7 +37,8 @@ public class GoogleCalendarClient implements CalendarClient {
             String clientSecret,
             String refreshToken,
             String calendarId,
-            String appName) throws GeneralSecurityException, IOException {
+            String appName
+    ) throws GeneralSecurityException, IOException {
         NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
         GoogleCredential credential = new GoogleCredential.Builder()
@@ -68,36 +56,6 @@ public class GoogleCalendarClient implements CalendarClient {
     }
 
     @Override
-    public Event createAvailabilityBlockEvent(String blockType, Instant start, Instant end, String reason)
-            throws IOException {
-        Event ev = new Event()
-                .setSummary(buildAvailabilityBlockSummary(blockType, reason))
-                .setDescription(safe(reason));
-
-        Map<String, String> ext = new HashMap<>();
-        ext.put(APP_KEY, APP_VALUE);
-        ext.put(ENTITY_TYPE_KEY, ENTITY_TYPE_AVAILABILITY_BLOCK);
-        ext.put("blockType", safe(blockType).trim().toUpperCase(Locale.ROOT));
-        ext.put("blockReason", safe(reason));
-        ext.put("createdAt", String.valueOf(Instant.now().getEpochSecond()));
-
-        ev.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
-        ev.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(start))).setTimeZone(ZONE.toString()));
-        ev.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(end))).setTimeZone(ZONE.toString()));
-
-        return service.events()
-                .insert(calendarId, ev)
-                .setSendUpdates("none")
-                .execute();
-    }
-
-    private String buildAvailabilityBlockSummary(String blockType, String reason) {
-        String prefix = "DAY".equalsIgnoreCase(blockType) ? "[Bloqueio de dia]" : "[Bloqueio de horário]";
-        String r = safe(reason);
-        return r.isBlank() ? prefix : prefix + " " + r;
-    }
-
-    @Override
     public Event createEvent(Servico s) throws IOException {
         Event ev = new Event()
                 .setSummary(withStatusInSummary(s.getTitle(), s.getStatus()))
@@ -106,14 +64,10 @@ public class GoogleCalendarClient implements CalendarClient {
 
         Map<String, String> ext = new HashMap<>();
         ext.put(APP_KEY, APP_VALUE);
-
         ext.put(ENTITY_TYPE_KEY, ENTITY_TYPE_BOOKING);
-
-        // guardar "serviceType" limpo (pra reconstruir sem sufixo no summary)
         ext.put("serviceType", safe(s.getTitle()));
-
-        // status/reserva
         ext.put("status", safe(s.getStatus()));
+
         if (s.getPendingExpiresAt() != null) {
             ext.put("pendingExpiresAt", String.valueOf(s.getPendingExpiresAt().getEpochSecond()));
         }
@@ -121,13 +75,11 @@ public class GoogleCalendarClient implements CalendarClient {
             ext.put("phoneVerifiedAt", String.valueOf(s.getPhoneVerifiedAt().getEpochSecond()));
         }
 
-        // cliente
         ext.put("clientFirstName", safe(s.getClientFirstName()));
         ext.put("clientLastName", safe(s.getClientLastName()));
         ext.put("clientEmail", safe(s.getClientEmail()));
         ext.put("clientPhone", safe(s.getClientPhone()));
 
-        // endereço estruturado
         ext.put("clientCep", safe(s.getClientCep()));
         ext.put("clientStreet", safe(s.getClientStreet()));
         ext.put("clientNeighborhood", safe(s.getClientNeighborhood()));
@@ -143,7 +95,6 @@ public class GoogleCalendarClient implements CalendarClient {
         ev.setStart(new EventDateTime().setDateTime(start).setTimeZone(ZONE.toString()));
         ev.setEnd(new EventDateTime().setDateTime(end).setTimeZone(ZONE.toString()));
 
-        // e-mails como notificação (cliente e/ou dono)
         if (s.getClientEmail() != null && !s.getClientEmail().isBlank()) {
             EventAttendee attendee = new EventAttendee()
                     .setEmail(s.getClientEmail())
@@ -155,19 +106,6 @@ public class GoogleCalendarClient implements CalendarClient {
                 .insert(calendarId, ev)
                 .setSendUpdates("all")
                 .execute();
-    }
-
-    @Override
-    public void deleteEvent(String eventId) throws IOException {
-        Event e = getEvent(eventId);
-        if (e == null)
-            return;
-
-        if (!isSystemEvent(e)) {
-            throw new IllegalArgumentException("Evento não pertence ao sistema (não será apagado).");
-        }
-
-        service.events().delete(calendarId, eventId).execute();
     }
 
     @Override
@@ -188,13 +126,11 @@ public class GoogleCalendarClient implements CalendarClient {
         ext.put("serviceType", safe(s.getTitle()));
         ext.put("status", safe(s.getStatus()));
 
-        // cliente
         ext.put("clientFirstName", safe(s.getClientFirstName()));
         ext.put("clientLastName", safe(s.getClientLastName()));
         ext.put("clientEmail", safe(s.getClientEmail()));
         ext.put("clientPhone", safe(s.getClientPhone()));
 
-        // endereço estruturado
         ext.put("clientCep", safe(s.getClientCep()));
         ext.put("clientStreet", safe(s.getClientStreet()));
         ext.put("clientNeighborhood", safe(s.getClientNeighborhood()));
@@ -203,7 +139,6 @@ public class GoogleCalendarClient implements CalendarClient {
         ext.put("clientCity", safe(s.getClientCity()));
         ext.put("clientState", safe(s.getClientState()));
 
-        // reserva
         if (s.getPendingExpiresAt() != null) {
             ext.put("pendingExpiresAt", String.valueOf(s.getPendingExpiresAt().getEpochSecond()));
         } else {
@@ -217,16 +152,9 @@ public class GoogleCalendarClient implements CalendarClient {
         }
 
         event.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
+        event.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(s.getStart()))).setTimeZone(ZONE.toString()));
+        event.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(s.getEnd()))).setTimeZone(ZONE.toString()));
 
-        event.setStart(new EventDateTime()
-                .setDateTime(new DateTime(Date.from(s.getStart())))
-                .setTimeZone(ZONE.toString()));
-
-        event.setEnd(new EventDateTime()
-                .setDateTime(new DateTime(Date.from(s.getEnd())))
-                .setTimeZone(ZONE.toString()));
-
-        // mantém notificação por e-mail pro cliente
         if (s.getClientEmail() != null && !s.getClientEmail().isBlank()) {
             EventAttendee attendee = new EventAttendee()
                     .setEmail(s.getClientEmail())
@@ -241,10 +169,22 @@ public class GoogleCalendarClient implements CalendarClient {
     }
 
     @Override
+    public void deleteEvent(String eventId) throws IOException {
+        Event e = getEvent(eventId);
+        if (e == null) return;
+
+        if (!isSystemEvent(e)) {
+            throw new IllegalArgumentException("Evento não pertence ao sistema (não será apagado).");
+        }
+
+        service.events().delete(calendarId, eventId).execute();
+    }
+
+    @Override
     public Event getEvent(String eventId) throws IOException {
         try {
             Event e = service.events().get(calendarId, eventId)
-                    .setFields("id,status,summary,description,location,htmlLink,start,end,attendees,extendedProperties")
+                    .setFields("id,status,summary,description,location,htmlLink,start,end,attendees,extendedProperties,transparency")
                     .execute();
 
             if (e != null && "cancelled".equalsIgnoreCase(e.getStatus())) {
@@ -253,8 +193,7 @@ public class GoogleCalendarClient implements CalendarClient {
             return e;
 
         } catch (GoogleJsonResponseException ex) {
-            if (ex.getStatusCode() == 404)
-                return null;
+            if (ex.getStatusCode() == 404) return null;
             throw ex;
         }
     }
@@ -269,19 +208,21 @@ public class GoogleCalendarClient implements CalendarClient {
         List<Event> items = listSystemEvents(timeMin, timeMax);
         List<Event> out = new ArrayList<>();
         for (Event e : items) {
-            if (isBookingEvent(e))
+            if (isBookingEvent(e)) {
                 out.add(e);
+            }
         }
         return out;
     }
 
     @Override
-    public List<Event> listAvailabilityBlockEvents(DateTime timeMin, DateTime timeMax) throws IOException {
+    public List<Event> listAvailabilityRuleEvents(DateTime timeMin, DateTime timeMax) throws IOException {
         List<Event> items = listSystemEvents(timeMin, timeMax);
         List<Event> out = new ArrayList<>();
         for (Event e : items) {
-            if (isAvailabilityBlockEvent(e))
+            if (isAvailabilityRuleEvent(e)) {
                 out.add(e);
+            }
         }
         return out;
     }
@@ -289,41 +230,49 @@ public class GoogleCalendarClient implements CalendarClient {
     @Override
     public List<Event> listEventsByPhone(DateTime timeMin, DateTime timeMax, String phoneDigits) throws IOException {
         List<Event> items = listBookingEvents(timeMin, timeMax);
-        if (items == null || items.isEmpty())
-            return Collections.emptyList();
+        if (items == null || items.isEmpty()) return Collections.emptyList();
 
         List<Event> out = new ArrayList<>();
         for (Event e : items) {
             Map<String, String> ext = privateProps(e);
-            if (phoneDigits.equals(ext.getOrDefault("clientPhone", "")))
+            if (phoneDigits.equals(ext.getOrDefault("clientPhone", ""))) {
                 out.add(e);
+            }
         }
         return out;
     }
 
-    private List<Event> listSystemEvents(DateTime timeMin, DateTime timeMax) throws IOException {
-        Events events = service.events().list(calendarId)
-                .setTimeMin(timeMin)
-                .setTimeMax(timeMax)
-                .setOrderBy("startTime")
-                .setSingleEvents(true)
-                .setShowDeleted(false)
-                .setFields(
-                        "items(id,status,summary,description,location,htmlLink,start,end,attendees,extendedProperties),nextPageToken")
-                .execute();
+    @Override
+    public Event createAvailabilityRuleEvent(String mode, String type, Instant start, Instant end, String reason) throws IOException {
+        String normalizedMode = safe(mode).trim().toUpperCase(Locale.ROOT);
+        String normalizedType = safe(type).trim().toUpperCase(Locale.ROOT);
 
-        List<Event> items = events.getItems();
-        if (items == null)
-            return Collections.emptyList();
+        Event ev = new Event()
+                .setSummary(buildAvailabilityRuleSummary(normalizedMode, normalizedType, reason))
+                .setDescription(safe(reason));
 
-        List<Event> onlySystem = new ArrayList<>();
-        for (Event e : items) {
-            if ("cancelled".equalsIgnoreCase(e.getStatus()))
-                continue;
-            if (isSystemEvent(e))
-                onlySystem.add(e);
+        Map<String, String> ext = new HashMap<>();
+        ext.put(APP_KEY, APP_VALUE);
+        ext.put(ENTITY_TYPE_KEY, ENTITY_TYPE_AVAILABILITY_RULE);
+        ext.put("ruleMode", normalizedMode);
+        ext.put("blockType", normalizedType);
+        ext.put("blockReason", safe(reason));
+        ext.put("createdAt", String.valueOf(Instant.now().getEpochSecond()));
+
+        ev.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
+        ev.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(start))).setTimeZone(ZONE.toString()));
+        ev.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(end))).setTimeZone(ZONE.toString()));
+
+        if ("OPEN".equals(normalizedMode)) {
+            ev.setTransparency("transparent");
+        } else {
+            ev.setTransparency("opaque");
         }
-        return onlySystem;
+
+        return service.events()
+                .insert(calendarId, ev)
+                .setSendUpdates("none")
+                .execute();
     }
 
     @Override
@@ -337,22 +286,57 @@ public class GoogleCalendarClient implements CalendarClient {
         Map<String, FreeBusyCalendar> cals = resp.getCalendars();
         if (cals != null && cals.containsKey(calendarId)) {
             FreeBusyCalendar fb = cals.get(calendarId);
-            if (fb.getBusy() != null)
-                return fb.getBusy();
+            if (fb.getBusy() != null) return fb.getBusy();
         }
         return Collections.emptyList();
     }
 
-    // -------- helpers --------
+    private List<Event> listSystemEvents(DateTime timeMin, DateTime timeMax) throws IOException {
+        Events events = service.events().list(calendarId)
+                .setTimeMin(timeMin)
+                .setTimeMax(timeMax)
+                .setOrderBy("startTime")
+                .setSingleEvents(true)
+                .setShowDeleted(false)
+                .setFields("items(id,status,summary,description,location,htmlLink,start,end,attendees,extendedProperties,transparency),nextPageToken")
+                .execute();
+
+        List<Event> items = events.getItems();
+        if (items == null) return Collections.emptyList();
+
+        List<Event> onlySystem = new ArrayList<>();
+        for (Event e : items) {
+            if ("cancelled".equalsIgnoreCase(e.getStatus())) continue;
+            if (isSystemEvent(e)) {
+                onlySystem.add(e);
+            }
+        }
+        return onlySystem;
+    }
 
     private boolean isSystemEvent(Event e) {
         Map<String, String> ext = privateProps(e);
         return APP_VALUE.equals(ext.get(APP_KEY));
     }
 
+    private boolean isBookingEvent(Event e) {
+        String entityType = entityTypeOf(e);
+        return entityType.isBlank() || ENTITY_TYPE_BOOKING.equals(entityType);
+    }
+
+    private boolean isAvailabilityRuleEvent(Event e) {
+        String entityType = entityTypeOf(e);
+        return ENTITY_TYPE_AVAILABILITY_RULE.equals(entityType)
+                || ENTITY_TYPE_LEGACY_AVAILABILITY_BLOCK.equals(entityType);
+    }
+
+    private String entityTypeOf(Event e) {
+        Map<String, String> ext = privateProps(e);
+        return safe(ext.get(ENTITY_TYPE_KEY)).trim().toLowerCase(Locale.ROOT);
+    }
+
     private Map<String, String> privateProps(Event e) {
-        if (e.getExtendedProperties() == null)
-            return new HashMap<>();
+        if (e.getExtendedProperties() == null) return new HashMap<>();
         Map<String, String> p = e.getExtendedProperties().getPrivate();
         return (p == null) ? new HashMap<>() : new HashMap<>(p);
     }
@@ -365,15 +349,24 @@ public class GoogleCalendarClient implements CalendarClient {
         String t = safe(title);
         String st = safe(status).toUpperCase(Locale.ROOT);
 
-        if ("PENDING_PHONE".equals(st))
-            return t + " (Pendente confirmação)";
-        if ("CONFIRMED".equals(st))
-            return t + " (Confirmado)";
+        if ("PENDING_PHONE".equals(st)) return t + " (Pendente confirmação)";
+        if ("CONFIRMED".equals(st)) return t + " (Confirmado)";
         return t;
     }
 
+    private String buildAvailabilityRuleSummary(String mode, String type, String reason) {
+        String prefix;
+        if ("OPEN".equals(mode)) {
+            prefix = "DAY".equals(type) ? "[Abertura de dia]" : "[Abertura de horário]";
+        } else {
+            prefix = "DAY".equals(type) ? "[Bloqueio de dia]" : "[Bloqueio de horário]";
+        }
+
+        String r = safe(reason).trim();
+        return r.isBlank() ? prefix : prefix + " " + r;
+    }
+
     private String buildAddressLine(Servico s) {
-        // Rua, Nº - Complemento - Bairro - Cidade/UF CEP: xxxxxxxx
         String street = safe(s.getClientStreet());
         String num = safe(s.getClientNumber());
         String comp = safe(s.getClientComplement());
@@ -383,28 +376,11 @@ public class GoogleCalendarClient implements CalendarClient {
         String cep = safe(s.getClientCep());
 
         String base = street + ", " + num;
-        if (!comp.isBlank())
-            base += " - " + comp;
+        if (!comp.isBlank()) base += " - " + comp;
 
         String tail = " - " + neigh + " - " + city + "/" + state;
-        if (!cep.isBlank())
-            tail += " CEP: " + cep;
+        if (!cep.isBlank()) tail += " CEP: " + cep;
 
         return (base + tail).trim();
     }
-
-    private boolean isBookingEvent(Event e) {
-        String entityType = entityTypeOf(e);
-        return entityType.isBlank() || ENTITY_TYPE_BOOKING.equals(entityType);
-    }
-
-    private boolean isAvailabilityBlockEvent(Event e) {
-        return ENTITY_TYPE_AVAILABILITY_BLOCK.equals(entityTypeOf(e));
-    }
-
-    private String entityTypeOf(Event e) {
-        Map<String, String> ext = privateProps(e);
-        return safe(ext.get(ENTITY_TYPE_KEY)).trim().toLowerCase(Locale.ROOT);
-    }
-
 }

@@ -115,9 +115,16 @@ public class AppConfig {
             CalendarClient calendarClient,
             TokenUtil tokenUtil,
             VerificationService verificationService,
-            AppProperties props
+            AppProperties props,
+            AvailabilityPolicyService availabilityPolicyService
     ) {
-        return new ServicoService(calendarClient, tokenUtil, verificationService, props);
+        return new ServicoService(
+                calendarClient,
+                tokenUtil,
+                verificationService,
+                props,
+                availabilityPolicyService
+        );
     }
 
     @Bean
@@ -185,31 +192,5 @@ public class AppConfig {
     ) {
         boolean enabled = props.isGoogleMapsEnabled() && !props.getGoogleMapsApiKey().isBlank();
         return new RoutesService(calendarClient, tokenUtil, googleRoutesClient, enabled);
-    }
-
-    @Bean
-    public AdminDashboardService adminDashboardService(
-            ServicoService servicoService,
-            AvailabilityBlockService availabilityBlockService,
-            AdminFinanceService adminFinanceService
-    ) {
-        return new AdminDashboardService(servicoService, availabilityBlockService, adminFinanceService);
-    }
-
-    @Bean
-    public AdminBookingOpsService adminBookingOpsService(
-            CalendarClient calendarClient,
-            AppProperties props
-    ) {
-        return new AdminBookingOpsService(calendarClient, props);
-    }
-
-    @Bean
-    public AvailabilityBlockService availabilityBlockService(
-            CalendarClient calendarClient,
-            AppProperties props,
-            AdminBookingOpsService adminBookingOpsService
-    ) {
-        return new AvailabilityBlockService(calendarClient, props, adminBookingOpsService);
     }
 }

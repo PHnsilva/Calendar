@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -18,14 +19,24 @@ public class AppProperties {
     @Value("${app.schedule.cycleStart:}")
     private String scheduleCycleStart;
 
-    // ====== LEGADO (compat) ======
+    @Value("${app.schedule.workStart:08:00}")
+    private String workStart;
+
+    @Value("${app.schedule.workEnd:18:00}")
+    private String workEnd;
+
+    @Value("${app.schedule.lunchStart:12:00}")
+    private String lunchStart;
+
+    @Value("${app.schedule.lunchEnd:13:00}")
+    private String lunchEnd;
+
     @Value("${app.service.city:}")
     private String serviceCity;
 
     @Value("${app.service.state:}")
     private String serviceState;
 
-    // ====== NOVO ======
     @Value("${app.service.allowedCities:}")
     private String allowedCitiesCsv;
 
@@ -35,26 +46,21 @@ public class AppProperties {
     @Value("${app.service.allowedStates:}")
     private String allowedStatesCsv;
 
-    // ====== PENDING ======
     @Value("${app.pending.ttlMinutes:10}")
     private long pendingTtlMinutes;
 
     @Value("${app.pending.blockOtherBookings:true}")
     private boolean blockOtherBookingsWhenPending;
 
-    // ====== OTP ======
     @Value("${app.otp.ttlSeconds:300}")
     private long otpTtlSeconds;
 
     @Value("${app.otp.resendAfterSeconds:3}")
     private long otpResendAfterSeconds;
 
-    // ====== ADMIN ======
-
     @Value("${app.admin.bulkCancel.maxItems:200}")
     private int adminBulkCancelMaxItems;
 
-    // ====== WhatsApp ======
     @Value("${whatsapp.enabled:false}")
     private boolean whatsappEnabled;
 
@@ -70,7 +76,6 @@ public class AppProperties {
     @Value("${whatsapp.language:pt_BR}")
     private String whatsappLanguage;
 
-    // ====== Supabase ======
     @Value("${supabase.enabled:false}")
     private boolean supabaseEnabled;
 
@@ -92,7 +97,6 @@ public class AppProperties {
     @Value("${supabase.table.history_records:history_records}")
     private String tableHistory;
 
-    // ====== Google Routes ======
     @Value("${google.maps.enabled:false}")
     private boolean googleMapsEnabled;
 
@@ -257,6 +261,32 @@ public class AppProperties {
             return LocalDate.parse(v);
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    public LocalTime getWorkStart() {
+        return parseTimeOrDefault(workStart, LocalTime.of(8, 0));
+    }
+
+    public LocalTime getWorkEnd() {
+        return parseTimeOrDefault(workEnd, LocalTime.of(18, 0));
+    }
+
+    public LocalTime getLunchStart() {
+        return parseTimeOrDefault(lunchStart, LocalTime.of(12, 0));
+    }
+
+    public LocalTime getLunchEnd() {
+        return parseTimeOrDefault(lunchEnd, LocalTime.of(13, 0));
+    }
+
+    private LocalTime parseTimeOrDefault(String raw, LocalTime def) {
+        try {
+            String v = raw == null ? "" : raw.trim();
+            if (v.isBlank()) return def;
+            return LocalTime.parse(v);
+        } catch (Exception e) {
+            return def;
         }
     }
 }

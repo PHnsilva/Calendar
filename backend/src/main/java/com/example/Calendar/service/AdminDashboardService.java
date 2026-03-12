@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class AdminDashboardService {
@@ -36,7 +37,7 @@ public class AdminDashboardService {
         int otherBookings = 0;
 
         for (ServicoResponse booking : bookings) {
-            String currentStatus = booking.getStatus() == null ? "" : booking.getStatus().trim().toUpperCase();
+            String currentStatus = booking.getStatus() == null ? "" : booking.getStatus().trim().toUpperCase(Locale.ROOT);
             if ("PENDING_PHONE".equals(currentStatus)) {
                 pendingBookings++;
             } else if ("CONFIRMED".equals(currentStatus)) {
@@ -60,7 +61,7 @@ public class AdminDashboardService {
         } catch (Exception ignored) {
         }
 
-        int totalBlocks = availabilityBlockService.list(from, to, null, null).size();
+        int totalBlocks = availabilityBlockService.list(from, to).size();
 
         AdminDashboardSummaryResponse out = new AdminDashboardSummaryResponse();
         out.setTotalBookings(totalBookings);

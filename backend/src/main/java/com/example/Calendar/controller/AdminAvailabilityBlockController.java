@@ -46,10 +46,13 @@ public class AdminAvailabilityBlockController {
     public ResponseEntity<List<AvailabilityBlockResponse>> list(
             @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String header,
             @RequestParam(required = false) LocalDate from,
-            @RequestParam(required = false) LocalDate to
+            @RequestParam(required = false) LocalDate to,
+            @RequestParam(required = false) String mode,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String reason
     ) throws IOException {
         AdminTokenGuard.require(header);
-        return ResponseEntity.ok(service.list(from, to));
+        return ResponseEntity.ok(service.list(from, to, mode, type, reason));
     }
 
     @DeleteMapping("/{blockId}")
@@ -61,4 +64,4 @@ public class AdminAvailabilityBlockController {
         service.delete(blockId);
         return ResponseEntity.ok().build();
     }
-}   
+}

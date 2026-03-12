@@ -15,28 +15,14 @@ import com.google.api.services.calendar.model.Event;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.ArrayList;
+import java.time.*;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class AvailabilityBlockService {
 
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
-    private static final LocalTime WORK_START = LocalTime.of(8, 0);
-    private static final LocalTime WORK_END = LocalTime.of(18, 0);
     private static final Set<Integer> ALLOWED_MINUTES = Set.of(0, 30);
 
     private final CalendarClient calendar;
@@ -54,7 +40,8 @@ public class AvailabilityBlockService {
     }
 
     public AvailabilityBlockPreviewResponse preview(AvailabilityBlockPreviewRequest req) throws IOException {
-        BlockWindow window = resolveWindow(
+        RuleWindow window = resolveWindow(
+                req.getMode(),
                 req.getType(),
                 req.getDate(),
                 req.getStartAt(),
@@ -62,9 +49,12 @@ public class AvailabilityBlockService {
                 req.getReason()
         );
 
-        List<AvailabilityConflictItem> conflicts = findConflicts(window.start(), window.end());
+        List<AvailabilityConflictItem> conflicts = "BLOCK".equals(window.mode())
+                ? findConflicts(window.start(), window.end())
+                : Collections.emptyList();
 
         AvailabilityBlockPreviewResponse out = new AvailabilityBlockPreviewResponse();
+        out.setMode(window.mode());
         out.setType(window.type());
         out.setStart(window.start());
         out.setEnd(window.end());
@@ -75,7 +65,8 @@ public class AvailabilityBlockService {
     }
 
     public AvailabilityBlockResponse create(AvailabilityBlockCreateRequest req) throws IOException {
-        BlockWindow window = resolveWindow(
+        RuleWindow requested = resolveWindow(
+                req.getMode(),
                 req.getType(),
                 req.getDate(),
                 req.getStartAt(),
@@ -83,7 +74,9 @@ public class AvailabilityBlockService {
                 req.getReason()
         );
 
-        List<AvailabilityConflictItem> conflicts = findConflicts(window.start(), window.end());
+        List<AvailabilityConflictItem> conflicts = "BLOCK".equals(requested.mode())
+                ? findConflicts(requested.start(), requested.end())
+                : Collections.emptyList();
 
         boolean cancelConflicts = Boolean.TRUE.equals(req.getCancelConflictingBookings());
         if (!conflicts.isEmpty() && !cancelConflicts) {
@@ -99,25 +92,38 @@ public class AvailabilityBlockService {
                     .filter(s -> !s.isBlank())
                     .collect(Collectors.toList());
 
-            adminBookingOpsService.bulkCancelByIds(ids, safe(window.reason()));
+            adminBookingOpsService.bulkCancelByIds(ids, safe(requested.reason()));
         }
 
-        Event created = calendar.createAvailabilityBlockEvent(
-                window.type(),
-                window.start(),
-                window.end(),
-                window.reason()
+        Event existingCovering = findExistingCoveringRule(requested);
+        if (existingCovering != null) {
+            return toResponse(existingCovering);
+        }
+
+        RuleWindow merged = mergeWithOverlappingSameModeRules(requested);
+
+        Event created = calendar.createAvailabilityRuleEvent(
+                merged.mode(),
+                merged.type(),
+                merged.start(),
+                merged.end(),
+                merged.reason()
         );
 
         return toResponse(created);
     }
 
     public List<AvailabilityBlockResponse> list(LocalDate fromDate, LocalDate toDate) throws IOException {
-        return list(fromDate, toDate, null, null);
+        return list(fromDate, toDate, null, null, null);
     }
 
-    public List<AvailabilityBlockResponse> list(LocalDate fromDate, LocalDate toDate, String type, String reason)
-            throws IOException {
+    public List<AvailabilityBlockResponse> list(
+            LocalDate fromDate,
+            LocalDate toDate,
+            String mode,
+            String type,
+            String reason
+    ) throws IOException {
         ZonedDateTime base = ZonedDateTime.now(ZONE).withDayOfMonth(1).toLocalDate().atStartOfDay(ZONE);
 
         LocalDate resolvedFrom = (fromDate != null) ? fromDate : base.toLocalDate();
@@ -127,10 +133,11 @@ public class AvailabilityBlockService {
             throw new BadRequestException("Parâmetros inválidos: from deve ser <= to");
         }
 
-        String normalizedType = normalizeOptionalBlockType(type);
+        String normalizedMode = normalizeOptionalMode(mode);
+        String normalizedType = normalizeOptionalType(type);
         String normalizedReason = normalizeOptionalReason(reason);
 
-        List<Event> items = calendar.listAvailabilityBlockEvents(
+        List<Event> items = calendar.listAvailabilityRuleEvents(
                 new DateTime(Date.from(resolvedFrom.atStartOfDay(ZONE).toInstant())),
                 new DateTime(Date.from(resolvedTo.plusDays(1).atStartOfDay(ZONE).toInstant()))
         );
@@ -138,8 +145,9 @@ public class AvailabilityBlockService {
         if (items == null) return Collections.emptyList();
 
         return items.stream()
-                .filter(e -> matchesBlockType(e, normalizedType))
-                .filter(e -> matchesBlockReason(e, normalizedReason))
+                .filter(e -> matchesMode(e, normalizedMode))
+                .filter(e -> matchesType(e, normalizedType))
+                .filter(e -> matchesReason(e, normalizedReason))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -151,14 +159,45 @@ public class AvailabilityBlockService {
 
         Event e = calendar.getEvent(blockId);
         if (e == null) {
-            throw new NotFoundException("Bloqueio não encontrado");
+            throw new NotFoundException("Regra manual não encontrada");
         }
 
-        if (!isAvailabilityBlockEvent(e)) {
-            throw new BadRequestException("O evento informado não é um bloqueio manual");
+        if (!isAvailabilityRuleEvent(e)) {
+            throw new BadRequestException("O evento informado não é uma regra manual de disponibilidade");
         }
 
         calendar.deleteEvent(blockId);
+    }
+
+    private Event findExistingCoveringRule(RuleWindow requested) throws IOException {
+        List<Event> rules = calendar.listAvailabilityRuleEvents(
+                new DateTime(Date.from(requested.start().minus(Duration.ofDays(1)))),
+                new DateTime(Date.from(requested.end().plus(Duration.ofDays(1))))
+        );
+
+        if (rules == null || rules.isEmpty()) {
+            return null;
+        }
+
+        for (Event rule : rules) {
+            Map<String, String> ext = privateExt(rule);
+            String mode = ext.getOrDefault("ruleMode", "").trim().toUpperCase(Locale.ROOT);
+            String type = ext.getOrDefault("blockType", "").trim().toUpperCase(Locale.ROOT);
+
+            if (!requested.mode().equals(mode)) continue;
+            if (!requested.type().equals(type)) continue;
+
+            Instant ruleStart = instantFrom(rule.getStart());
+            Instant ruleEnd = instantFrom(rule.getEnd());
+            if (ruleStart == null || ruleEnd == null) continue;
+
+            boolean covers = !ruleStart.isAfter(requested.start()) && !ruleEnd.isBefore(requested.end());
+            if (covers) {
+                return rule;
+            }
+        }
+
+        return null;
     }
 
     private List<AvailabilityConflictItem> findConflicts(Instant start, Instant end) throws IOException {
@@ -186,6 +225,52 @@ public class AvailabilityBlockService {
         return out;
     }
 
+    private RuleWindow mergeWithOverlappingSameModeRules(RuleWindow requested) throws IOException {
+        List<Event> rules = calendar.listAvailabilityRuleEvents(
+                new DateTime(Date.from(requested.start().minus(Duration.ofDays(1)))),
+                new DateTime(Date.from(requested.end().plus(Duration.ofDays(1))))
+        );
+        if (rules == null || rules.isEmpty()) {
+            return requested;
+        }
+
+        Instant mergedStart = requested.start();
+        Instant mergedEnd = requested.end();
+
+        List<Event> overlappingSameMode = new ArrayList<>();
+
+        for (Event rule : rules) {
+            Map<String, String> ext = privateExt(rule);
+            String mode = ext.getOrDefault("ruleMode", "").trim().toUpperCase(Locale.ROOT);
+            String type = ext.getOrDefault("blockType", "").trim().toUpperCase(Locale.ROOT);
+
+            if (!requested.mode().equals(mode)) continue;
+            if (!requested.type().equals(type)) continue;
+
+            Instant ruleStart = instantFrom(rule.getStart());
+            Instant ruleEnd = instantFrom(rule.getEnd());
+            if (ruleStart == null || ruleEnd == null) continue;
+
+            boolean overlapsOrTouches = !ruleEnd.isBefore(mergedStart) && !ruleStart.isAfter(mergedEnd);
+            if (!overlapsOrTouches) continue;
+
+            overlappingSameMode.add(rule);
+
+            if (ruleStart.isBefore(mergedStart)) mergedStart = ruleStart;
+            if (ruleEnd.isAfter(mergedEnd)) mergedEnd = ruleEnd;
+        }
+
+        if (overlappingSameMode.isEmpty()) {
+            return requested;
+        }
+
+        for (Event rule : overlappingSameMode) {
+            calendar.deleteEvent(rule.getId());
+        }
+
+        return new RuleWindow(requested.mode(), requested.type(), mergedStart, mergedEnd, requested.reason());
+    }
+
     private AvailabilityConflictItem toConflictItem(Event e) {
         Map<String, String> ext = privateExt(e);
 
@@ -207,6 +292,7 @@ public class AvailabilityBlockService {
 
         AvailabilityBlockResponse out = new AvailabilityBlockResponse();
         out.setBlockId(e.getId());
+        out.setMode(ext.getOrDefault("ruleMode", "BLOCK"));
         out.setType(ext.getOrDefault("blockType", ""));
         out.setReason(ext.getOrDefault("blockReason", ""));
         out.setStart(instantFrom(e.getStart()));
@@ -220,28 +306,34 @@ public class AvailabilityBlockService {
         return out;
     }
 
-    private BlockWindow resolveWindow(
+    private RuleWindow resolveWindow(
+            String rawMode,
             String rawType,
             LocalDate date,
             LocalDateTime startAt,
             LocalDateTime endAt,
             String reason
     ) {
+        String mode = normalizeMode(rawMode);
         String type = normalizeType(rawType);
 
         if ("DAY".equals(type)) {
             if (date == null) {
-                throw new BadRequestException("date é obrigatório para bloqueio do tipo DAY");
+                throw new BadRequestException("date é obrigatório para regra do tipo DAY");
             }
+            validateDateWindow(date);
 
-            Instant start = ZonedDateTime.of(date, WORK_START, ZONE).toInstant();
-            Instant end = ZonedDateTime.of(date, WORK_END, ZONE).toInstant();
-            return new BlockWindow(type, start, end, safe(reason));
+            Instant start = ZonedDateTime.of(date, props.getWorkStart(), ZONE).toInstant();
+            Instant end = ZonedDateTime.of(date, props.getWorkEnd(), ZONE).toInstant();
+            return new RuleWindow(mode, type, start, end, safe(reason));
         }
 
         if (startAt == null || endAt == null) {
-            throw new BadRequestException("startAt e endAt são obrigatórios para bloqueio do tipo SLOT");
+            throw new BadRequestException("startAt e endAt são obrigatórios para regra do tipo SLOT");
         }
+
+        validateDateWindow(startAt.toLocalDate());
+        validateDateWindow(endAt.toLocalDate());
 
         validateSlotTime(startAt.toLocalTime());
         validateSlotTime(endAt.toLocalTime());
@@ -253,7 +345,9 @@ public class AvailabilityBlockService {
             throw new BadRequestException("endAt deve ser maior que startAt");
         }
 
-        return new BlockWindow(type, start, end, safe(reason));
+        validateInsideBusinessWindow(start, end);
+
+        return new RuleWindow(mode, type, start, end, safe(reason));
     }
 
     private void validateSlotTime(LocalTime time) {
@@ -265,6 +359,43 @@ public class AvailabilityBlockService {
         }
     }
 
+    private void validateInsideBusinessWindow(Instant start, Instant end) {
+        LocalTime startTime = start.atZone(ZONE).toLocalTime();
+        LocalTime endTime = end.atZone(ZONE).toLocalTime();
+
+        if (startTime.isBefore(props.getWorkStart()) || endTime.isAfter(props.getWorkEnd())) {
+            throw new BadRequestException("Regra fora do expediente");
+        }
+
+        boolean overlapsLunch = startTime.isBefore(props.getLunchEnd()) && endTime.isAfter(props.getLunchStart());
+        if (overlapsLunch) {
+            throw new BadRequestException("Regra não pode cobrir horário de almoço");
+        }
+    }
+
+    private void validateDateWindow(LocalDate requestedDate) {
+        LocalDate today = LocalDate.now(ZONE);
+
+        if (requestedDate == null) throw new BadRequestException("date é obrigatório");
+        if (requestedDate.isBefore(today)) throw new BadRequestException("Data inválida: não pode ser no passado");
+
+        YearMonth ymReq = YearMonth.from(requestedDate);
+        YearMonth ymNow = YearMonth.from(today);
+        YearMonth ymNext = ymNow.plusMonths(1);
+
+        if (!ymReq.equals(ymNow) && !ymReq.equals(ymNext)) {
+            throw new BadRequestException("Data inválida: apenas mês atual ou próximo");
+        }
+    }
+
+    private String normalizeMode(String rawMode) {
+        String mode = safe(rawMode).trim().toUpperCase(Locale.ROOT);
+        if (!"BLOCK".equals(mode) && !"OPEN".equals(mode)) {
+            throw new BadRequestException("mode deve ser BLOCK ou OPEN");
+        }
+        return mode;
+    }
+
     private String normalizeType(String rawType) {
         String type = safe(rawType).trim().toUpperCase(Locale.ROOT);
         if (!"DAY".equals(type) && !"SLOT".equals(type)) {
@@ -273,13 +404,14 @@ public class AvailabilityBlockService {
         return type;
     }
 
-    private String normalizeOptionalBlockType(String rawType) {
+    private String normalizeOptionalMode(String rawMode) {
+        if (rawMode == null || rawMode.isBlank()) return "";
+        return normalizeMode(rawMode);
+    }
+
+    private String normalizeOptionalType(String rawType) {
         if (rawType == null || rawType.isBlank()) return "";
-        String type = rawType.trim().toUpperCase(Locale.ROOT);
-        if (!"DAY".equals(type) && !"SLOT".equals(type)) {
-            throw new BadRequestException("type deve ser DAY ou SLOT");
-        }
-        return type;
+        return normalizeType(rawType);
     }
 
     private String normalizeOptionalReason(String reason) {
@@ -287,22 +419,30 @@ public class AvailabilityBlockService {
         return reason.trim().toLowerCase(Locale.ROOT);
     }
 
-    private boolean matchesBlockType(Event e, String normalizedType) {
+    private boolean matchesMode(Event e, String normalizedMode) {
+        if (normalizedMode.isBlank()) return true;
+        Map<String, String> ext = privateExt(e);
+        return normalizedMode.equalsIgnoreCase(ext.getOrDefault("ruleMode", ""));
+    }
+
+    private boolean matchesType(Event e, String normalizedType) {
         if (normalizedType.isBlank()) return true;
         Map<String, String> ext = privateExt(e);
         return normalizedType.equalsIgnoreCase(ext.getOrDefault("blockType", ""));
     }
 
-    private boolean matchesBlockReason(Event e, String normalizedReason) {
+    private boolean matchesReason(Event e, String normalizedReason) {
         if (normalizedReason.isBlank()) return true;
         Map<String, String> ext = privateExt(e);
         String blockReason = safe(ext.getOrDefault("blockReason", "")).toLowerCase(Locale.ROOT);
         return blockReason.contains(normalizedReason);
     }
 
-    private boolean isAvailabilityBlockEvent(Event e) {
+    private boolean isAvailabilityRuleEvent(Event e) {
         Map<String, String> ext = privateExt(e);
-        return "availability-block".equalsIgnoreCase(ext.getOrDefault("entityType", ""));
+        String entityType = ext.getOrDefault("entityType", "");
+        return "availability-rule".equalsIgnoreCase(entityType)
+                || "availability-block".equalsIgnoreCase(entityType);
     }
 
     private Map<String, String> privateExt(Event e) {
@@ -323,5 +463,5 @@ public class AvailabilityBlockService {
         return s == null ? "" : s.trim();
     }
 
-    private record BlockWindow(String type, Instant start, Instant end, String reason) {}
+    private record RuleWindow(String mode, String type, Instant start, Instant end, String reason) {}
 }

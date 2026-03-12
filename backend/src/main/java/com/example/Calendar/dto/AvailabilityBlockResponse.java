@@ -4,6 +4,7 @@ import java.time.Instant;
 
 public class AvailabilityBlockResponse {
     private String blockId;
+    private String mode;
     private String type;
     private Instant start;
     private Instant end;
@@ -16,6 +17,14 @@ public class AvailabilityBlockResponse {
 
     public void setBlockId(String blockId) {
         this.blockId = blockId;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
     }
 
     public String getType() {

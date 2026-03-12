@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 public class AvailabilityBlockCreateRequest {
 
     @NotBlank
+    private String mode;
+
+    @NotBlank
     private String type;
 
     private LocalDate date;
@@ -15,6 +18,14 @@ public class AvailabilityBlockCreateRequest {
     private LocalDateTime endAt;
     private String reason;
     private Boolean cancelConflictingBookings;
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
 
     public String getType() {
         return type;

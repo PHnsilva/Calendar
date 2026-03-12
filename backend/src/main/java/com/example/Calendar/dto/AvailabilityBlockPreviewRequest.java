@@ -8,12 +8,23 @@ import java.time.LocalDateTime;
 public class AvailabilityBlockPreviewRequest {
 
     @NotBlank
+    private String mode;
+
+    @NotBlank
     private String type;
 
     private LocalDate date;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
     private String reason;
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
 
     public String getType() {
         return type;

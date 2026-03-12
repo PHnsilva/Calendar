@@ -4,12 +4,21 @@ import java.time.Instant;
 import java.util.List;
 
 public class AvailabilityBlockPreviewResponse {
+    private String mode;
     private String type;
     private Instant start;
     private Instant end;
     private String reason;
     private int conflictCount;
     private List<AvailabilityConflictItem> conflicts;
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
 
     public String getType() {
         return type;

@@ -32,7 +32,7 @@ public class ServicoService {
 
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
     private static final int DEFAULT_DURATION_MINUTES = 60;
-    private static final Set<Integer> ALLOWED_MINUTES = Set.of(0, 30);
+    private static final Set<Integer> ALLOWED_MINUTES = Set.of(0, 60);
 
     public ServicoService(
             CalendarClient calendar,
@@ -484,7 +484,7 @@ public class ServicoService {
     private void validateTime(LocalTime time) {
         if (time == null) throw new BadRequestException("time é obrigatório");
         if (!ALLOWED_MINUTES.contains(time.getMinute())) {
-            throw new BadRequestException("Minutos inválidos. Use 00 ou 30.");
+            throw new BadRequestException("Minutos inválidos. Use 60.");
         }
     }
 

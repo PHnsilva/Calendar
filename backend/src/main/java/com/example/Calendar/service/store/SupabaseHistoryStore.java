@@ -17,7 +17,8 @@ public class SupabaseHistoryStore implements HistoryStore {
 
     @Override
     public void append(HistoryRecord record) {
-        if (record == null) return;
+        if (record == null)
+            return;
 
         Map<String, Object> row = new LinkedHashMap<>();
         row.put("id", record.getId());
@@ -34,17 +35,18 @@ public class SupabaseHistoryStore implements HistoryStore {
     public List<HistoryRecord> listByPhone(String phoneDigits, int limit) {
         int lim = Math.max(1, Math.min(limit, 200));
         List<Map> rows = sb.select(table, Map.of("phone_digits", phoneDigits), lim, "created_at.desc");
-        if (rows == null) return List.of();
+        if (rows == null)
+            return List.of();
 
         List<HistoryRecord> out = new ArrayList<>();
-        for (Map r : rows) out.add(map(r));
+        for (Map r : rows)
+            out.add(map(r));
         return out;
     }
 
     @Override
     public int deleteOlderThan(long olderThanEpochSec) {
-        // fica para cleanup interno
-        return 0;
+        return sb.deleteLt(table, "created_at", olderThanEpochSec);
     }
 
     private HistoryRecord map(Map r) {
@@ -54,13 +56,20 @@ public class SupabaseHistoryStore implements HistoryStore {
                 str(r.get("phone_digits")),
                 str(r.get("event_id")),
                 longv(r.get("created_at")),
-                str(r.get("meta"))
-        );
+                str(r.get("meta")));
     }
 
-    private static String str(Object o) { return o == null ? "" : String.valueOf(o); }
+    private static String str(Object o) {
+        return o == null ? "" : String.valueOf(o);
+    }
+
     private static long longv(Object o) {
-        if (o == null) return 0L;
-        try { return Long.parseLong(String.valueOf(o)); } catch (Exception e) { return 0L; }
+        if (o == null)
+            return 0L;
+        try {
+            return Long.parseLong(String.valueOf(o));
+        } catch (Exception e) {
+            return 0L;
+        }
     }
 }

@@ -17,9 +17,9 @@ public class SupabasePendingStore implements PendingStore {
 
     @Override
     public void upsert(PendingRecord record) {
-        if (record == null) return;
+        if (record == null)
+            return;
 
-        // Implementação simples: delete + insert (sem upsert real)
         deleteByEventId(record.getEventId());
 
         Map<String, Object> row = new LinkedHashMap<>();
@@ -34,16 +34,19 @@ public class SupabasePendingStore implements PendingStore {
     @Override
     public PendingRecord getByEventId(String eventId) {
         List<Map> rows = sb.select(table, Map.of("event_id", eventId), 1, null);
-        if (rows == null || rows.isEmpty()) return null;
+        if (rows == null || rows.isEmpty())
+            return null;
         return map(rows.get(0));
     }
 
     @Override
     public List<PendingRecord> listByPhone(String phoneDigits) {
         List<Map> rows = sb.select(table, Map.of("phone_digits", phoneDigits), 200, "created_at.desc");
-        if (rows == null) return List.of();
+        if (rows == null)
+            return List.of();
         List<PendingRecord> out = new ArrayList<>();
-        for (Map r : rows) out.add(map(r));
+        for (Map r : rows)
+            out.add(map(r));
         return out;
     }
 
@@ -54,8 +57,7 @@ public class SupabasePendingStore implements PendingStore {
 
     @Override
     public int deleteExpired(long nowEpochSec) {
-        // idem: sem suporte lt no helper -> fica para cleanup interno.
-        return 0;
+        return sb.deleteLt(table, "pending_expires_at", nowEpochSec);
     }
 
     private PendingRecord map(Map r) {
@@ -63,13 +65,20 @@ public class SupabasePendingStore implements PendingStore {
                 str(r.get("event_id")),
                 str(r.get("phone_digits")),
                 longv(r.get("pending_expires_at")),
-                longv(r.get("created_at"))
-        );
+                longv(r.get("created_at")));
     }
 
-    private static String str(Object o) { return o == null ? "" : String.valueOf(o); }
+    private static String str(Object o) {
+        return o == null ? "" : String.valueOf(o);
+    }
+
     private static long longv(Object o) {
-        if (o == null) return 0L;
-        try { return Long.parseLong(String.valueOf(o)); } catch (Exception e) { return 0L; }
+        if (o == null)
+            return 0L;
+        try {
+            return Long.parseLong(String.valueOf(o));
+        } catch (Exception e) {
+            return 0L;
+        }
     }
 }

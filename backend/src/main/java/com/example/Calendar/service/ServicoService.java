@@ -9,7 +9,10 @@ import com.example.Calendar.exception.ConflictException;
 import com.example.Calendar.exception.ForbiddenException;
 import com.example.Calendar.exception.NotFoundException;
 import com.example.Calendar.google.CalendarClient;
+import com.example.Calendar.model.PendingRecord;
 import com.example.Calendar.model.Servico;
+import com.example.Calendar.model.TimeWindow;
+import com.example.Calendar.service.store.PendingStore;
 import com.example.Calendar.util.LocationNormalizer;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.model.Event;
@@ -27,29 +30,37 @@ public class ServicoService {
     private final TokenUtil tokenUtil;
     private final VerificationService verificationService;
     private final AppProperties props;
+    private final AvailabilityPolicyService availabilityPolicyService;
+    private final PendingStore pendingStore;
 
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
     private static final int DEFAULT_DURATION_MINUTES = 60;
-    private static final Set<Integer> ALLOWED_MINUTES = Set.of(0, 30);
+    private static final Set<Integer> ALLOWED_MINUTES = Set.of(0);
 
-    public ServicoService(CalendarClient calendar, TokenUtil tokenUtil, VerificationService verificationService,
-                         AppProperties props) {
+    public ServicoService(
+            CalendarClient calendar,
+            TokenUtil tokenUtil,
+            VerificationService verificationService,
+            PendingStore pendingStore,
+            AppProperties props,
+            AvailabilityPolicyService availabilityPolicyService) {
         this.calendar = calendar;
         this.tokenUtil = tokenUtil;
         this.verificationService = verificationService;
+        this.pendingStore = pendingStore;
         this.props = props;
+        this.availabilityPolicyService = availabilityPolicyService;
     }
 
     public ServicoCreateResponse create(ServicoRequest req) throws IOException {
         validateDateWindow(req.getDate());
-        validateNotOffDay(req.getDate());            // ✅ 4x4
         validateTime(req.getTime());
         validateServiceArea(req);
 
         String phoneDigits = normalizePhone(req.getClientPhone());
 
         cleanupExpiredPendings();
-        if (hasActivePendingForPhone(phoneDigits)) {
+        if (props.isBlockOtherBookingsWhenPending() && hasActivePendingForPhone(phoneDigits)) {
             throw new ConflictException("Você já tem um agendamento pendente de confirmação");
         }
 
@@ -57,12 +68,19 @@ public class ServicoService {
         ZonedDateTime endZ = startZ.plusMinutes(DEFAULT_DURATION_MINUTES);
         Instant start = startZ.toInstant();
         Instant end = endZ.toInstant();
-        if (!end.isAfter(start)) throw new BadRequestException("Horário inválido");
+
+        if (!end.isAfter(start)) {
+            throw new BadRequestException("Horário inválido");
+        }
+
+        validateRequestedWindowAvailable(start, end);
 
         DateTime timeMin = new DateTime(Date.from(start));
         DateTime timeMax = new DateTime(Date.from(end));
         List<TimePeriod> busy = calendar.freeBusy(timeMin, timeMax);
-        if (busy != null && !busy.isEmpty()) throw new ConflictException("Horário indisponível");
+        if (busy != null && !busy.isEmpty()) {
+            throw new ConflictException("Horário indisponível");
+        }
 
         Instant pendingExpiresAt = Instant.now().plus(props.getPendingTtl());
 
@@ -95,7 +113,9 @@ public class ServicoService {
 
         String token = tokenUtil.generate(created.getId(), req.getClientEmail());
 
-        VerificationService.StartResult otp = verificationService.start(token, phoneDigits);
+        VerificationService.StartResult otp = verificationService.start(
+                token,
+                phoneDigits);
 
         ServicoResponse servico = mapEventToResponse(created);
         servico.setStatus("PENDING_PHONE");
@@ -103,7 +123,6 @@ public class ServicoService {
         ServicoCreateResponse out = new ServicoCreateResponse();
         out.setServico(servico);
         out.setManageToken(token);
-
         out.setVerificationId(otp.verificationId());
         out.setExpiresInSeconds(otp.expiresInSeconds());
         out.setResendAfterSeconds(otp.resendAfterSeconds());
@@ -114,7 +133,9 @@ public class ServicoService {
 
     public ServicoResponse getByToken(String token) throws IOException {
         TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
-        if (vt == null) throw new ForbiddenException("Token inválido ou expirado");
+        if (vt == null) {
+            throw new ForbiddenException("Token inválido ou expirado");
+        }
 
         Event e = calendar.getEvent(vt.getEventId());
         if (e == null || "cancelled".equalsIgnoreCase(e.getStatus())) {
@@ -123,12 +144,12 @@ public class ServicoService {
 
         Map<String, String> ext = privateExt(e);
         String email = ext.getOrDefault("clientEmail", "");
-        // mantém regra atual (se email for usado). Se você quiser, depois dá pra migrar p/ telefone.
         if (email.isBlank() || !vt.getClientEmail().equalsIgnoreCase(email)) {
             throw new ForbiddenException("Token inválido");
         }
 
         if (isExpiredPending(ext)) {
+            pendingStore.deleteByEventId(e.getId());
             calendar.deleteEvent(e.getId());
             throw new NotFoundException("Agendamento não encontrado");
         }
@@ -136,18 +157,22 @@ public class ServicoService {
         return mapEventToResponse(e);
     }
 
-    // ✅ FIX: não lista por email (pode ficar vazio). Usa o telefone do próprio evento do token.
     public List<ServicoResponse> listMy(String token) throws IOException {
         TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
-        if (vt == null) throw new ForbiddenException("Token inválido ou expirado");
+        if (vt == null) {
+            throw new ForbiddenException("Token inválido ou expirado");
+        }
 
         cleanupExpiredPendings();
 
         Event seed = calendar.getEvent(vt.getEventId());
-        if (seed == null) throw new NotFoundException("Agendamento não encontrado");
+        if (seed == null) {
+            throw new NotFoundException("Agendamento não encontrado");
+        }
 
         Map<String, String> ext = privateExt(seed);
         if (isExpiredPending(ext)) {
+            pendingStore.deleteByEventId(seed.getId());
             calendar.deleteEvent(seed.getId());
             throw new NotFoundException("Agendamento não encontrado");
         }
@@ -164,14 +189,16 @@ public class ServicoService {
         cleanupExpiredPendings();
 
         ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
-        ZonedDateTime from = base.minusMonths(1);
+        ZonedDateTime from = base.minusMonths(props.getHistoryRetentionMonths());
         ZonedDateTime to = base.plusMonths(2);
 
         List<Event> events = calendar.listEventsByPhone(
                 new DateTime(Date.from(from.toInstant())),
                 new DateTime(Date.from(to.toInstant())),
                 phone);
-        if (events == null) return Collections.emptyList();
+        if (events == null) {
+            return Collections.emptyList();
+        }
 
         return events.stream()
                 .map(this::mapEventToResponse)
@@ -180,48 +207,64 @@ public class ServicoService {
 
     public ServicoResponse updateByToken(String eventId, String token, ServicoRequest req) throws IOException {
         validateDateWindow(req.getDate());
-        validateNotOffDay(req.getDate());            // ✅ 4x4
         validateTime(req.getTime());
+        validateServiceArea(req);
 
         TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
-        if (vt == null || !vt.getEventId().equals(eventId)) throw new ForbiddenException("Token inválido");
+        if (vt == null || !vt.getEventId().equals(eventId)) {
+            throw new ForbiddenException("Token inválido");
+        }
 
         Event existing = calendar.getEvent(eventId);
-        if (existing == null) throw new NotFoundException("Agendamento não encontrado");
+        if (existing == null) {
+            throw new NotFoundException("Agendamento não encontrado");
+        }
 
         Map<String, String> ext0 = privateExt(existing);
         if (isExpiredPending(ext0)) {
+            pendingStore.deleteByEventId(existing.getId());
             calendar.deleteEvent(existing.getId());
             throw new NotFoundException("Agendamento não encontrado");
         }
 
         String existingEmail = ext0.getOrDefault("clientEmail", "");
-        if (!vt.getClientEmail().equalsIgnoreCase(existingEmail)) throw new ForbiddenException("Token inválido");
-
-        validateServiceArea(req);
+        if (!vt.getClientEmail().equalsIgnoreCase(existingEmail)) {
+            throw new ForbiddenException("Token inválido");
+        }
 
         ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
         ZonedDateTime endZ = startZ.plusMinutes(DEFAULT_DURATION_MINUTES);
         Instant start = startZ.toInstant();
         Instant end = endZ.toInstant();
-        if (!end.isAfter(start)) throw new BadRequestException("Horário inválido");
+
+        if (!end.isAfter(start)) {
+            throw new BadRequestException("Horário inválido");
+        }
+
+        validateRequestedWindowAvailable(start, end);
 
         DateTime timeMin = new DateTime(Date.from(start));
         DateTime timeMax = new DateTime(Date.from(end));
         List<TimePeriod> busy = calendar.freeBusy(timeMin, timeMax);
-        if (busy == null) busy = Collections.emptyList();
+        if (busy == null) {
+            busy = Collections.emptyList();
+        }
 
         Instant oldStart = instantFrom(existing.getStart());
         Instant oldEnd = instantFrom(existing.getEnd());
 
         boolean conflict = busy.stream().anyMatch(tp -> {
-            if (tp.getStart() == null || tp.getEnd() == null) return true;
+            if (tp.getStart() == null || tp.getEnd() == null)
+                return true;
             Instant bs = Instant.ofEpochMilli(tp.getStart().getValue());
             Instant be = Instant.ofEpochMilli(tp.getEnd().getValue());
             boolean isSelf = bs.equals(oldStart) && be.equals(oldEnd);
             return !isSelf;
         });
-        if (conflict) throw new ConflictException("Horário indisponível");
+
+        if (conflict) {
+            throw new ConflictException("Horário indisponível");
+        }
 
         String phoneDigits = normalizePhone(req.getClientPhone());
 
@@ -259,144 +302,228 @@ public class ServicoService {
         }
 
         Event updated = calendar.updateEvent(s);
+
+        if ("PENDING_PHONE".equalsIgnoreCase(curStatus) && s.getPendingExpiresAt() != null) {
+            pendingStore.upsert(new PendingRecord(
+                    eventId,
+                    phoneDigits,
+                    s.getPendingExpiresAt().getEpochSecond(),
+                    Instant.now().getEpochSecond()));
+        } else {
+            pendingStore.deleteByEventId(eventId);
+        }
+
         return mapEventToResponse(updated);
     }
 
     public void cancelByToken(String eventId, String token) throws IOException {
         TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
-        if (vt == null || !vt.getEventId().equals(eventId)) throw new ForbiddenException("Token inválido");
+        if (vt == null || !vt.getEventId().equals(eventId)) {
+            throw new ForbiddenException("Token inválido");
+        }
 
         Event e = calendar.getEvent(eventId);
-        if (e == null) throw new NotFoundException("Agendamento não encontrado");
+        if (e == null) {
+            throw new NotFoundException("Agendamento não encontrado");
+        }
 
         Map<String, String> ext = privateExt(e);
         String email = ext.getOrDefault("clientEmail", "");
-        if (!vt.getClientEmail().equalsIgnoreCase(email)) throw new ForbiddenException("Token inválido");
+        if (!vt.getClientEmail().equalsIgnoreCase(email)) {
+            throw new ForbiddenException("Token inválido");
+        }
 
+        pendingStore.deleteByEventId(eventId);
         calendar.deleteEvent(eventId);
     }
 
-public List<ServicoResponse> listAllAdmin() throws IOException {
-    cleanupExpiredPendings();
-
-    ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
-    ZonedDateTime from = base.minusMonths(1);
-    ZonedDateTime to = base.plusMonths(2);
-
-    return listEventsBetween(from, to);
-}
-
-public List<ServicoResponse> listAllAdmin(LocalDate fromDate, LocalDate toDate) throws IOException {
-    if (fromDate == null && toDate == null) {
-        return listAllAdmin();
+    public List<ServicoResponse> listAllAdmin() throws IOException {
+        return listAllAdmin(null, null, null, null);
     }
 
-    LocalDate resolvedFrom = (fromDate != null) ? fromDate : toDate;
-    LocalDate resolvedTo = (toDate != null) ? toDate : fromDate;
-
-    if (resolvedFrom == null || resolvedTo == null) {
-        throw new BadRequestException("Parâmetros inválidos");
-    }
-    if (resolvedFrom.isAfter(resolvedTo)) {
-        throw new BadRequestException("Parâmetros inválidos: from deve ser <= to");
+    public List<ServicoResponse> listAllAdmin(LocalDate fromDate, LocalDate toDate) throws IOException {
+        return listAllAdmin(fromDate, toDate, null, null);
     }
 
-    cleanupExpiredPendings(resolvedFrom, resolvedTo);
+    public List<ServicoResponse> listAllAdmin(LocalDate fromDate, LocalDate toDate, String status, String city)
+            throws IOException {
+        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
 
-    ZonedDateTime from = resolvedFrom.atStartOfDay(ZONE);
-    ZonedDateTime to = resolvedTo.plusDays(1).atStartOfDay(ZONE); // fim inclusivo no dia
+        LocalDate resolvedFrom;
+        LocalDate resolvedTo;
 
-    return listEventsBetween(from, to);
-}
+        if (fromDate == null && toDate == null) {
+            resolvedFrom = base.minusMonths(props.getHistoryRetentionMonths()).toLocalDate();
+            resolvedTo = base.plusMonths(2).toLocalDate().minusDays(1);
+        } else {
+            resolvedFrom = (fromDate != null) ? fromDate : toDate;
+            resolvedTo = (toDate != null) ? toDate : fromDate;
 
-private List<ServicoResponse> listEventsBetween(ZonedDateTime from, ZonedDateTime to) throws IOException {
-    List<Event> events = calendar.listEvents(
-            new DateTime(Date.from(from.toInstant())),
-            new DateTime(Date.from(to.toInstant()))
-    );
-    if (events == null) return Collections.emptyList();
+            if (resolvedFrom == null || resolvedTo == null) {
+                throw new BadRequestException("Parâmetros inválidos");
+            }
+            if (resolvedFrom.isAfter(resolvedTo)) {
+                throw new BadRequestException("Parâmetros inválidos: from deve ser <= to");
+            }
+        }
 
-    return events.stream()
-            .map(this::mapEventToResponse)
-            .collect(Collectors.toList());
-}
+        cleanupExpiredPendings(resolvedFrom, resolvedTo);
+
+        ZonedDateTime from = resolvedFrom.atStartOfDay(ZONE);
+        ZonedDateTime to = resolvedTo.plusDays(1).atStartOfDay(ZONE);
+
+        List<Event> events = listBookingEventsBetween(from, to);
+
+        String normalizedStatus = normalizeAdminStatus(status);
+        String normalizedCity = normalizeAdminCity(city);
+
+        return events.stream()
+                .filter(e -> matchesAdminStatus(e, normalizedStatus))
+                .filter(e -> matchesAdminCity(e, normalizedCity))
+                .map(this::mapEventToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private List<Event> listBookingEventsBetween(ZonedDateTime from, ZonedDateTime to) throws IOException {
+        List<Event> events = calendar.listBookingEvents(
+                new DateTime(Date.from(from.toInstant())),
+                new DateTime(Date.from(to.toInstant())));
+        return events == null ? Collections.emptyList() : events;
+    }
+
+    private boolean matchesAdminStatus(Event e, String normalizedStatus) {
+        if (normalizedStatus.isBlank())
+            return true;
+        Map<String, String> ext = privateExt(e);
+        String current = ext.getOrDefault("status", "PENDING_PHONE");
+        return normalizedStatus.equalsIgnoreCase(current);
+    }
+
+    private boolean matchesAdminCity(Event e, String normalizedCity) {
+        if (normalizedCity.isBlank())
+            return true;
+        Map<String, String> ext = privateExt(e);
+        String current = LocationNormalizer.normalizeCity(ext.getOrDefault("clientCity", ""));
+        return normalizedCity.equals(current);
+    }
+
+    private String normalizeAdminStatus(String status) {
+        if (status == null)
+            return "";
+        return status.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeAdminCity(String city) {
+        if (city == null || city.isBlank())
+            return "";
+        return LocationNormalizer.normalizeCity(city);
+    }
 
     public void deleteByIdAdmin(String eventId) throws IOException {
         Event e = calendar.getEvent(eventId);
-        if (e == null) throw new NotFoundException("Agendamento não encontrado");
+        if (e == null) {
+            throw new NotFoundException("Agendamento não encontrado");
+        }
 
+        pendingStore.deleteByEventId(eventId);
         calendar.deleteEvent(eventId);
     }
 
     public List<String> getAvailableSlots(LocalDate date, int slotMinutes) throws IOException {
         validateDateWindow(date);
 
-        if (slotMinutes <= 0) throw new BadRequestException("slotMinutes deve ser > 0");
-
-        // ✅ 4x4: em folga, retorna vazio (sem 400)
-        if (isOffDay(date)) return Collections.emptyList();
+        if (slotMinutes != DEFAULT_DURATION_MINUTES) {
+            throw new BadRequestException("slotMinutes deve ser 60");
+        }
 
         cleanupExpiredPendings();
 
-        LocalTime WORK_START = LocalTime.of(8, 0);
-        LocalTime WORK_END = LocalTime.of(18, 0);
-        LocalTime LUNCH_START = LocalTime.of(12, 0);
-        LocalTime LUNCH_END = LocalTime.of(13, 0);
+        List<TimeWindow> allowedWindows = availabilityPolicyService.resolveAllowedWindows(date);
+        if (allowedWindows.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-        ZonedDateTime dayStart = ZonedDateTime.of(date, WORK_START, ZONE);
-        ZonedDateTime dayEnd = ZonedDateTime.of(date, WORK_END, ZONE);
+        ZonedDateTime dayStart = ZonedDateTime.of(date, props.getWorkStart(), ZONE);
+        ZonedDateTime dayEnd = ZonedDateTime.of(date, props.getWorkEnd(), ZONE);
 
         DateTime timeMin = new DateTime(Date.from(dayStart.toInstant()));
         DateTime timeMax = new DateTime(Date.from(dayEnd.toInstant()));
 
         List<TimePeriod> busy = calendar.freeBusy(timeMin, timeMax);
-        if (busy == null) busy = Collections.emptyList();
+        if (busy == null) {
+            busy = Collections.emptyList();
+        }
 
         List<ZonedDateTime> slots = new ArrayList<>();
         ZonedDateTime current = dayStart;
 
         while (!current.plusMinutes(slotMinutes).isAfter(dayEnd)) {
-            LocalTime t = current.toLocalTime();
-            boolean inLunch = !t.isBefore(LUNCH_START) && t.isBefore(LUNCH_END);
+            Instant slotStart = current.toInstant();
+            Instant slotEnd = current.plusMinutes(slotMinutes).toInstant();
 
-            if (!inLunch) {
-                Instant slotStart = current.toInstant();
-                Instant slotEnd = current.plusMinutes(slotMinutes).toInstant();
-
-                boolean conflict = false;
-                for (TimePeriod tp : busy) {
-                    if (tp.getStart() == null || tp.getEnd() == null) continue;
-                    Instant busyStart = Instant.ofEpochMilli(tp.getStart().getValue());
-                    Instant busyEnd = Instant.ofEpochMilli(tp.getEnd().getValue());
-                    if (!(slotEnd.compareTo(busyStart) <= 0 || slotStart.compareTo(busyEnd) >= 0)) {
-                        conflict = true;
-                        break;
-                    }
-                }
-                if (!conflict) slots.add(current);
+            TimeWindow requested = new TimeWindow(slotStart, slotEnd);
+            if (!isInsideAllowedWindows(requested, allowedWindows)) {
+                current = current.plusMinutes(slotMinutes);
+                continue;
             }
+
+            boolean conflict = false;
+            for (TimePeriod tp : busy) {
+                if (tp.getStart() == null || tp.getEnd() == null)
+                    continue;
+
+                Instant busyStart = Instant.ofEpochMilli(tp.getStart().getValue());
+                Instant busyEnd = Instant.ofEpochMilli(tp.getEnd().getValue());
+
+                if (!(slotEnd.compareTo(busyStart) <= 0 || slotStart.compareTo(busyEnd) >= 0)) {
+                    conflict = true;
+                    break;
+                }
+            }
+
+            if (!conflict) {
+                slots.add(current);
+            }
+
             current = current.plusMinutes(slotMinutes);
         }
 
-        return slots.stream().map(z -> z.toOffsetDateTime().toString()).collect(Collectors.toList());
+        return slots.stream()
+                .map(z -> z.toOffsetDateTime().toString())
+                .collect(Collectors.toList());
     }
 
-    // =========================
-    // Helpers
-    // =========================
+    private void validateRequestedWindowAvailable(Instant start, Instant end) throws IOException {
+        boolean allowed = availabilityPolicyService.isIntervalAllowed(start, end);
+        if (!allowed) {
+            throw new BadRequestException("Horário indisponível");
+        }
+    }
+
+    private boolean isInsideAllowedWindows(TimeWindow requested, List<TimeWindow> allowedWindows) {
+        for (TimeWindow allowed : allowedWindows) {
+            if (allowed.contains(requested)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private void validateTime(LocalTime time) {
-        if (time == null) throw new BadRequestException("time é obrigatório");
+        if (time == null)
+            throw new BadRequestException("time é obrigatório");
         if (!ALLOWED_MINUTES.contains(time.getMinute())) {
-            throw new BadRequestException("Minutos inválidos. Use 00 ou 30.");
+            throw new BadRequestException("Minutos inválidos. Use 00.");
         }
     }
 
     private void validateDateWindow(LocalDate requestedDate) {
         LocalDate today = LocalDate.now(ZONE);
 
-        if (requestedDate == null) throw new BadRequestException("date é obrigatório");
-        if (requestedDate.isBefore(today)) throw new BadRequestException("Data inválida: não pode ser no passado");
+        if (requestedDate == null)
+            throw new BadRequestException("date é obrigatório");
+        if (requestedDate.isBefore(today))
+            throw new BadRequestException("Data inválida: não pode ser no passado");
 
         YearMonth ymReq = YearMonth.from(requestedDate);
         YearMonth ymNow = YearMonth.from(today);
@@ -405,21 +532,6 @@ private List<ServicoResponse> listEventsBetween(ZonedDateTime from, ZonedDateTim
         if (!ymReq.equals(ymNow) && !ymReq.equals(ymNext)) {
             throw new BadRequestException("Data inválida: apenas mês atual ou próximo");
         }
-    }
-
-    // ✅ 4x4
-    private void validateNotOffDay(LocalDate date) {
-        if (isOffDay(date)) {
-            throw new BadRequestException("Dia indisponível: folga (4x4)");
-        }
-    }
-
-    private boolean isOffDay(LocalDate date) {
-        // você vai setar isso no back. Ex:
-        // app.schedule.cycleStart=2026-03-01
-        LocalDate cycleStart = props.getScheduleCycleStart();
-        if (cycleStart == null) return false; // se não configurou ainda, não bloqueia
-        return new ScheduleRules(cycleStart).isOffDay(date);
     }
 
     private void validateServiceArea(ServicoRequest req) {
@@ -455,76 +567,89 @@ private List<ServicoResponse> listEventsBetween(ZonedDateTime from, ZonedDateTim
 
     private String normalizePhone(String phone) {
         String d = (phone == null) ? "" : phone.replaceAll("\\D", "");
-        if (d.length() < 10 || d.length() > 11) throw new BadRequestException("clientPhone inválido");
+        if (d.length() < 10 || d.length() > 11) {
+            throw new BadRequestException("clientPhone inválido");
+        }
         return d;
     }
 
     private Map<String, String> privateExt(Event e) {
-        if (e.getExtendedProperties() == null) return Collections.emptyMap();
-        if (e.getExtendedProperties().getPrivate() == null) return Collections.emptyMap();
+        if (e.getExtendedProperties() == null)
+            return Collections.emptyMap();
+        if (e.getExtendedProperties().getPrivate() == null)
+            return Collections.emptyMap();
         return e.getExtendedProperties().getPrivate();
     }
 
     private Instant instantFrom(EventDateTime edt) {
-        if (edt == null) return null;
+        if (edt == null)
+            return null;
         DateTime dt = edt.getDateTime();
-        if (dt == null) dt = edt.getDate();
-        if (dt == null) return null;
+        if (dt == null)
+            dt = edt.getDate();
+        if (dt == null)
+            return null;
         return Instant.ofEpochMilli(dt.getValue());
     }
 
     private boolean isExpiredPending(Map<String, String> ext) {
         String status = ext.getOrDefault("status", "");
-        if (!"PENDING_PHONE".equalsIgnoreCase(status)) return false;
+        if (!"PENDING_PHONE".equalsIgnoreCase(status))
+            return false;
 
         String pe = ext.get("pendingExpiresAt");
-        if (pe == null || !pe.matches("\\d+")) return false;
+        if (pe == null || !pe.matches("\\d+"))
+            return false;
 
         long exp = Long.parseLong(pe);
         return Instant.now().getEpochSecond() > exp;
     }
 
-   private void cleanupExpiredPendings() throws IOException {
-    ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
-    cleanupExpiredPendings(base.minusMonths(1), base.plusMonths(2));
-}
+    private void cleanupExpiredPendings() throws IOException {
+        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
+        cleanupExpiredPendings(base.minusMonths(props.getHistoryRetentionMonths()), base.plusMonths(2));
+    }
 
-private void cleanupExpiredPendings(LocalDate fromDate, LocalDate toDate) throws IOException {
-    ZonedDateTime from = fromDate.atStartOfDay(ZONE);
-    ZonedDateTime to = toDate.plusDays(1).atStartOfDay(ZONE); // fim inclusivo no dia
-    cleanupExpiredPendings(from, to);
-}
+    private void cleanupExpiredPendings(LocalDate fromDate, LocalDate toDate) throws IOException {
+        ZonedDateTime from = fromDate.atStartOfDay(ZONE);
+        ZonedDateTime to = toDate.plusDays(1).atStartOfDay(ZONE);
+        cleanupExpiredPendings(from, to);
+    }
 
-private void cleanupExpiredPendings(ZonedDateTime from, ZonedDateTime to) throws IOException {
-    List<Event> events = calendar.listEvents(
-            new DateTime(Date.from(from.toInstant())),
-            new DateTime(Date.from(to.toInstant()))
-    );
-    if (events == null) return;
+    private void cleanupExpiredPendings(ZonedDateTime from, ZonedDateTime to) throws IOException {
+        List<Event> events = calendar.listBookingEvents(
+                new DateTime(Date.from(from.toInstant())),
+                new DateTime(Date.from(to.toInstant())));
+        if (events == null)
+            return;
 
-    for (Event e : events) {
-        Map<String, String> ext = privateExt(e);
-        if (isExpiredPending(ext)) {
-            calendar.deleteEvent(e.getId());
+        for (Event e : events) {
+            Map<String, String> ext = privateExt(e);
+            if (isExpiredPending(ext)) {
+                pendingStore.deleteByEventId(e.getId());
+                calendar.deleteEvent(e.getId());
+            }
         }
     }
-}
 
     private boolean hasActivePendingForPhone(String phoneDigits) throws IOException {
         ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
-        ZonedDateTime from = base.minusMonths(1);
+        ZonedDateTime from = base.minusMonths(props.getHistoryRetentionMonths());
         ZonedDateTime to = base.plusMonths(2);
 
         List<Event> events = calendar.listEventsByPhone(
                 new DateTime(Date.from(from.toInstant())),
                 new DateTime(Date.from(to.toInstant())),
                 phoneDigits);
-        if (events == null) return false;
+        if (events == null)
+            return false;
 
         for (Event e : events) {
             Map<String, String> ext = privateExt(e);
-            if (!"PENDING_PHONE".equalsIgnoreCase(ext.getOrDefault("status", ""))) continue;
-            if (isExpiredPending(ext)) continue;
+            if (!"PENDING_PHONE".equalsIgnoreCase(ext.getOrDefault("status", "")))
+                continue;
+            if (isExpiredPending(ext))
+                continue;
             return true;
         }
         return false;
@@ -538,7 +663,6 @@ private void cleanupExpiredPendings(ZonedDateTime from, ZonedDateTime to) throws
         Map<String, String> ext = privateExt(e);
 
         s.setServiceType(ext.getOrDefault("serviceType", e.getSummary() == null ? "" : e.getSummary()));
-
         s.setStart(instantFrom(e.getStart()));
         s.setEnd(instantFrom(e.getEnd()));
 

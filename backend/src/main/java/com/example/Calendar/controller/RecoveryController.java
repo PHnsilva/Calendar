@@ -1,6 +1,9 @@
 package com.example.Calendar.controller;
 
-import com.example.Calendar.dto.*;
+import com.example.Calendar.dto.RecoverConfirmRequest;
+import com.example.Calendar.dto.RecoverConfirmResponse;
+import com.example.Calendar.dto.RecoverStartRequest;
+import com.example.Calendar.dto.RecoverStartResponse;
 import com.example.Calendar.service.RecoveryService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +22,12 @@ public class RecoveryController {
 
     @PostMapping("/start")
     public RecoverStartResponse start(@Valid @RequestBody RecoverStartRequest req) {
-        var r = recoveryService.start(req.getPhone());
-        return new RecoverStartResponse(r.verificationId(), r.expiresInSeconds(), r.resendAfterSeconds());
+        RecoveryService.StartResult r = recoveryService.start(req.getPhone());
+        return new RecoverStartResponse(
+                r.verificationId(),
+                r.expiresInSeconds(),
+                r.resendAfterSeconds()
+        );
     }
 
     @PostMapping("/confirm")

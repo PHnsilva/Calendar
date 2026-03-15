@@ -24,7 +24,8 @@ public class ServicoRequest {
 
     @NotBlank
     private String clientLastName;
-
+    
+    @NotBlank
     @Email(message = "email inválido")
     private String clientEmail;
 

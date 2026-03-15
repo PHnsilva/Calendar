@@ -25,7 +25,34 @@ public class DummyCalendarClient implements CalendarClient {
         ev.setDescription(safe(s.getDescription()));
         ev.setHtmlLink("http://localhost/dummy/event/" + id);
 
-        // start/end (essencial para available/freeBusy)
+        if (s.getStart() != null) {
+            ev.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(s.getStart()))));
+        }
+        if (s.getEnd() != null) {
+            ev.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(s.getEnd()))));
+        }
+
+        applyPrivateProps(ev, s);
+
+        store.put(id, ev);
+        return ev;
+    }
+
+    @Override
+    public Event updateEvent(Servico s) throws IOException {
+        String id = s.getEventId();
+        if (id == null || id.isBlank()) {
+            throw new IllegalArgumentException("eventId é obrigatório para atualizar");
+        }
+
+        Event ev = store.get(id);
+        if (ev == null) {
+            return null;
+        }
+
+        ev.setSummary(safe(s.getTitle()));
+        ev.setDescription(safe(s.getDescription()));
+
         if (s.getStart() != null) {
             ev.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(s.getStart()))));
         }
@@ -45,32 +72,6 @@ public class DummyCalendarClient implements CalendarClient {
     }
 
     @Override
-    public Event updateEvent(Servico s) throws IOException {
-        String id = s.getEventId();
-        if (id == null || id.isBlank())
-            throw new IllegalArgumentException("eventId é obrigatório para atualizar");
-
-        Event ev = store.get(id);
-        if (ev == null)
-            return null;
-
-        ev.setSummary(safe(s.getTitle()));
-        ev.setDescription(safe(s.getDescription()));
-
-        if (s.getStart() != null) {
-            ev.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(s.getStart()))));
-        }
-        if (s.getEnd() != null) {
-            ev.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(s.getEnd()))));
-        }
-
-        applyPrivateProps(ev, s);
-
-        store.put(id, ev);
-        return ev;
-    }
-
-    @Override
     public Event getEvent(String eventId) throws IOException {
         return store.get(eventId);
     }
@@ -82,17 +83,103 @@ public class DummyCalendarClient implements CalendarClient {
 
         List<Event> out = new ArrayList<>();
         for (Event e : store.values()) {
-            Instant start = eventStartInstant(e);
-            if (start == null)
-                continue;
+            if (!isSystemEvent(e)) continue;
 
-            if (!start.isBefore(min) && start.isBefore(max))
+            Instant start = eventStartInstant(e);
+            if (start == null) continue;
+
+            if (!start.isBefore(min) && start.isBefore(max)) {
                 out.add(e);
+            }
         }
 
-        out.sort(Comparator.comparing((Event e) -> DummyCalendarClient.eventStartInstant(e),
-                Comparator.nullsLast(Comparator.naturalOrder())));
+        out.sort((a, b) -> {
+            Instant ia = eventStartInstant(a);
+            Instant ib = eventStartInstant(b);
+            if (ia == null && ib == null) return 0;
+            if (ia == null) return 1;
+            if (ib == null) return -1;
+            return ia.compareTo(ib);
+        });
+
         return out;
+    }
+
+    @Override
+    public List<Event> listBookingEvents(DateTime timeMin, DateTime timeMax) throws IOException {
+        List<Event> all = listEvents(timeMin, timeMax);
+        List<Event> out = new ArrayList<>();
+        for (Event e : all) {
+            if (isBookingEvent(e)) {
+                out.add(e);
+            }
+        }
+        return out;
+    }
+
+    @Override
+    public List<Event> listAvailabilityRuleEvents(DateTime timeMin, DateTime timeMax) throws IOException {
+        List<Event> all = listEvents(timeMin, timeMax);
+        List<Event> out = new ArrayList<>();
+        for (Event e : all) {
+            if (isAvailabilityRuleEvent(e)) {
+                out.add(e);
+            }
+        }
+        return out;
+    }
+
+    @Override
+    public List<Event> listEventsByPhone(DateTime timeMin, DateTime timeMax, String phoneDigits) throws IOException {
+        String phone = (phoneDigits == null) ? "" : phoneDigits.replaceAll("\\D", "");
+
+        List<Event> out = new ArrayList<>();
+        for (Event e : listBookingEvents(timeMin, timeMax)) {
+            Map<String, String> ext = privateProps(e);
+            String p = ext.getOrDefault("clientPhone", "");
+            if (phone.equals(p)) {
+                out.add(e);
+            }
+        }
+
+        out.sort((a, b) -> {
+            Instant ia = eventStartInstant(a);
+            Instant ib = eventStartInstant(b);
+            if (ia == null && ib == null) return 0;
+            if (ia == null) return 1;
+            if (ib == null) return -1;
+            return ia.compareTo(ib);
+        });
+
+        return out;
+    }
+
+    @Override
+    public Event createAvailabilityRuleEvent(String mode, String type, Instant start, Instant end, String reason) throws IOException {
+        String id = "dummy-rule-" + UUID.randomUUID();
+        String normalizedMode = safe(mode).trim().toUpperCase(Locale.ROOT);
+        String normalizedType = safe(type).trim().toUpperCase(Locale.ROOT);
+
+        Event ev = new Event();
+        ev.setId(id);
+        ev.setSummary(buildAvailabilityRuleSummary(normalizedMode, normalizedType, reason));
+        ev.setDescription(safe(reason));
+        ev.setHtmlLink("http://localhost/dummy/event/" + id);
+        ev.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(start))));
+        ev.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(end))));
+        ev.setTransparency("OPEN".equals(normalizedMode) ? "transparent" : "opaque");
+
+        Map<String, String> ext = privateProps(ev);
+        ext.put("appSource", "calendar-backend");
+        ext.put("entityType", "availability-rule");
+        ext.put("ruleMode", normalizedMode);
+        ext.put("blockType", normalizedType);
+        ext.put("blockReason", safe(reason));
+        ext.put("createdAt", String.valueOf(Instant.now().getEpochSecond()));
+        ev.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
+
+        store.put(id, ev);
+        return ev;
     }
 
     @Override
@@ -104,8 +191,11 @@ public class DummyCalendarClient implements CalendarClient {
         for (Event e : store.values()) {
             Instant s = eventStartInstant(e);
             Instant en = eventEndInstant(e);
-            if (s == null || en == null)
+            if (s == null || en == null) continue;
+
+            if (isOpenAvailabilityRule(e)) {
                 continue;
+            }
 
             if (s.isBefore(max) && en.isAfter(min)) {
                 TimePeriod tp = new TimePeriod();
@@ -119,44 +209,12 @@ public class DummyCalendarClient implements CalendarClient {
         return busy;
     }
 
-    @Override
-    public List<Event> listEventsByPhone(DateTime timeMin, DateTime timeMax, String phoneDigits) throws IOException {
-        Instant min = toInstant(timeMin);
-        Instant max = toInstant(timeMax);
-
-        String phone = (phoneDigits == null) ? "" : phoneDigits.replaceAll("\\D", "");
-
-        List<Event> out = new ArrayList<>();
-        for (Event e : store.values()) {
-            Instant start = eventStartInstant(e);
-            if (start == null)
-                continue;
-
-            if (!start.isBefore(min) && start.isBefore(max)) {
-                Map<String, String> ext = privateProps(e);
-                String p = ext.getOrDefault("clientPhone", "");
-                if (phone.equals(p))
-                    out.add(e);
-            }
-        }
-
-        out.sort(Comparator.comparing((Event e) -> DummyCalendarClient.eventStartInstant(e),
-                Comparator.nullsLast(Comparator.naturalOrder())));
-        return out;
-    }
-
-    // ===== helpers =====
-
     private static void applyPrivateProps(Event ev, Servico s) {
         Map<String, String> ext = privateProps(ev);
 
-        // marca do sistema (para consistência com GoogleCalendarClient)
         ext.put("appSource", "calendar-backend");
-
-        // guardar serviceType limpo
+        ext.put("entityType", "booking");
         ext.put("serviceType", safe(s.getTitle()));
-
-        // status + tempos
         ext.put("status", safe(s.getStatus()));
 
         if (s.getPendingExpiresAt() != null) {
@@ -171,13 +229,11 @@ public class DummyCalendarClient implements CalendarClient {
             ext.remove("phoneVerifiedAt");
         }
 
-        // cliente
         ext.put("clientFirstName", safe(s.getClientFirstName()));
         ext.put("clientLastName", safe(s.getClientLastName()));
         ext.put("clientEmail", safe(s.getClientEmail()));
         ext.put("clientPhone", safe(s.getClientPhone()));
 
-        // endereço estruturado (mesmo padrão do GoogleCalendarClient)
         ext.put("clientCep", safe(s.getClientCep()));
         ext.put("clientStreet", safe(s.getClientStreet()));
         ext.put("clientNeighborhood", safe(s.getClientNeighborhood()));
@@ -189,6 +245,33 @@ public class DummyCalendarClient implements CalendarClient {
         ev.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
     }
 
+    private static boolean isSystemEvent(Event e) {
+        Map<String, String> ext = privateProps(e);
+        return "calendar-backend".equals(ext.get("appSource"));
+    }
+
+    private static boolean isBookingEvent(Event e) {
+        String entityType = entityTypeOf(e);
+        return entityType.isBlank() || "booking".equals(entityType);
+    }
+
+    private static boolean isAvailabilityRuleEvent(Event e) {
+        String entityType = entityTypeOf(e);
+        return "availability-rule".equals(entityType) || "availability-block".equals(entityType);
+    }
+
+    private static boolean isOpenAvailabilityRule(Event e) {
+        if (!isAvailabilityRuleEvent(e)) return false;
+        Map<String, String> ext = privateProps(e);
+        return "OPEN".equalsIgnoreCase(ext.getOrDefault("ruleMode", ""));
+    }
+
+    private static String entityTypeOf(Event e) {
+        Map<String, String> ext = privateProps(e);
+        String v = ext.getOrDefault("entityType", "");
+        return v == null ? "" : v.trim().toLowerCase(Locale.ROOT);
+    }
+
     private static Map<String, String> privateProps(Event e) {
         if (e.getExtendedProperties() == null) {
             e.setExtendedProperties(new Event.ExtendedProperties());
@@ -198,31 +281,36 @@ public class DummyCalendarClient implements CalendarClient {
     }
 
     private static Instant toInstant(DateTime dt) {
-        if (dt == null)
-            return Instant.EPOCH;
+        if (dt == null) return Instant.EPOCH;
         return Instant.ofEpochMilli(dt.getValue());
     }
 
     private static Instant eventStartInstant(Event e) {
-        if (e == null || e.getStart() == null)
-            return null;
+        if (e == null || e.getStart() == null) return null;
         DateTime dt = e.getStart().getDateTime();
-        if (dt == null)
-            dt = e.getStart().getDate();
-        if (dt == null)
-            return null;
+        if (dt == null) dt = e.getStart().getDate();
+        if (dt == null) return null;
         return Instant.ofEpochMilli(dt.getValue());
     }
 
     private static Instant eventEndInstant(Event e) {
-        if (e == null || e.getEnd() == null)
-            return null;
+        if (e == null || e.getEnd() == null) return null;
         DateTime dt = e.getEnd().getDateTime();
-        if (dt == null)
-            dt = e.getEnd().getDate();
-        if (dt == null)
-            return null;
+        if (dt == null) dt = e.getEnd().getDate();
+        if (dt == null) return null;
         return Instant.ofEpochMilli(dt.getValue());
+    }
+
+    private static String buildAvailabilityRuleSummary(String mode, String type, String reason) {
+        String prefix;
+        if ("OPEN".equals(mode)) {
+            prefix = "DAY".equals(type) ? "[Abertura de dia]" : "[Abertura de horário]";
+        } else {
+            prefix = "DAY".equals(type) ? "[Bloqueio de dia]" : "[Bloqueio de horário]";
+        }
+
+        String r = safe(reason);
+        return r.isBlank() ? prefix : prefix + " " + r;
     }
 
     private static String safe(String s) {

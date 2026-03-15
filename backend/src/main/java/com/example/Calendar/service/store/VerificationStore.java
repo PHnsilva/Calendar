@@ -8,12 +8,13 @@ public interface VerificationStore {
 
     void delete(String verificationId);
 
-    // (opcional) para debug/cleanup
+    Session refreshResend(String verificationId, long resendAfterSeconds);
+
     default void cleanupExpired() {}
 
     class Session {
         public final String verificationId;
-        public final String scopeId; // eventId OU "recovery:phone"
+        public final String scopeId;
         public final String phoneDigits;
         public final String code;
         public final long expiresAtEpochSec;
@@ -26,6 +27,17 @@ public interface VerificationStore {
             this.code = code;
             this.expiresAtEpochSec = exp;
             this.resendAllowedAtEpochSec = resendAt;
+        }
+
+        public Session withResendAllowedAt(long resendAtEpochSec) {
+            return new Session(
+                    verificationId,
+                    scopeId,
+                    phoneDigits,
+                    code,
+                    expiresAtEpochSec,
+                    resendAtEpochSec
+            );
         }
 
         public boolean isExpired() {

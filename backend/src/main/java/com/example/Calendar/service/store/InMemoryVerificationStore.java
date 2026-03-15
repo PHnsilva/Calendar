@@ -12,7 +12,7 @@ public class InMemoryVerificationStore implements VerificationStore {
     public Session create(String scopeId, String phoneDigits, long otpTtlSeconds, long resendAfterSeconds) {
         long now = Instant.now().getEpochSecond();
         String verificationId = "vfy_" + UUID.randomUUID();
-        String code = random6();
+        String code = random3();
 
         Session s = new Session(
                 verificationId,
@@ -38,13 +38,24 @@ public class InMemoryVerificationStore implements VerificationStore {
     }
 
     @Override
+    public Session refreshResend(String verificationId, long resendAfterSeconds) {
+        Session current = sessions.get(verificationId);
+        if (current == null) return null;
+
+        long now = Instant.now().getEpochSecond();
+        Session updated = current.withResendAllowedAt(now + resendAfterSeconds);
+        sessions.put(verificationId, updated);
+        return updated;
+    }
+
+    @Override
     public void cleanupExpired() {
         long now = Instant.now().getEpochSecond();
         sessions.entrySet().removeIf(e -> e.getValue().expiresAtEpochSec < now);
     }
 
-    private static String random6() {
-        int n = (int)(Math.random() * 900000) + 100000;
-        return String.valueOf(n);
+    private static String random3() {
+        int n = (int) (Math.random() * 1000);
+        return String.format("%03d", n);
     }
 }

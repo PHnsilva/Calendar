@@ -19,12 +19,9 @@ public class InternalCleanupController {
     @PostMapping("/cleanup")
     public InternalCleanupService.CleanupResult cleanup(
             @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String header,
-            @RequestParam(defaultValue = "30") long historyRetentionDays
-    ) throws IOException {
+            @RequestParam(required = false) Integer historyRetentionMonths) throws IOException {
 
         AdminTokenGuard.require(header);
-
-        long retentionSeconds = Math.max(0, historyRetentionDays) * 24L * 3600L;
-        return cleanupService.runDefault(retentionSeconds);
+        return cleanupService.runDefault(historyRetentionMonths);
     }
 }

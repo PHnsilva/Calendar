@@ -1,5 +1,6 @@
 package com.example.Calendar.service;
 
+import com.example.Calendar.config.AppProperties;
 import com.example.Calendar.config.BankingProperties;
 import com.example.Calendar.dto.AdminHealthResponse;
 import com.example.Calendar.dto.AdminStatementItem;
@@ -17,20 +18,38 @@ import java.util.stream.Collectors;
 
 public class AdminFinanceService {
 
+    private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
+
     private final BankingProperties props;
     private final StatementProvider provider;
-    private final ZoneId zone = ZoneId.of("America/Sao_Paulo");
+    private final AppProperties appProperties;
 
-    public AdminFinanceService(BankingProperties props, StatementProvider provider) {
+    public AdminFinanceService(BankingProperties props, StatementProvider provider, AppProperties appProperties) {
         this.props = props;
         this.provider = provider;
+        this.appProperties = appProperties;
     }
 
     public AdminStatementResponse statement(String from, String to) {
         requireEnabled();
 
-        LocalDate f = parseOr(from, LocalDate.now(zone).withDayOfMonth(1));
-        LocalDate t = parseOr(to, LocalDate.now(zone));
+        LocalDate today = LocalDate.now(ZONE);
+        LocalDate minHistoryDate = today
+                .withDayOfMonth(1)
+                .minusMonths(appProperties.getHistoryRetentionMonths());
+
+        LocalDate f = parseOr(from, today.withDayOfMonth(1));
+        LocalDate t = parseOr(to, today);
+
+        if (f.isBefore(minHistoryDate)) {
+            f = minHistoryDate;
+        }
+        if (t.isBefore(minHistoryDate)) {
+            t = minHistoryDate;
+        }
+        if (t.isAfter(today)) {
+            t = today;
+        }
 
         if (f.isAfter(t)) {
             throw new BadRequestException("Parâmetros inválidos: from deve ser <= to");
@@ -44,13 +63,18 @@ public class AdminFinanceService {
     }
 
     public AdminHealthResponse health() {
-        if (!props.isEnabled()) return new AdminHealthResponse(true, provider.name(), "disabled->dummy");
+        if (!props.isEnabled()) {
+            return new AdminHealthResponse(true, provider.name(), "disabled->dummy");
+        }
+
         StatementProvider.Health h = provider.health();
         return new AdminHealthResponse(h.ok(), h.provider(), h.message());
     }
 
     private void requireEnabled() {
-        if (!props.isEnabled()) throw new ForbiddenException("Banking desabilitado");
+        if (!props.isEnabled()) {
+            throw new ForbiddenException("Banking desabilitado");
+        }
     }
 
     private AdminStatementItem toDto(StatementProvider.Item i) {
@@ -64,24 +88,30 @@ public class AdminFinanceService {
     }
 
     private static LocalDate parseOr(String s, LocalDate def) {
-        if (s == null || s.isBlank()) return def;
+        if (s == null || s.isBlank()) {
+            return def;
+        }
         return LocalDate.parse(s.trim());
     }
 
     private long parseAmountToCents(String raw) {
-        if (raw == null || raw.isBlank()) return 0L;
+        if (raw == null || raw.isBlank()) {
+            return 0L;
+        }
 
         String s = raw.trim();
         boolean negative = s.startsWith("-") || (s.contains("(") && s.contains(")"));
 
         s = s.replace("R$", "")
-             .replace("r$", "")
-             .replace("(", "")
-             .replace(")", "")
-             .replaceAll("\\s+", "")
-             .replaceAll("[^0-9,.-]", "");
+                .replace("r$", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replaceAll("\\s+", "")
+                .replaceAll("[^0-9,.-]", "");
 
-        if (s.isBlank()) return 0L;
+        if (s.isBlank()) {
+            return 0L;
+        }
 
         if (s.startsWith("-")) {
             s = s.substring(1);

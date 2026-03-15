@@ -66,9 +66,7 @@ public class SupabaseVerificationStore implements VerificationStore {
     @Override
     public void cleanupExpired() {
         long now = Instant.now().getEpochSecond();
-        // PostgREST: delete where expires_at < now -> não tem lt nativo no helper
-        // acima.
-        // Mantemos sem cleanup aqui; faz cleanup via endpoint interno quando precisar.
+        sb.deleteLt(table, "expires_at", now);
     }
 
     private static String random3() {
@@ -78,6 +76,22 @@ public class SupabaseVerificationStore implements VerificationStore {
 
     private static String str(Object o) {
         return o == null ? "" : String.valueOf(o);
+    }
+
+    @Override
+    public Session refreshResend(String verificationId, long resendAfterSeconds) {
+        Session current = get(verificationId);
+        if (current == null)
+            return null;
+
+        long now = Instant.now().getEpochSecond();
+        long resendAt = now + resendAfterSeconds;
+
+        sb.update(table,
+                Map.of("verification_id", verificationId),
+                Map.of("resend_allowed_at", resendAt));
+
+        return current.withResendAllowedAt(resendAt);
     }
 
     private static long longv(Object o) {

@@ -1,6 +1,10 @@
 package com.example.Calendar.controller;
 
-import com.example.Calendar.dto.*;
+import com.example.Calendar.dto.VerifyConfirmRequest;
+import com.example.Calendar.dto.VerifyConfirmResponse;
+import com.example.Calendar.dto.VerifyResendRequest;
+import com.example.Calendar.dto.VerifyStartRequest;
+import com.example.Calendar.dto.VerifyStartResponse;
 import com.example.Calendar.service.VerificationService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -19,15 +23,22 @@ public class VerificationController {
 
     @PostMapping("/start")
     public VerifyStartResponse start(@Valid @RequestBody VerifyStartRequest req) throws IOException {
-        var r = verificationService.start(req.getToken(), req.getPhone());
-        return new VerifyStartResponse(r.verificationId(), r.expiresInSeconds(), r.resendAfterSeconds());
+        VerificationService.StartResult r = verificationService.start(req.getToken(), req.getPhone());
+        return new VerifyStartResponse(
+                r.verificationId(),
+                r.expiresInSeconds(),
+                r.resendAfterSeconds()
+        );
     }
 
-    // NOVO: reenviar código para o mesmo verificationId (respeitando resendAfter)
     @PostMapping("/resend")
     public VerifyStartResponse resend(@Valid @RequestBody VerifyResendRequest req) {
-        var r = verificationService.resend(req.getVerificationId());
-        return new VerifyStartResponse(r.verificationId(), r.expiresInSeconds(), r.resendAfterSeconds());
+        VerificationService.StartResult r = verificationService.resend(req.getVerificationId());
+        return new VerifyStartResponse(
+                r.verificationId(),
+                r.expiresInSeconds(),
+                r.resendAfterSeconds()
+        );
     }
 
     @PostMapping("/confirm")

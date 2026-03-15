@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class AvailabilityBlockService {
 
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
-    private static final Set<Integer> ALLOWED_MINUTES = Set.of(0, 30);
+    private static final Set<Integer> ALLOWED_MINUTES = Set.of(0);
 
     private final CalendarClient calendar;
     private final AppProperties props;
@@ -142,7 +142,9 @@ public class AvailabilityBlockService {
                 new DateTime(Date.from(resolvedTo.plusDays(1).atStartOfDay(ZONE).toInstant()))
         );
 
-        if (items == null) return Collections.emptyList();
+        if (items == null) {
+            return Collections.emptyList();
+        }
 
         return items.stream()
                 .filter(e -> matchesMode(e, normalizedMode))
@@ -208,7 +210,9 @@ public class AvailabilityBlockService {
                 new DateTime(Date.from(from.toInstant())),
                 new DateTime(Date.from(to.toInstant()))
         );
-        if (events == null || events.isEmpty()) return Collections.emptyList();
+        if (events == null || events.isEmpty()) {
+            return Collections.emptyList();
+        }
 
         List<AvailabilityConflictItem> out = new ArrayList<>();
         for (Event e : events) {
@@ -355,7 +359,7 @@ public class AvailabilityBlockService {
             throw new BadRequestException("Horário inválido");
         }
         if (!ALLOWED_MINUTES.contains(time.getMinute())) {
-            throw new BadRequestException("Minutos inválidos. Use 00 ou 30.");
+            throw new BadRequestException("Minutos inválidos. Use 00.");
         }
     }
 
@@ -376,8 +380,12 @@ public class AvailabilityBlockService {
     private void validateDateWindow(LocalDate requestedDate) {
         LocalDate today = LocalDate.now(ZONE);
 
-        if (requestedDate == null) throw new BadRequestException("date é obrigatório");
-        if (requestedDate.isBefore(today)) throw new BadRequestException("Data inválida: não pode ser no passado");
+        if (requestedDate == null) {
+            throw new BadRequestException("date é obrigatório");
+        }
+        if (requestedDate.isBefore(today)) {
+            throw new BadRequestException("Data inválida: não pode ser no passado");
+        }
 
         YearMonth ymReq = YearMonth.from(requestedDate);
         YearMonth ymNow = YearMonth.from(today);
@@ -463,5 +471,6 @@ public class AvailabilityBlockService {
         return s == null ? "" : s.trim();
     }
 
-    private record RuleWindow(String mode, String type, Instant start, Instant end, String reason) {}
+    private record RuleWindow(String mode, String type, Instant start, Instant end, String reason) {
+    }
 }

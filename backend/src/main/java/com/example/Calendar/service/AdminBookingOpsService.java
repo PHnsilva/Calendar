@@ -6,6 +6,7 @@ import com.example.Calendar.dto.AdminBulkCancelRequest;
 import com.example.Calendar.dto.AdminBulkCancelResponse;
 import com.example.Calendar.exception.BadRequestException;
 import com.example.Calendar.google.CalendarClient;
+import com.example.Calendar.service.store.PendingStore;
 import com.google.api.services.calendar.model.Event;
 import org.springframework.stereotype.Service;
 
@@ -15,11 +16,13 @@ import java.util.*;
 @Service
 public class AdminBookingOpsService {
 
-    private final CalendarClient calendar;
+    private final PendingStore pendingStore;
     private final AppProperties props;
+    private CalendarClient calendar;
 
-    public AdminBookingOpsService(CalendarClient calendar, AppProperties props) {
+    public AdminBookingOpsService(CalendarClient calendar, PendingStore pendingStore, AppProperties props) {
         this.calendar = calendar;
+        this.pendingStore = pendingStore;
         this.props = props;
     }
 
@@ -69,6 +72,7 @@ public class AdminBookingOpsService {
                 continue;
             }
 
+            pendingStore.deleteByEventId(eventId);
             calendar.deleteEvent(eventId);
 
             item.setSuccess(true);
@@ -92,14 +96,17 @@ public class AdminBookingOpsService {
     }
 
     private Map<String, String> privateExt(Event e) {
-        if (e.getExtendedProperties() == null) return Collections.emptyMap();
-        if (e.getExtendedProperties().getPrivate() == null) return Collections.emptyMap();
+        if (e.getExtendedProperties() == null)
+            return Collections.emptyMap();
+        if (e.getExtendedProperties().getPrivate() == null)
+            return Collections.emptyMap();
         return e.getExtendedProperties().getPrivate();
     }
 
     private String buildSuccessMessage(String reason) {
         String r = reason == null ? "" : reason.trim();
-        if (r.isBlank()) return "Agendamento cancelado";
+        if (r.isBlank())
+            return "Agendamento cancelado";
         return "Agendamento cancelado: " + r;
     }
 }

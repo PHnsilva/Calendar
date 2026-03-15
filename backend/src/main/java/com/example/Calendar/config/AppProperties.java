@@ -109,6 +109,13 @@ public class AppProperties {
     @Value("${google.maps.routes.fieldMask:routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline}")
     private String googleRoutesFieldMask;
 
+    @Value("${app.history.retentionMonths:2}")
+    private int historyRetentionMonths;
+
+    public int getHistoryRetentionMonths() {
+        return Math.max(0, Math.min(historyRetentionMonths, 24));
+    }
+
     public String getZone() {
         return zone;
     }
@@ -123,7 +130,8 @@ public class AppProperties {
 
     public Set<String> getAllowedCitiesNormalized() {
         String csv = (allowedCitiesCsv == null ? "" : allowedCitiesCsv.trim());
-        if (csv.isBlank()) return Collections.emptySet();
+        if (csv.isBlank())
+            return Collections.emptySet();
 
         return Arrays.stream(csv.split(","))
                 .map(String::trim)
@@ -256,7 +264,8 @@ public class AppProperties {
 
     public LocalDate getScheduleCycleStart() {
         String v = (scheduleCycleStart == null) ? "" : scheduleCycleStart.trim();
-        if (v.isBlank()) return null;
+        if (v.isBlank())
+            return null;
         try {
             return LocalDate.parse(v);
         } catch (Exception e) {
@@ -283,7 +292,8 @@ public class AppProperties {
     private LocalTime parseTimeOrDefault(String raw, LocalTime def) {
         try {
             String v = raw == null ? "" : raw.trim();
-            if (v.isBlank()) return def;
+            if (v.isBlank())
+                return def;
             return LocalTime.parse(v);
         } catch (Exception e) {
             return def;

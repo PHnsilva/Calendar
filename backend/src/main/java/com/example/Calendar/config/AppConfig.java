@@ -46,8 +46,7 @@ public class AppConfig {
                 props.getWhatsappToken(),
                 props.getWhatsappPhoneNumberId(),
                 props.getWhatsappTemplateName(),
-                props.getWhatsappLanguage()
-        );
+                props.getWhatsappLanguage());
     }
 
     @Bean
@@ -75,8 +74,7 @@ public class AppConfig {
     public VerificationStore verificationStore(
             AppProperties props,
             ObjectProvider<SupabaseClient> supabaseClientProvider,
-            InMemoryVerificationStore mem
-    ) {
+            InMemoryVerificationStore mem) {
         SupabaseClient sb = supabaseClientProvider.getIfAvailable();
         if (props.isSupabaseEnabled() && sb != null) {
             return new SupabaseVerificationStore(sb, props.getTableVerification());
@@ -88,8 +86,7 @@ public class AppConfig {
     public PendingStore pendingStore(
             AppProperties props,
             ObjectProvider<SupabaseClient> supabaseClientProvider,
-            InMemoryPendingStore mem
-    ) {
+            InMemoryPendingStore mem) {
         SupabaseClient sb = supabaseClientProvider.getIfAvailable();
         if (props.isSupabaseEnabled() && sb != null) {
             return new SupabasePendingStore(sb, props.getTablePending());
@@ -101,8 +98,7 @@ public class AppConfig {
     public HistoryStore historyStore(
             AppProperties props,
             ObjectProvider<SupabaseClient> supabaseClientProvider,
-            InMemoryHistoryStore mem
-    ) {
+            InMemoryHistoryStore mem) {
         SupabaseClient sb = supabaseClientProvider.getIfAvailable();
         if (props.isSupabaseEnabled() && sb != null) {
             return new SupabaseHistoryStore(sb, props.getTableHistory());
@@ -115,16 +111,16 @@ public class AppConfig {
             CalendarClient calendarClient,
             TokenUtil tokenUtil,
             VerificationService verificationService,
+            PendingStore pendingStore,
             AppProperties props,
-            AvailabilityPolicyService availabilityPolicyService
-    ) {
+            AvailabilityPolicyService availabilityPolicyService) {
         return new ServicoService(
                 calendarClient,
                 tokenUtil,
                 verificationService,
+                pendingStore,
                 props,
-                availabilityPolicyService
-        );
+                availabilityPolicyService);
     }
 
     @Bean
@@ -132,29 +128,31 @@ public class AppConfig {
             CalendarClient calendarClient,
             TokenUtil tokenUtil,
             VerificationStore verificationStore,
+            PendingStore pendingStore,
             WhatsAppClient whatsAppClient,
-            AppProperties props
-    ) {
-        return new VerificationService(calendarClient, tokenUtil, verificationStore, whatsAppClient, props);
+            AppProperties props) {
+        return new VerificationService(
+                calendarClient,
+                tokenUtil,
+                verificationStore,
+                pendingStore,
+                whatsAppClient,
+                props);
     }
 
     @Bean
     public RecoveryService recoveryService(
             VerificationStore verificationStore,
-            PendingStore pendingStore,
             HistoryStore historyStore,
             WhatsAppClient whatsAppClient,
             AppProperties props,
-            ServicoService servicoService
-    ) {
+            ServicoService servicoService) {
         return new RecoveryService(
                 verificationStore,
-                pendingStore,
                 historyStore,
                 whatsAppClient,
                 props,
-                servicoService
-        );
+                servicoService);
     }
 
     @Bean
@@ -167,14 +165,14 @@ public class AppConfig {
             CalendarClient calendarClient,
             PendingStore pendingStore,
             VerificationStore verificationStore,
-            HistoryStore historyStore
-    ) {
+            HistoryStore historyStore,
+            AppProperties props) {
         return new InternalCleanupService(
                 calendarClient,
                 pendingStore,
                 verificationStore,
-                historyStore
-        );
+                historyStore,
+                props);
     }
 
     @Bean
@@ -188,8 +186,7 @@ public class AppConfig {
             CalendarClient calendarClient,
             TokenUtil tokenUtil,
             GoogleRoutesClient googleRoutesClient,
-            AppProperties props
-    ) {
+            AppProperties props) {
         boolean enabled = props.isGoogleMapsEnabled() && !props.getGoogleMapsApiKey().isBlank();
         return new RoutesService(calendarClient, tokenUtil, googleRoutesClient, enabled);
     }

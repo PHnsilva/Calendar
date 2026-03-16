@@ -10,6 +10,10 @@ export type CalendarEvent = {
   endTime: string;
   city?: string;
   customerName?: string;
+  customerAddress?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  serviceLabel?: string;
   status?: CalendarEventStatus;
 };
 

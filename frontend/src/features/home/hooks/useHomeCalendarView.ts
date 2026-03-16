@@ -43,7 +43,6 @@ export function useHomeCalendarView() {
     selectedSlot,
     currentMonth,
     isBookingModalOpen,
-    setSelectedDate,
     setCurrentMonth,
     handleDateSelect,
     handleSlotSelect,

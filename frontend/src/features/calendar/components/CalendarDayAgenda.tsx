@@ -16,14 +16,16 @@ type CalendarDayAgendaProps = {
   selectedDate: string;
   events: CalendarEvent[];
   unavailableDates: string[];
-  onOpenBookingModal: () => void;
+  isSelectingDate: boolean;
+  onRequestBookingDate: () => void;
 };
 
 export default function CalendarDayAgenda({
   selectedDate,
   events,
   unavailableDates,
-  onOpenBookingModal,
+  isSelectingDate,
+  onRequestBookingDate,
 }: CalendarDayAgendaProps) {
   const dayEvents = events.filter((event) => event.date === selectedDate);
   const isUnavailable = unavailableDates.includes(selectedDate);
@@ -41,6 +43,13 @@ export default function CalendarDayAgenda({
           <span>{dayEvents.length === 1 ? "agendamento" : "agendamentos"}</span>
         </div>
       </div>
+
+      {isSelectingDate ? (
+        <div className="agenda__selection-hint">
+          <strong>Selecione um dia</strong>
+          <p>Escolha um dia disponível no calendário para abrir o formulário.</p>
+        </div>
+      ) : null}
 
       <div className="agenda__body">
         {isUnavailable ? (
@@ -80,11 +89,18 @@ export default function CalendarDayAgenda({
       <div className="agenda__footer">
         <button
           type="button"
-          className="primary-action primary-action--block"
-          disabled={isUnavailable}
-          onClick={onOpenBookingModal}
+          className={[
+            "booking-cta",
+            isSelectingDate ? "booking-cta--active" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          onClick={onRequestBookingDate}
         >
-          Ver horários e iniciar agendamento
+          <span className="booking-cta__icon" aria-hidden="true">
+            +
+          </span>
+          <span>{isSelectingDate ? "Selecione um dia" : "Agendamentos"}</span>
         </button>
       </div>
     </div>

@@ -5,9 +5,8 @@ type CalendarLegendProps = {
 const items = [
   { key: "available", label: "Disponível" },
   { key: "unavailable", label: "Indisponível" },
-  { key: "booked", label: "Com agendamento" },
-  { key: "selected", label: "Selecionado" },
   { key: "today", label: "Hoje" },
+  { key: "booked", label: "Com agendamentos" },
 ] as const;
 
 export default function CalendarLegend({ compact = false }: CalendarLegendProps) {

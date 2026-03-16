@@ -10,21 +10,23 @@ function toMonthStart(date: Date): string {
 
 function shiftMonth(monthStart: string, delta: number): string {
   const base = toLocalDate(monthStart);
-  return toMonthStart(new Date(base.getFullYear(), base.getMonth() + delta, 1));
+  const next = new Date(base.getFullYear(), base.getMonth() + delta, 1);
+  return toMonthStart(next);
 }
 
 type CalendarToolbarProps = {
   currentMonth: string;
   onMonthChange: (month: string) => void;
+  onHelpOpen: () => void;
 };
 
 export default function CalendarToolbar({
   currentMonth,
   onMonthChange,
+  onHelpOpen,
 }: CalendarToolbarProps) {
   const currentMonthLabel = new Intl.DateTimeFormat("pt-BR", {
     month: "long",
-    year: "numeric",
   }).format(toLocalDate(currentMonth));
 
   const today = new Date();
@@ -38,33 +40,36 @@ export default function CalendarToolbar({
 
   return (
     <div className="calendar-toolbar">
-      <div className="calendar-toolbar__group">
-        <span className="calendar-toolbar__eyebrow">Agenda inteligente</span>
-        <strong className="calendar-toolbar__title">{currentMonthLabel}</strong>
-      </div>
+      <button
+        type="button"
+        className="calendar-toolbar__help"
+        onClick={onHelpOpen}
+        aria-label="Abrir ajuda do calendário"
+        title="Ajuda"
+      >
+        ?
+      </button>
 
-      <div className="calendar-toolbar__controls">
-        <div className="calendar-toolbar__group-buttons">
-          <button
-            type="button"
-            className="toolbar-button"
-            onClick={() => onMonthChange(shiftMonth(currentMonth, -1))}
-            disabled={!canGoPrev}
-            aria-label="Ir para o mês anterior permitido"
-          >
-            ←
-          </button>
+      <strong className="calendar-toolbar__title">{currentMonthLabel}</strong>
 
-          <button
-            type="button"
-            className="toolbar-button"
-            onClick={() => onMonthChange(shiftMonth(currentMonth, 1))}
-            disabled={!canGoNext}
-            aria-label="Ir para o próximo mês permitido"
-          >
-            →
-          </button>
-        </div>
+      <div className="calendar-toolbar__nav-group">
+        <button
+          type="button"
+          className="calendar-toolbar__nav"
+          onClick={() => onMonthChange(shiftMonth(currentMonth, -1))}
+          disabled={!canGoPrev}
+        >
+          Ant
+        </button>
+
+        <button
+          type="button"
+          className="calendar-toolbar__nav"
+          onClick={() => onMonthChange(shiftMonth(currentMonth, 1))}
+          disabled={!canGoNext}
+        >
+          Próx
+        </button>
       </div>
     </div>
   );

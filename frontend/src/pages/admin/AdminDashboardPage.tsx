@@ -157,7 +157,7 @@ export default function AdminDashboardPage() {
               onOpenDayBooking={(date) => {
                 setSelectedDate(date);
               }}
-              showInlineBookingAction={false}
+              bookingPickMode={false}
             />
           </div>
         </div>

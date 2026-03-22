@@ -1,9 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import HomeCalendarSection from "../../features/home/components/HomeCalendarSection";
 import HomeSidebar from "../../features/home/components/HomeSidebar";
 import BookingFormModal from "../../features/booking-form/components/BookingFormModal";
 import { useHomeCalendarView } from "../../features/home/hooks/useHomeCalendarView";
+import { useHomeBookingSelection } from "../../app/home-booking-provider";
 import type { CalendarEvent } from "../../features/calendar/types";
+import { getLocalCalendarEvents } from "../../lib/storage";
 
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
@@ -14,6 +16,16 @@ function toIsoDate(date: Date): string {
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
   const day = `${date.getDate()}`.padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function toMonthStart(dateString: string): string {
+  return `${dateString.slice(0, 7)}-01`;
+}
+
+function shiftMonth(monthStart: string, delta: number): string {
+  const base = new Date(`${monthStart}T12:00:00`);
+  const next = new Date(base.getFullYear(), base.getMonth() + delta, 1);
+  return `${next.getFullYear()}-${`${next.getMonth() + 1}`.padStart(2, "0")}-01`;
 }
 
 function buildMonthDate(monthStart: string, day: number): string {
@@ -30,71 +42,32 @@ function buildMonthMockEvents(monthStart: string): CalendarEvent[] {
   ).getDate();
 
   const entries = [
-    {
-      day: 3,
-      title: "Revisão leve",
-      startTime: "08:30",
-      endTime: "09:00",
-      city: "Itabirito",
-    },
-    {
-      day: 3,
-      title: "Troca de óleo",
-      startTime: "10:00",
-      endTime: "10:30",
-      city: "Itabirito",
-    },
-    {
-      day: 7,
-      title: "Check-up geral",
-      startTime: "09:30",
-      endTime: "10:00",
-      city: "Ouro Preto",
-    },
-    {
-      day: 13,
-      title: "Diagnóstico",
-      startTime: "13:30",
-      endTime: "14:00",
-      city: "Moeda",
-    },
-    {
-      day: 18,
-      title: "Inspeção elétrica",
-      startTime: "15:00",
-      endTime: "15:30",
-      city: "Itabirito",
-    },
-    {
-      day: 18,
-      title: "Revisão preventiva",
-      startTime: "16:00",
-      endTime: "16:30",
-      city: "Itabirito",
-    },
-    {
-      day: 25,
-      title: "Check-list final",
-      startTime: "09:30",
-      endTime: "10:00",
-      city: "Ouro Preto",
-    },
+    { day: 2, name: "Mariana Souza", address: "Rua A, 120 - Centro", email: "mariana@email.com", phone: "31999990001", startTime: "08:00", endTime: "09:00", city: "Itabirito" },
+    { day: 7, name: "Felipe Lima", address: "Av. B, 420 - Pilar", email: "felipe@email.com", phone: "31999990002", startTime: "09:00", endTime: "10:00", city: "Ouro Preto" },
+    { day: 12, name: "Ana Ribeiro", address: "Rua C, 85 - Centro", email: "ana@email.com", phone: "31999990003", startTime: "13:00", endTime: "14:00", city: "Moeda" },
+    { day: 18, name: "Carlos Mendes", address: "Rua D, 41 - Novo Horizonte", email: "carlos@email.com", phone: "31999990004", startTime: "15:00", endTime: "16:00", city: "Itabirito" },
+    { day: 21, name: "Paula Costa", address: "Rua E, 210 - Rosário", email: "paula@email.com", phone: "31999990005", startTime: "10:00", endTime: "11:00", city: "Ouro Preto" },
+    { day: 28, name: "João Silva", address: "Rua F, 300 - Centro", email: "joao@email.com", phone: "31999990006", startTime: "18:00", endTime: "19:00", city: "Itabirito" },
   ];
 
   return entries
     .filter((entry) => entry.day <= daysInMonth)
     .map((entry, index) => ({
       id: `${monthStart}-${index}`,
-      title: entry.title,
+      title: "Visita técnica",
       date: buildMonthDate(monthStart, entry.day),
       startTime: entry.startTime,
       endTime: entry.endTime,
       city: entry.city,
+      customerName: entry.name,
+      addressLine: entry.address,
+      email: entry.email,
+      phone: entry.phone,
       status: "booked" as const,
     }));
 }
 
-function buildUnavailableDates(monthStart: string): string[] {
+function build4x4UnavailableDates(monthStart: string, anchorMonth: string): string[] {
   const reference = toLocalDate(monthStart);
   const daysInMonth = new Date(
     reference.getFullYear(),
@@ -102,39 +75,67 @@ function buildUnavailableDates(monthStart: string): string[] {
     0,
   ).getDate();
 
-  const today = new Date();
-  const todayMonth = today.getMonth();
-  const todayYear = today.getFullYear();
-
+  const anchorDate = toLocalDate(anchorMonth);
   const values = new Set<string>();
 
   for (let day = 1; day <= daysInMonth; day += 1) {
     const date = new Date(reference.getFullYear(), reference.getMonth(), day);
     const iso = toIsoDate(date);
 
-    if (date.getDay() === 0) {
-      values.add(iso);
-    }
+    const diffInDays = Math.floor(
+      (date.getTime() - anchorDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
-    if (
-      reference.getFullYear() === todayYear &&
-      reference.getMonth() === todayMonth &&
-      day < today.getDate()
-    ) {
+    const normalized = ((diffInDays % 8) + 8) % 8;
+    if (normalized >= 4) {
       values.add(iso);
     }
   }
 
-  [6, 12, 19, 26].forEach((day) => {
-    if (day <= daysInMonth) {
-      values.add(buildMonthDate(monthStart, day));
-    }
-  });
-
   return Array.from(values);
 }
 
+function findFirstAvailableDate(
+  monthStart: string,
+  unavailableDates: string[],
+): string {
+  const reference = toLocalDate(monthStart);
+  const daysInMonth = new Date(
+    reference.getFullYear(),
+    reference.getMonth() + 1,
+    0,
+  ).getDate();
+  const todayIso = toIsoDate(new Date());
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = buildMonthDate(monthStart, day);
+    if (date < todayIso) continue;
+    if (!unavailableDates.includes(date)) {
+      return date;
+    }
+  }
+
+  return todayIso;
+}
+
+function mergeEvents(baseEvents: CalendarEvent[], localEvents: CalendarEvent[]) {
+  const map = new Map<string, CalendarEvent>();
+  for (const event of [...baseEvents, ...localEvents]) {
+    map.set(event.id, event);
+  }
+  return Array.from(map.values()).sort((a, b) => {
+    const byDate = a.date.localeCompare(b.date);
+    if (byDate !== 0) return byDate;
+    return a.startTime.localeCompare(b.startTime);
+  });
+}
+
 export default function HomePage() {
+  const today = new Date();
+  const todayIso = toIsoDate(today);
+  const currentAllowedMonth = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-01`;
+  const nextAllowedMonth = shiftMonth(currentAllowedMonth, 1);
+
   const {
     selectedDate,
     selectedSlot,
@@ -146,49 +147,85 @@ export default function HomePage() {
     closeBookingModal,
   } = useHomeCalendarView();
 
-  const events = useMemo(() => buildMonthMockEvents(currentMonth), [currentMonth]);
-  const unavailableDates = useMemo(
-    () => buildUnavailableDates(currentMonth),
-    [currentMonth],
+  const { quickBookingRequestId, requestQuickBooking } = useHomeBookingSelection();
+  const lastQuickRequestRef = useRef(0);
+  const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
+  const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
+    getLocalCalendarEvents().filter((event) => event.date >= todayIso),
   );
+
+  const demoEvents = useMemo(
+    () => [
+      ...buildMonthMockEvents(currentAllowedMonth),
+      ...buildMonthMockEvents(nextAllowedMonth),
+    ].filter((event) => event.date >= todayIso),
+    [currentAllowedMonth, nextAllowedMonth, todayIso],
+  );
+
+  const allEvents = useMemo(() => mergeEvents(demoEvents, localEvents), [demoEvents, localEvents]);
+
+  const allUnavailableDates = useMemo(
+    () => [
+      ...build4x4UnavailableDates(currentAllowedMonth, currentAllowedMonth),
+      ...build4x4UnavailableDates(nextAllowedMonth, currentAllowedMonth),
+    ],
+    [currentAllowedMonth, nextAllowedMonth],
+  );
+
+  useEffect(() => {
+    const selectedMonth = toMonthStart(selectedDate);
+    if (
+      selectedMonth === currentAllowedMonth ||
+      selectedMonth === nextAllowedMonth
+    ) {
+      setTimelineMonth(selectedMonth);
+    }
+  }, [selectedDate, currentAllowedMonth, nextAllowedMonth]);
+
+  useEffect(() => {
+    if (quickBookingRequestId === 0) return;
+    if (quickBookingRequestId === lastQuickRequestRef.current) return;
+
+    lastQuickRequestRef.current = quickBookingRequestId;
+
+    const firstAvailable = findFirstAvailableDate(currentMonth, allUnavailableDates);
+    handleDateSelect(firstAvailable);
+    openBookingModal();
+  }, [
+    quickBookingRequestId,
+    currentMonth,
+    allUnavailableDates,
+    handleDateSelect,
+    openBookingModal,
+  ]);
 
   const handleCalendarDateSelect = (
     date: string,
     options?: { unavailable?: boolean },
   ) => {
-    handleDateSelect(date);
-
-    const isMobile = window.matchMedia("(max-width: 860px)").matches;
-    const isUnavailable = Boolean(options?.unavailable);
-
-    if (isMobile) {
-      window.requestAnimationFrame(() => {
-        document
-          .getElementById("day-agenda-panel")
-          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-      return;
-    }
-
-    if (!isUnavailable) {
-      openBookingModal();
-    }
-  };
-
-  const handleMiniCalendarDateSelect = (date: string) => {
+    if (options?.unavailable) return;
     handleDateSelect(date);
 
     const isMobile = window.matchMedia("(max-width: 860px)").matches;
     if (isMobile) {
       window.requestAnimationFrame(() => {
         document
-          .getElementById("day-agenda-panel")
+          .querySelector(".timeline-panel")
           ?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     }
   };
 
-  const selectedDateUnavailable = unavailableDates.includes(selectedDate);
+  const handleOpenDayBooking = (date: string) => {
+    handleDateSelect(date);
+    openBookingModal();
+  };
+
+  const handleBookingCreated = (event: CalendarEvent) => {
+    setLocalEvents((current) => mergeEvents(current, [event]));
+    setTimelineMonth(toMonthStart(event.date));
+    handleDateSelect(event.date);
+  };
 
   return (
     <div className="home-page">
@@ -197,22 +234,26 @@ export default function HomePage() {
       </section>
 
       <div className="home-grid">
+        <HomeSidebar
+          selectedDate={selectedDate}
+          events={allEvents}
+          activeMonth={timelineMonth}
+          currentAllowedMonth={currentAllowedMonth}
+          nextAllowedMonth={nextAllowedMonth}
+          onChangeTimelineMonth={setTimelineMonth}
+          onQuickBooking={requestQuickBooking}
+        />
+
         <HomeCalendarSection
           selectedDate={selectedDate}
           currentMonth={currentMonth}
-          events={events}
-          unavailableDates={unavailableDates}
+          currentAllowedMonth={currentAllowedMonth}
+          nextAllowedMonth={nextAllowedMonth}
+          events={allEvents}
+          unavailableDates={allUnavailableDates}
           onDateSelect={handleCalendarDateSelect}
           onMonthChange={setCurrentMonth}
-        />
-
-        <HomeSidebar
-          selectedDate={selectedDate}
-          currentMonth={currentMonth}
-          events={events}
-          unavailableDates={unavailableDates}
-          onDateSelect={handleMiniCalendarDateSelect}
-          onOpenBookingModal={openBookingModal}
+          onOpenDayBooking={handleOpenDayBooking}
         />
       </div>
 
@@ -220,12 +261,11 @@ export default function HomePage() {
         open={isBookingModalOpen}
         selectedDate={selectedDate}
         selectedSlot={selectedSlot}
-        events={events}
-        unavailableDates={unavailableDates}
+        events={allEvents}
+        unavailableDates={allUnavailableDates}
         onClose={closeBookingModal}
+        onBookingCreated={handleBookingCreated}
       />
-
-      {selectedDateUnavailable ? null : null}
     </div>
   );
 }

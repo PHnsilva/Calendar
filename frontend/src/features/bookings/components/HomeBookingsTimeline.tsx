@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getCityTone } from "../../../data/allowed-cities";
 import type { CalendarEvent } from "../../calendar/types";
 
@@ -109,8 +109,9 @@ export default function HomeBookingsTimeline({
       map.set(event.date, list);
     }
 
+    const hasSelectedDate = Boolean(selectedDate);
     const baseDate =
-      toMonthStart(selectedDate) === activeMonth && selectedDate >= todayIso
+      hasSelectedDate && toMonthStart(selectedDate) === activeMonth && selectedDate >= todayIso
         ? selectedDate
         : activeMonth === currentAllowedMonth
           ? todayIso
@@ -125,6 +126,10 @@ export default function HomeBookingsTimeline({
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, items]) => ({ date, items }));
   }, [events, activeMonth, currentAllowedMonth, selectedDate, todayIso]);
+
+  useEffect(() => {
+    setActiveEvent(null);
+  }, [selectedDate, activeMonth]);
 
   return (
     <>

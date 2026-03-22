@@ -144,20 +144,16 @@ export default function HomePage() {
     isBookingModalOpen,
     setCurrentMonth,
     handleDateSelect,
+    clearSelection,
     openBookingModal,
     closeBookingModal,
   } = useHomeCalendarView();
 
   const { quickBookingRequestId, requestQuickBooking } = useHomeBookingSelection();
   const lastQuickRequestRef = useRef(0);
-  const calendarSectionRef = useRef<HTMLElement | null>(null);
   const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
   const [isBookingGuideOpen, setIsBookingGuideOpen] = useState(false);
   const [isBookingPickMode, setIsBookingPickMode] = useState(false);
-  const [isCompactViewport, setIsCompactViewport] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia("(max-width: 860px)").matches : false,
-  );
-  const [isCalendarFocusActive, setIsCalendarFocusActive] = useState(false);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
   );
@@ -184,6 +180,7 @@ export default function HomePage() {
   );
 
   useEffect(() => {
+    if (!selectedDate) return;
     const selectedMonth = toMonthStart(selectedDate);
     if (selectedMonth === currentAllowedMonth || selectedMonth === nextAllowedMonth) {
       setTimelineMonth(selectedMonth);
@@ -191,37 +188,28 @@ export default function HomePage() {
   }, [selectedDate, currentAllowedMonth, nextAllowedMonth]);
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 860px)");
-    const apply = () => setIsCompactViewport(media.matches);
-
-    apply();
-    media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
-  }, []);
-
-  useEffect(() => {
     if (quickBookingRequestId === 0) return;
     if (quickBookingRequestId === lastQuickRequestRef.current) return;
 
     lastQuickRequestRef.current = quickBookingRequestId;
 
-    const firstAvailable = findFirstAvailableDate(currentMonth, allUnavailableDates);
-    const isMobile = window.matchMedia("(max-width: 860px)").matches;
-
-    handleDateSelect(firstAvailable);
+    clearSelection();
+    closeBookingModal();
+    setTimelineMonth(currentMonth);
     setIsBookingPickMode(true);
     setIsBookingGuideOpen(true);
 
-    if (isMobile) {
-      setIsCalendarFocusActive(true);
-      window.requestAnimationFrame(() => {
-        calendarSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-
-      const timeoutId = window.setTimeout(() => setIsCalendarFocusActive(false), 850);
-      return () => window.clearTimeout(timeoutId);
-    }
-  }, [quickBookingRequestId, currentMonth, allUnavailableDates, handleDateSelect]);
+    const isMobile = window.matchMedia("(max-width: 860px)").matches;
+    window.requestAnimationFrame(() => {
+      const target = document.querySelector(".home-main-panel--calendar");
+      if (target instanceof HTMLElement) {
+        target.classList.remove("calendar-focus-pulse");
+        void target.offsetWidth;
+        target.classList.add("calendar-focus-pulse");
+        target.scrollIntoView({ behavior: "smooth", block: isMobile ? "start" : "nearest" });
+      }
+    });
+  }, [quickBookingRequestId, currentMonth, allUnavailableDates, clearSelection]);
 
   const handleCalendarDateSelect = (date: string, options?: { unavailable?: boolean }) => {
     if (options?.unavailable) return;
@@ -235,14 +223,41 @@ export default function HomePage() {
     }
 
     const isMobile = window.matchMedia("(max-width: 860px)").matches;
-    if (isMobile && !isBookingPickMode) {
+    if (isMobile) {
       window.requestAnimationFrame(() => {
         document.querySelector(".timeline-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     }
   };
 
+  const handleCalendarMonthChange = (month: string) => {
+    clearSelection();
+    closeBookingModal();
+    setCurrentMonth(month);
+    setTimelineMonth(month);
+    setIsBookingGuideOpen(false);
+    setIsBookingPickMode(false);
+    window.requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement) active.blur();
+    });
+  };
+
+  const handleTimelineMonthChange = (month: string) => {
+    clearSelection();
+    closeBookingModal();
+    setTimelineMonth(month);
+    setCurrentMonth(month);
+    setIsBookingGuideOpen(false);
+    setIsBookingPickMode(false);
+    window.requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement) active.blur();
+    });
+  };
+
   const handleOpenDayBooking = (date: string) => {
+    clearSelection();
     handleDateSelect(date);
     setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
@@ -266,17 +281,8 @@ export default function HomePage() {
         <span className="home-page__eyebrow">Agenda inteligente</span>
       </section>
 
-      <div
-        className={[
-          "home-grid",
-          isBookingPickMode && !isCompactViewport ? "home-grid--booking-pick" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
+      <div className="home-grid">
         <HomeCalendarSection
-          containerRef={calendarSectionRef}
-          focusPulse={isCalendarFocusActive}
           selectedDate={selectedDate}
           currentMonth={currentMonth}
           currentAllowedMonth={currentAllowedMonth}
@@ -285,18 +291,17 @@ export default function HomePage() {
           unavailableDates={allUnavailableDates}
           bookingPickMode={isBookingPickMode}
           onDateSelect={handleCalendarDateSelect}
-          onMonthChange={setCurrentMonth}
+          onMonthChange={handleCalendarMonthChange}
           onOpenDayBooking={handleOpenDayBooking}
         />
 
         <HomeSidebar
-          compressed={isBookingPickMode && !isCompactViewport}
           selectedDate={selectedDate}
           events={allEvents}
           activeMonth={timelineMonth}
           currentAllowedMonth={currentAllowedMonth}
           nextAllowedMonth={nextAllowedMonth}
-          onChangeTimelineMonth={setTimelineMonth}
+          onChangeTimelineMonth={handleTimelineMonthChange}
           onQuickBooking={requestQuickBooking}
         />
       </div>

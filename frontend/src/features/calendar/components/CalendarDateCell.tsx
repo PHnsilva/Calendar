@@ -42,6 +42,8 @@ export default function CalendarDateCell({
       )}
       aria-hidden="true"
     >
+      <span className="calendar-date-cell__halo" />
+      <span className="calendar-date-cell__ring" />
       <span className="calendar-date-cell__label">{label}</span>
     </span>
   );

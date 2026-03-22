@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import CalendarDateCell from "./CalendarDateCell";
 import type { CalendarEvent } from "../types";
 
@@ -25,7 +26,7 @@ function getMonthDays(monthStart: string): Array<{
     1 - sundayOffset,
   );
 
-  return Array.from({ length: 42 }, (_, index) => {
+  return Array.from({ length: 35 }, (_, index) => {
     const date = new Date(gridStart);
     date.setDate(gridStart.getDate() + index);
 
@@ -40,6 +41,19 @@ function getWeekdayIndex(dateString: string) {
   return toLocalDate(dateString).getDay();
 }
 
+function getCityTone(dayEvents: CalendarEvent[]): string | undefined {
+  const city = dayEvents[0]?.city?.toLowerCase();
+  if (!city) return undefined;
+
+  if (city.includes("belo horizonte")) return "var(--city-bh)";
+  if (city.includes("itabirito")) return "var(--city-itabirito)";
+  if (city.includes("ouro preto")) return "var(--city-ouro-preto)";
+  if (city.includes("moeda")) return "var(--city-moeda)";
+  if (city.includes("congonhas")) return "var(--city-congonhas)";
+  if (city.includes("nova lima")) return "var(--city-nova-lima)";
+  return "var(--accent-strong)";
+}
+
 type BigCalendarProps = {
   currentMonth: string;
   selectedDate: string;
@@ -47,7 +61,7 @@ type BigCalendarProps = {
   unavailableDates: string[];
   onDateSelect: (date: string, options?: { unavailable?: boolean }) => void;
   onOpenDayBooking: (date: string) => void;
-  showInlineBookingAction?: boolean;
+  bookingPickMode?: boolean;
 };
 
 const weekLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -59,14 +73,14 @@ export default function BigCalendar({
   unavailableDates,
   onDateSelect,
   onOpenDayBooking,
-  showInlineBookingAction = true,
+  bookingPickMode = false,
 }: BigCalendarProps) {
   const today = toIsoDate(new Date());
   const days = getMonthDays(currentMonth);
   const activeWeekday = getWeekdayIndex(selectedDate || today);
 
   return (
-    <div className="calendar-grid calendar-grid--slim">
+    <div className={["calendar-grid", "calendar-grid--slim", bookingPickMode ? "calendar-grid--booking-pick" : ""].filter(Boolean).join(" ")}>
       <div className="calendar-grid__weekdays calendar-grid__weekdays--slim">
         {weekLabels.map((label, index) => (
           <span
@@ -92,6 +106,7 @@ export default function BigCalendar({
           const hasEvents = dayEvents.length > 0;
           const isSelected = selectedDate === day.date;
           const isClickable = !isOutside && !isUnavailable;
+          const cityTone = getCityTone(dayEvents);
 
           return (
             <div
@@ -107,6 +122,7 @@ export default function BigCalendar({
               ]
                 .filter(Boolean)
                 .join(" ")}
+              style={cityTone ? ({ ["--calendar-city-tone" as string]: cityTone } as CSSProperties) : undefined}
               onClick={() => {
                 if (!isClickable) return;
                 onDateSelect(day.date, { unavailable: false });
@@ -123,6 +139,8 @@ export default function BigCalendar({
               aria-disabled={!isClickable}
               aria-label={`Selecionar dia ${day.date}`}
             >
+              <span className="calendar-grid__hover-hint">Clique para agendar</span>
+
               <div className="calendar-grid__date-row">
                 <CalendarDateCell
                   date={day.date}
@@ -136,19 +154,20 @@ export default function BigCalendar({
               </div>
 
               <div className="calendar-grid__indicator-stack">
-                {hasEvents ? <span className="calendar-indicator calendar-indicator--booked" /> : null}
+                {hasEvents ? <span className="calendar-indicator calendar-indicator--booked" style={cityTone ? ({ background: cityTone } as CSSProperties) : undefined} /> : null}
               </div>
 
-              {isSelected && isClickable && showInlineBookingAction ? (
+              {isSelected && isClickable ? (
                 <button
                   type="button"
-                  className="calendar-grid__inline-cta"
+                  className="calendar-grid__edge-cta"
                   onClick={(event) => {
                     event.stopPropagation();
                     onOpenDayBooking(day.date);
                   }}
                 >
-                  Agendar
+                  <span className="calendar-grid__edge-cta-icon" aria-hidden="true">+</span>
+                  <span>Agendar</span>
                 </button>
               ) : null}
             </div>

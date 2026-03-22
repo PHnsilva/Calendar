@@ -1,9 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type RefObject } from "react";
 import CalendarToolbar from "../../calendar/components/CalendarToolbar";
 import BigCalendar from "../../calendar/components/BigCalendar";
 import CalendarMonthPreview from "../../calendar/components/CalendarMonthPreview";
 import CalendarHelpModal from "../../../components/ui/CalendarHelpModal";
-import BookingStartHintModal from "../../../components/ui/BookingStartHintModal";
 import type { CalendarEvent } from "../../calendar/types";
 
 function shiftMonth(monthStart: string, delta: number): string {
@@ -19,11 +18,12 @@ type HomeCalendarSectionProps = {
   nextAllowedMonth: string;
   events: CalendarEvent[];
   unavailableDates: string[];
+  bookingPickMode?: boolean;
+  containerRef?: RefObject<HTMLElement | null>;
+  focusPulse?: boolean;
   onDateSelect: (date: string, options?: { unavailable?: boolean }) => void;
   onMonthChange: (month: string) => void;
   onOpenDayBooking: (date: string) => void;
-  bookingPickMode?: boolean;
-  onCancelBookingPick?: () => void;
 };
 
 export default function HomeCalendarSection({
@@ -33,11 +33,12 @@ export default function HomeCalendarSection({
   nextAllowedMonth,
   events,
   unavailableDates,
+  bookingPickMode = false,
+  containerRef,
+  focusPulse = false,
   onDateSelect,
   onMonthChange,
   onOpenDayBooking,
-  bookingPickMode = false,
-  onCancelBookingPick,
 }: HomeCalendarSectionProps) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -46,7 +47,15 @@ export default function HomeCalendarSection({
 
   return (
     <>
-      <section className={["home-calendar-stack", bookingPickMode ? "home-calendar-stack--booking-pick" : ""].filter(Boolean).join(" ")}>
+      <section
+        ref={containerRef}
+        className={[
+          "home-calendar-stack",
+          focusPulse ? "home-calendar-stack--focus-pulse" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <section className="panel home-main-panel home-main-panel--calendar">
           <CalendarToolbar
             currentMonth={currentMonth}
@@ -60,9 +69,9 @@ export default function HomeCalendarSection({
               selectedDate={selectedDate}
               events={events}
               unavailableDates={unavailableDates}
+              bookingPickMode={bookingPickMode}
               onDateSelect={onDateSelect}
               onOpenDayBooking={onOpenDayBooking}
-              bookingPickMode={bookingPickMode}
             />
           </div>
         </section>
@@ -80,11 +89,6 @@ export default function HomeCalendarSection({
       <CalendarHelpModal
         open={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
-      />
-
-      <BookingStartHintModal
-        open={bookingPickMode}
-        onClose={() => onCancelBookingPick?.()}
       />
     </>
   );

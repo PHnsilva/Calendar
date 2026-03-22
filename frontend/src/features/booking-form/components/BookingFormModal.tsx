@@ -427,42 +427,55 @@ export default function BookingFormModal({
                           .join(" ")}
                         onClick={() => setCityMode("belo-horizonte")}
                       >
-                        <span className="city-choice-button__icon" aria-hidden="true">
-                          🏙️
-                        </span>
+                        <span
+                          className="city-choice-button__icon-slot city-choice-button__icon-slot--metro"
+                          aria-hidden="true"
+                        />
                         <span className="city-choice-button__text">Belo Horizonte</span>
                       </button>
 
-                      <button
-                        type="button"
+                      <div
                         className={[
                           "city-choice-button",
+                          "city-choice-button--with-select",
                           cityMode === "others" ? "city-choice-button--active" : "",
                         ]
                           .filter(Boolean)
                           .join(" ")}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setCityMode("others")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setCityMode("others");
+                          }
+                        }}
                       >
-                        <span className="city-choice-button__icon" aria-hidden="true">
-                          🏘️
-                        </span>
-                        <span className="city-choice-button__text">Outros</span>
-                      </button>
-                    </div>
+                        <div className="city-choice-button__head">
+                          <span
+                            className="city-choice-button__icon-slot city-choice-button__icon-slot--town"
+                            aria-hidden="true"
+                          />
+                          <span className="city-choice-button__text">Outros</span>
+                        </div>
 
-                    {cityMode === "others" ? (
-                      <select
-                        className="booking-form__input city-choice-select"
-                        value={selectedOtherCity}
-                        onChange={(event) => setSelectedOtherCity(event.target.value)}
-                      >
-                        {OTHER_CITIES.map((city) => (
-                          <option key={city} value={city}>
-                            {city}
-                          </option>
-                        ))}
-                      </select>
-                    ) : null}
+                        {cityMode === "others" ? (
+                          <select
+                            className="city-choice-button__select"
+                            value={selectedOtherCity}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={(event) => setSelectedOtherCity(event.target.value)}
+                          >
+                            {OTHER_CITIES.map((city) => (
+                              <option key={city} value={city}>
+                                {city}
+                              </option>
+                            ))}
+                          </select>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
                 </div>
 

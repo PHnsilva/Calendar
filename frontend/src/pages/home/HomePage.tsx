@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import HomeCalendarSection from "../../features/home/components/HomeCalendarSection";
 import HomeSidebar from "../../features/home/components/HomeSidebar";
 import BookingFormModal from "../../features/booking-form/components/BookingFormModal";
+import BookingStartHintModal from "../../components/ui/BookingStartHintModal";
 import { useHomeCalendarView } from "../../features/home/hooks/useHomeCalendarView";
 import { useHomeBookingSelection } from "../../app/home-booking-provider";
 import type { CalendarEvent } from "../../features/calendar/types";
@@ -42,27 +43,30 @@ function buildMonthMockEvents(monthStart: string): CalendarEvent[] {
   ).getDate();
 
   const entries = [
-    { day: 2, name: "Mariana Souza", address: "Rua A, 120 - Centro", email: "mariana@email.com", phone: "31999990001", startTime: "08:00", endTime: "09:00", city: "Itabirito" },
-    { day: 7, name: "Felipe Lima", address: "Av. B, 420 - Pilar", email: "felipe@email.com", phone: "31999990002", startTime: "09:00", endTime: "10:00", city: "Ouro Preto" },
-    { day: 12, name: "Ana Ribeiro", address: "Rua C, 85 - Centro", email: "ana@email.com", phone: "31999990003", startTime: "13:00", endTime: "14:00", city: "Moeda" },
-    { day: 18, name: "Carlos Mendes", address: "Rua D, 41 - Novo Horizonte", email: "carlos@email.com", phone: "31999990004", startTime: "15:00", endTime: "16:00", city: "Belo Horizonte" },
-    { day: 21, name: "Paula Costa", address: "Rua E, 210 - Rosário", email: "paula@email.com", phone: "31999990005", startTime: "10:00", endTime: "11:00", city: "Congonhas" },
-    { day: 28, name: "João Silva", address: "Rua F, 300 - Centro", email: "joao@email.com", phone: "31999990006", startTime: "18:00", endTime: "19:00", city: "Nova Lima" },
+    { day: 2, name: "Carlos Souza", address: "Rua dos Inconfidentes, 120 - Itabirito", startTime: "08:00", endTime: "09:00", city: "Itabirito" },
+    { day: 2, name: "Marina Alves", address: "Av. Queiroz Júnior, 88 - Itabirito", startTime: "11:00", endTime: "12:00", city: "Itabirito" },
+    { day: 7, name: "Rafael Lima", address: "Rua Conselheiro Quintiliano, 41 - Ouro Preto", startTime: "09:00", endTime: "10:00", city: "Ouro Preto" },
+    { day: 12, name: "Bianca Rocha", address: "Rua do Rosário, 210 - Moeda", startTime: "13:00", endTime: "14:00", city: "Moeda" },
+    { day: 12, name: "Fernanda Reis", address: "Rua Primeiro de Maio, 56 - Moeda", startTime: "16:00", endTime: "17:00", city: "Moeda" },
+    { day: 18, name: "Lucas Pereira", address: "Rua João Pinheiro, 320 - Itabirito", startTime: "15:00", endTime: "16:00", city: "Itabirito" },
+    { day: 21, name: "Patrícia Gomes", address: "Rua das Flores, 77 - Ouro Preto", startTime: "10:00", endTime: "11:00", city: "Ouro Preto" },
+    { day: 28, name: "Thiago Costa", address: "Rua José Farid Rahme, 64 - Itabirito", startTime: "17:00", endTime: "18:00", city: "Itabirito" },
   ];
 
   return entries
     .filter((entry) => entry.day <= daysInMonth)
     .map((entry, index) => ({
-      id: `${monthStart}-${index}`,
-      title: "Visita técnica",
+      id: `demo-${monthStart}-${index}`,
+      title: entry.name,
       date: buildMonthDate(monthStart, entry.day),
       startTime: entry.startTime,
       endTime: entry.endTime,
       city: entry.city,
       customerName: entry.name,
-      addressLine: entry.address,
-      email: entry.email,
-      phone: entry.phone,
+      customerAddress: entry.address,
+      customerEmail: `${entry.name.toLowerCase().replace(/\s+/g, ".")}@email.com`,
+      customerPhone: "31999999999",
+      serviceLabel: "Visita técnica",
       status: "booked" as const,
     }));
 }
@@ -95,10 +99,7 @@ function build4x4UnavailableDates(monthStart: string, anchorMonth: string): stri
   return Array.from(values);
 }
 
-function findFirstAvailableDate(
-  monthStart: string,
-  unavailableDates: string[],
-): string {
+function findFirstAvailableDate(monthStart: string, unavailableDates: string[]): string {
   const reference = toLocalDate(monthStart);
   const daysInMonth = new Date(
     reference.getFullYear(),
@@ -149,12 +150,17 @@ export default function HomePage() {
 
   const { quickBookingRequestId, requestQuickBooking } = useHomeBookingSelection();
   const lastQuickRequestRef = useRef(0);
+  const calendarSectionRef = useRef<HTMLElement | null>(null);
   const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
+  const [isBookingGuideOpen, setIsBookingGuideOpen] = useState(false);
+  const [isBookingPickMode, setIsBookingPickMode] = useState(false);
+  const [isCompactViewport, setIsCompactViewport] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 860px)").matches : false,
+  );
+  const [isCalendarFocusActive, setIsCalendarFocusActive] = useState(false);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
   );
-  const [isBookingPickMode, setIsBookingPickMode] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const demoEvents = useMemo(
     () => [
@@ -164,7 +170,10 @@ export default function HomePage() {
     [currentAllowedMonth, nextAllowedMonth, todayIso],
   );
 
-  const allEvents = useMemo(() => mergeEvents(demoEvents, localEvents), [demoEvents, localEvents]);
+  const allEvents = useMemo(
+    () => mergeEvents(demoEvents, localEvents),
+    [demoEvents, localEvents],
+  );
 
   const allUnavailableDates = useMemo(
     () => [
@@ -176,13 +185,19 @@ export default function HomePage() {
 
   useEffect(() => {
     const selectedMonth = toMonthStart(selectedDate);
-    if (
-      selectedMonth === currentAllowedMonth ||
-      selectedMonth === nextAllowedMonth
-    ) {
+    if (selectedMonth === currentAllowedMonth || selectedMonth === nextAllowedMonth) {
       setTimelineMonth(selectedMonth);
     }
   }, [selectedDate, currentAllowedMonth, nextAllowedMonth]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 860px)");
+    const apply = () => setIsCompactViewport(media.matches);
+
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, []);
 
   useEffect(() => {
     if (quickBookingRequestId === 0) return;
@@ -191,37 +206,52 @@ export default function HomePage() {
     lastQuickRequestRef.current = quickBookingRequestId;
 
     const firstAvailable = findFirstAvailableDate(currentMonth, allUnavailableDates);
+    const isMobile = window.matchMedia("(max-width: 860px)").matches;
+
     handleDateSelect(firstAvailable);
     setIsBookingPickMode(true);
-    setIsSidebarCollapsed(true);
-  }, [
-    quickBookingRequestId,
-    currentMonth,
-    allUnavailableDates,
-    handleDateSelect,
-  ]);
+    setIsBookingGuideOpen(true);
 
-  const handleCalendarDateSelect = (
-    date: string,
-    options?: { unavailable?: boolean },
-  ) => {
+    if (isMobile) {
+      setIsCalendarFocusActive(true);
+      window.requestAnimationFrame(() => {
+        calendarSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      const timeoutId = window.setTimeout(() => setIsCalendarFocusActive(false), 850);
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, [quickBookingRequestId, currentMonth, allUnavailableDates, handleDateSelect]);
+
+  const handleCalendarDateSelect = (date: string, options?: { unavailable?: boolean }) => {
     if (options?.unavailable) return;
+
     handleDateSelect(date);
 
-    if (!isSidebarCollapsed && window.matchMedia("(max-width: 860px)").matches) {
+    if (isBookingPickMode) {
+      setIsBookingGuideOpen(false);
+      setIsBookingPickMode(false);
+      openBookingModal();
+    }
+
+    const isMobile = window.matchMedia("(max-width: 860px)").matches;
+    if (isMobile && !isBookingPickMode) {
       window.requestAnimationFrame(() => {
-        document
-          .querySelector(".timeline-panel")
-          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.querySelector(".timeline-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     }
   };
 
   const handleOpenDayBooking = (date: string) => {
     handleDateSelect(date);
+    setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
-    setIsSidebarCollapsed(false);
     openBookingModal();
+  };
+
+  const handleCloseBookingGuide = () => {
+    setIsBookingGuideOpen(false);
+    setIsBookingPickMode(false);
   };
 
   const handleBookingCreated = (event: CalendarEvent) => {
@@ -230,33 +260,37 @@ export default function HomePage() {
     handleDateSelect(event.date);
   };
 
-  const handleCancelBookingPick = () => {
-    setIsBookingPickMode(false);
-    setIsSidebarCollapsed(false);
-  };
-
   return (
     <div className="home-page">
       <section className="home-page__hero">
         <span className="home-page__eyebrow">Agenda inteligente</span>
       </section>
 
-      <div className={["home-grid", isBookingPickMode ? "home-grid--booking-pick" : ""].filter(Boolean).join(" ")}>
+      <div
+        className={[
+          "home-grid",
+          isBookingPickMode && !isCompactViewport ? "home-grid--booking-pick" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <HomeCalendarSection
+          containerRef={calendarSectionRef}
+          focusPulse={isCalendarFocusActive}
           selectedDate={selectedDate}
           currentMonth={currentMonth}
           currentAllowedMonth={currentAllowedMonth}
           nextAllowedMonth={nextAllowedMonth}
           events={allEvents}
           unavailableDates={allUnavailableDates}
+          bookingPickMode={isBookingPickMode}
           onDateSelect={handleCalendarDateSelect}
           onMonthChange={setCurrentMonth}
           onOpenDayBooking={handleOpenDayBooking}
-          bookingPickMode={isBookingPickMode}
-          onCancelBookingPick={handleCancelBookingPick}
         />
 
         <HomeSidebar
+          compressed={isBookingPickMode && !isCompactViewport}
           selectedDate={selectedDate}
           events={allEvents}
           activeMonth={timelineMonth}
@@ -264,11 +298,13 @@ export default function HomePage() {
           nextAllowedMonth={nextAllowedMonth}
           onChangeTimelineMonth={setTimelineMonth}
           onQuickBooking={requestQuickBooking}
-          collapsed={isSidebarCollapsed}
-          onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
-          bookingPickMode={isBookingPickMode}
         />
       </div>
+
+      <BookingStartHintModal
+        open={isBookingGuideOpen}
+        onClose={handleCloseBookingGuide}
+      />
 
       <BookingFormModal
         open={isBookingModalOpen}

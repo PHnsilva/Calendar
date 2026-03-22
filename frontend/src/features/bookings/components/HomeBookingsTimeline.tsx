@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import type { CalendarEvent } from "../../calendar/types";
 
@@ -34,6 +35,17 @@ function formatDayLabel(dateString: string) {
       .format(date)
       .replace(".", ""),
   };
+}
+
+function getCityTone(city?: string) {
+  const normalized = city?.toLowerCase() ?? "";
+  if (normalized.includes("belo horizonte")) return { color: "var(--city-bh)", className: "timeline-card--city-bh" };
+  if (normalized.includes("itabirito")) return { color: "var(--city-itabirito)", className: "timeline-card--city-itabirito" };
+  if (normalized.includes("ouro preto")) return { color: "var(--city-ouro-preto)", className: "timeline-card--city-ouro-preto" };
+  if (normalized.includes("moeda")) return { color: "var(--city-moeda)", className: "timeline-card--city-moeda" };
+  if (normalized.includes("congonhas")) return { color: "var(--city-congonhas)", className: "timeline-card--city-congonhas" };
+  if (normalized.includes("nova lima")) return { color: "var(--city-nova-lima)", className: "timeline-card--city-nova-lima" };
+  return { color: "var(--accent)", className: "timeline-card--city-default" };
 }
 
 type HomeBookingsTimelineProps = {
@@ -173,11 +185,13 @@ export default function HomeBookingsTimeline({
                         <span>Escolha outro dia ou crie um novo atendimento.</span>
                       </div>
                     ) : (
-                      items.map((item, index) => {
+                      items.map((item) => {
                         const clickable = Boolean(item.customerName || item.addressLine || item.email || item.phone);
+                        const tone = getCityTone(item.city);
                         const className = [
                           "timeline-card",
-                          index === 0 ? "timeline-card--primary" : "timeline-card--secondary",
+                          "timeline-card--service",
+                          tone.className,
                           clickable ? "timeline-card--button" : "",
                         ]
                           .filter(Boolean)
@@ -186,13 +200,12 @@ export default function HomeBookingsTimeline({
                         const content = (
                           <>
                             <div className="timeline-card__main">
-                              <strong>{item.title}</strong>
+                              <strong>{item.customerName ?? item.title}</strong>
                               <span>{item.startTime}</span>
                             </div>
 
-                            {item.customerName ? <small>{item.customerName}</small> : null}
-                            {item.addressLine ? <p className="timeline-card__address">{item.addressLine}</p> : null}
-                            {!item.customerName && !item.addressLine ? <small>{item.city ?? "Atendimento"}</small> : null}
+                            <small className="timeline-card__city">{item.city ?? "Atendimento"}</small>
+                            <p className="timeline-card__address">{item.addressLine ?? "Endereço não informado"}</p>
                           </>
                         );
 
@@ -202,6 +215,7 @@ export default function HomeBookingsTimeline({
                               key={item.id}
                               type="button"
                               className={className}
+                              style={{ ["--timeline-city-tone" as string]: tone.color } as CSSProperties}
                               onClick={() => setActiveCard(item)}
                             >
                               {content}
@@ -210,7 +224,7 @@ export default function HomeBookingsTimeline({
                         }
 
                         return (
-                          <div key={item.id} className={className}>
+                          <div key={item.id} className={className} style={{ ["--timeline-city-tone" as string]: tone.color } as CSSProperties}>
                             {content}
                           </div>
                         );
@@ -261,8 +275,8 @@ export default function HomeBookingsTimeline({
                 <strong>{activeCard.customerName ?? "Não informado"}</strong>
               </div>
               <div className="timeline-detail-modal__item">
-                <span>Serviço</span>
-                <strong>{activeCard.title}</strong>
+                <span>Cidade</span>
+                <strong>{activeCard.city ?? "Não informado"}</strong>
               </div>
               <div className="timeline-detail-modal__item">
                 <span>Horário</span>

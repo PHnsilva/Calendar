@@ -1,4 +1,4 @@
-import { apiClient } from "../../../lib/api-client";
+import { apiGet } from "../../../lib/api-client";
 import type { CalendarSlot } from "../types";
 
 function pad(value: number): string {
@@ -21,8 +21,7 @@ function extractTime(isoDateTime: string): string {
 }
 
 export async function getAvailableSlots(date: string): Promise<CalendarSlot[]> {
-  const response = await apiClient<string[]>("/api/servicos/available", {
-    method: "GET",
+  const response = await apiGet<string[]>("/api/servicos/available", {
     query: {
       date,
       slotMinutes: 60,

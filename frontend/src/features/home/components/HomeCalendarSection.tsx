@@ -18,10 +18,10 @@ type HomeCalendarSectionProps = {
   nextAllowedMonth: string;
   events: CalendarEvent[];
   unavailableDates: string[];
-  bookingPickMode?: boolean;
   onDateSelect: (date: string, options?: { unavailable?: boolean }) => void;
   onMonthChange: (month: string) => void;
   onOpenDayBooking: (date: string) => void;
+  showInlineBookingAction?: boolean;
 };
 
 export default function HomeCalendarSection({
@@ -31,10 +31,10 @@ export default function HomeCalendarSection({
   nextAllowedMonth,
   events,
   unavailableDates,
-  bookingPickMode = false,
   onDateSelect,
   onMonthChange,
   onOpenDayBooking,
+  showInlineBookingAction = true,
 }: HomeCalendarSectionProps) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -57,9 +57,9 @@ export default function HomeCalendarSection({
               selectedDate={selectedDate}
               events={events}
               unavailableDates={unavailableDates}
-              bookingPickMode={bookingPickMode}
               onDateSelect={onDateSelect}
               onOpenDayBooking={onOpenDayBooking}
+              showInlineBookingAction={showInlineBookingAction}
             />
           </div>
         </section>

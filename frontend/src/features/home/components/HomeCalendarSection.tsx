@@ -3,6 +3,7 @@ import CalendarToolbar from "../../calendar/components/CalendarToolbar";
 import BigCalendar from "../../calendar/components/BigCalendar";
 import CalendarMonthPreview from "../../calendar/components/CalendarMonthPreview";
 import CalendarHelpModal from "../../../components/ui/CalendarHelpModal";
+import BookingStartHintModal from "../../../components/ui/BookingStartHintModal";
 import type { CalendarEvent } from "../../calendar/types";
 
 function shiftMonth(monthStart: string, delta: number): string {
@@ -21,7 +22,8 @@ type HomeCalendarSectionProps = {
   onDateSelect: (date: string, options?: { unavailable?: boolean }) => void;
   onMonthChange: (month: string) => void;
   onOpenDayBooking: (date: string) => void;
-  showInlineBookingAction?: boolean;
+  bookingPickMode?: boolean;
+  onCancelBookingPick?: () => void;
 };
 
 export default function HomeCalendarSection({
@@ -34,7 +36,8 @@ export default function HomeCalendarSection({
   onDateSelect,
   onMonthChange,
   onOpenDayBooking,
-  showInlineBookingAction = true,
+  bookingPickMode = false,
+  onCancelBookingPick,
 }: HomeCalendarSectionProps) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -43,7 +46,7 @@ export default function HomeCalendarSection({
 
   return (
     <>
-      <section className="home-calendar-stack">
+      <section className={["home-calendar-stack", bookingPickMode ? "home-calendar-stack--booking-pick" : ""].filter(Boolean).join(" ")}>
         <section className="panel home-main-panel home-main-panel--calendar">
           <CalendarToolbar
             currentMonth={currentMonth}
@@ -59,7 +62,7 @@ export default function HomeCalendarSection({
               unavailableDates={unavailableDates}
               onDateSelect={onDateSelect}
               onOpenDayBooking={onOpenDayBooking}
-              showInlineBookingAction={showInlineBookingAction}
+              bookingPickMode={bookingPickMode}
             />
           </div>
         </section>
@@ -77,6 +80,11 @@ export default function HomeCalendarSection({
       <CalendarHelpModal
         open={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
+      />
+
+      <BookingStartHintModal
+        open={bookingPickMode}
+        onClose={() => onCancelBookingPick?.()}
       />
     </>
   );

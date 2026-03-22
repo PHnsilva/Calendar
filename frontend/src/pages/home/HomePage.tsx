@@ -45,9 +45,9 @@ function buildMonthMockEvents(monthStart: string): CalendarEvent[] {
     { day: 2, name: "Mariana Souza", address: "Rua A, 120 - Centro", email: "mariana@email.com", phone: "31999990001", startTime: "08:00", endTime: "09:00", city: "Itabirito" },
     { day: 7, name: "Felipe Lima", address: "Av. B, 420 - Pilar", email: "felipe@email.com", phone: "31999990002", startTime: "09:00", endTime: "10:00", city: "Ouro Preto" },
     { day: 12, name: "Ana Ribeiro", address: "Rua C, 85 - Centro", email: "ana@email.com", phone: "31999990003", startTime: "13:00", endTime: "14:00", city: "Moeda" },
-    { day: 18, name: "Carlos Mendes", address: "Rua D, 41 - Novo Horizonte", email: "carlos@email.com", phone: "31999990004", startTime: "15:00", endTime: "16:00", city: "Itabirito" },
-    { day: 21, name: "Paula Costa", address: "Rua E, 210 - Rosário", email: "paula@email.com", phone: "31999990005", startTime: "10:00", endTime: "11:00", city: "Ouro Preto" },
-    { day: 28, name: "João Silva", address: "Rua F, 300 - Centro", email: "joao@email.com", phone: "31999990006", startTime: "18:00", endTime: "19:00", city: "Itabirito" },
+    { day: 18, name: "Carlos Mendes", address: "Rua D, 41 - Novo Horizonte", email: "carlos@email.com", phone: "31999990004", startTime: "15:00", endTime: "16:00", city: "Belo Horizonte" },
+    { day: 21, name: "Paula Costa", address: "Rua E, 210 - Rosário", email: "paula@email.com", phone: "31999990005", startTime: "10:00", endTime: "11:00", city: "Congonhas" },
+    { day: 28, name: "João Silva", address: "Rua F, 300 - Centro", email: "joao@email.com", phone: "31999990006", startTime: "18:00", endTime: "19:00", city: "Nova Lima" },
   ];
 
   return entries
@@ -153,6 +153,8 @@ export default function HomePage() {
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
   );
+  const [isBookingPickMode, setIsBookingPickMode] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const demoEvents = useMemo(
     () => [
@@ -190,13 +192,13 @@ export default function HomePage() {
 
     const firstAvailable = findFirstAvailableDate(currentMonth, allUnavailableDates);
     handleDateSelect(firstAvailable);
-    openBookingModal();
+    setIsBookingPickMode(true);
+    setIsSidebarCollapsed(true);
   }, [
     quickBookingRequestId,
     currentMonth,
     allUnavailableDates,
     handleDateSelect,
-    openBookingModal,
   ]);
 
   const handleCalendarDateSelect = (
@@ -206,8 +208,7 @@ export default function HomePage() {
     if (options?.unavailable) return;
     handleDateSelect(date);
 
-    const isMobile = window.matchMedia("(max-width: 860px)").matches;
-    if (isMobile) {
+    if (!isSidebarCollapsed && window.matchMedia("(max-width: 860px)").matches) {
       window.requestAnimationFrame(() => {
         document
           .querySelector(".timeline-panel")
@@ -218,6 +219,8 @@ export default function HomePage() {
 
   const handleOpenDayBooking = (date: string) => {
     handleDateSelect(date);
+    setIsBookingPickMode(false);
+    setIsSidebarCollapsed(false);
     openBookingModal();
   };
 
@@ -227,23 +230,18 @@ export default function HomePage() {
     handleDateSelect(event.date);
   };
 
+  const handleCancelBookingPick = () => {
+    setIsBookingPickMode(false);
+    setIsSidebarCollapsed(false);
+  };
+
   return (
     <div className="home-page">
       <section className="home-page__hero">
         <span className="home-page__eyebrow">Agenda inteligente</span>
       </section>
 
-      <div className="home-grid">
-        <HomeSidebar
-          selectedDate={selectedDate}
-          events={allEvents}
-          activeMonth={timelineMonth}
-          currentAllowedMonth={currentAllowedMonth}
-          nextAllowedMonth={nextAllowedMonth}
-          onChangeTimelineMonth={setTimelineMonth}
-          onQuickBooking={requestQuickBooking}
-        />
-
+      <div className={["home-grid", isBookingPickMode ? "home-grid--booking-pick" : ""].filter(Boolean).join(" ")}>
         <HomeCalendarSection
           selectedDate={selectedDate}
           currentMonth={currentMonth}
@@ -254,6 +252,21 @@ export default function HomePage() {
           onDateSelect={handleCalendarDateSelect}
           onMonthChange={setCurrentMonth}
           onOpenDayBooking={handleOpenDayBooking}
+          bookingPickMode={isBookingPickMode}
+          onCancelBookingPick={handleCancelBookingPick}
+        />
+
+        <HomeSidebar
+          selectedDate={selectedDate}
+          events={allEvents}
+          activeMonth={timelineMonth}
+          currentAllowedMonth={currentAllowedMonth}
+          nextAllowedMonth={nextAllowedMonth}
+          onChangeTimelineMonth={setTimelineMonth}
+          onQuickBooking={requestQuickBooking}
+          collapsed={isSidebarCollapsed}
+          onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
+          bookingPickMode={isBookingPickMode}
         />
       </div>
 

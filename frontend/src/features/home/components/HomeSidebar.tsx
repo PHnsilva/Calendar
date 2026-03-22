@@ -1,49 +1,45 @@
-import MiniCalendar from "../../calendar/components/MiniCalendar";
-import CalendarLegend from "../../calendar/components/CalendarLegend";
-import CalendarDayAgenda from "../../calendar/components/CalendarDayAgenda";
 import type { CalendarEvent } from "../../calendar/types";
+import HomeBookingsTimeline from "../../bookings/components/HomeBookingsTimeline";
 
 type HomeSidebarProps = {
   selectedDate: string;
-  currentMonth: string;
   events: CalendarEvent[];
-  unavailableDates: string[];
-  onDateSelect: (date: string) => void;
-  onOpenBookingModal: () => void;
+  activeMonth: string;
+  currentAllowedMonth: string;
+  nextAllowedMonth: string;
+  onChangeTimelineMonth: (monthStart: string) => void;
+  onQuickBooking?: () => void;
+  eyebrow?: string;
+  title?: string;
+  hideQuickBooking?: boolean;
 };
 
 export default function HomeSidebar({
   selectedDate,
-  currentMonth,
   events,
-  unavailableDates,
-  onDateSelect,
-  onOpenBookingModal,
+  activeMonth,
+  currentAllowedMonth,
+  nextAllowedMonth,
+  onChangeTimelineMonth,
+  onQuickBooking,
+  eyebrow,
+  title,
+  hideQuickBooking = false,
 }: HomeSidebarProps) {
-  const datesWithEvents = Array.from(new Set(events.map((event) => event.date)));
-
   return (
     <aside className="home-sidebar">
-      <section className="panel home-sidebar__panel">
-        <MiniCalendar
-          currentMonth={currentMonth}
-          selectedDate={selectedDate}
-          unavailableDates={unavailableDates}
-          datesWithEvents={datesWithEvents}
-          onDateSelect={onDateSelect}
-        />
-
-        <CalendarLegend compact />
-      </section>
-
-      <section className="panel home-sidebar__panel home-sidebar__panel--agenda">
-        <CalendarDayAgenda
-          selectedDate={selectedDate}
-          events={events}
-          unavailableDates={unavailableDates}
-          onOpenBookingModal={onOpenBookingModal}
-        />
-      </section>
+      <HomeBookingsTimeline
+        selectedDate={selectedDate}
+        events={events}
+        activeMonth={activeMonth}
+        currentAllowedMonth={currentAllowedMonth}
+        nextAllowedMonth={nextAllowedMonth}
+        onChangeMonth={onChangeTimelineMonth}
+        onQuickBooking={onQuickBooking}
+        eyebrow={eyebrow}
+        title={title}
+        hideQuickBooking={hideQuickBooking}
+      />
     </aside>
   );
 }

@@ -1,19 +1,12 @@
-import type { CSSProperties } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getCityTone } from "../../../data/allowed-cities";
 import type { CalendarEvent } from "../../calendar/types";
 
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
 }
 
-function toIsoDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function toMonthStart(dateString: string): string {
+function toMonthStart(dateString: string) {
   return `${dateString.slice(0, 7)}-01`;
 }
 
@@ -22,9 +15,17 @@ function timeToMinutes(value: string): number {
   return hours * 60 + minutes;
 }
 
+function getTodayIso() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = `${today.getMonth() + 1}`.padStart(2, "0");
+  const day = `${today.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function formatDayLabel(dateString: string) {
   const date = toLocalDate(dateString);
-  const todayIso = toIsoDate(new Date());
+  const todayIso = getTodayIso();
   const isToday = dateString === todayIso;
 
   return {
@@ -34,19 +35,22 @@ function formatDayLabel(dateString: string) {
     week: new Intl.DateTimeFormat("pt-BR", { weekday: "short" })
       .format(date)
       .replace(".", ""),
+    isToday,
   };
 }
 
-function getCityTone(city?: string) {
-  const normalized = city?.toLowerCase() ?? "";
-  if (normalized.includes("belo horizonte")) return { color: "var(--city-bh)", className: "timeline-card--city-bh" };
-  if (normalized.includes("itabirito")) return { color: "var(--city-itabirito)", className: "timeline-card--city-itabirito" };
-  if (normalized.includes("ouro preto")) return { color: "var(--city-ouro-preto)", className: "timeline-card--city-ouro-preto" };
-  if (normalized.includes("moeda")) return { color: "var(--city-moeda)", className: "timeline-card--city-moeda" };
-  if (normalized.includes("congonhas")) return { color: "var(--city-congonhas)", className: "timeline-card--city-congonhas" };
-  if (normalized.includes("nova lima")) return { color: "var(--city-nova-lima)", className: "timeline-card--city-nova-lima" };
-  return { color: "var(--accent)", className: "timeline-card--city-default" };
+function formatLongDate(dateString: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  }).format(toLocalDate(dateString));
 }
+
+type TimelineGroup = {
+  date: string;
+  items: CalendarEvent[];
+};
 
 type HomeBookingsTimelineProps = {
   selectedDate: string;
@@ -55,10 +59,10 @@ type HomeBookingsTimelineProps = {
   currentAllowedMonth: string;
   nextAllowedMonth: string;
   onChangeMonth: (monthStart: string) => void;
-  onQuickBooking?: () => void;
+  onQuickBooking: () => void;
+  hideQuickBooking?: boolean;
   eyebrow?: string;
   title?: string;
-  hideQuickBooking?: boolean;
 };
 
 export default function HomeBookingsTimeline({
@@ -69,16 +73,19 @@ export default function HomeBookingsTimeline({
   nextAllowedMonth,
   onChangeMonth,
   onQuickBooking,
+  hideQuickBooking = false,
   eyebrow = "Agendamentos",
   title,
-  hideQuickBooking = false,
 }: HomeBookingsTimelineProps) {
-  const [activeCard, setActiveCard] = useState<CalendarEvent | null>(null);
-  const todayIso = toIsoDate(new Date());
+  const resolvedTitle =
+    title ??
+    new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
+  const todayIso = getTodayIso();
+  const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
 
-  const monthTitle = new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-  }).format(toLocalDate(activeMonth));
+  useEffect(() => {
+    setActiveEvent(null);
+  }, [selectedDate, activeMonth]);
 
   const tabs = [
     {
@@ -95,8 +102,8 @@ export default function HomeBookingsTimeline({
     },
   ];
 
-  const grouped = useMemo(() => {
-    const filtered = events
+  const grouped = useMemo<TimelineGroup[]>(() => {
+    const monthEvents = events
       .filter((event) => event.date >= todayIso)
       .filter((event) => toMonthStart(event.date) === activeMonth)
       .sort((a, b) => {
@@ -106,23 +113,31 @@ export default function HomeBookingsTimeline({
       });
 
     const map = new Map<string, CalendarEvent[]>();
-
-    for (const event of filtered) {
+    for (const event of monthEvents) {
       const list = map.get(event.date) ?? [];
       list.push(event);
       map.set(event.date, list);
     }
 
-    if (selectedDate.startsWith(activeMonth.slice(0, 7)) && selectedDate >= todayIso && !map.has(selectedDate)) {
-      map.set(selectedDate, []);
+    const normalizedSelectedDate = selectedDate && selectedDate.length >= 10 ? selectedDate : "";
+    const baseDate =
+      normalizedSelectedDate &&
+      toMonthStart(normalizedSelectedDate) === activeMonth &&
+      normalizedSelectedDate >= todayIso
+        ? normalizedSelectedDate
+        : activeMonth === currentAllowedMonth
+          ? todayIso
+          : activeMonth;
+
+    if (!map.has(baseDate) && toMonthStart(baseDate) === activeMonth) {
+      map.set(baseDate, []);
     }
 
-    return Array.from(map.entries()).sort(([dateA], [dateB]) => {
-      if (dateA === selectedDate) return -1;
-      if (dateB === selectedDate) return 1;
-      return dateA.localeCompare(dateB);
-    });
-  }, [events, activeMonth, selectedDate, todayIso]);
+    return Array.from(map.entries())
+      .filter(([date]) => date >= baseDate)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, items]) => ({ date, items }));
+  }, [events, activeMonth, currentAllowedMonth, selectedDate, todayIso]);
 
   return (
     <>
@@ -130,7 +145,7 @@ export default function HomeBookingsTimeline({
         <header className="timeline-panel__header">
           <div className="timeline-panel__title-block">
             <span className="timeline-panel__eyebrow">{eyebrow}</span>
-            <h2 className="timeline-panel__title">{title ?? monthTitle}</h2>
+            <h2 className="timeline-panel__title">{resolvedTitle}</h2>
           </div>
 
           <div className="timeline-panel__tabs">
@@ -155,13 +170,13 @@ export default function HomeBookingsTimeline({
         <div className="timeline-panel__body">
           {grouped.length === 0 ? (
             <div className="timeline-card timeline-card--empty">
-              <strong>Sem agendamentos</strong>
-              <span>Esse mês ainda não possui atendimentos futuros.</span>
+              <strong>Nenhum agendamento futuro</strong>
+              <span>Esse mês ainda não possui atendimentos a partir da data selecionada.</span>
             </div>
           ) : (
-            grouped.map(([date, items]) => {
+            grouped.map(({ date, items }) => {
               const label = formatDayLabel(date);
-              const isSelectedGroup = date === selectedDate;
+              const isSelectedGroup = selectedDate === date;
 
               return (
                 <div
@@ -180,53 +195,43 @@ export default function HomeBookingsTimeline({
 
                   <div className="timeline-group__content">
                     {items.length === 0 ? (
-                      <div className="timeline-card timeline-card--empty timeline-card--placeholder">
-                        <strong>Sem agendamentos para esse dia</strong>
-                        <span>Escolha outro dia ou crie um novo atendimento.</span>
+                      <div className="timeline-card timeline-card--empty timeline-card--today-empty">
+                        <strong>
+                          {label.isToday ? "Sem agendamentos para hoje" : "Sem agendamentos para esse dia"}
+                        </strong>
+                        <span>
+                          {label.isToday
+                            ? "Use o botão abaixo para criar um novo atendimento."
+                            : "Esse dia ainda não possui atendimentos visíveis na agenda."}
+                        </span>
                       </div>
                     ) : (
                       items.map((item) => {
-                        const clickable = Boolean(item.customerName || item.addressLine || item.email || item.phone);
                         const tone = getCityTone(item.city);
-                        const className = [
-                          "timeline-card",
-                          "timeline-card--service",
-                          tone.className,
-                          clickable ? "timeline-card--button" : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ");
 
-                        const content = (
-                          <>
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            className={[
+                              "timeline-card",
+                              "timeline-card--button",
+                              `timeline-card--tone-${tone}`,
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                            onClick={() => setActiveEvent(item)}
+                          >
                             <div className="timeline-card__main">
                               <strong>{item.customerName ?? item.title}</strong>
                               <span>{item.startTime}</span>
                             </div>
 
-                            <small className="timeline-card__city">{item.city ?? "Atendimento"}</small>
-                            <p className="timeline-card__address">{item.addressLine ?? "Endereço não informado"}</p>
-                          </>
-                        );
-
-                        if (clickable) {
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              className={className}
-                              style={{ ["--timeline-city-tone" as string]: tone.color } as CSSProperties}
-                              onClick={() => setActiveCard(item)}
-                            >
-                              {content}
-                            </button>
-                          );
-                        }
-
-                        return (
-                          <div key={item.id} className={className} style={{ ["--timeline-city-tone" as string]: tone.color } as CSSProperties}>
-                            {content}
-                          </div>
+                            <small className="timeline-card__city">{item.city ?? "Cidade"}</small>
+                            <small className="timeline-card__address">
+                              {item.customerAddress ?? item.city ?? "Endereço não informado"}
+                            </small>
+                          </button>
                         );
                       })
                     )}
@@ -237,7 +242,7 @@ export default function HomeBookingsTimeline({
           )}
         </div>
 
-        {!hideQuickBooking && onQuickBooking ? (
+        {!hideQuickBooking ? (
           <button
             type="button"
             className="timeline-panel__fab"
@@ -250,49 +255,60 @@ export default function HomeBookingsTimeline({
         ) : null}
       </section>
 
-      {activeCard ? (
-        <div className="timeline-detail-modal" role="dialog" aria-modal="true">
+      {activeEvent ? (
+        <div className="booking-detail-modal" role="dialog" aria-modal="true">
           <button
             type="button"
-            className="timeline-detail-modal__backdrop"
-            onClick={() => setActiveCard(null)}
+            className="booking-detail-modal__backdrop"
+            onClick={() => setActiveEvent(null)}
             aria-label="Fechar detalhes"
           />
-          <div className="timeline-detail-modal__card">
-            <div className="timeline-detail-modal__header">
+
+          <div className="booking-detail-modal__card">
+            <div className="booking-detail-modal__header">
               <div>
-                <span className="timeline-panel__eyebrow">Detalhes do agendamento</span>
-                <h3>{activeCard.customerName ?? activeCard.title}</h3>
+                <span className="booking-preview-modal__eyebrow">Detalhes do atendimento</span>
+                <h3 className="booking-preview-modal__title">
+                  {activeEvent.customerName ?? activeEvent.title}
+                </h3>
               </div>
-              <button type="button" className="timeline-detail-modal__close" onClick={() => setActiveCard(null)}>
-                Fechar
+
+              <button
+                type="button"
+                className="booking-preview-modal__close"
+                onClick={() => setActiveEvent(null)}
+                aria-label="Fechar"
+              >
+                ×
               </button>
             </div>
 
-            <div className="timeline-detail-modal__grid">
-              <div className="timeline-detail-modal__item">
-                <span>Cliente</span>
-                <strong>{activeCard.customerName ?? "Não informado"}</strong>
+            <div className="booking-detail-modal__body">
+              <div className="booking-detail-modal__row">
+                <span>Data</span>
+                <strong>{formatLongDate(activeEvent.date)}</strong>
               </div>
-              <div className="timeline-detail-modal__item">
-                <span>Cidade</span>
-                <strong>{activeCard.city ?? "Não informado"}</strong>
-              </div>
-              <div className="timeline-detail-modal__item">
+              <div className="booking-detail-modal__row">
                 <span>Horário</span>
-                <strong>{activeCard.date} · {activeCard.startTime} às {activeCard.endTime}</strong>
+                <strong>
+                  {activeEvent.startTime} - {activeEvent.endTime}
+                </strong>
               </div>
-              <div className="timeline-detail-modal__item timeline-detail-modal__item--full">
+              <div className="booking-detail-modal__row">
+                <span>Cidade</span>
+                <strong>{activeEvent.city ?? "Não informada"}</strong>
+              </div>
+              <div className="booking-detail-modal__row">
                 <span>Endereço</span>
-                <strong>{activeCard.addressLine ?? "Não informado"}</strong>
+                <strong>{activeEvent.customerAddress ?? "Não informado"}</strong>
               </div>
-              <div className="timeline-detail-modal__item">
+              <div className="booking-detail-modal__row">
                 <span>E-mail</span>
-                <strong>{activeCard.email ?? "Não informado"}</strong>
+                <strong>{activeEvent.customerEmail ?? "Não informado"}</strong>
               </div>
-              <div className="timeline-detail-modal__item">
+              <div className="booking-detail-modal__row">
                 <span>Telefone</span>
-                <strong>{activeCard.phone ?? "Não informado"}</strong>
+                <strong>{activeEvent.customerPhone ?? "Não informado"}</strong>
               </div>
             </div>
           </div>

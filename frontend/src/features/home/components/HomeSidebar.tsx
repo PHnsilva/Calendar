@@ -8,13 +8,10 @@ type HomeSidebarProps = {
   currentAllowedMonth: string;
   nextAllowedMonth: string;
   onChangeTimelineMonth: (monthStart: string) => void;
-  onQuickBooking?: () => void;
+  onQuickBooking: () => void;
+  hideQuickBooking?: boolean;
   eyebrow?: string;
   title?: string;
-  hideQuickBooking?: boolean;
-  collapsed?: boolean;
-  onToggleCollapsed?: () => void;
-  bookingPickMode?: boolean;
 };
 
 export default function HomeSidebar({
@@ -25,53 +22,24 @@ export default function HomeSidebar({
   nextAllowedMonth,
   onChangeTimelineMonth,
   onQuickBooking,
+  hideQuickBooking = false,
   eyebrow,
   title,
-  hideQuickBooking = false,
-  collapsed = false,
-  onToggleCollapsed,
-  bookingPickMode = false,
 }: HomeSidebarProps) {
   return (
-    <aside className={["home-sidebar", collapsed ? "home-sidebar--collapsed" : ""].filter(Boolean).join(" ")}>
-      {collapsed ? (
-        <button
-          type="button"
-          className="home-sidebar__toggle"
-          onClick={onToggleCollapsed}
-          aria-label="Expandir agendamentos"
-          title="Expandir agendamentos"
-        >
-          <span aria-hidden="true">◀</span>
-        </button>
-      ) : (
-        <>
-          {bookingPickMode && onToggleCollapsed ? (
-            <button
-              type="button"
-              className="home-sidebar__toggle home-sidebar__toggle--inline"
-              onClick={onToggleCollapsed}
-              aria-label="Recolher agendamentos"
-              title="Recolher agendamentos"
-            >
-              <span aria-hidden="true">▶</span>
-            </button>
-          ) : null}
-
-          <HomeBookingsTimeline
-            selectedDate={selectedDate}
-            events={events}
-            activeMonth={activeMonth}
-            currentAllowedMonth={currentAllowedMonth}
-            nextAllowedMonth={nextAllowedMonth}
-            onChangeMonth={onChangeTimelineMonth}
-            onQuickBooking={onQuickBooking}
-            eyebrow={eyebrow}
-            title={title}
-            hideQuickBooking={hideQuickBooking}
-          />
-        </>
-      )}
+    <aside className="home-sidebar">
+      <HomeBookingsTimeline
+        selectedDate={selectedDate}
+        events={events}
+        activeMonth={activeMonth}
+        currentAllowedMonth={currentAllowedMonth}
+        nextAllowedMonth={nextAllowedMonth}
+        onChangeMonth={onChangeTimelineMonth}
+        onQuickBooking={onQuickBooking}
+        hideQuickBooking={hideQuickBooking}
+        eyebrow={eyebrow}
+        title={title}
+      />
     </aside>
   );
 }

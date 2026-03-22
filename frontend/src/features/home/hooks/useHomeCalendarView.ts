@@ -30,6 +30,11 @@ export function useHomeCalendarView() {
     setSelectedSlot(slot);
   };
 
+  const clearSelection = () => {
+    setSelectedDate("");
+    setSelectedSlot(null);
+  };
+
   const openBookingModal = () => {
     setIsBookingModalOpen(true);
   };
@@ -46,6 +51,7 @@ export function useHomeCalendarView() {
     setCurrentMonth,
     handleDateSelect,
     handleSlotSelect,
+    clearSelection,
     openBookingModal,
     closeBookingModal,
   };

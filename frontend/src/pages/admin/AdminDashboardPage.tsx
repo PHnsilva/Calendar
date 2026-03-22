@@ -1,17 +1,28 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ApiError } from "../../types/api";
+import { useMemo, useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import AppShell from "../../layouts/AppShell";
 import Logo from "../../components/branding/Logo";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import HomeSidebar from "../../features/home/components/HomeSidebar";
 import HomeCalendarSection from "../../features/home/components/HomeCalendarSection";
-import HistorySheet from "../../features/history/components/HistorySheet";
-import StatementSheet from "../../features/finance/components/StatementSheet";
-import { useAdminBookings } from "../../features/admin/hooks/useAdminBookings";
-import { useAdminFilters } from "../../features/admin/hooks/useAdminFilters";
-import { clearAdminToken, useAdminStore } from "../../stores/admin-store";
 import type { CalendarEvent } from "../../features/calendar/types";
+import { getLocalCalendarEvents } from "../../lib/storage";
+
+const ADMIN_TOKEN_KEY = "calendar.adminToken";
+
+function getSavedAdminToken() {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(ADMIN_TOKEN_KEY) ?? "";
+}
+
+function clearAdminToken() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+
+function toLocalDate(dateString: string): Date {
+  return new Date(`${dateString}T12:00:00`);
+}
 
 function toIsoDate(date: Date): string {
   const year = date.getFullYear();
@@ -20,163 +31,189 @@ function toIsoDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function toMonthStart(dateString: string): string {
+  return `${dateString.slice(0, 7)}-01`;
+}
+
 function shiftMonth(monthStart: string, delta: number): string {
   const base = new Date(`${monthStart}T12:00:00`);
   const next = new Date(base.getFullYear(), base.getMonth() + delta, 1);
   return `${next.getFullYear()}-${`${next.getMonth() + 1}`.padStart(2, "0")}-01`;
 }
 
-function maskToken(token: string): string {
-  if (token.length <= 8) return token;
-  return `${token.slice(0, 4)}••••${token.slice(-4)}`;
+function buildMonthDate(monthStart: string, day: number): string {
+  const reference = toLocalDate(monthStart);
+  return toIsoDate(new Date(reference.getFullYear(), reference.getMonth(), day));
 }
 
-function bookingToCalendarEvent(booking: any): CalendarEvent {
-  const start = new Date(booking.start);
-  const end = new Date(booking.end);
-  const formatTime = (value: Date) => new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(value);
+function buildMonthMockEvents(monthStart: string): CalendarEvent[] {
+  const reference = toLocalDate(monthStart);
+  const daysInMonth = new Date(reference.getFullYear(), reference.getMonth() + 1, 0).getDate();
+  const entries = [
+    { day: 2, name: "Carlos Souza", address: "Rua dos Inconfidentes, 120 - Itabirito", startTime: "08:00", endTime: "09:00", city: "Itabirito" },
+    { day: 2, name: "Marina Alves", address: "Av. Queiroz Júnior, 88 - Itabirito", startTime: "11:00", endTime: "12:00", city: "Itabirito" },
+    { day: 7, name: "Rafael Lima", address: "Rua Conselheiro Quintiliano, 41 - Ouro Preto", startTime: "09:00", endTime: "10:00", city: "Ouro Preto" },
+    { day: 12, name: "Bianca Rocha", address: "Rua do Rosário, 210 - Moeda", startTime: "13:00", endTime: "14:00", city: "Moeda" },
+    { day: 18, name: "Lucas Pereira", address: "Rua João Pinheiro, 320 - Itabirito", startTime: "15:00", endTime: "16:00", city: "Itabirito" },
+    { day: 21, name: "Patrícia Gomes", address: "Rua das Flores, 77 - Ouro Preto", startTime: "10:00", endTime: "11:00", city: "Ouro Preto" },
+    { day: 28, name: "Thiago Costa", address: "Rua José Farid Rahme, 64 - Itabirito", startTime: "17:00", endTime: "18:00", city: "Itabirito" },
+  ];
 
-  return {
-    id: booking.eventId,
-    title: booking.serviceType || "Visita técnica",
-    date: booking.start.slice(0, 10),
-    startTime: formatTime(start),
-    endTime: formatTime(end),
-    city: booking.clientCity,
-    customerName: `${booking.clientFirstName ?? ""} ${booking.clientLastName ?? ""}`.trim() || "Cliente",
-    addressLine: booking.clientAddressLine,
-    email: booking.clientEmail,
-    phone: booking.clientPhone,
-    status: "booked",
-  };
+  return entries
+    .filter((entry) => entry.day <= daysInMonth)
+    .map((entry, index) => ({
+      id: `admin-demo-${monthStart}-${index}`,
+      title: entry.name,
+      date: buildMonthDate(monthStart, entry.day),
+      startTime: entry.startTime,
+      endTime: entry.endTime,
+      city: entry.city,
+      customerName: entry.name,
+      customerAddress: entry.address,
+      customerEmail: `${entry.name.toLowerCase().replace(/\s+/g, ".")}@email.com`,
+      customerPhone: "31999999999",
+      serviceLabel: "Visita técnica",
+      status: "booked" as const,
+    }));
+}
+
+function mergeEvents(baseEvents: CalendarEvent[], localEvents: CalendarEvent[]) {
+  const map = new Map<string, CalendarEvent>();
+  for (const event of [...baseEvents, ...localEvents]) map.set(event.id, event);
+  return Array.from(map.values()).sort((a, b) => {
+    const byDate = a.date.localeCompare(b.date);
+    return byDate !== 0 ? byDate : a.startTime.localeCompare(b.startTime);
+  });
 }
 
 export default function AdminDashboardPage() {
-  const navigate = useNavigate();
-  const { token, hasToken } = useAdminStore();
-  const { filters } = useAdminFilters();
-  const { bookingsQuery, filteredBookings } = useAdminBookings(filters);
-
+  const token = getSavedAdminToken();
   const todayIso = toIsoDate(new Date());
   const currentAllowedMonth = `${todayIso.slice(0, 7)}-01`;
   const nextAllowedMonth = shiftMonth(currentAllowedMonth, 1);
-
   const [selectedDate, setSelectedDate] = useState(todayIso);
   const [currentMonth, setCurrentMonth] = useState(currentAllowedMonth);
   const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
-  const [activeBottomSheet, setActiveBottomSheet] = useState<"history" | "statement" | null>(null);
+  const [activeSheet, setActiveSheet] = useState<"history" | "statement" | null>(null);
 
-  useEffect(() => {
-    if (!hasToken) {
-      navigate("/admin", { replace: true });
-    }
-  }, [hasToken, navigate]);
+  const allEvents = useMemo(() => {
+    const locals = getLocalCalendarEvents().filter((event) => event.date >= todayIso);
+    return mergeEvents(
+      [...buildMonthMockEvents(currentAllowedMonth), ...buildMonthMockEvents(nextAllowedMonth)].filter((event) => event.date >= todayIso),
+      locals,
+    );
+  }, [currentAllowedMonth, nextAllowedMonth, todayIso]);
 
-  const adminError = bookingsQuery.error instanceof Error ? bookingsQuery.error : null;
-  const isForbidden = adminError instanceof ApiError && adminError.status === 403;
+  const historyEvents = useMemo(
+    () => getLocalCalendarEvents().filter((event) => event.date < todayIso).sort((a, b) => b.date.localeCompare(a.date)),
+    [todayIso],
+  );
 
-  const allEvents = useMemo(() => (filteredBookings ?? []).map(bookingToCalendarEvent), [filteredBookings]);
-  const futureEvents = useMemo(() => allEvents.filter((event) => event.date >= todayIso), [allEvents, todayIso]);
-  const historyBookings = useMemo(() => (filteredBookings ?? []).filter((booking) => booking.start.slice(0, 10) < todayIso).sort((a, b) => b.start.localeCompare(a.start)), [filteredBookings, todayIso]);
-
-  useEffect(() => {
-    if (selectedDate < todayIso) {
-      setSelectedDate(todayIso);
-    }
-  }, [selectedDate, todayIso]);
+  if (!token) {
+    return <Navigate to="/admin" replace />;
+  }
 
   const header = (
-    <header className="public-header admin-home-header">
-      <div className="admin-home-header__brand">
-        <Link to="/" className="brand-lockup" aria-label="Voltar para a home">
-          <Logo />
-        </Link>
-        <div className="admin-home-header__copy">
-          <span className="home-page__eyebrow">Admin</span>
-          <strong>Agenda geral</strong>
-          <small>Token {token ? maskToken(token) : "—"}</small>
-        </div>
-      </div>
+    <header className="public-header">
+      <Link to="/admin/dashboard" className="brand-lockup" aria-label="Ir para o dashboard admin">
+        <Logo />
+      </Link>
 
       <div className="public-header__actions">
         <ThemeToggle />
-        <button type="button" className="admin-mini-chip" onClick={() => clearAdminToken()}>
+        <button
+          type="button"
+          className="header-booking-action header-booking-action--ghost"
+          onClick={() => {
+            clearAdminToken();
+            window.location.href = "/admin";
+          }}
+        >
           Trocar token
         </button>
       </div>
     </header>
   );
 
-  if (!token) return null;
-
   return (
     <AppShell header={header}>
       <main className="public-layout__content">
-        <div className="home-page admin-home-page">
+        <div className="home-page">
           <section className="home-page__hero">
-            <span className="home-page__eyebrow">Visual do cliente + gestão admin</span>
+            <span className="home-page__eyebrow">Admin · agenda completa</span>
           </section>
 
-          {isForbidden ? (
-            <section className="panel admin-inline-error">
-              <strong>Token inválido ou expirado.</strong>
-              <span>Volte ao gateway e informe um token admin válido.</span>
-              <button type="button" className="admin-btn admin-btn--primary" onClick={() => navigate('/admin', { replace: true })}>Voltar ao gateway</button>
-            </section>
-          ) : null}
-
-          <div className="home-grid home-grid--admin">
-            <HomeSidebar
-              selectedDate={selectedDate}
-              events={futureEvents}
-              activeMonth={timelineMonth}
-              currentAllowedMonth={currentAllowedMonth}
-              nextAllowedMonth={nextAllowedMonth}
-              onChangeTimelineMonth={setTimelineMonth}
-              hideQuickBooking
-              eyebrow="Serviços"
-              title="Todos os agendamentos"
-            />
-
+          <div className="home-grid home-grid--admin-view">
             <HomeCalendarSection
               selectedDate={selectedDate}
               currentMonth={currentMonth}
               currentAllowedMonth={currentAllowedMonth}
               nextAllowedMonth={nextAllowedMonth}
-              events={futureEvents}
+              events={allEvents}
               unavailableDates={[]}
-              onDateSelect={(date) => {
-                setSelectedDate(date);
-                setCurrentMonth(`${date.slice(0, 7)}-01`);
-                setTimelineMonth(`${date.slice(0, 7)}-01`);
-              }}
+              onDateSelect={(date) => setSelectedDate(date)}
               onMonthChange={(month) => {
+                setSelectedDate("");
                 setCurrentMonth(month);
                 setTimelineMonth(month);
               }}
-              onOpenDayBooking={(date) => {
-                setSelectedDate(date);
+              onOpenDayBooking={(date) => setSelectedDate(date)}
+            />
+
+            <HomeSidebar
+              selectedDate={selectedDate}
+              events={allEvents}
+              activeMonth={timelineMonth}
+              currentAllowedMonth={currentAllowedMonth}
+              nextAllowedMonth={nextAllowedMonth}
+              onChangeTimelineMonth={(month) => {
+                setSelectedDate("");
+                setTimelineMonth(month);
+                setCurrentMonth(month);
               }}
-              bookingPickMode={false}
+              onQuickBooking={() => setSelectedDate(todayIso)}
+              hideQuickBooking
+              eyebrow="Serviços"
+              title="Todos os agendamentos"
             />
           </div>
         </div>
 
         <div className="admin-bottom-tabs">
-          <button type="button" className="admin-bottom-tabs__button" onClick={() => setActiveBottomSheet('history')}>Histórico</button>
-          <button type="button" className="admin-bottom-tabs__button" onClick={() => setActiveBottomSheet('statement')}>Extrato</button>
+          <button type="button" className="admin-bottom-tabs__button" onClick={() => setActiveSheet("history")}>Histórico</button>
+          <button type="button" className="admin-bottom-tabs__button" onClick={() => setActiveSheet("statement")}>Extrato</button>
         </div>
 
-        <HistorySheet
-          open={activeBottomSheet === 'history'}
-          onClose={() => setActiveBottomSheet(null)}
-          bookings={historyBookings}
-        />
-
-        <StatementSheet
-          open={activeBottomSheet === 'statement'}
-          onClose={() => setActiveBottomSheet(null)}
-        />
+        {activeSheet ? (
+          <div className="booking-detail-modal" role="dialog" aria-modal="true">
+            <button type="button" className="booking-detail-modal__backdrop" onClick={() => setActiveSheet(null)} aria-label="Fechar" />
+            <div className="booking-detail-modal__card admin-sheet-card">
+              <div className="booking-detail-modal__header">
+                <div>
+                  <span className="booking-preview-modal__eyebrow">Admin</span>
+                  <h3 className="booking-preview-modal__title">{activeSheet === "history" ? "Histórico" : "Extrato"}</h3>
+                </div>
+                <button type="button" className="booking-preview-modal__close" onClick={() => setActiveSheet(null)}>×</button>
+              </div>
+              <div className="booking-detail-modal__body admin-sheet-card__body">
+                {activeSheet === "history" ? (
+                  historyEvents.length > 0 ? historyEvents.map((event) => (
+                    <div key={event.id} className="admin-sheet-card__row">
+                      <strong>{event.customerName ?? event.title}</strong>
+                      <span>{event.date} · {event.startTime}</span>
+                    </div>
+                  )) : <div className="admin-sheet-card__empty">Sem histórico local disponível.</div>
+                ) : (
+                  <div className="admin-sheet-card__statement">
+                    <div className="admin-sheet-card__row"><strong>Recebido</strong><span>R$ 0,00</span></div>
+                    <div className="admin-sheet-card__row"><strong>Pendente</strong><span>R$ 0,00</span></div>
+                    <div className="admin-sheet-card__row"><strong>Saúde</strong><span>Dummy/Local</span></div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </main>
     </AppShell>
   );

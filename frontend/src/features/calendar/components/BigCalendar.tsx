@@ -1,4 +1,5 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
+import { getCityTone } from "../../../data/allowed-cities";
 import CalendarDateCell from "./CalendarDateCell";
 import type { CalendarEvent } from "../types";
 
@@ -41,27 +42,14 @@ function getWeekdayIndex(dateString: string) {
   return toLocalDate(dateString).getDay();
 }
 
-function getCityTone(dayEvents: CalendarEvent[]): string | undefined {
-  const city = dayEvents[0]?.city?.toLowerCase();
-  if (!city) return undefined;
-
-  if (city.includes("belo horizonte")) return "var(--city-bh)";
-  if (city.includes("itabirito")) return "var(--city-itabirito)";
-  if (city.includes("ouro preto")) return "var(--city-ouro-preto)";
-  if (city.includes("moeda")) return "var(--city-moeda)";
-  if (city.includes("congonhas")) return "var(--city-congonhas)";
-  if (city.includes("nova lima")) return "var(--city-nova-lima)";
-  return "var(--accent-strong)";
-}
-
 type BigCalendarProps = {
   currentMonth: string;
   selectedDate: string;
   events: CalendarEvent[];
   unavailableDates: string[];
+  bookingPickMode?: boolean;
   onDateSelect: (date: string, options?: { unavailable?: boolean }) => void;
   onOpenDayBooking: (date: string) => void;
-  bookingPickMode?: boolean;
 };
 
 const weekLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -71,16 +59,28 @@ export default function BigCalendar({
   selectedDate,
   events,
   unavailableDates,
+  bookingPickMode = false,
   onDateSelect,
   onOpenDayBooking,
-  bookingPickMode = false,
 }: BigCalendarProps) {
   const today = toIsoDate(new Date());
   const days = getMonthDays(currentMonth);
   const activeWeekday = getWeekdayIndex(selectedDate || today);
 
+  const handleKeyboardSelect = (
+    event: KeyboardEvent<HTMLDivElement>,
+    date: string,
+    isClickable: boolean,
+  ) => {
+    if (!isClickable) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onDateSelect(date, { unavailable: false });
+    }
+  };
+
   return (
-    <div className={["calendar-grid", "calendar-grid--slim", bookingPickMode ? "calendar-grid--booking-pick" : ""].filter(Boolean).join(" ")}>
+    <div className="calendar-grid calendar-grid--slim">
       <div className="calendar-grid__weekdays calendar-grid__weekdays--slim">
         {weekLabels.map((label, index) => (
           <span
@@ -88,6 +88,7 @@ export default function BigCalendar({
             className={[
               "calendar-grid__weekday",
               activeWeekday === index ? "calendar-grid__weekday--active" : "",
+              `calendar-grid__weekday--tone-${index}`,
             ]
               .filter(Boolean)
               .join(" ")}
@@ -98,15 +99,18 @@ export default function BigCalendar({
       </div>
 
       <div className="calendar-grid__body calendar-grid__body--slim">
-        {days.map((day) => {
+        {days.map((day, index) => {
           const dayEvents = events.filter((event) => event.date === day.date);
-          const isPast = day.date < today;
-          const isUnavailable = unavailableDates.includes(day.date) || isPast;
+          const cityTones = Array.from(
+            new Set(dayEvents.map((event) => getCityTone(event.city)).filter(Boolean)),
+          ).slice(0, 3);
+          const isUnavailable = unavailableDates.includes(day.date);
           const isOutside = !day.isCurrentMonth;
+          const isPast = day.date < today;
           const hasEvents = dayEvents.length > 0;
           const isSelected = selectedDate === day.date;
-          const isClickable = !isOutside && !isUnavailable;
-          const cityTone = getCityTone(dayEvents);
+          const isClickable = !isOutside && !isUnavailable && !isPast;
+          const isFloating = bookingPickMode && isClickable;
 
           return (
             <div
@@ -119,55 +123,65 @@ export default function BigCalendar({
                 isOutside ? "calendar-grid__cell--outside" : "",
                 isPast ? "calendar-grid__cell--past" : "",
                 !isClickable ? "calendar-grid__cell--blocked" : "",
+                bookingPickMode ? "calendar-grid__cell--pick-mode" : "",
+                isFloating ? "calendar-grid__cell--floating" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
-              style={cityTone ? ({ ["--calendar-city-tone" as string]: cityTone } as CSSProperties) : undefined}
               onClick={() => {
                 if (!isClickable) return;
                 onDateSelect(day.date, { unavailable: false });
               }}
-              onKeyDown={(event) => {
-                if (!isClickable) return;
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onDateSelect(day.date, { unavailable: false });
-                }
-              }}
+              onKeyDown={(event) => handleKeyboardSelect(event, day.date, isClickable)}
+              aria-label={`Selecionar dia ${day.date}`}
+              aria-disabled={!isClickable}
               role="button"
               tabIndex={isClickable ? 0 : -1}
-              aria-disabled={!isClickable}
-              aria-label={`Selecionar dia ${day.date}`}
+              style={{ "--cell-order": index % 7 } as CSSProperties}
             >
-              <span className="calendar-grid__hover-hint">Clique para agendar</span>
-
               <div className="calendar-grid__date-row">
                 <CalendarDateCell
                   date={day.date}
                   variant="big"
                   isToday={today === day.date}
                   isSelected={isSelected}
-                  isUnavailable={isUnavailable}
+                  isUnavailable={isUnavailable || isPast}
                   hasEvents={hasEvents}
                   isCurrentMonth={day.isCurrentMonth}
+                  isPast={isPast}
                 />
               </div>
 
               <div className="calendar-grid__indicator-stack">
-                {hasEvents ? <span className="calendar-indicator calendar-indicator--booked" style={cityTone ? ({ background: cityTone } as CSSProperties) : undefined} /> : null}
+                {cityTones.length > 0 ? (
+                  cityTones.map((tone, toneIndex) => (
+                    <span
+                      key={`${day.date}-${tone}-${toneIndex}`}
+                      className={[
+                        "calendar-indicator",
+                        "calendar-indicator--booked",
+                        `calendar-indicator--${tone}`,
+                      ].join(" ")}
+                    />
+                  ))
+                ) : (
+                  <span className="calendar-indicator calendar-indicator--idle" />
+                )}
               </div>
 
-              {isSelected && isClickable ? (
+              {isSelected && isClickable && !bookingPickMode ? (
                 <button
                   type="button"
-                  className="calendar-grid__edge-cta"
+                  className="calendar-grid__inline-cta"
                   onClick={(event) => {
                     event.stopPropagation();
                     onOpenDayBooking(day.date);
                   }}
                 >
-                  <span className="calendar-grid__edge-cta-icon" aria-hidden="true">+</span>
-                  <span>Agendar</span>
+                  <span className="calendar-grid__inline-cta-label">Agendar</span>
+                  <span className="calendar-grid__inline-cta-icon" aria-hidden="true">
+                    +
+                  </span>
                 </button>
               ) : null}
             </div>

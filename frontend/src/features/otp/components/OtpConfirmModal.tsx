@@ -98,7 +98,7 @@ export default function OtpConfirmModal({
             <span>Código</span>
             <input
               value={code}
-              onChange={(event: any) => setCode(onlyDigits(event.target.value))}
+              onChange={(event) => setCode(onlyDigits(event.target.value))}
               inputMode="numeric"
               autoComplete="one-time-code"
               placeholder="123"
@@ -107,10 +107,10 @@ export default function OtpConfirmModal({
           </label>
 
           {feedbackMessage ? <p className="booking-form__feedback booking-form__feedback--success">{feedbackMessage}</p> : null}
-          {confirmError ? (
+          {confirmError instanceof Error ? (
             <p className="booking-form__feedback booking-form__feedback--error">{confirmError.message}</p>
           ) : null}
-          {resendError ? (
+          {resendError instanceof Error ? (
             <p className="booking-form__feedback booking-form__feedback--error">{resendError.message}</p>
           ) : null}
           {expiresIn <= 0 ? (

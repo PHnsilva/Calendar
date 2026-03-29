@@ -60,6 +60,9 @@ type HomeBookingsTimelineProps = {
   nextAllowedMonth: string;
   onChangeMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
+  hideQuickBooking?: boolean;
+  eyebrow?: string;
+  title?: string;
 };
 
 export default function HomeBookingsTimeline({
@@ -70,12 +73,19 @@ export default function HomeBookingsTimeline({
   nextAllowedMonth,
   onChangeMonth,
   onQuickBooking,
+  hideQuickBooking = false,
+  eyebrow = "Agendamentos",
+  title,
 }: HomeBookingsTimelineProps) {
-  const title = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(
-    toLocalDate(activeMonth),
-  );
+  const resolvedTitle =
+    title ??
+    new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
   const todayIso = getTodayIso();
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
+
+  useEffect(() => {
+    setActiveEvent(null);
+  }, [selectedDate, activeMonth]);
 
   const tabs = [
     {
@@ -109,10 +119,12 @@ export default function HomeBookingsTimeline({
       map.set(event.date, list);
     }
 
-    const hasSelectedDate = Boolean(selectedDate);
+    const normalizedSelectedDate = selectedDate && selectedDate.length >= 10 ? selectedDate : "";
     const baseDate =
-      hasSelectedDate && toMonthStart(selectedDate) === activeMonth && selectedDate >= todayIso
-        ? selectedDate
+      normalizedSelectedDate &&
+      toMonthStart(normalizedSelectedDate) === activeMonth &&
+      normalizedSelectedDate >= todayIso
+        ? normalizedSelectedDate
         : activeMonth === currentAllowedMonth
           ? todayIso
           : activeMonth;
@@ -127,17 +139,13 @@ export default function HomeBookingsTimeline({
       .map(([date, items]) => ({ date, items }));
   }, [events, activeMonth, currentAllowedMonth, selectedDate, todayIso]);
 
-  useEffect(() => {
-    setActiveEvent(null);
-  }, [selectedDate, activeMonth]);
-
   return (
     <>
       <section className="timeline-panel">
         <header className="timeline-panel__header">
           <div className="timeline-panel__title-block">
-            <span className="timeline-panel__eyebrow">Agendamentos</span>
-            <h2 className="timeline-panel__title">{title}</h2>
+            <span className="timeline-panel__eyebrow">{eyebrow}</span>
+            <h2 className="timeline-panel__title">{resolvedTitle}</h2>
           </div>
 
           <div className="timeline-panel__tabs">
@@ -163,14 +171,12 @@ export default function HomeBookingsTimeline({
           {grouped.length === 0 ? (
             <div className="timeline-card timeline-card--empty">
               <strong>Nenhum agendamento futuro</strong>
-              <span>
-                Esse mês ainda não possui atendimentos a partir da data selecionada.
-              </span>
+              <span>Esse mês ainda não possui atendimentos a partir da data selecionada.</span>
             </div>
           ) : (
             grouped.map(({ date, items }) => {
               const label = formatDayLabel(date);
-              const isSelectedGroup = date === selectedDate;
+              const isSelectedGroup = selectedDate === date;
 
               return (
                 <div
@@ -191,9 +197,7 @@ export default function HomeBookingsTimeline({
                     {items.length === 0 ? (
                       <div className="timeline-card timeline-card--empty timeline-card--today-empty">
                         <strong>
-                          {label.isToday
-                            ? "Sem agendamentos para hoje"
-                            : "Sem agendamentos para esse dia"}
+                          {label.isToday ? "Sem agendamentos para hoje" : "Sem agendamentos para esse dia"}
                         </strong>
                         <span>
                           {label.isToday
@@ -202,7 +206,7 @@ export default function HomeBookingsTimeline({
                         </span>
                       </div>
                     ) : (
-                      items.map((item, index) => {
+                      items.map((item) => {
                         const tone = getCityTone(item.city);
 
                         return (
@@ -211,9 +215,6 @@ export default function HomeBookingsTimeline({
                             type="button"
                             className={[
                               "timeline-card",
-                              index === 0
-                                ? "timeline-card--primary"
-                                : "timeline-card--secondary",
                               "timeline-card--button",
                               `timeline-card--tone-${tone}`,
                             ]
@@ -241,15 +242,17 @@ export default function HomeBookingsTimeline({
           )}
         </div>
 
-        <button
-          type="button"
-          className="timeline-panel__fab"
-          onClick={onQuickBooking}
-          aria-label="Novo agendamento"
-          title="Novo agendamento"
-        >
-          +
-        </button>
+        {!hideQuickBooking ? (
+          <button
+            type="button"
+            className="timeline-panel__fab"
+            onClick={onQuickBooking}
+            aria-label="Novo agendamento"
+            title="Novo agendamento"
+          >
+            +
+          </button>
+        ) : null}
       </section>
 
       {activeEvent ? (

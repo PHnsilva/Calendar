@@ -30,7 +30,7 @@ type VerificationState = {
   resendAfterSeconds: number;
 };
 
-type CityMode = "belo-horizonte" | "others";
+type CityMode = "belo-horizonte" | "itabirito" | "others";
 
 const DEFAULT_SERVICE_TYPE = "Visita técnica";
 const INITIAL_FORM: BookingFormValues = {
@@ -111,7 +111,7 @@ export default function BookingFormModal({
   const [draftSlot, setDraftSlot] = useState<HomeSelectedSlot>(selectedSlot);
   const [formValues, setFormValues] = useState<BookingFormValues>(INITIAL_FORM);
   const [cityMode, setCityMode] = useState<CityMode>("belo-horizonte");
-  const [selectedOtherCity, setSelectedOtherCity] = useState<string>(OTHER_CITIES[0]);
+  const [selectedOtherCity, setSelectedOtherCity] = useState<string>(OTHER_CITIES.find((city) => city !== "Itabirito") ?? OTHER_CITIES[0]);
   const [verificationState, setVerificationState] = useState<VerificationState | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -130,7 +130,7 @@ export default function BookingFormModal({
     setDraftSlot(selectedSlot);
     setFormValues(INITIAL_FORM);
     setCityMode("belo-horizonte");
-    setSelectedOtherCity(OTHER_CITIES[0]);
+    setSelectedOtherCity(OTHER_CITIES.find((city) => city !== "Itabirito") ?? OTHER_CITIES[0]);
     setSuccessMessage(null);
   }, [open, selectedDate, selectedSlot]);
 
@@ -175,7 +175,8 @@ export default function BookingFormModal({
   }
 
   const canSubmit = Boolean(draftSlot) && !isUnavailable && isRequiredFormValid(formValues);
-  const selectedCity = cityMode === "belo-horizonte" ? PRIMARY_CITY : selectedOtherCity;
+  const otherCityOptions = OTHER_CITIES.filter((city) => city !== "Itabirito");
+  const selectedCity = cityMode === "belo-horizonte" ? PRIMARY_CITY : cityMode === "itabirito" ? "Itabirito" : selectedOtherCity;
 
   const handleFieldChange = <K extends keyof BookingFormValues>(
     key: K,
@@ -416,7 +417,7 @@ export default function BookingFormModal({
 
                   <div className="booking-form__field booking-form__field--full booking-form__field--city">
                     <span>Cidade</span>
-                    <div className="city-choice-row">
+                    <div className="city-choice-row city-choice-row--triple">
                       <button
                         type="button"
                         className={[
@@ -427,54 +428,51 @@ export default function BookingFormModal({
                           .join(" ")}
                         onClick={() => setCityMode("belo-horizonte")}
                       >
-                        <span
-                          className="city-choice-button__icon-slot city-choice-button__icon-slot--metro"
-                          aria-hidden="true"
-                        />
+                        <span className="city-choice-button__icon-slot city-choice-button__icon-slot--metro" aria-hidden="true" />
                         <span className="city-choice-button__text">Belo Horizonte</span>
                       </button>
 
-                      <div
+                      <button
+                        type="button"
                         className={[
                           "city-choice-button",
-                          "city-choice-button--with-select",
-                          cityMode === "others" ? "city-choice-button--active" : "",
+                          cityMode === "itabirito" ? "city-choice-button--active" : "",
                         ]
                           .filter(Boolean)
                           .join(" ")}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => setCityMode("others")}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            setCityMode("others");
-                          }
-                        }}
+                        onClick={() => setCityMode("itabirito")}
                       >
-                        <div className="city-choice-button__head">
-                          <span
-                            className="city-choice-button__icon-slot city-choice-button__icon-slot--town"
-                            aria-hidden="true"
-                          />
-                          <span className="city-choice-button__text">Outros</span>
-                        </div>
+                        <span className="city-choice-button__icon-slot city-choice-button__icon-slot--historic" aria-hidden="true" />
+                        <span className="city-choice-button__text">Itabirito</span>
+                      </button>
 
-                        {cityMode === "others" ? (
-                          <select
-                            className="city-choice-button__select"
-                            value={selectedOtherCity}
-                            onClick={(event) => event.stopPropagation()}
-                            onChange={(event) => setSelectedOtherCity(event.target.value)}
-                          >
-                            {OTHER_CITIES.map((city) => (
-                              <option key={city} value={city}>
-                                {city}
-                              </option>
-                            ))}
-                          </select>
-                        ) : null}
-                      </div>
+                      <label className={[
+                        "city-choice-select-wrap",
+                        cityMode === "others" ? "city-choice-select-wrap--active" : "",
+                      ].filter(Boolean).join(" ")}>
+                        <span className="city-choice-button__icon-slot city-choice-button__icon-slot--town" aria-hidden="true" />
+                        <select
+                          className="booking-form__input city-choice-select"
+                          value={cityMode === "others" ? selectedOtherCity : ""}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            if (!value) {
+                              setCityMode("others");
+                              setSelectedOtherCity(otherCityOptions[0] ?? OTHER_CITIES[0]);
+                              return;
+                            }
+                            setCityMode("others");
+                            setSelectedOtherCity(value);
+                          }}
+                        >
+                          <option value="">Outros</option>
+                          {otherCityOptions.map((city) => (
+                            <option key={city} value={city}>
+                              {city}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                     </div>
                   </div>
                 </div>

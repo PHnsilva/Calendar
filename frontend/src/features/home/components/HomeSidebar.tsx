@@ -10,6 +10,9 @@ type HomeSidebarProps = {
   nextAllowedMonth: string;
   onChangeTimelineMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
+  hideQuickBooking?: boolean;
+  eyebrow?: string;
+  title?: string;
 };
 
 export default function HomeSidebar({
@@ -21,9 +24,12 @@ export default function HomeSidebar({
   nextAllowedMonth,
   onChangeTimelineMonth,
   onQuickBooking,
+  hideQuickBooking = false,
+  eyebrow,
+  title,
 }: HomeSidebarProps) {
   return (
-    <aside className={["home-sidebar", compressed ? "home-sidebar--compressed" : ""].filter(Boolean).join(" ")}>
+    <aside className="home-sidebar">
       <HomeBookingsTimeline
         selectedDate={selectedDate}
         events={events}
@@ -32,6 +38,9 @@ export default function HomeSidebar({
         nextAllowedMonth={nextAllowedMonth}
         onChangeMonth={onChangeTimelineMonth}
         onQuickBooking={onQuickBooking}
+        hideQuickBooking={hideQuickBooking}
+        eyebrow={eyebrow}
+        title={title}
       />
     </aside>
   );

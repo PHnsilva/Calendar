@@ -36,11 +36,7 @@ function buildMonthDate(monthStart: string, day: number): string {
 
 function buildMonthMockEvents(monthStart: string): CalendarEvent[] {
   const reference = toLocalDate(monthStart);
-  const daysInMonth = new Date(
-    reference.getFullYear(),
-    reference.getMonth() + 1,
-    0,
-  ).getDate();
+  const daysInMonth = new Date(reference.getFullYear(), reference.getMonth() + 1, 0).getDate();
 
   const entries = [
     { day: 2, name: "Carlos Souza", address: "Rua dos Inconfidentes, 120 - Itabirito", startTime: "08:00", endTime: "09:00", city: "Itabirito" },
@@ -73,61 +69,27 @@ function buildMonthMockEvents(monthStart: string): CalendarEvent[] {
 
 function build4x4UnavailableDates(monthStart: string, anchorMonth: string): string[] {
   const reference = toLocalDate(monthStart);
-  const daysInMonth = new Date(
-    reference.getFullYear(),
-    reference.getMonth() + 1,
-    0,
-  ).getDate();
-
+  const daysInMonth = new Date(reference.getFullYear(), reference.getMonth() + 1, 0).getDate();
   const anchorDate = toLocalDate(anchorMonth);
   const values = new Set<string>();
 
   for (let day = 1; day <= daysInMonth; day += 1) {
     const date = new Date(reference.getFullYear(), reference.getMonth(), day);
     const iso = toIsoDate(date);
-
-    const diffInDays = Math.floor(
-      (date.getTime() - anchorDate.getTime()) / (1000 * 60 * 60 * 24),
-    );
-
+    const diffInDays = Math.floor((date.getTime() - anchorDate.getTime()) / (1000 * 60 * 60 * 24));
     const normalized = ((diffInDays % 8) + 8) % 8;
-    if (normalized >= 4) {
-      values.add(iso);
-    }
+    if (normalized >= 4) values.add(iso);
   }
 
   return Array.from(values);
 }
 
-function findFirstAvailableDate(monthStart: string, unavailableDates: string[]): string {
-  const reference = toLocalDate(monthStart);
-  const daysInMonth = new Date(
-    reference.getFullYear(),
-    reference.getMonth() + 1,
-    0,
-  ).getDate();
-  const todayIso = toIsoDate(new Date());
-
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    const date = buildMonthDate(monthStart, day);
-    if (date < todayIso) continue;
-    if (!unavailableDates.includes(date)) {
-      return date;
-    }
-  }
-
-  return todayIso;
-}
-
 function mergeEvents(baseEvents: CalendarEvent[], localEvents: CalendarEvent[]) {
   const map = new Map<string, CalendarEvent>();
-  for (const event of [...baseEvents, ...localEvents]) {
-    map.set(event.id, event);
-  }
+  for (const event of [...baseEvents, ...localEvents]) map.set(event.id, event);
   return Array.from(map.values()).sort((a, b) => {
     const byDate = a.date.localeCompare(b.date);
-    if (byDate !== 0) return byDate;
-    return a.startTime.localeCompare(b.startTime);
+    return byDate !== 0 ? byDate : a.startTime.localeCompare(b.startTime);
   });
 }
 
@@ -136,6 +98,7 @@ export default function HomePage() {
   const todayIso = toIsoDate(today);
   const currentAllowedMonth = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-01`;
   const nextAllowedMonth = shiftMonth(currentAllowedMonth, 1);
+  const calendarRef = useRef<HTMLDivElement | null>(null);
 
   const {
     selectedDate,
@@ -159,18 +122,11 @@ export default function HomePage() {
   );
 
   const demoEvents = useMemo(
-    () => [
-      ...buildMonthMockEvents(currentAllowedMonth),
-      ...buildMonthMockEvents(nextAllowedMonth),
-    ].filter((event) => event.date >= todayIso),
+    () => [...buildMonthMockEvents(currentAllowedMonth), ...buildMonthMockEvents(nextAllowedMonth)].filter((event) => event.date >= todayIso),
     [currentAllowedMonth, nextAllowedMonth, todayIso],
   );
 
-  const allEvents = useMemo(
-    () => mergeEvents(demoEvents, localEvents),
-    [demoEvents, localEvents],
-  );
-
+  const allEvents = useMemo(() => mergeEvents(demoEvents, localEvents), [demoEvents, localEvents]);
   const allUnavailableDates = useMemo(
     () => [
       ...build4x4UnavailableDates(currentAllowedMonth, currentAllowedMonth),
@@ -178,6 +134,13 @@ export default function HomePage() {
     ],
     [currentAllowedMonth, nextAllowedMonth],
   );
+
+  const focusCalendar = () => {
+    const node = calendarRef.current ?? document.querySelector<HTMLElement>(".home-calendar-stack");
+    node?.scrollIntoView({ behavior: "smooth", block: "start" });
+    node?.classList.add("calendar-focus-pulse");
+    window.setTimeout(() => node?.classList.remove("calendar-focus-pulse"), 950);
+  };
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -190,26 +153,16 @@ export default function HomePage() {
   useEffect(() => {
     if (quickBookingRequestId === 0) return;
     if (quickBookingRequestId === lastQuickRequestRef.current) return;
-
     lastQuickRequestRef.current = quickBookingRequestId;
 
     clearSelection();
-    closeBookingModal();
-    setTimelineMonth(currentMonth);
     setIsBookingPickMode(true);
     setIsBookingGuideOpen(true);
 
-    const isMobile = window.matchMedia("(max-width: 860px)").matches;
-    window.requestAnimationFrame(() => {
-      const target = document.querySelector(".home-main-panel--calendar");
-      if (target instanceof HTMLElement) {
-        target.classList.remove("calendar-focus-pulse");
-        void target.offsetWidth;
-        target.classList.add("calendar-focus-pulse");
-        target.scrollIntoView({ behavior: "smooth", block: isMobile ? "start" : "nearest" });
-      }
-    });
-  }, [quickBookingRequestId, currentMonth, allUnavailableDates, clearSelection]);
+    if (window.matchMedia("(max-width: 860px)").matches) {
+      window.requestAnimationFrame(() => focusCalendar());
+    }
+  }, [quickBookingRequestId, clearSelection]);
 
   const handleCalendarDateSelect = (date: string, options?: { unavailable?: boolean }) => {
     if (options?.unavailable) return;
@@ -222,10 +175,9 @@ export default function HomePage() {
       openBookingModal();
     }
 
-    const isMobile = window.matchMedia("(max-width: 860px)").matches;
-    if (isMobile) {
+    if (window.matchMedia("(max-width: 860px)").matches) {
       window.requestAnimationFrame(() => {
-        document.querySelector(".timeline-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.querySelector<HTMLElement>(".timeline-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     }
   };
@@ -264,6 +216,24 @@ export default function HomePage() {
     openBookingModal();
   };
 
+  const handleCalendarMonthChange = (month: string) => {
+    closeBookingModal();
+    clearSelection();
+    setIsBookingGuideOpen(false);
+    setIsBookingPickMode(false);
+    setCurrentMonth(month);
+    setTimelineMonth(month);
+  };
+
+  const handleTimelineMonthChange = (month: string) => {
+    closeBookingModal();
+    clearSelection();
+    setIsBookingGuideOpen(false);
+    setIsBookingPickMode(false);
+    setTimelineMonth(month);
+    setCurrentMonth(month);
+  };
+
   const handleCloseBookingGuide = () => {
     setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
@@ -281,19 +251,21 @@ export default function HomePage() {
         <span className="home-page__eyebrow">Agenda inteligente</span>
       </section>
 
-      <div className="home-grid">
-        <HomeCalendarSection
-          selectedDate={selectedDate}
-          currentMonth={currentMonth}
-          currentAllowedMonth={currentAllowedMonth}
-          nextAllowedMonth={nextAllowedMonth}
-          events={allEvents}
-          unavailableDates={allUnavailableDates}
-          bookingPickMode={isBookingPickMode}
-          onDateSelect={handleCalendarDateSelect}
-          onMonthChange={handleCalendarMonthChange}
-          onOpenDayBooking={handleOpenDayBooking}
-        />
+      <div className={`home-grid${isBookingPickMode ? " home-grid--pick-mode" : ""}`}>
+        <div ref={calendarRef}>
+          <HomeCalendarSection
+            selectedDate={selectedDate}
+            currentMonth={currentMonth}
+            currentAllowedMonth={currentAllowedMonth}
+            nextAllowedMonth={nextAllowedMonth}
+            events={allEvents}
+            unavailableDates={allUnavailableDates}
+            bookingPickMode={isBookingPickMode}
+            onDateSelect={handleCalendarDateSelect}
+            onMonthChange={handleCalendarMonthChange}
+            onOpenDayBooking={handleOpenDayBooking}
+          />
+        </div>
 
         <HomeSidebar
           selectedDate={selectedDate}
@@ -302,18 +274,18 @@ export default function HomePage() {
           currentAllowedMonth={currentAllowedMonth}
           nextAllowedMonth={nextAllowedMonth}
           onChangeTimelineMonth={handleTimelineMonthChange}
-          onQuickBooking={requestQuickBooking}
+          onQuickBooking={() => {
+            clearSelection();
+            requestQuickBooking();
+          }}
         />
       </div>
 
-      <BookingStartHintModal
-        open={isBookingGuideOpen}
-        onClose={handleCloseBookingGuide}
-      />
+      <BookingStartHintModal open={isBookingGuideOpen} onClose={handleCloseBookingGuide} />
 
       <BookingFormModal
         open={isBookingModalOpen}
-        selectedDate={selectedDate}
+        selectedDate={selectedDate || todayIso}
         selectedSlot={selectedSlot}
         events={allEvents}
         unavailableDates={allUnavailableDates}

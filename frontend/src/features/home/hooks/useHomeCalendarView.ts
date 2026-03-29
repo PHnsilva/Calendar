@@ -30,12 +30,6 @@ export function useHomeCalendarView() {
     setSelectedSlot(slot);
   };
 
-  const handleMonthChange = (month: string) => {
-    setCurrentMonth(month);
-    setSelectedDate("");
-    setSelectedSlot(null);
-  };
-
   const clearSelection = () => {
     setSelectedDate("");
     setSelectedSlot(null);

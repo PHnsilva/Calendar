@@ -33,10 +33,6 @@ public class ServicoService {
     private final AvailabilityPolicyService availabilityPolicyService;
     private final PendingStore pendingStore;
 
-    private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
-    private static final int DEFAULT_DURATION_MINUTES = 60;
-    private static final Set<Integer> ALLOWED_MINUTES = Set.of(0);
-
     public ServicoService(
             CalendarClient calendar,
             TokenUtil tokenUtil,
@@ -64,8 +60,8 @@ public class ServicoService {
             throw new ConflictException("Você já tem um agendamento pendente de confirmação");
         }
 
-        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
-        ZonedDateTime endZ = startZ.plusMinutes(DEFAULT_DURATION_MINUTES);
+        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), zone());
+        ZonedDateTime endZ = startZ.plusMinutes(props.getBookingSlotMinutes());
         Instant start = startZ.toInstant();
         Instant end = endZ.toInstant();
 
@@ -113,12 +109,11 @@ public class ServicoService {
 
         String token = tokenUtil.generate(created.getId(), req.getClientEmail());
 
-        VerificationService.StartResult otp = verificationService.start(
-                token,
-                phoneDigits);
+        VerificationService.StartResult otp = verificationService.start(token, phoneDigits);
 
         ServicoResponse servico = mapEventToResponse(created);
         servico.setStatus("PENDING_PHONE");
+        servico.setPendingExpiresAt(pendingExpiresAt);
 
         ServicoCreateResponse out = new ServicoCreateResponse();
         out.setServico(servico);
@@ -127,7 +122,6 @@ public class ServicoService {
         out.setExpiresInSeconds(otp.expiresInSeconds());
         out.setResendAfterSeconds(otp.resendAfterSeconds());
         out.setPendingExpiresAt(pendingExpiresAt);
-
         return out;
     }
 
@@ -177,9 +171,7 @@ public class ServicoService {
             throw new NotFoundException("Agendamento não encontrado");
         }
 
-        String phone = ext.getOrDefault("clientPhone", "");
-        phone = normalizePhone(phone);
-
+        String phone = normalizePhone(ext.getOrDefault("clientPhone", ""));
         return listByPhone(phone);
     }
 
@@ -188,9 +180,9 @@ public class ServicoService {
 
         cleanupExpiredPendings();
 
-        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
+        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(zone()));
         ZonedDateTime from = base.minusMonths(props.getHistoryRetentionMonths());
-        ZonedDateTime to = base.plusMonths(2);
+        ZonedDateTime to = base.plusMonths(props.getBookingMaxFutureMonthsAhead() + 1L);
 
         List<Event> events = calendar.listEventsByPhone(
                 new DateTime(Date.from(from.toInstant())),
@@ -202,6 +194,7 @@ public class ServicoService {
 
         return events.stream()
                 .map(this::mapEventToResponse)
+                .sorted(Comparator.comparing(ServicoResponse::getStart, Comparator.nullsLast(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
     }
 
@@ -232,8 +225,8 @@ public class ServicoService {
             throw new ForbiddenException("Token inválido");
         }
 
-        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
-        ZonedDateTime endZ = startZ.plusMinutes(DEFAULT_DURATION_MINUTES);
+        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), zone());
+        ZonedDateTime endZ = startZ.plusMinutes(props.getBookingSlotMinutes());
         Instant start = startZ.toInstant();
         Instant end = endZ.toInstant();
 
@@ -254,8 +247,9 @@ public class ServicoService {
         Instant oldEnd = instantFrom(existing.getEnd());
 
         boolean conflict = busy.stream().anyMatch(tp -> {
-            if (tp.getStart() == null || tp.getEnd() == null)
+            if (tp.getStart() == null || tp.getEnd() == null) {
                 return true;
+            }
             Instant bs = Instant.ofEpochMilli(tp.getStart().getValue());
             Instant be = Instant.ofEpochMilli(tp.getEnd().getValue());
             boolean isSelf = bs.equals(oldStart) && be.equals(oldEnd);
@@ -347,14 +341,14 @@ public class ServicoService {
 
     public List<ServicoResponse> listAllAdmin(LocalDate fromDate, LocalDate toDate, String status, String city)
             throws IOException {
-        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
+        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(zone()));
 
         LocalDate resolvedFrom;
         LocalDate resolvedTo;
 
         if (fromDate == null && toDate == null) {
             resolvedFrom = base.minusMonths(props.getHistoryRetentionMonths()).toLocalDate();
-            resolvedTo = base.plusMonths(2).toLocalDate().minusDays(1);
+            resolvedTo = base.plusMonths(props.getBookingMaxFutureMonthsAhead() + 1L).toLocalDate().minusDays(1);
         } else {
             resolvedFrom = (fromDate != null) ? fromDate : toDate;
             resolvedTo = (toDate != null) ? toDate : fromDate;
@@ -369,8 +363,8 @@ public class ServicoService {
 
         cleanupExpiredPendings(resolvedFrom, resolvedTo);
 
-        ZonedDateTime from = resolvedFrom.atStartOfDay(ZONE);
-        ZonedDateTime to = resolvedTo.plusDays(1).atStartOfDay(ZONE);
+        ZonedDateTime from = resolvedFrom.atStartOfDay(zone());
+        ZonedDateTime to = resolvedTo.plusDays(1).atStartOfDay(zone());
 
         List<Event> events = listBookingEventsBetween(from, to);
 
@@ -392,30 +386,34 @@ public class ServicoService {
     }
 
     private boolean matchesAdminStatus(Event e, String normalizedStatus) {
-        if (normalizedStatus.isBlank())
+        if (normalizedStatus.isBlank()) {
             return true;
+        }
         Map<String, String> ext = privateExt(e);
         String current = ext.getOrDefault("status", "PENDING_PHONE");
         return normalizedStatus.equalsIgnoreCase(current);
     }
 
     private boolean matchesAdminCity(Event e, String normalizedCity) {
-        if (normalizedCity.isBlank())
+        if (normalizedCity.isBlank()) {
             return true;
+        }
         Map<String, String> ext = privateExt(e);
         String current = LocationNormalizer.normalizeCity(ext.getOrDefault("clientCity", ""));
         return normalizedCity.equals(current);
     }
 
     private String normalizeAdminStatus(String status) {
-        if (status == null)
+        if (status == null) {
             return "";
+        }
         return status.trim().toUpperCase(Locale.ROOT);
     }
 
     private String normalizeAdminCity(String city) {
-        if (city == null || city.isBlank())
+        if (city == null || city.isBlank()) {
             return "";
+        }
         return LocationNormalizer.normalizeCity(city);
     }
 
@@ -432,8 +430,8 @@ public class ServicoService {
     public List<String> getAvailableSlots(LocalDate date, int slotMinutes) throws IOException {
         validateDateWindow(date);
 
-        if (slotMinutes != DEFAULT_DURATION_MINUTES) {
-            throw new BadRequestException("slotMinutes deve ser 60");
+        if (slotMinutes != props.getBookingSlotMinutes()) {
+            throw new BadRequestException("slotMinutes deve ser " + props.getBookingSlotMinutes());
         }
 
         cleanupExpiredPendings();
@@ -443,8 +441,8 @@ public class ServicoService {
             return Collections.emptyList();
         }
 
-        ZonedDateTime dayStart = ZonedDateTime.of(date, props.getWorkStart(), ZONE);
-        ZonedDateTime dayEnd = ZonedDateTime.of(date, props.getWorkEnd(), ZONE);
+        ZonedDateTime dayStart = ZonedDateTime.of(date, props.getWorkStart(), zone());
+        ZonedDateTime dayEnd = ZonedDateTime.of(date, props.getWorkEnd(), zone());
 
         DateTime timeMin = new DateTime(Date.from(dayStart.toInstant()));
         DateTime timeMax = new DateTime(Date.from(dayEnd.toInstant()));
@@ -469,8 +467,9 @@ public class ServicoService {
 
             boolean conflict = false;
             for (TimePeriod tp : busy) {
-                if (tp.getStart() == null || tp.getEnd() == null)
+                if (tp.getStart() == null || tp.getEnd() == null) {
                     continue;
+                }
 
                 Instant busyStart = Instant.ofEpochMilli(tp.getStart().getValue());
                 Instant busyEnd = Instant.ofEpochMilli(tp.getEnd().getValue());
@@ -510,28 +509,42 @@ public class ServicoService {
     }
 
     private void validateTime(LocalTime time) {
-        if (time == null)
+        if (time == null) {
             throw new BadRequestException("time é obrigatório");
-        if (!ALLOWED_MINUTES.contains(time.getMinute())) {
-            throw new BadRequestException("Minutos inválidos. Use 00.");
+        }
+        if (!props.getAllowedMinuteMarks().contains(time.getMinute())) {
+            throw new BadRequestException("Minutos inválidos. Valores permitidos: " + props.getAllowedMinuteMarksList());
         }
     }
 
     private void validateDateWindow(LocalDate requestedDate) {
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(zone());
 
-        if (requestedDate == null)
+        if (requestedDate == null) {
             throw new BadRequestException("date é obrigatório");
-        if (requestedDate.isBefore(today))
+        }
+        if (requestedDate.isBefore(today)) {
             throw new BadRequestException("Data inválida: não pode ser no passado");
+        }
 
         YearMonth ymReq = YearMonth.from(requestedDate);
         YearMonth ymNow = YearMonth.from(today);
-        YearMonth ymNext = ymNow.plusMonths(1);
+        YearMonth ymMax = ymNow.plusMonths(props.getBookingMaxFutureMonthsAhead());
 
-        if (!ymReq.equals(ymNow) && !ymReq.equals(ymNext)) {
-            throw new BadRequestException("Data inválida: apenas mês atual ou próximo");
+        if (ymReq.isBefore(ymNow) || ymReq.isAfter(ymMax)) {
+            throw new BadRequestException(buildDateWindowMessage());
         }
+    }
+
+    private String buildDateWindowMessage() {
+        int maxMonthsAhead = props.getBookingMaxFutureMonthsAhead();
+        if (maxMonthsAhead <= 0) {
+            return "Data inválida: apenas mês atual";
+        }
+        if (maxMonthsAhead == 1) {
+            return "Data inválida: apenas mês atual ou próximo";
+        }
+        return "Data inválida: apenas até " + maxMonthsAhead + " mês(es) à frente";
     }
 
     private void validateServiceArea(ServicoRequest req) {
@@ -554,15 +567,13 @@ public class ServicoService {
         }
 
         String legacyCity = props.getLegacyCityNormalized();
-        if (!legacyCity.isBlank()) {
-            if (reqCityNorm.isBlank() || !legacyCity.equals(reqCityNorm)) {
-                throw new BadRequestException("Atendimento não disponível para esta cidade");
-            }
+        if (!legacyCity.isBlank() && (reqCityNorm.isBlank() || !legacyCity.equals(reqCityNorm))) {
+            throw new BadRequestException("Atendimento não disponível para esta cidade");
         }
     }
 
     private ZonedDateTime firstDayOfMonth(ZonedDateTime now) {
-        return now.withDayOfMonth(1).toLocalDate().atStartOfDay(ZONE);
+        return now.withDayOfMonth(1).toLocalDate().atStartOfDay(zone());
     }
 
     private String normalizePhone(String phone) {
@@ -574,45 +585,53 @@ public class ServicoService {
     }
 
     private Map<String, String> privateExt(Event e) {
-        if (e.getExtendedProperties() == null)
+        if (e.getExtendedProperties() == null) {
             return Collections.emptyMap();
-        if (e.getExtendedProperties().getPrivate() == null)
+        }
+        if (e.getExtendedProperties().getPrivate() == null) {
             return Collections.emptyMap();
+        }
         return e.getExtendedProperties().getPrivate();
     }
 
     private Instant instantFrom(EventDateTime edt) {
-        if (edt == null)
+        if (edt == null) {
             return null;
+        }
         DateTime dt = edt.getDateTime();
-        if (dt == null)
+        if (dt == null) {
             dt = edt.getDate();
-        if (dt == null)
+        }
+        if (dt == null) {
             return null;
+        }
         return Instant.ofEpochMilli(dt.getValue());
     }
 
     private boolean isExpiredPending(Map<String, String> ext) {
         String status = ext.getOrDefault("status", "");
-        if (!"PENDING_PHONE".equalsIgnoreCase(status))
+        if (!"PENDING_PHONE".equalsIgnoreCase(status)) {
             return false;
+        }
 
         String pe = ext.get("pendingExpiresAt");
-        if (pe == null || !pe.matches("\\d+"))
+        if (pe == null || !pe.matches("\\d+")) {
             return false;
+        }
 
         long exp = Long.parseLong(pe);
         return Instant.now().getEpochSecond() > exp;
     }
 
     private void cleanupExpiredPendings() throws IOException {
-        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
-        cleanupExpiredPendings(base.minusMonths(props.getHistoryRetentionMonths()), base.plusMonths(2));
+        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(zone()));
+        cleanupExpiredPendings(base.minusMonths(props.getHistoryRetentionMonths()),
+                base.plusMonths(props.getBookingMaxFutureMonthsAhead() + 1L));
     }
 
     private void cleanupExpiredPendings(LocalDate fromDate, LocalDate toDate) throws IOException {
-        ZonedDateTime from = fromDate.atStartOfDay(ZONE);
-        ZonedDateTime to = toDate.plusDays(1).atStartOfDay(ZONE);
+        ZonedDateTime from = fromDate.atStartOfDay(zone());
+        ZonedDateTime to = toDate.plusDays(1).atStartOfDay(zone());
         cleanupExpiredPendings(from, to);
     }
 
@@ -620,8 +639,9 @@ public class ServicoService {
         List<Event> events = calendar.listBookingEvents(
                 new DateTime(Date.from(from.toInstant())),
                 new DateTime(Date.from(to.toInstant())));
-        if (events == null)
+        if (events == null) {
             return;
+        }
 
         for (Event e : events) {
             Map<String, String> ext = privateExt(e);
@@ -633,23 +653,26 @@ public class ServicoService {
     }
 
     private boolean hasActivePendingForPhone(String phoneDigits) throws IOException {
-        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
+        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(zone()));
         ZonedDateTime from = base.minusMonths(props.getHistoryRetentionMonths());
-        ZonedDateTime to = base.plusMonths(2);
+        ZonedDateTime to = base.plusMonths(props.getBookingMaxFutureMonthsAhead() + 1L);
 
         List<Event> events = calendar.listEventsByPhone(
                 new DateTime(Date.from(from.toInstant())),
                 new DateTime(Date.from(to.toInstant())),
                 phoneDigits);
-        if (events == null)
+        if (events == null) {
             return false;
+        }
 
         for (Event e : events) {
             Map<String, String> ext = privateExt(e);
-            if (!"PENDING_PHONE".equalsIgnoreCase(ext.getOrDefault("status", "")))
+            if (!"PENDING_PHONE".equalsIgnoreCase(ext.getOrDefault("status", ""))) {
                 continue;
-            if (isExpiredPending(ext))
+            }
+            if (isExpiredPending(ext)) {
                 continue;
+            }
             return true;
         }
         return false;
@@ -681,8 +704,16 @@ public class ServicoService {
 
         s.setClientAddressLine(buildAddressLine(s));
         s.setStatus(ext.getOrDefault("status", "PENDING_PHONE"));
-
+        s.setPendingExpiresAt(readInstant(ext.get("pendingExpiresAt")));
+        s.setPhoneVerifiedAt(readInstant(ext.get("phoneVerifiedAt")));
         return s;
+    }
+
+    private Instant readInstant(String raw) {
+        if (raw == null || !raw.matches("\\d+")) {
+            return null;
+        }
+        return Instant.ofEpochSecond(Long.parseLong(raw));
     }
 
     private String buildAddressLine(ServicoResponse s) {
@@ -694,5 +725,9 @@ public class ServicoService {
                 + " - " + s.getClientCity() + "/" + s.getClientState()
                 + " CEP: " + s.getClientCep();
         return base.trim();
+    }
+
+    private ZoneId zone() {
+        return props.getZoneId();
     }
 }

@@ -22,9 +22,6 @@ import java.util.stream.Collectors;
 @Service
 public class AvailabilityBlockService {
 
-    private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
-    private static final Set<Integer> ALLOWED_MINUTES = Set.of(0);
-
     private final CalendarClient calendar;
     private final AppProperties props;
     private final AdminBookingOpsService adminBookingOpsService;
@@ -124,10 +121,11 @@ public class AvailabilityBlockService {
             String type,
             String reason
     ) throws IOException {
-        ZonedDateTime base = ZonedDateTime.now(ZONE).withDayOfMonth(1).toLocalDate().atStartOfDay(ZONE);
+        ZonedDateTime base = ZonedDateTime.now(zone()).withDayOfMonth(1).toLocalDate().atStartOfDay(zone());
 
         LocalDate resolvedFrom = (fromDate != null) ? fromDate : base.toLocalDate();
-        LocalDate resolvedTo = (toDate != null) ? toDate : base.plusMonths(2).toLocalDate().minusDays(1);
+        LocalDate resolvedTo = (toDate != null) ? toDate : base.plusMonths(props.getBookingMaxFutureMonthsAhead() + 1L)
+                .toLocalDate().minusDays(1);
 
         if (resolvedFrom.isAfter(resolvedTo)) {
             throw new BadRequestException("Parâmetros inválidos: from deve ser <= to");
@@ -138,8 +136,8 @@ public class AvailabilityBlockService {
         String normalizedReason = normalizeOptionalReason(reason);
 
         List<Event> items = calendar.listAvailabilityRuleEvents(
-                new DateTime(Date.from(resolvedFrom.atStartOfDay(ZONE).toInstant())),
-                new DateTime(Date.from(resolvedTo.plusDays(1).atStartOfDay(ZONE).toInstant()))
+                new DateTime(Date.from(resolvedFrom.atStartOfDay(zone()).toInstant())),
+                new DateTime(Date.from(resolvedTo.plusDays(1).atStartOfDay(zone()).toInstant()))
         );
 
         if (items == null) {
@@ -186,12 +184,18 @@ public class AvailabilityBlockService {
             String mode = ext.getOrDefault("ruleMode", "").trim().toUpperCase(Locale.ROOT);
             String type = ext.getOrDefault("blockType", "").trim().toUpperCase(Locale.ROOT);
 
-            if (!requested.mode().equals(mode)) continue;
-            if (!requested.type().equals(type)) continue;
+            if (!requested.mode().equals(mode)) {
+                continue;
+            }
+            if (!requested.type().equals(type)) {
+                continue;
+            }
 
             Instant ruleStart = instantFrom(rule.getStart());
             Instant ruleEnd = instantFrom(rule.getEnd());
-            if (ruleStart == null || ruleEnd == null) continue;
+            if (ruleStart == null || ruleEnd == null) {
+                continue;
+            }
 
             boolean covers = !ruleStart.isAfter(requested.start()) && !ruleEnd.isBefore(requested.end());
             if (covers) {
@@ -203,8 +207,8 @@ public class AvailabilityBlockService {
     }
 
     private List<AvailabilityConflictItem> findConflicts(Instant start, Instant end) throws IOException {
-        ZonedDateTime from = start.atZone(ZONE).minusDays(1);
-        ZonedDateTime to = end.atZone(ZONE).plusDays(1);
+        ZonedDateTime from = start.atZone(zone()).minusDays(1);
+        ZonedDateTime to = end.atZone(zone()).plusDays(1);
 
         List<Event> events = calendar.listBookingEvents(
                 new DateTime(Date.from(from.toInstant())),
@@ -218,10 +222,14 @@ public class AvailabilityBlockService {
         for (Event e : events) {
             Instant evStart = instantFrom(e.getStart());
             Instant evEnd = instantFrom(e.getEnd());
-            if (evStart == null || evEnd == null) continue;
+            if (evStart == null || evEnd == null) {
+                continue;
+            }
 
             boolean overlaps = evStart.isBefore(end) && evEnd.isAfter(start);
-            if (!overlaps) continue;
+            if (!overlaps) {
+                continue;
+            }
 
             out.add(toConflictItem(e));
         }
@@ -248,20 +256,32 @@ public class AvailabilityBlockService {
             String mode = ext.getOrDefault("ruleMode", "").trim().toUpperCase(Locale.ROOT);
             String type = ext.getOrDefault("blockType", "").trim().toUpperCase(Locale.ROOT);
 
-            if (!requested.mode().equals(mode)) continue;
-            if (!requested.type().equals(type)) continue;
+            if (!requested.mode().equals(mode)) {
+                continue;
+            }
+            if (!requested.type().equals(type)) {
+                continue;
+            }
 
             Instant ruleStart = instantFrom(rule.getStart());
             Instant ruleEnd = instantFrom(rule.getEnd());
-            if (ruleStart == null || ruleEnd == null) continue;
+            if (ruleStart == null || ruleEnd == null) {
+                continue;
+            }
 
             boolean overlapsOrTouches = !ruleEnd.isBefore(mergedStart) && !ruleStart.isAfter(mergedEnd);
-            if (!overlapsOrTouches) continue;
+            if (!overlapsOrTouches) {
+                continue;
+            }
 
             overlappingSameMode.add(rule);
 
-            if (ruleStart.isBefore(mergedStart)) mergedStart = ruleStart;
-            if (ruleEnd.isAfter(mergedEnd)) mergedEnd = ruleEnd;
+            if (ruleStart.isBefore(mergedStart)) {
+                mergedStart = ruleStart;
+            }
+            if (ruleEnd.isAfter(mergedEnd)) {
+                mergedEnd = ruleEnd;
+            }
         }
 
         if (overlappingSameMode.isEmpty()) {
@@ -327,8 +347,8 @@ public class AvailabilityBlockService {
             }
             validateDateWindow(date);
 
-            Instant start = ZonedDateTime.of(date, props.getWorkStart(), ZONE).toInstant();
-            Instant end = ZonedDateTime.of(date, props.getWorkEnd(), ZONE).toInstant();
+            Instant start = ZonedDateTime.of(date, props.getWorkStart(), zone()).toInstant();
+            Instant end = ZonedDateTime.of(date, props.getWorkEnd(), zone()).toInstant();
             return new RuleWindow(mode, type, start, end, safe(reason));
         }
 
@@ -342,8 +362,8 @@ public class AvailabilityBlockService {
         validateSlotTime(startAt.toLocalTime());
         validateSlotTime(endAt.toLocalTime());
 
-        Instant start = startAt.atZone(ZONE).toInstant();
-        Instant end = endAt.atZone(ZONE).toInstant();
+        Instant start = startAt.atZone(zone()).toInstant();
+        Instant end = endAt.atZone(zone()).toInstant();
 
         if (!end.isAfter(start)) {
             throw new BadRequestException("endAt deve ser maior que startAt");
@@ -358,14 +378,14 @@ public class AvailabilityBlockService {
         if (time == null) {
             throw new BadRequestException("Horário inválido");
         }
-        if (!ALLOWED_MINUTES.contains(time.getMinute())) {
-            throw new BadRequestException("Minutos inválidos. Use 00.");
+        if (!props.getAllowedMinuteMarks().contains(time.getMinute())) {
+            throw new BadRequestException("Minutos inválidos. Valores permitidos: " + props.getAllowedMinuteMarksList());
         }
     }
 
     private void validateInsideBusinessWindow(Instant start, Instant end) {
-        LocalTime startTime = start.atZone(ZONE).toLocalTime();
-        LocalTime endTime = end.atZone(ZONE).toLocalTime();
+        LocalTime startTime = start.atZone(zone()).toLocalTime();
+        LocalTime endTime = end.atZone(zone()).toLocalTime();
 
         if (startTime.isBefore(props.getWorkStart()) || endTime.isAfter(props.getWorkEnd())) {
             throw new BadRequestException("Regra fora do expediente");
@@ -378,7 +398,7 @@ public class AvailabilityBlockService {
     }
 
     private void validateDateWindow(LocalDate requestedDate) {
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(zone());
 
         if (requestedDate == null) {
             throw new BadRequestException("date é obrigatório");
@@ -389,11 +409,22 @@ public class AvailabilityBlockService {
 
         YearMonth ymReq = YearMonth.from(requestedDate);
         YearMonth ymNow = YearMonth.from(today);
-        YearMonth ymNext = ymNow.plusMonths(1);
+        YearMonth ymMax = ymNow.plusMonths(props.getBookingMaxFutureMonthsAhead());
 
-        if (!ymReq.equals(ymNow) && !ymReq.equals(ymNext)) {
-            throw new BadRequestException("Data inválida: apenas mês atual ou próximo");
+        if (ymReq.isBefore(ymNow) || ymReq.isAfter(ymMax)) {
+            throw new BadRequestException(buildDateWindowMessage());
         }
+    }
+
+    private String buildDateWindowMessage() {
+        int maxMonthsAhead = props.getBookingMaxFutureMonthsAhead();
+        if (maxMonthsAhead <= 0) {
+            return "Data inválida: apenas mês atual";
+        }
+        if (maxMonthsAhead == 1) {
+            return "Data inválida: apenas mês atual ou próximo";
+        }
+        return "Data inválida: apenas até " + maxMonthsAhead + " mês(es) à frente";
     }
 
     private String normalizeMode(String rawMode) {
@@ -413,34 +444,46 @@ public class AvailabilityBlockService {
     }
 
     private String normalizeOptionalMode(String rawMode) {
-        if (rawMode == null || rawMode.isBlank()) return "";
+        if (rawMode == null || rawMode.isBlank()) {
+            return "";
+        }
         return normalizeMode(rawMode);
     }
 
     private String normalizeOptionalType(String rawType) {
-        if (rawType == null || rawType.isBlank()) return "";
+        if (rawType == null || rawType.isBlank()) {
+            return "";
+        }
         return normalizeType(rawType);
     }
 
     private String normalizeOptionalReason(String reason) {
-        if (reason == null || reason.isBlank()) return "";
+        if (reason == null || reason.isBlank()) {
+            return "";
+        }
         return reason.trim().toLowerCase(Locale.ROOT);
     }
 
     private boolean matchesMode(Event e, String normalizedMode) {
-        if (normalizedMode.isBlank()) return true;
+        if (normalizedMode.isBlank()) {
+            return true;
+        }
         Map<String, String> ext = privateExt(e);
         return normalizedMode.equalsIgnoreCase(ext.getOrDefault("ruleMode", ""));
     }
 
     private boolean matchesType(Event e, String normalizedType) {
-        if (normalizedType.isBlank()) return true;
+        if (normalizedType.isBlank()) {
+            return true;
+        }
         Map<String, String> ext = privateExt(e);
         return normalizedType.equalsIgnoreCase(ext.getOrDefault("blockType", ""));
     }
 
     private boolean matchesReason(Event e, String normalizedReason) {
-        if (normalizedReason.isBlank()) return true;
+        if (normalizedReason.isBlank()) {
+            return true;
+        }
         Map<String, String> ext = privateExt(e);
         String blockReason = safe(ext.getOrDefault("blockReason", "")).toLowerCase(Locale.ROOT);
         return blockReason.contains(normalizedReason);
@@ -454,21 +497,35 @@ public class AvailabilityBlockService {
     }
 
     private Map<String, String> privateExt(Event e) {
-        if (e.getExtendedProperties() == null) return Collections.emptyMap();
-        if (e.getExtendedProperties().getPrivate() == null) return Collections.emptyMap();
+        if (e.getExtendedProperties() == null) {
+            return Collections.emptyMap();
+        }
+        if (e.getExtendedProperties().getPrivate() == null) {
+            return Collections.emptyMap();
+        }
         return e.getExtendedProperties().getPrivate();
     }
 
     private Instant instantFrom(com.google.api.services.calendar.model.EventDateTime edt) {
-        if (edt == null) return null;
+        if (edt == null) {
+            return null;
+        }
         DateTime dt = edt.getDateTime();
-        if (dt == null) dt = edt.getDate();
-        if (dt == null) return null;
+        if (dt == null) {
+            dt = edt.getDate();
+        }
+        if (dt == null) {
+            return null;
+        }
         return Instant.ofEpochMilli(dt.getValue());
     }
 
     private String safe(String s) {
         return s == null ? "" : s.trim();
+    }
+
+    private ZoneId zone() {
+        return props.getZoneId();
     }
 
     private record RuleWindow(String mode, String type, Instant start, Instant end, String reason) {

@@ -15,12 +15,9 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class AvailabilityPolicyService {
-
-    private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
 
     private final CalendarClient calendar;
     private final AppProperties props;
@@ -55,8 +52,8 @@ public class AvailabilityPolicyService {
             return false;
         }
 
-        LocalDate startDate = start.atZone(ZONE).toLocalDate();
-        LocalDate endDate = end.atZone(ZONE).toLocalDate();
+        LocalDate startDate = start.atZone(zone()).toLocalDate();
+        LocalDate endDate = end.atZone(zone()).toLocalDate();
 
         if (!startDate.equals(endDate)) {
             return false;
@@ -82,8 +79,8 @@ public class AvailabilityPolicyService {
             return Collections.emptyList();
         }
 
-        ZonedDateTime dayStart = ZonedDateTime.of(date, props.getWorkStart(), ZONE);
-        ZonedDateTime dayEnd = ZonedDateTime.of(date, props.getWorkEnd(), ZONE);
+        ZonedDateTime dayStart = ZonedDateTime.of(date, props.getWorkStart(), zone());
+        ZonedDateTime dayEnd = ZonedDateTime.of(date, props.getWorkEnd(), zone());
 
         List<Event> rules = calendar.listAvailabilityRuleEvents(
                 new DateTime(Date.from(dayStart.toInstant())),
@@ -123,10 +120,10 @@ public class AvailabilityPolicyService {
 
         List<TimeWindow> out = new ArrayList<>();
 
-        ZonedDateTime dayWorkStart = ZonedDateTime.of(date, workStart, ZONE);
-        ZonedDateTime dayWorkEnd = ZonedDateTime.of(date, workEnd, ZONE);
-        ZonedDateTime dayLunchStart = ZonedDateTime.of(date, lunchStart, ZONE);
-        ZonedDateTime dayLunchEnd = ZonedDateTime.of(date, lunchEnd, ZONE);
+        ZonedDateTime dayWorkStart = ZonedDateTime.of(date, workStart, zone());
+        ZonedDateTime dayWorkEnd = ZonedDateTime.of(date, workEnd, zone());
+        ZonedDateTime dayLunchStart = ZonedDateTime.of(date, lunchStart, zone());
+        ZonedDateTime dayLunchEnd = ZonedDateTime.of(date, lunchEnd, zone());
 
         if (lunchStart.isAfter(workStart)) {
             out.add(new TimeWindow(dayWorkStart.toInstant(), dayLunchStart.toInstant()));
@@ -218,16 +215,30 @@ public class AvailabilityPolicyService {
     }
 
     private Map<String, String> privateExt(Event e) {
-        if (e.getExtendedProperties() == null) return Collections.emptyMap();
-        if (e.getExtendedProperties().getPrivate() == null) return Collections.emptyMap();
+        if (e.getExtendedProperties() == null) {
+            return Collections.emptyMap();
+        }
+        if (e.getExtendedProperties().getPrivate() == null) {
+            return Collections.emptyMap();
+        }
         return e.getExtendedProperties().getPrivate();
     }
 
     private Instant instantFrom(com.google.api.services.calendar.model.EventDateTime edt) {
-        if (edt == null) return null;
+        if (edt == null) {
+            return null;
+        }
         DateTime dt = edt.getDateTime();
-        if (dt == null) dt = edt.getDate();
-        if (dt == null) return null;
+        if (dt == null) {
+            dt = edt.getDate();
+        }
+        if (dt == null) {
+            return null;
+        }
         return Instant.ofEpochMilli(dt.getValue());
+    }
+
+    private ZoneId zone() {
+        return props.getZoneId();
     }
 }

@@ -9,6 +9,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CalendarClientConfig {
 
+    private final AppProperties props;
+
+    public CalendarClientConfig(AppProperties props) {
+        this.props = props;
+    }
+
     @Bean
     public CalendarClient calendarClient() {
         String clientId = env("GOOGLE_CLIENT_ID");
@@ -27,7 +33,7 @@ public class CalendarClientConfig {
         }
 
         try {
-            return new GoogleCalendarClient(clientId, clientSecret, refreshToken, calendarId, appName);
+            return new GoogleCalendarClient(clientId, clientSecret, refreshToken, calendarId, appName, props.getZone());
         } catch (Exception ex) {
             return new DummyCalendarClient();
         }

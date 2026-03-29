@@ -25,6 +25,8 @@ public class ServicoResponse {
 
     private String clientAddressLine;
     private String status;
+    private Instant pendingExpiresAt;
+    private Instant phoneVerifiedAt;
 
     public String getEventId() { return eventId; }
     public void setEventId(String eventId) { this.eventId = eventId; }
@@ -79,4 +81,10 @@ public class ServicoResponse {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Instant getPendingExpiresAt() { return pendingExpiresAt; }
+    public void setPendingExpiresAt(Instant pendingExpiresAt) { this.pendingExpiresAt = pendingExpiresAt; }
+
+    public Instant getPhoneVerifiedAt() { return phoneVerifiedAt; }
+    public void setPhoneVerifiedAt(Instant phoneVerifiedAt) { this.phoneVerifiedAt = phoneVerifiedAt; }
 }

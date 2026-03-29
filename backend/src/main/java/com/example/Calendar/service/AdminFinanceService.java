@@ -18,8 +18,6 @@ import java.util.stream.Collectors;
 
 public class AdminFinanceService {
 
-    private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
-
     private final BankingProperties props;
     private final StatementProvider provider;
     private final AppProperties appProperties;
@@ -33,7 +31,7 @@ public class AdminFinanceService {
     public AdminStatementResponse statement(String from, String to) {
         requireEnabled();
 
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(zone());
         LocalDate minHistoryDate = today
                 .withDayOfMonth(1)
                 .minusMonths(appProperties.getHistoryRetentionMonths());
@@ -154,5 +152,9 @@ public class AdminFinanceService {
         }
 
         return 0;
+    }
+
+    private ZoneId zone() {
+        return appProperties.getZoneId();
     }
 }

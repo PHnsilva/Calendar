@@ -19,7 +19,7 @@ import java.util.*;
 
 public class GoogleCalendarClient implements CalendarClient {
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
+    private final ZoneId zone;
 
     private static final String APP_KEY = "appSource";
     private static final String APP_VALUE = "calendar-backend";
@@ -32,12 +32,22 @@ public class GoogleCalendarClient implements CalendarClient {
     private final Calendar service;
     private final String calendarId;
 
+    private ZoneId resolveZone(String raw) {
+        try {
+            String value = raw == null ? "" : raw.trim();
+            return value.isBlank() ? ZoneId.of("America/Sao_Paulo") : ZoneId.of(value);
+        } catch (Exception e) {
+            return ZoneId.of("America/Sao_Paulo");
+        }
+    }
+
     public GoogleCalendarClient(
             String clientId,
             String clientSecret,
             String refreshToken,
             String calendarId,
-            String appName
+            String appName,
+            String zoneId
     ) throws GeneralSecurityException, IOException {
         NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
@@ -53,6 +63,7 @@ public class GoogleCalendarClient implements CalendarClient {
                 .setApplicationName(appName)
                 .build();
         this.calendarId = calendarId;
+        this.zone = resolveZone(zoneId);
     }
 
     @Override
@@ -92,8 +103,8 @@ public class GoogleCalendarClient implements CalendarClient {
 
         DateTime start = new DateTime(Date.from(s.getStart()));
         DateTime end = new DateTime(Date.from(s.getEnd()));
-        ev.setStart(new EventDateTime().setDateTime(start).setTimeZone(ZONE.toString()));
-        ev.setEnd(new EventDateTime().setDateTime(end).setTimeZone(ZONE.toString()));
+        ev.setStart(new EventDateTime().setDateTime(start).setTimeZone(zone.toString()));
+        ev.setEnd(new EventDateTime().setDateTime(end).setTimeZone(zone.toString()));
 
         if (s.getClientEmail() != null && !s.getClientEmail().isBlank()) {
             EventAttendee attendee = new EventAttendee()
@@ -152,8 +163,8 @@ public class GoogleCalendarClient implements CalendarClient {
         }
 
         event.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
-        event.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(s.getStart()))).setTimeZone(ZONE.toString()));
-        event.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(s.getEnd()))).setTimeZone(ZONE.toString()));
+        event.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(s.getStart()))).setTimeZone(zone.toString()));
+        event.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(s.getEnd()))).setTimeZone(zone.toString()));
 
         if (s.getClientEmail() != null && !s.getClientEmail().isBlank()) {
             EventAttendee attendee = new EventAttendee()
@@ -260,8 +271,8 @@ public class GoogleCalendarClient implements CalendarClient {
         ext.put("createdAt", String.valueOf(Instant.now().getEpochSecond()));
 
         ev.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
-        ev.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(start))).setTimeZone(ZONE.toString()));
-        ev.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(end))).setTimeZone(ZONE.toString()));
+        ev.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(start))).setTimeZone(zone.toString()));
+        ev.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(end))).setTimeZone(zone.toString()));
 
         if ("OPEN".equals(normalizedMode)) {
             ev.setTransparency("transparent");

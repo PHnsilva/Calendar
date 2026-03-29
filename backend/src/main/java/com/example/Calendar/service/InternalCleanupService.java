@@ -19,8 +19,6 @@ import java.util.Map;
 
 public class InternalCleanupService {
 
-    private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
-
     private final CalendarClient calendarClient;
     private final PendingStore pendingStore;
     private final VerificationStore verificationStore;
@@ -69,9 +67,9 @@ public class InternalCleanupService {
     }
 
     public int cleanupExpiredPendingsInCalendar() throws IOException {
-        ZonedDateTime base = ZonedDateTime.now(ZONE).withDayOfMonth(1).toLocalDate().atStartOfDay(ZONE);
+        ZonedDateTime base = ZonedDateTime.now(zone()).withDayOfMonth(1).toLocalDate().atStartOfDay(zone());
         ZonedDateTime from = base.minusMonths(props.getHistoryRetentionMonths());
-        ZonedDateTime to = base.plusMonths(2);
+        ZonedDateTime to = base.plusMonths(props.getBookingMaxFutureMonthsAhead() + 1L);
 
         List<Event> events = calendarClient.listBookingEvents(
                 new DateTime(Date.from(from.toInstant())),
@@ -108,8 +106,8 @@ public class InternalCleanupService {
     }
 
     private int cleanupHistoricalBookingsBefore(Instant keepFromInclusive) throws IOException {
-        ZonedDateTime from = ZonedDateTime.ofInstant(Instant.EPOCH, ZONE);
-        ZonedDateTime to = ZonedDateTime.ofInstant(keepFromInclusive, ZONE);
+        ZonedDateTime from = ZonedDateTime.ofInstant(Instant.EPOCH, zone());
+        ZonedDateTime to = ZonedDateTime.ofInstant(keepFromInclusive, zone());
 
         List<Event> events = calendarClient.listBookingEvents(
                 new DateTime(Date.from(from.toInstant())),
@@ -149,7 +147,11 @@ public class InternalCleanupService {
     }
 
     private Instant retentionStart(int retentionMonths) {
-        ZonedDateTime base = ZonedDateTime.now(ZONE).withDayOfMonth(1).toLocalDate().atStartOfDay(ZONE);
+        ZonedDateTime base = ZonedDateTime.now(zone()).withDayOfMonth(1).toLocalDate().atStartOfDay(zone());
         return base.minusMonths(retentionMonths).toInstant();
+    }
+
+    private ZoneId zone() {
+        return props.getZoneId();
     }
 }

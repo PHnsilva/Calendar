@@ -146,13 +146,15 @@ public class AppConfig {
             HistoryStore historyStore,
             WhatsAppClient whatsAppClient,
             AppProperties props,
-            ServicoService servicoService) {
+            ServicoService servicoService,
+            TokenUtil tokenUtil) {
         return new RecoveryService(
                 verificationStore,
                 historyStore,
                 whatsAppClient,
                 props,
-                servicoService);
+                servicoService,
+                tokenUtil);
     }
 
     @Bean

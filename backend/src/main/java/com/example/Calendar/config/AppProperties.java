@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,18 @@ public class AppProperties {
 
     @Value("${app.service.allowedStates:}")
     private String allowedStatesCsv;
+
+    @Value("${app.booking.slotMinutes:60}")
+    private int bookingSlotMinutes;
+
+    @Value("${app.booking.allowedMinutes:0}")
+    private String bookingAllowedMinutesCsv;
+
+    @Value("${app.booking.maxFutureMonthsAhead:1}")
+    private int bookingMaxFutureMonthsAhead;
+
+    @Value("${app.booking.statuses:PENDING_PHONE,CONFIRMED}")
+    private String bookingStatusesCsv;
 
     @Value("${app.pending.ttlMinutes:10}")
     private long pendingTtlMinutes;
@@ -117,7 +130,16 @@ public class AppProperties {
     }
 
     public String getZone() {
-        return zone;
+        String value = zone == null ? "" : zone.trim();
+        return value.isBlank() ? "America/Sao_Paulo" : value;
+    }
+
+    public ZoneId getZoneId() {
+        try {
+            return ZoneId.of(getZone());
+        } catch (Exception e) {
+            return ZoneId.of("America/Sao_Paulo");
+        }
     }
 
     public String getServiceCity() {
@@ -128,52 +150,100 @@ public class AppProperties {
         return serviceState == null ? "" : serviceState.trim();
     }
 
-    public Set<String> getAllowedCitiesNormalized() {
-        String csv = (allowedCitiesCsv == null ? "" : allowedCitiesCsv.trim());
-        if (csv.isBlank())
-            return Collections.emptySet();
+    public List<String> getAllowedCitiesDisplay() {
+        List<String> csvValues = csvList(allowedCitiesCsv);
+        if (!csvValues.isEmpty()) {
+            return csvValues;
+        }
 
-        return Arrays.stream(csv.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
+        String legacy = getServiceCity();
+        if (legacy.isBlank()) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(legacy);
+    }
+
+    public List<String> getAllowedStatesDisplay() {
+        List<String> csvValues = csvList(allowedStatesCsv);
+        if (!csvValues.isEmpty()) {
+            return csvValues;
+        }
+
+        String single = allowedState == null ? "" : allowedState.trim();
+        if (!single.isBlank()) {
+            return Collections.singletonList(single);
+        }
+
+        String legacy = getServiceState();
+        if (legacy.isBlank()) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(legacy);
+    }
+
+    public Set<String> getAllowedCitiesNormalized() {
+        List<String> source = getAllowedCitiesDisplay();
+        if (source.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return source.stream()
                 .map(LocationNormalizer::normalizeCity)
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public Set<String> getAllowedStatesUpper() {
-        String csv = (allowedStatesCsv == null ? "" : allowedStatesCsv.trim());
-        String single = (allowedState == null ? "" : allowedState.trim());
-        String legacy = (serviceState == null ? "" : serviceState.trim());
-
-        LinkedHashSet<String> out = new LinkedHashSet<>();
-
-        if (!csv.isBlank()) {
-            Arrays.stream(csv.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isBlank())
-                    .map(LocationNormalizer::normalizeState)
-                    .filter(s -> !s.isBlank())
-                    .forEach(out::add);
-            return out;
+        List<String> source = getAllowedStatesDisplay();
+        if (source.isEmpty()) {
+            return Collections.emptySet();
         }
 
-        if (!single.isBlank()) {
-            out.add(LocationNormalizer.normalizeState(single));
-            return out;
-        }
-
-        if (!legacy.isBlank()) {
-            out.add(LocationNormalizer.normalizeState(legacy));
-            return out;
-        }
-
-        return Collections.emptySet();
+        return source.stream()
+                .map(LocationNormalizer::normalizeState)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public String getLegacyCityNormalized() {
-        String c = (serviceCity == null ? "" : serviceCity.trim());
+        String c = getServiceCity();
         return LocationNormalizer.normalizeCity(c);
+    }
+
+    public int getBookingSlotMinutes() {
+        return Math.max(15, Math.min(bookingSlotMinutes, 240));
+    }
+
+    public Set<Integer> getAllowedMinuteMarks() {
+        LinkedHashSet<Integer> out = csvList(bookingAllowedMinutesCsv).stream()
+                .map(this::parseMinute)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        if (out.isEmpty()) {
+            out.add(0);
+        }
+
+        return Collections.unmodifiableSet(out);
+    }
+
+    public List<Integer> getAllowedMinuteMarksList() {
+        return new ArrayList<>(getAllowedMinuteMarks());
+    }
+
+    public int getBookingMaxFutureMonthsAhead() {
+        return Math.max(0, Math.min(bookingMaxFutureMonthsAhead, 12));
+    }
+
+    public List<String> getBookingStatuses() {
+        List<String> values = csvList(bookingStatusesCsv).stream()
+                .map(v -> v.toUpperCase(Locale.ROOT))
+                .collect(Collectors.toList());
+
+        if (values.isEmpty()) {
+            return List.of("PENDING_PHONE", "CONFIRMED");
+        }
+        return values;
     }
 
     public Duration getPendingTtl() {
@@ -264,8 +334,9 @@ public class AppProperties {
 
     public LocalDate getScheduleCycleStart() {
         String v = (scheduleCycleStart == null) ? "" : scheduleCycleStart.trim();
-        if (v.isBlank())
+        if (v.isBlank()) {
             return null;
+        }
         try {
             return LocalDate.parse(v);
         } catch (Exception e) {
@@ -292,11 +363,37 @@ public class AppProperties {
     private LocalTime parseTimeOrDefault(String raw, LocalTime def) {
         try {
             String v = raw == null ? "" : raw.trim();
-            if (v.isBlank())
+            if (v.isBlank()) {
                 return def;
+            }
             return LocalTime.parse(v);
         } catch (Exception e) {
             return def;
+        }
+    }
+
+    private List<String> csvList(String csv) {
+        String value = csv == null ? "" : csv.trim();
+        if (value.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private Integer parseMinute(String value) {
+        try {
+            int minute = Integer.parseInt(value);
+            if (minute < 0 || minute > 59) {
+                return null;
+            }
+            return minute;
+        } catch (Exception e) {
+            return null;
         }
     }
 }

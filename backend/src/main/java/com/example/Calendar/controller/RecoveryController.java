@@ -2,6 +2,7 @@ package com.example.Calendar.controller;
 
 import com.example.Calendar.dto.RecoverConfirmRequest;
 import com.example.Calendar.dto.RecoverConfirmResponse;
+import com.example.Calendar.dto.RecoverResendRequest;
 import com.example.Calendar.dto.RecoverStartRequest;
 import com.example.Calendar.dto.RecoverStartResponse;
 import com.example.Calendar.service.RecoveryService;
@@ -23,6 +24,16 @@ public class RecoveryController {
     @PostMapping("/start")
     public RecoverStartResponse start(@Valid @RequestBody RecoverStartRequest req) {
         RecoveryService.StartResult r = recoveryService.start(req.getPhone());
+        return new RecoverStartResponse(
+                r.verificationId(),
+                r.expiresInSeconds(),
+                r.resendAfterSeconds()
+        );
+    }
+
+    @PostMapping("/resend")
+    public RecoverStartResponse resend(@Valid @RequestBody RecoverResendRequest req) {
+        RecoveryService.StartResult r = recoveryService.resend(req.getVerificationId());
         return new RecoverStartResponse(
                 r.verificationId(),
                 r.expiresInSeconds(),

@@ -1,0 +1,130 @@
+/* Base dos botões */
+.btn-component {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Efeito de interação */
+.btn-component:hover {
+  transform: translateY(-2px) scale(1.02) rotate(-1deg);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+.btn-component:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) inset;
+}
+
+/* ----------- TIPOS DE BOTÃO ----------- */
+
+/* Azul padrão */
+.btn-default,
+.btn-entrar,
+.btn-cadastrar,
+.btn-editar,
+.btn-salvar,
+.btn-concluir,
+.btn-link-button {
+  background: linear-gradient(135deg, #003366, #0055aa);
+  color: #fff;
+}
+.btn-default:hover,
+.btn-entrar:hover,
+.btn-cadastrar:hover,
+.btn-editar:hover,
+.btn-salvar:hover,
+.btn-concluir:hover,
+.btn-link-button:hover {
+  background: linear-gradient(135deg, #002244, #004488);
+}
+
+/* Contratar (mais chamativo) */
+.btn-contratar {
+  background: linear-gradient(135deg, #0044cc, #007bff);
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 0.8rem 2rem;
+}
+.btn-contratar:hover {
+  background: linear-gradient(135deg, #003399, #0066dd);
+}
+
+/* Sair */
+.btn-sair {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c);
+  color: #fff;
+}
+.btn-sair:hover {
+  background: linear-gradient(135deg, #e53935, #c62828);
+}
+
+/* Excluir */
+.btn-excluir {
+  background: linear-gradient(135deg, #a70000, #cc3333);
+  color: #fff;
+}
+.btn-excluir:hover {
+  background: linear-gradient(135deg, #7a0000, #aa2e2e);
+}
+
+/* Cancelar */
+.btn-cancelar {
+  background: linear-gradient(135deg, #b22222, #d32f2f);
+  color: #fff;
+}
+.btn-cancelar:hover {
+  background: linear-gradient(135deg, #8b1a1a, #c62828);
+}
+
+/* Avaliar */
+.btn-avaliar {
+  background: linear-gradient(135deg, #28a745, #218838);
+  color: #fff;
+}
+.btn-avaliar:hover {
+  background: linear-gradient(135deg, #1e7e34, #19692c);
+}
+
+/* Aceitar */
+.btn-aceitar {
+  background: linear-gradient(135deg, #229251, #1d8147);
+  color: #fff;
+}
+.btn-aceitar:hover {
+  background: linear-gradient(135deg, #1a6d3d, #176033);
+}
+
+/* Recusar */
+.btn-recusar {
+  background: linear-gradient(135deg, #c0392b, #a93226);
+  color: #fff;
+}
+.btn-recusar:hover {
+  background: linear-gradient(135deg, #922b21, #7b241c);
+}
+
+/* ----------- RESPONSIVIDADE ----------- */
+@media (max-width: 768px) {
+  .btn-component {
+    font-size: 0.9rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: 6px;
+  }
+}
+@media (max-width: 480px) {
+  .btn-component {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+  }
+}

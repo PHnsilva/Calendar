@@ -1,9 +1,5 @@
-import { Outlet } from "react-router-dom";
+import PublicLayout from "./PublicLayout";
 
 export default function AdminLayout() {
-  return (
-    <div className="admin-layout">
-      <Outlet />
-    </div>
-  );
+  return <PublicLayout />;
 }

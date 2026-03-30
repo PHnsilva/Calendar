@@ -1,23 +1,3 @@
-export type ApiErrorPayload = {
-  code?: string;
-  error?: string;
-  message?: string;
-  status?: number;
-  details?: unknown;
-};
-
-export class ApiError extends Error {
-  readonly status: number;
-  readonly payload?: ApiErrorPayload;
-
-  constructor(status: number, message: string, payload?: ApiErrorPayload) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.payload = payload;
-  }
-}
-
 export type ServicoRequest = {
   serviceType: string;
   date: string;
@@ -37,7 +17,7 @@ export type ServicoRequest = {
 
 export type ServicoResponse = {
   eventId: string;
-  eventLink?: string;
+  eventLink: string;
   serviceType: string;
   start: string;
   end: string;
@@ -45,14 +25,14 @@ export type ServicoResponse = {
   clientLastName: string;
   clientEmail: string;
   clientPhone: string;
-  clientCep?: string;
-  clientStreet?: string;
-  clientNeighborhood?: string;
-  clientNumber?: string;
+  clientCep: string;
+  clientStreet: string;
+  clientNeighborhood: string;
+  clientNumber: string;
   clientComplement?: string;
-  clientCity?: string;
-  clientState?: string;
-  clientAddressLine?: string;
+  clientCity: string;
+  clientState: string;
+  clientAddressLine: string;
   status: string;
 };
 

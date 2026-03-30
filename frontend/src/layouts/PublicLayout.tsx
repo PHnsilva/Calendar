@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import AppShell from "./AppShell";
 import Logo from "../components/branding/Logo";
 import { ThemeToggle } from "../components/ui/ThemeToggle";
@@ -8,18 +8,18 @@ export default function PublicLayout() {
   const location = useLocation();
   const { requestQuickBooking } = useHomeBookingSelection();
 
-  const isHomePage = location.pathname === "/";
+  const isHomeLikePage = location.pathname === "/" || location.pathname.startsWith("/admin");
 
   const header = (
-    <header className="public-header">
-      <Link to="/" className="brand-lockup" aria-label="Ir para a página inicial">
+    <header className="public-header public-header--chrome">
+      <div className="brand-lockup" aria-label="SG Pequenos Reparos">
         <Logo />
-      </Link>
+      </div>
 
       <div className="public-header__actions">
         <ThemeToggle />
 
-        {isHomePage ? (
+        {isHomeLikePage ? (
           <button
             type="button"
             className="header-booking-action"

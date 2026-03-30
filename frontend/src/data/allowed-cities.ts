@@ -1,4 +1,5 @@
 export const PRIMARY_CITY = "Belo Horizonte";
+export const SECONDARY_CITY = "Itabirito";
 
 export const OTHER_CITIES = [
   "Itabirito",
@@ -40,4 +41,7 @@ export function getCityTone(city?: string | null): CityTone {
 
 export function isAllowedCity(value?: string | null): value is AllowedCity {
   return Boolean(value && ALLOWED_CITIES.includes(value as AllowedCity));
+}
+export function normalizeCityTone(city?: string | null): CityTone {
+  return getCityTone(city);
 }

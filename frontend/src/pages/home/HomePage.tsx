@@ -8,6 +8,10 @@ import { useHomeBookingSelection } from "../../app/home-booking-provider";
 import type { CalendarEvent } from "../../features/calendar/types";
 import { getLocalCalendarEvents } from "../../lib/storage";
 
+type HomePageProps = {
+  mode?: "public" | "admin";
+};
+
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
 }
@@ -44,27 +48,25 @@ function buildMonthMockEvents(monthStart: string): CalendarEvent[] {
     { day: 7, name: "Rafael Lima", address: "Rua Conselheiro Quintiliano, 41 - Ouro Preto", startTime: "09:00", endTime: "10:00", city: "Ouro Preto" },
     { day: 12, name: "Bianca Rocha", address: "Rua do Rosário, 210 - Moeda", startTime: "13:00", endTime: "14:00", city: "Moeda" },
     { day: 12, name: "Fernanda Reis", address: "Rua Primeiro de Maio, 56 - Moeda", startTime: "16:00", endTime: "17:00", city: "Moeda" },
-    { day: 18, name: "Lucas Pereira", address: "Rua João Pinheiro, 320 - Itabirito", startTime: "15:00", endTime: "16:00", city: "Itabirito" },
+    { day: 18, name: "Lucas Pereira", address: "Rua João Pinheiro, 320 - Nova Lima", startTime: "15:00", endTime: "16:00", city: "Nova Lima" },
     { day: 21, name: "Patrícia Gomes", address: "Rua das Flores, 77 - Ouro Preto", startTime: "10:00", endTime: "11:00", city: "Ouro Preto" },
-    { day: 28, name: "Thiago Costa", address: "Rua José Farid Rahme, 64 - Itabirito", startTime: "17:00", endTime: "18:00", city: "Itabirito" },
+    { day: 28, name: "Thiago Costa", address: "Rua José Farid Rahme, 64 - Belo Horizonte", startTime: "17:00", endTime: "18:00", city: "Belo Horizonte" },
   ];
 
-  return entries
-    .filter((entry) => entry.day <= daysInMonth)
-    .map((entry, index) => ({
-      id: `demo-${monthStart}-${index}`,
-      title: entry.name,
-      date: buildMonthDate(monthStart, entry.day),
-      startTime: entry.startTime,
-      endTime: entry.endTime,
-      city: entry.city,
-      customerName: entry.name,
-      customerAddress: entry.address,
-      customerEmail: `${entry.name.toLowerCase().replace(/\s+/g, ".")}@email.com`,
-      customerPhone: "31999999999",
-      serviceLabel: "Visita técnica",
-      status: "booked" as const,
-    }));
+  return entries.filter((entry) => entry.day <= daysInMonth).map((entry, index) => ({
+    id: `demo-${monthStart}-${index}`,
+    title: entry.name,
+    date: buildMonthDate(monthStart, entry.day),
+    startTime: entry.startTime,
+    endTime: entry.endTime,
+    city: entry.city,
+    customerName: entry.name,
+    customerAddress: entry.address,
+    customerEmail: `${entry.name.toLowerCase().replace(/\s+/g, ".")}@email.com`,
+    customerPhone: "31999999999",
+    serviceLabel: "Visita técnica",
+    status: "booked" as const,
+  }));
 }
 
 function build4x4UnavailableDates(monthStart: string, anchorMonth: string): string[] {
@@ -84,6 +86,20 @@ function build4x4UnavailableDates(monthStart: string, anchorMonth: string): stri
   return Array.from(values);
 }
 
+function findFirstAvailableDate(monthStart: string, unavailableDates: string[]): string {
+  const reference = toLocalDate(monthStart);
+  const daysInMonth = new Date(reference.getFullYear(), reference.getMonth() + 1, 0).getDate();
+  const todayIso = toIsoDate(new Date());
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = buildMonthDate(monthStart, day);
+    if (date < todayIso) continue;
+    if (!unavailableDates.includes(date)) return date;
+  }
+
+  return todayIso;
+}
+
 function mergeEvents(baseEvents: CalendarEvent[], localEvents: CalendarEvent[]) {
   const map = new Map<string, CalendarEvent>();
   for (const event of [...baseEvents, ...localEvents]) map.set(event.id, event);
@@ -93,12 +109,12 @@ function mergeEvents(baseEvents: CalendarEvent[], localEvents: CalendarEvent[]) 
   });
 }
 
-export default function HomePage() {
+export default function HomePage({ mode = "public" }: HomePageProps) {
+  const isAdmin = mode === "admin";
   const today = new Date();
   const todayIso = toIsoDate(today);
   const currentAllowedMonth = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-01`;
   const nextAllowedMonth = shiftMonth(currentAllowedMonth, 1);
-  const calendarRef = useRef<HTMLDivElement | null>(null);
 
   const {
     selectedDate,
@@ -107,19 +123,22 @@ export default function HomePage() {
     isBookingModalOpen,
     setCurrentMonth,
     handleDateSelect,
-    clearSelection,
     openBookingModal,
     closeBookingModal,
+    clearSelection,
   } = useHomeCalendarView();
 
   const { quickBookingRequestId, requestQuickBooking } = useHomeBookingSelection();
   const lastQuickRequestRef = useRef(0);
+  const calendarSectionRef = useRef<HTMLDivElement | null>(null);
   const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
   const [isBookingGuideOpen, setIsBookingGuideOpen] = useState(false);
   const [isBookingPickMode, setIsBookingPickMode] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
   );
+  const [adminSheet, setAdminSheet] = useState<"history" | "statement" | null>(null);
 
   const demoEvents = useMemo(
     () => [...buildMonthMockEvents(currentAllowedMonth), ...buildMonthMockEvents(nextAllowedMonth)].filter((event) => event.date >= todayIso),
@@ -127,6 +146,7 @@ export default function HomePage() {
   );
 
   const allEvents = useMemo(() => mergeEvents(demoEvents, localEvents), [demoEvents, localEvents]);
+
   const allUnavailableDates = useMemo(
     () => [
       ...build4x4UnavailableDates(currentAllowedMonth, currentAllowedMonth),
@@ -135,18 +155,18 @@ export default function HomePage() {
     [currentAllowedMonth, nextAllowedMonth],
   );
 
-  const focusCalendar = () => {
-    const node = calendarRef.current ?? document.querySelector<HTMLElement>(".home-calendar-stack");
-    node?.scrollIntoView({ behavior: "smooth", block: "start" });
-    node?.classList.add("calendar-focus-pulse");
-    window.setTimeout(() => node?.classList.remove("calendar-focus-pulse"), 950);
+  const isMobileViewport = () => window.matchMedia("(max-width: 860px)").matches;
+
+  const resetPickMode = () => {
+    setIsBookingGuideOpen(false);
+    setIsBookingPickMode(false);
+    setIsSidebarCollapsed(false);
   };
 
   useEffect(() => {
-    if (!selectedDate) return;
-    const selectedMonth = toMonthStart(selectedDate);
+    const selectedMonth = selectedDate ? toMonthStart(selectedDate) : "";
     if (selectedMonth === currentAllowedMonth || selectedMonth === nextAllowedMonth) {
-      setTimelineMonth(selectedMonth);
+      setTimelineMonth(selectedMonth || currentAllowedMonth);
     }
   }, [selectedDate, currentAllowedMonth, nextAllowedMonth]);
 
@@ -159,25 +179,36 @@ export default function HomePage() {
     setIsBookingPickMode(true);
     setIsBookingGuideOpen(true);
 
-    if (window.matchMedia("(max-width: 860px)").matches) {
-      window.requestAnimationFrame(() => focusCalendar());
+    if (isMobileViewport()) {
+      setIsSidebarCollapsed(false);
+      window.requestAnimationFrame(() => {
+        calendarSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      return;
     }
-  }, [quickBookingRequestId, clearSelection]);
+
+    const firstAvailable = findFirstAvailableDate(currentMonth, allUnavailableDates);
+    setTimelineMonth(toMonthStart(firstAvailable));
+    setIsSidebarCollapsed(true);
+  }, [quickBookingRequestId, currentMonth, allUnavailableDates, clearSelection]);
 
   const handleCalendarDateSelect = (date: string, options?: { unavailable?: boolean }) => {
     if (options?.unavailable) return;
 
     handleDateSelect(date);
+    setTimelineMonth(toMonthStart(date));
 
     if (isBookingPickMode) {
       setIsBookingGuideOpen(false);
       setIsBookingPickMode(false);
+      setIsSidebarCollapsed(false);
       openBookingModal();
+      return;
     }
 
-    if (window.matchMedia("(max-width: 860px)").matches) {
+    if (isMobileViewport()) {
       window.requestAnimationFrame(() => {
-        document.querySelector<HTMLElement>(".timeline-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.querySelector(".timeline-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     }
   };
@@ -211,32 +242,20 @@ export default function HomePage() {
   const handleOpenDayBooking = (date: string) => {
     clearSelection();
     handleDateSelect(date);
-    setIsBookingGuideOpen(false);
-    setIsBookingPickMode(false);
+    setTimelineMonth(toMonthStart(date));
+    resetPickMode();
     openBookingModal();
   };
 
-  const handleCalendarMonthChange = (month: string) => {
-    closeBookingModal();
-    clearSelection();
-    setIsBookingGuideOpen(false);
-    setIsBookingPickMode(false);
-    setCurrentMonth(month);
-    setTimelineMonth(month);
-  };
-
-  const handleTimelineMonthChange = (month: string) => {
-    closeBookingModal();
-    clearSelection();
-    setIsBookingGuideOpen(false);
-    setIsBookingPickMode(false);
-    setTimelineMonth(month);
-    setCurrentMonth(month);
-  };
-
   const handleCloseBookingGuide = () => {
-    setIsBookingGuideOpen(false);
-    setIsBookingPickMode(false);
+    resetPickMode();
+    clearSelection();
+  };
+
+  const handleQuickBooking = () => {
+    setAdminSheet(null);
+    clearSelection();
+    requestQuickBooking();
   };
 
   const handleBookingCreated = (event: CalendarEvent) => {
@@ -245,14 +264,21 @@ export default function HomePage() {
     handleDateSelect(event.date);
   };
 
+
   return (
     <div className="home-page">
-      <section className="home-page__hero">
-        <span className="home-page__eyebrow">Agenda inteligente</span>
-      </section>
-
-      <div className={`home-grid${isBookingPickMode ? " home-grid--pick-mode" : ""}`}>
-        <div ref={calendarRef}>
+      <div
+        className={[
+          "home-grid",
+          isBookingPickMode ? "home-grid--pick-mode" : "",
+          isBookingPickMode && isSidebarCollapsed && !isMobileViewport() ? "home-grid--pick-mode-collapsed" : "",
+          isBookingPickMode && !isSidebarCollapsed && !isMobileViewport() ? "home-grid--pick-mode-open" : "",
+          isAdmin ? "home-grid--admin" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <div ref={calendarSectionRef}>
           <HomeCalendarSection
             selectedDate={selectedDate}
             currentMonth={currentMonth}
@@ -274,24 +300,58 @@ export default function HomePage() {
           currentAllowedMonth={currentAllowedMonth}
           nextAllowedMonth={nextAllowedMonth}
           onChangeTimelineMonth={handleTimelineMonthChange}
-          onQuickBooking={() => {
-            clearSelection();
-            requestQuickBooking();
-          }}
+          onQuickBooking={handleQuickBooking}
+          bookingPickMode={isBookingPickMode}
+          isCollapsed={isSidebarCollapsed && !isMobileViewport()}
+          onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
+          onOpenDayBooking={handleOpenDayBooking}
+          showSelectedDayCta={!isBookingPickMode && !isBookingGuideOpen}
         />
       </div>
+
+      {isAdmin ? (
+        <div className="admin-bottom-actions">
+          <button type="button" className="admin-bottom-actions__item" onClick={() => setAdminSheet("history")}>Histórico</button>
+          <button type="button" className="admin-bottom-actions__item" onClick={() => setAdminSheet("statement")}>Extrato</button>
+        </div>
+      ) : null}
 
       <BookingStartHintModal open={isBookingGuideOpen} onClose={handleCloseBookingGuide} />
 
       <BookingFormModal
         open={isBookingModalOpen}
-        selectedDate={selectedDate || todayIso}
+        selectedDate={selectedDate}
         selectedSlot={selectedSlot}
         events={allEvents}
         unavailableDates={allUnavailableDates}
-        onClose={closeBookingModal}
+        onClose={() => {
+          resetPickMode();
+          closeBookingModal();
+        }}
         onBookingCreated={handleBookingCreated}
       />
+
+      {adminSheet ? (
+        <div className="admin-sheet-modal" role="dialog" aria-modal="true">
+          <button type="button" className="admin-sheet-modal__backdrop" aria-label="Fechar" onClick={() => setAdminSheet(null)} />
+          <div className="admin-sheet-modal__card">
+            <div className="admin-sheet-modal__header">
+              <div>
+                <span className="booking-preview-modal__eyebrow">Área administrativa</span>
+                <h3 className="booking-preview-modal__title">{adminSheet === "history" ? "Histórico" : "Extrato"}</h3>
+              </div>
+              <button type="button" className="booking-preview-modal__close" onClick={() => setAdminSheet(null)} aria-label="Fechar">×</button>
+            </div>
+            <div className="admin-sheet-modal__body">
+              <p>
+                {adminSheet === "history"
+                  ? "Aqui você poderá visualizar a linha do tempo completa dos atendimentos realizados e alterações do painel administrativo."
+                  : "Aqui você poderá acompanhar o extrato financeiro administrativo do período selecionado."}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

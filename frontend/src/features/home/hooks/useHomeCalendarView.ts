@@ -17,22 +17,30 @@ export function useHomeCalendarView() {
 
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [selectedSlot, setSelectedSlot] = useState<HomeSelectedSlot>(null);
-  const [currentMonth, setCurrentMonth] = useState<string>(toMonthStart(today));
+  const [currentMonth, setCurrentMonthState] = useState<string>(toMonthStart(today));
   const [isBookingModalOpen, setIsBookingModalOpen] = useState<boolean>(false);
 
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
     setSelectedSlot(null);
-    setCurrentMonth(toMonthStart(date));
-  };
-
-  const handleSlotSelect = (slot: HomeSelectedSlot) => {
-    setSelectedSlot(slot);
+    if (date) {
+      setCurrentMonthState(toMonthStart(date));
+    }
   };
 
   const clearSelection = () => {
     setSelectedDate("");
     setSelectedSlot(null);
+  };
+
+  const setCurrentMonth = (month: string) => {
+    setCurrentMonthState(month);
+    setSelectedDate("");
+    setSelectedSlot(null);
+  };
+
+  const handleSlotSelect = (slot: HomeSelectedSlot) => {
+    setSelectedSlot(slot);
   };
 
   const openBookingModal = () => {
@@ -48,11 +56,11 @@ export function useHomeCalendarView() {
     selectedSlot,
     currentMonth,
     isBookingModalOpen,
-    setCurrentMonth: handleMonthChange,
+    setCurrentMonth,
     handleDateSelect,
     handleSlotSelect,
-    clearSelection,
     openBookingModal,
     closeBookingModal,
+    clearSelection,
   };
 }

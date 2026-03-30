@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { getCityTone } from "../../../data/allowed-cities";
 import type { CalendarEvent } from "../../calendar/types";
+import { normalizeCityTone } from "../../../data/allowed-cities";
 
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
@@ -29,12 +29,8 @@ function formatDayLabel(dateString: string) {
   const isToday = dateString === todayIso;
 
   return {
-    day: isToday
-      ? "Hoje"
-      : new Intl.DateTimeFormat("pt-BR", { day: "2-digit" }).format(date),
-    week: new Intl.DateTimeFormat("pt-BR", { weekday: "short" })
-      .format(date)
-      .replace(".", ""),
+    day: isToday ? "Hoje" : new Intl.DateTimeFormat("pt-BR", { day: "2-digit" }).format(date),
+    week: new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(date).replace(".", ""),
     isToday,
   };
 }
@@ -60,9 +56,10 @@ type HomeBookingsTimelineProps = {
   nextAllowedMonth: string;
   onChangeMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
-  hideQuickBooking?: boolean;
-  eyebrow?: string;
-  title?: string;
+  bookingPickMode?: boolean;
+  isCollapsed?: boolean;
+  onOpenDayBooking: (date: string) => void;
+  showSelectedDayCta?: boolean;
 };
 
 export default function HomeBookingsTimeline({
@@ -73,32 +70,27 @@ export default function HomeBookingsTimeline({
   nextAllowedMonth,
   onChangeMonth,
   onQuickBooking,
-  hideQuickBooking = false,
-  eyebrow = "Agendamentos",
-  title,
+  bookingPickMode = false,
+  isCollapsed = false,
+  onOpenDayBooking,
+  showSelectedDayCta = true,
 }: HomeBookingsTimelineProps) {
-  const resolvedTitle =
-    title ??
-    new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
+  const title = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
   const todayIso = getTodayIso();
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
 
   useEffect(() => {
     setActiveEvent(null);
-  }, [selectedDate, activeMonth]);
+  }, [selectedDate, activeMonth, bookingPickMode]);
 
   const tabs = [
     {
       key: currentAllowedMonth,
-      label: new Intl.DateTimeFormat("pt-BR", { month: "short" })
-        .format(toLocalDate(currentAllowedMonth))
-        .replace(".", ""),
+      label: new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(toLocalDate(currentAllowedMonth)).replace(".", ""),
     },
     {
       key: nextAllowedMonth,
-      label: new Intl.DateTimeFormat("pt-BR", { month: "short" })
-        .format(toLocalDate(nextAllowedMonth))
-        .replace(".", ""),
+      label: new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(toLocalDate(nextAllowedMonth)).replace(".", ""),
     },
   ];
 
@@ -119,17 +111,14 @@ export default function HomeBookingsTimeline({
       map.set(event.date, list);
     }
 
-    const normalizedSelectedDate = selectedDate && selectedDate.length >= 10 ? selectedDate : "";
     const baseDate =
-      normalizedSelectedDate &&
-      toMonthStart(normalizedSelectedDate) === activeMonth &&
-      normalizedSelectedDate >= todayIso
-        ? normalizedSelectedDate
+      selectedDate && toMonthStart(selectedDate) === activeMonth && selectedDate >= todayIso
+        ? selectedDate
         : activeMonth === currentAllowedMonth
           ? todayIso
           : activeMonth;
 
-    if (!map.has(baseDate) && toMonthStart(baseDate) === activeMonth) {
+    if (toMonthStart(baseDate) === activeMonth && !map.has(baseDate)) {
       map.set(baseDate, []);
     }
 
@@ -141,11 +130,19 @@ export default function HomeBookingsTimeline({
 
   return (
     <>
-      <section className="timeline-panel">
+      <section
+        className={[
+          "timeline-panel",
+          bookingPickMode ? "timeline-panel--pick-mode" : "",
+          isCollapsed ? "timeline-panel--collapsed" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <header className="timeline-panel__header">
           <div className="timeline-panel__title-block">
-            <span className="timeline-panel__eyebrow">{eyebrow}</span>
-            <h2 className="timeline-panel__title">{resolvedTitle}</h2>
+            <span className="timeline-panel__eyebrow">Agendamentos</span>
+            <h2 className="timeline-panel__title">{title}</h2>
           </div>
 
           <div className="timeline-panel__tabs">
@@ -176,7 +173,8 @@ export default function HomeBookingsTimeline({
           ) : (
             grouped.map(({ date, items }) => {
               const label = formatDayLabel(date);
-              const isSelectedGroup = selectedDate === date;
+              const isSelectedGroup = date === selectedDate;
+              const dayTone = normalizeCityTone(items[0]?.city);
 
               return (
                 <div
@@ -184,6 +182,7 @@ export default function HomeBookingsTimeline({
                   className={[
                     "timeline-group",
                     isSelectedGroup ? "timeline-group--selected" : "",
+                    `timeline-group--tone-${dayTone}`,
                   ]
                     .filter(Boolean)
                     .join(" ")}
@@ -196,9 +195,7 @@ export default function HomeBookingsTimeline({
                   <div className="timeline-group__content">
                     {items.length === 0 ? (
                       <div className="timeline-card timeline-card--empty timeline-card--today-empty">
-                        <strong>
-                          {label.isToday ? "Sem agendamentos para hoje" : "Sem agendamentos para esse dia"}
-                        </strong>
+                        <strong>{label.isToday ? "Sem agendamentos para hoje" : "Sem agendamentos para esse dia"}</strong>
                         <span>
                           {label.isToday
                             ? "Use o botão abaixo para criar um novo atendimento."
@@ -206,15 +203,15 @@ export default function HomeBookingsTimeline({
                         </span>
                       </div>
                     ) : (
-                      items.map((item) => {
-                        const tone = getCityTone(item.city);
-
+                      items.map((item, index) => {
+                        const tone = normalizeCityTone(item.city);
                         return (
                           <button
                             key={item.id}
                             type="button"
                             className={[
                               "timeline-card",
+                              index === 0 ? "timeline-card--primary" : "timeline-card--secondary",
                               "timeline-card--button",
                               `timeline-card--tone-${tone}`,
                             ]
@@ -227,14 +224,18 @@ export default function HomeBookingsTimeline({
                               <span>{item.startTime}</span>
                             </div>
 
-                            <small className="timeline-card__city">{item.city ?? "Cidade"}</small>
-                            <small className="timeline-card__address">
-                              {item.customerAddress ?? item.city ?? "Endereço não informado"}
-                            </small>
+                            <small className="timeline-card__address">{item.customerAddress ?? item.city ?? "Endereço não informado"}</small>
                           </button>
                         );
                       })
                     )}
+
+                    {isSelectedGroup && showSelectedDayCta ? (
+                      <button type="button" className="timeline-day-cta" onClick={() => onOpenDayBooking(date)}>
+                        <span className="timeline-day-cta__icon" aria-hidden="true">+</span>
+                        <span>Agendar nesse dia</span>
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -242,17 +243,15 @@ export default function HomeBookingsTimeline({
           )}
         </div>
 
-        {!hideQuickBooking ? (
-          <button
-            type="button"
-            className="timeline-panel__fab"
-            onClick={onQuickBooking}
-            aria-label="Novo agendamento"
-            title="Novo agendamento"
-          >
-            +
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="timeline-panel__fab"
+          onClick={onQuickBooking}
+          aria-label="Novo agendamento"
+          title="Novo agendamento"
+        >
+          +
+        </button>
       </section>
 
       {activeEvent ? (
@@ -268,48 +267,20 @@ export default function HomeBookingsTimeline({
             <div className="booking-detail-modal__header">
               <div>
                 <span className="booking-preview-modal__eyebrow">Detalhes do atendimento</span>
-                <h3 className="booking-preview-modal__title">
-                  {activeEvent.customerName ?? activeEvent.title}
-                </h3>
+                <h3 className="booking-preview-modal__title">{activeEvent.customerName ?? activeEvent.title}</h3>
               </div>
 
-              <button
-                type="button"
-                className="booking-preview-modal__close"
-                onClick={() => setActiveEvent(null)}
-                aria-label="Fechar"
-              >
+              <button type="button" className="booking-preview-modal__close" onClick={() => setActiveEvent(null)} aria-label="Fechar">
                 ×
               </button>
             </div>
 
             <div className="booking-detail-modal__body">
-              <div className="booking-detail-modal__row">
-                <span>Data</span>
-                <strong>{formatLongDate(activeEvent.date)}</strong>
-              </div>
-              <div className="booking-detail-modal__row">
-                <span>Horário</span>
-                <strong>
-                  {activeEvent.startTime} - {activeEvent.endTime}
-                </strong>
-              </div>
-              <div className="booking-detail-modal__row">
-                <span>Cidade</span>
-                <strong>{activeEvent.city ?? "Não informada"}</strong>
-              </div>
-              <div className="booking-detail-modal__row">
-                <span>Endereço</span>
-                <strong>{activeEvent.customerAddress ?? "Não informado"}</strong>
-              </div>
-              <div className="booking-detail-modal__row">
-                <span>E-mail</span>
-                <strong>{activeEvent.customerEmail ?? "Não informado"}</strong>
-              </div>
-              <div className="booking-detail-modal__row">
-                <span>Telefone</span>
-                <strong>{activeEvent.customerPhone ?? "Não informado"}</strong>
-              </div>
+              <div className="booking-detail-modal__row"><span>Data</span><strong>{formatLongDate(activeEvent.date)}</strong></div>
+              <div className="booking-detail-modal__row"><span>Horário</span><strong>{activeEvent.startTime} - {activeEvent.endTime}</strong></div>
+              <div className="booking-detail-modal__row"><span>Endereço</span><strong>{activeEvent.customerAddress ?? "Não informado"}</strong></div>
+              <div className="booking-detail-modal__row"><span>E-mail</span><strong>{activeEvent.customerEmail ?? "Não informado"}</strong></div>
+              <div className="booking-detail-modal__row"><span>Telefone</span><strong>{activeEvent.customerPhone ?? "Não informado"}</strong></div>
             </div>
           </div>
         </div>

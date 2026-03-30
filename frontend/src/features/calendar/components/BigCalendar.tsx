@@ -14,18 +14,11 @@ function toIsoDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function getMonthDays(monthStart: string): Array<{
-  date: string;
-  isCurrentMonth: boolean;
-}> {
+function getMonthDays(monthStart: string): Array<{ date: string; isCurrentMonth: boolean }> {
   const reference = toLocalDate(monthStart);
   const firstDay = new Date(reference.getFullYear(), reference.getMonth(), 1);
   const sundayOffset = firstDay.getDay();
-  const gridStart = new Date(
-    reference.getFullYear(),
-    reference.getMonth(),
-    1 - sundayOffset,
-  );
+  const gridStart = new Date(reference.getFullYear(), reference.getMonth(), 1 - sundayOffset);
 
   return Array.from({ length: 35 }, (_, index) => {
     const date = new Date(gridStart);
@@ -38,7 +31,7 @@ function getMonthDays(monthStart: string): Array<{
   });
 }
 
-function getWeekdayIndex(dateString: string) {
+function getWeekdayIndex(dateString: string): number {
   return toLocalDate(dateString).getDay();
 }
 
@@ -65,19 +58,21 @@ export default function BigCalendar({
 }: BigCalendarProps) {
   const today = toIsoDate(new Date());
   const days = getMonthDays(currentMonth);
-  const activeWeekday = getWeekdayIndex(selectedDate || today);
+  const weekdayReference = selectedDate || today;
+  const activeWeekday = getWeekdayIndex(weekdayReference);
 
-  const handleKeyboardSelect = (
+  function handleKeyboardSelect(
     event: KeyboardEvent<HTMLDivElement>,
     date: string,
     isClickable: boolean,
-  ) => {
+  ): void {
     if (!isClickable) return;
+
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       onDateSelect(date, { unavailable: false });
     }
-  };
+  }
 
   return (
     <div className="calendar-grid calendar-grid--slim">
@@ -104,6 +99,7 @@ export default function BigCalendar({
           const cityTones = Array.from(
             new Set(dayEvents.map((event) => getCityTone(event.city)).filter(Boolean)),
           ).slice(0, 3);
+
           const isUnavailable = unavailableDates.includes(day.date);
           const isOutside = !day.isCurrentMonth;
           const isPast = day.date < today;

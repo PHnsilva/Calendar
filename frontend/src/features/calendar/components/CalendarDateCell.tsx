@@ -13,6 +13,7 @@ type CalendarDateCellProps = {
   isUnavailable?: boolean;
   hasEvents?: boolean;
   isCurrentMonth?: boolean;
+  isPast?: boolean;
   variant?: "big" | "preview" | "mini";
 };
 
@@ -23,6 +24,7 @@ export default function CalendarDateCell({
   isUnavailable = false,
   hasEvents = false,
   isCurrentMonth = true,
+  isPast = false,
   variant = "big",
 }: CalendarDateCellProps) {
   const numericLabel = toLocalDate(date).getDate();
@@ -38,12 +40,11 @@ export default function CalendarDateCell({
         isUnavailable && "calendar-date-cell--unavailable",
         hasEvents && "calendar-date-cell--has-events",
         !isCurrentMonth && "calendar-date-cell--outside",
+        isPast && "calendar-date-cell--past",
         isToday && "calendar-date-cell--today-label",
       )}
       aria-hidden="true"
     >
-      <span className="calendar-date-cell__halo" />
-      <span className="calendar-date-cell__ring" />
       <span className="calendar-date-cell__label">{label}</span>
     </span>
   );

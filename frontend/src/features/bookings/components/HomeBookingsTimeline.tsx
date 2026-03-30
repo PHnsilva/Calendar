@@ -60,6 +60,8 @@ type HomeBookingsTimelineProps = {
   isCollapsed?: boolean;
   onOpenDayBooking: (date: string) => void;
   showSelectedDayCta?: boolean;
+  eyebrow?: string;
+  title?: string;
 };
 
 export default function HomeBookingsTimeline({
@@ -74,8 +76,10 @@ export default function HomeBookingsTimeline({
   isCollapsed = false,
   onOpenDayBooking,
   showSelectedDayCta = true,
+  eyebrow,
+  title,
 }: HomeBookingsTimelineProps) {
-  const title = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
+  const monthTitle = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
   const todayIso = getTodayIso();
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
 
@@ -141,8 +145,8 @@ export default function HomeBookingsTimeline({
       >
         <header className="timeline-panel__header">
           <div className="timeline-panel__title-block">
-            <span className="timeline-panel__eyebrow">Agendamentos</span>
-            <h2 className="timeline-panel__title">{title}</h2>
+            <span className="timeline-panel__eyebrow">{eyebrow ?? monthTitle.toUpperCase()}</span>
+            <h2 className="timeline-panel__title">{title ?? "MEUS AGENDAMENTOS"}</h2>
           </div>
 
           <div className="timeline-panel__tabs">

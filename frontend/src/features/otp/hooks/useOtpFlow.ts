@@ -42,7 +42,7 @@ export function useOtpFlow({
 
   const confirmMutation = useMutation({
     mutationFn: () => confirmVerification({ verificationId, code }),
-    onSuccess: (response) => {
+    onSuccess: (response: any) => {
       if (response.verified) {
         setFeedbackMessage("Telefone confirmado com sucesso.");
         onVerified();
@@ -52,7 +52,7 @@ export function useOtpFlow({
 
   const resendMutation = useMutation({
     mutationFn: () => resendVerification({ verificationId }),
-    onSuccess: (response) => {
+    onSuccess: (response: any) => {
       setResendCooldown(response.resendAfterSeconds);
       setExpiresIn(response.expiresInSeconds);
       setFeedbackMessage("Novo código enviado.");
@@ -75,6 +75,7 @@ export function useOtpFlow({
     expiresIn,
     expiresLabel,
     feedbackMessage,
+    setFeedbackMessage,
     canConfirm,
     canResend,
     isConfirming: confirmMutation.isPending,

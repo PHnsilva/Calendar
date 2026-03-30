@@ -1596,14 +1596,6 @@ textarea:focus-visible {
 /* ---------- Responsividade ---------- */
 
 @media (max-width: 1180px) {
-  .home-grid {
-    grid-template-columns: minmax(0, 1.42fr) minmax(300px, 0.9fr);
-  }
-
-  .timeline-group {
-    grid-template-columns: 56px minmax(0, 1fr);
-  }
-
   .booking-preview-modal__slots-grid,
   .booking-preview-modal__slots-grid--compact {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1617,28 +1609,6 @@ textarea:focus-visible {
 
   .app-shell__frame {
     min-height: calc(100vh - 20px);
-  }
-
-  .home-grid {
-    min-height: auto;
-    height: auto;
-    grid-template-columns: 1fr;
-    overflow: visible;
-  }
-
-  .home-calendar-stack {
-    grid-template-rows: auto auto;
-  }
-
-  .home-sidebar,
-  .home-main-panel--calendar,
-  .timeline-panel {
-    height: auto;
-    overflow: visible;
-  }
-
-  .timeline-panel__body {
-    max-height: min(52vh, 560px);
   }
 }
 
@@ -2369,36 +2339,7 @@ textarea {
 }
 
 /* smaller widths or shorter screens should not crop the page */
-@media (max-width: 1180px), (max-height: 860px) {
-  .app-shell,
-  .public-layout__content,
-  .home-page {
-    overflow: auto;
-  }
-
-  .home-grid {
-    min-height: auto;
-    height: auto;
-    grid-template-columns: 1fr;
-    overflow: visible;
-  }
-
-  .home-calendar-stack,
-  .home-main-panel--calendar,
-  .home-sidebar,
-  .timeline-panel {
-    height: auto;
-    overflow: visible;
-  }
-
-  .calendar-grid__body--slim {
-    min-height: clamp(430px, 52vh, 620px);
-  }
-
-  .timeline-panel__body {
-    max-height: min(52vh, 560px);
-  }
-}
+/* home layout responsiveness moved to app/home-layout.css */
 
 @media (max-width: 860px) {
   .public-header {

@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import AppShell from "./AppShell";
 import Logo from "../components/branding/Logo";
 import { ThemeToggle } from "../components/ui/ThemeToggle";
@@ -6,30 +6,41 @@ import { useHomeBookingSelection } from "../app/home-booking-provider";
 
 export default function PublicLayout() {
   const location = useLocation();
-  const { requestQuickBooking } = useHomeBookingSelection();
+  const { requestQuickBooking, requestOpenBookings } = useHomeBookingSelection();
 
-  const isHomeLikePage = location.pathname === "/" || location.pathname.startsWith("/admin");
+  const isHomePage = location.pathname === "/";
 
   const header = (
-    <header className="public-header public-header--chrome">
-      <div className="brand-lockup" aria-label="SG Pequenos Reparos">
+    <header className="public-header">
+      <Link to="/" className="brand-lockup" aria-label="Ir para a página inicial">
         <Logo />
-      </div>
+      </Link>
 
       <div className="public-header__actions">
         <ThemeToggle />
 
-        {isHomeLikePage ? (
-          <button
-            type="button"
-            className="header-booking-action"
-            onClick={requestQuickBooking}
-          >
-            <span className="header-booking-action__icon" aria-hidden="true">
-              +
-            </span>
-            <span>Agendamentos</span>
-          </button>
+        {isHomePage ? (
+          <>
+            <button
+              type="button"
+              className="header-booking-action header-booking-action--compact-plus"
+              onClick={requestQuickBooking}
+              aria-label="Novo agendamento"
+              title="Novo agendamento"
+            >
+              <span className="header-booking-action__icon" aria-hidden="true">
+                +
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="header-booking-action header-booking-action--sidebar-focus"
+              onClick={requestOpenBookings}
+            >
+              <span>Meus agendamentos</span>
+            </button>
+          </>
         ) : null}
       </div>
     </header>

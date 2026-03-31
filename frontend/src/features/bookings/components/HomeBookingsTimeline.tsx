@@ -62,6 +62,7 @@ type HomeBookingsTimelineProps = {
   showSelectedDayCta?: boolean;
   eyebrow?: string;
   title?: string;
+  hideQuickBooking?: boolean;
 };
 
 export default function HomeBookingsTimeline({
@@ -78,8 +79,11 @@ export default function HomeBookingsTimeline({
   showSelectedDayCta = true,
   eyebrow,
   title,
+  hideQuickBooking = false,
 }: HomeBookingsTimelineProps) {
-  const monthTitle = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
+  const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
+  const resolvedEyebrow = eyebrow ?? monthLabel.toUpperCase();
+  const resolvedTitle = title ?? "MEUS AGENDAMENTOS";
   const todayIso = getTodayIso();
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
 
@@ -144,9 +148,10 @@ export default function HomeBookingsTimeline({
           .join(" ")}
       >
         <header className="timeline-panel__header">
-          <div className="timeline-panel__title-block">
-            <span className="timeline-panel__eyebrow">{eyebrow ?? monthTitle.toUpperCase()}</span>
-            <h2 className="timeline-panel__title">{title ?? "MEUS AGENDAMENTOS"}</h2>
+          <div className="timeline-panel__title-block timeline-panel__title-block--bookings">
+            <h2 className="timeline-panel__title timeline-panel__title--month">{resolvedTitle}</h2>
+            <span className="timeline-panel__separator timeline-panel__title-separator" aria-hidden="true">|</span>
+            <span className="timeline-panel__eyebrow timeline-panel__eyebrow--bookings">{resolvedEyebrow}</span>
           </div>
 
           <div className="timeline-panel__tabs">
@@ -247,15 +252,17 @@ export default function HomeBookingsTimeline({
           )}
         </div>
 
-        <button
-          type="button"
-          className="timeline-panel__fab"
-          onClick={onQuickBooking}
-          aria-label="Novo agendamento"
-          title="Novo agendamento"
-        >
-          +
-        </button>
+        {!hideQuickBooking ? (
+          <button
+            type="button"
+            className="timeline-panel__fab"
+            onClick={onQuickBooking}
+            aria-label="Novo agendamento"
+            title="Novo agendamento"
+          >
+            +
+          </button>
+        ) : null}
       </section>
 
       {activeEvent ? (

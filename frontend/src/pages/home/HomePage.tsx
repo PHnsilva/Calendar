@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import "../../app/home-layout.css";
+import "../../app/booking-sidebar.css";
 import HomeCalendarSection from "../../features/home/components/HomeCalendarSection";
 import HomeSidebar from "../../features/home/components/HomeSidebar";
 import BookingFormModal from "../../features/booking-form/components/BookingFormModal";
@@ -7,7 +9,6 @@ import { useHomeCalendarView } from "../../features/home/hooks/useHomeCalendarVi
 import { useHomeBookingSelection } from "../../app/home-booking-provider";
 import type { CalendarEvent } from "../../features/calendar/types";
 import { getLocalCalendarEvents } from "../../lib/storage";
-import "../../app/home-layout.css";
 
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
@@ -87,33 +88,11 @@ function build4x4UnavailableDates(monthStart: string, anchorMonth: string): stri
 
 function mergeEvents(baseEvents: CalendarEvent[], localEvents: CalendarEvent[]) {
   const map = new Map<string, CalendarEvent>();
-  for (const event of [...baseEvents, ...localEvents]) {
-    map.set(event.id, event);
-  }
-
+  for (const event of [...baseEvents, ...localEvents]) map.set(event.id, event);
   return Array.from(map.values()).sort((a, b) => {
     const byDate = a.date.localeCompare(b.date);
     return byDate !== 0 ? byDate : a.startTime.localeCompare(b.startTime);
   });
-}
-
-function getViewportWidth(): number {
-  if (typeof window === "undefined") return 1440;
-  return Math.round(window.innerWidth);
-}
-
-function resolveDesktopColumns(width: number): string {
-  if (width >= 1560) return "minmax(0, 2.16fr) minmax(320px, 22vw, 420px)";
-  if (width >= 1280) return "minmax(0, 2.02fr) minmax(300px, 24vw, 390px)";
-  if (width >= 1100) return "minmax(0, 1.92fr) minmax(286px, 25vw, 360px)";
-  if (width >= 920) return "minmax(0, 1.84fr) minmax(264px, 27vw, 332px)";
-  return "minmax(0, 1.74fr) minmax(238px, 29vw, 292px)";
-}
-
-function resolveCollapsedColumns(width: number): string {
-  if (width >= 1280) return "minmax(0, 1fr) 118px";
-  if (width >= 920) return "minmax(0, 1fr) 108px";
-  return "minmax(0, 1fr) 96px";
 }
 
 export default function HomePage() {
@@ -123,7 +102,6 @@ export default function HomePage() {
   const nextAllowedMonth = shiftMonth(currentAllowedMonth, 1);
   const calendarRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
-  const spotlightTimeoutRef = useRef<number | null>(null);
 
   const {
     selectedDate,
@@ -137,19 +115,19 @@ export default function HomePage() {
     closeBookingModal,
   } = useHomeCalendarView();
 
-  const { quickBookingRequestId, requestQuickBooking } = useHomeBookingSelection();
+  const { quickBookingRequestId, openBookingsRequestId, requestQuickBooking } = useHomeBookingSelection();
   const lastQuickRequestRef = useRef(0);
+  const lastOpenSidebarRequestRef = useRef(0);
   const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
-  const [viewportWidth, setViewportWidth] = useState(getViewportWidth);
   const [isBookingGuideOpen, setIsBookingGuideOpen] = useState(false);
   const [isBookingPickMode, setIsBookingPickMode] = useState(false);
-  const [isSidebarPreviewOpen, setIsSidebarPreviewOpen] = useState(false);
-  const [isSidebarFocused, setIsSidebarFocused] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
   );
 
-  const isDesktopLayout = viewportWidth >= 730;
+  const isDesktop = viewportWidth > 730;
 
   const demoEvents = useMemo(
     () => [...buildMonthMockEvents(currentAllowedMonth), ...buildMonthMockEvents(nextAllowedMonth)].filter((event) => event.date >= todayIso),
@@ -165,84 +143,37 @@ export default function HomePage() {
     [currentAllowedMonth, nextAllowedMonth],
   );
 
-  const sidebarMonthLabel = useMemo(
-    () => new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(timelineMonth)).toUpperCase(),
-    [timelineMonth],
-  );
-
-  const gridTemplateColumns = useMemo(() => {
-    if (!isDesktopLayout) return "1fr";
-    if (isBookingPickMode && !isSidebarPreviewOpen) return resolveCollapsedColumns(viewportWidth);
-    return resolveDesktopColumns(viewportWidth);
-  }, [isDesktopLayout, isBookingPickMode, isSidebarPreviewOpen, viewportWidth]);
-
-  const pulseSidebar = () => {
-    setIsSidebarFocused(true);
-    if (spotlightTimeoutRef.current) window.clearTimeout(spotlightTimeoutRef.current);
-    spotlightTimeoutRef.current = window.setTimeout(() => setIsSidebarFocused(false), 380);
-  };
-
-  const focusCalendar = () => {
-    const node = calendarRef.current ?? document.querySelector<HTMLElement>(".home-calendar-stack");
-    node?.scrollIntoView({ behavior: "smooth", block: "start" });
-    node?.classList.add("calendar-focus-pulse");
-    window.setTimeout(() => node?.classList.remove("calendar-focus-pulse"), 620);
-  };
-
-  const focusSidebar = (withSpotlight = true) => {
-    setIsBookingGuideOpen(false);
-    setIsBookingPickMode(false);
-    setIsSidebarPreviewOpen(false);
-
-    const node = sidebarRef.current ?? document.querySelector<HTMLElement>(".home-sidebar");
-    node?.scrollIntoView({ behavior: "smooth", block: isDesktopLayout ? "nearest" : "start", inline: "nearest" });
-    if (withSpotlight) pulseSidebar();
-  };
-
   useEffect(() => {
-    const handleResize = () => setViewportWidth(getViewportWidth());
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    const onResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
-    document.body.classList.add("home-page-active");
-    document.body.classList.toggle("home-page-desktop", isDesktopLayout);
-    document.body.classList.toggle("home-page-mobile", !isDesktopLayout);
-    return () => {
-      document.body.classList.remove("home-page-active", "home-page-desktop", "home-page-mobile");
-    };
-  }, [isDesktopLayout]);
+    const html = document.documentElement;
+    const body = document.body;
 
-  useEffect(() => {
-    if (!isDesktopLayout) {
-      setIsSidebarPreviewOpen(false);
-      setIsSidebarFocused(false);
+    if (isDesktop) {
+      html.classList.add("home-scroll-locked");
+      body.classList.add("home-scroll-locked");
+    } else {
+      html.classList.remove("home-scroll-locked");
+      body.classList.remove("home-scroll-locked");
     }
-  }, [isDesktopLayout]);
+
+    return () => {
+      html.classList.remove("home-scroll-locked");
+      body.classList.remove("home-scroll-locked");
+    };
+  }, [isDesktop]);
 
   useEffect(() => {
-    const button = document.querySelector<HTMLElement>(".header-booking-action");
-    if (!button) return;
-
-    const spans = button.querySelectorAll("span");
-    const labelNode = spans.item(spans.length - 1);
-    if (labelNode) labelNode.textContent = "Meus agendamentos";
-    button.setAttribute("aria-label", "Meus agendamentos");
-    button.setAttribute("title", "Meus agendamentos");
-
-    const handleHeaderAction = (event: Event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      focusSidebar(true);
-    };
-
-    button.addEventListener("click", handleHeaderAction);
-    return () => button.removeEventListener("click", handleHeaderAction);
-  }, [isDesktopLayout]);
+    if (!isDesktop) {
+      setIsSidebarExpanded(true);
+      return;
+    }
+    setIsSidebarExpanded((current) => current && !isBookingPickMode);
+  }, [isDesktop, isBookingPickMode]);
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -255,22 +186,34 @@ export default function HomePage() {
   useEffect(() => {
     if (quickBookingRequestId === 0) return;
     if (quickBookingRequestId === lastQuickRequestRef.current) return;
-
     lastQuickRequestRef.current = quickBookingRequestId;
-    clearSelection();
-    setIsSidebarFocused(false);
-    setIsBookingPickMode(true);
-    setIsSidebarPreviewOpen(false);
-    setIsBookingGuideOpen(true);
 
-    window.requestAnimationFrame(() => focusCalendar());
-  }, [quickBookingRequestId, clearSelection]);
+    clearSelection();
+    closeBookingModal();
+    setIsBookingPickMode(true);
+    setIsBookingGuideOpen(true);
+    setIsSidebarExpanded(false);
+
+    if (!isDesktop) {
+      window.requestAnimationFrame(() => {
+        calendarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [quickBookingRequestId, clearSelection, closeBookingModal, isDesktop]);
 
   useEffect(() => {
-    return () => {
-      if (spotlightTimeoutRef.current) window.clearTimeout(spotlightTimeoutRef.current);
-    };
-  }, []);
+    if (openBookingsRequestId === 0) return;
+    if (openBookingsRequestId === lastOpenSidebarRequestRef.current) return;
+    lastOpenSidebarRequestRef.current = openBookingsRequestId;
+
+    setIsBookingPickMode(false);
+    setIsBookingGuideOpen(false);
+    setIsSidebarExpanded(true);
+
+    window.requestAnimationFrame(() => {
+      sidebarRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "end" });
+    });
+  }, [openBookingsRequestId]);
 
   const handleCalendarDateSelect = (date: string, options?: { unavailable?: boolean }) => {
     if (options?.unavailable) return;
@@ -280,11 +223,14 @@ export default function HomePage() {
     if (isBookingPickMode) {
       setIsBookingGuideOpen(false);
       setIsBookingPickMode(false);
-      setIsSidebarPreviewOpen(false);
+      setIsSidebarExpanded(true);
       openBookingModal();
-      if (isDesktopLayout) {
-        window.requestAnimationFrame(() => pulseSidebar());
-      }
+    }
+
+    if (!isDesktop) {
+      window.requestAnimationFrame(() => {
+        sidebarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
     }
   };
 
@@ -295,8 +241,6 @@ export default function HomePage() {
     setTimelineMonth(month);
     setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
-    setIsSidebarPreviewOpen(false);
-    setIsSidebarFocused(false);
   };
 
   const handleTimelineMonthChange = (month: string) => {
@@ -306,8 +250,6 @@ export default function HomePage() {
     setCurrentMonth(month);
     setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
-    setIsSidebarPreviewOpen(false);
-    setIsSidebarFocused(false);
   };
 
   const handleOpenDayBooking = (date: string) => {
@@ -315,76 +257,40 @@ export default function HomePage() {
     handleDateSelect(date);
     setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
-    setIsSidebarPreviewOpen(false);
+    setIsSidebarExpanded(true);
     openBookingModal();
-    if (isDesktopLayout) pulseSidebar();
+  };
+
+  const handleRailDateSelect = (date: string) => {
+    handleDateSelect(date);
+    setTimelineMonth(toMonthStart(date));
+    if (isDesktop) setIsSidebarExpanded(true);
   };
 
   const handleCloseBookingGuide = () => {
     setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
-    setIsSidebarPreviewOpen(false);
   };
 
   const handleBookingCreated = (event: CalendarEvent) => {
     setLocalEvents((current) => mergeEvents(current, [event]));
     setTimelineMonth(toMonthStart(event.date));
     handleDateSelect(event.date);
-    if (isDesktopLayout) pulseSidebar();
+    setIsSidebarExpanded(true);
   };
 
-  const homePageStyle = isDesktopLayout
-    ? { height: "100%", minHeight: 0, overflow: "hidden" as const }
-    : { height: "auto", minHeight: 0, overflow: "visible" as const };
-
-  const gridStyle = isDesktopLayout
-    ? {
-        display: "grid",
-        gridTemplateColumns,
-        gap: viewportWidth >= 1100 ? "16px" : viewportWidth >= 860 ? "14px" : "12px",
-        height: "100%",
-        minHeight: 0,
-        alignItems: "stretch",
-        overflow: "hidden" as const,
-      }
-    : {
-        display: "grid",
-        gridTemplateColumns: "1fr",
-        gap: "12px",
-        height: "auto",
-        minHeight: 0,
-        overflow: "visible" as const,
-      };
-
-  const calendarWrapStyle = isDesktopLayout
-    ? { minWidth: 0, minHeight: 0, height: "100%", overflow: "hidden" as const }
-    : { minWidth: 0, minHeight: 0, height: "auto", overflow: "visible" as const };
-
-  const sidebarWrapStyle = isDesktopLayout
-    ? { minWidth: 0, minHeight: 0, height: "100%", overflow: "hidden" as const }
-    : { minWidth: 0, minHeight: 0, height: "auto", overflow: "visible" as const };
-
-  const sidebarClassName = [
-    "home-sidebar",
-    isDesktopLayout && isBookingPickMode && !isSidebarPreviewOpen ? "home-sidebar--collapsed" : "",
-    isDesktopLayout && isSidebarPreviewOpen ? "home-sidebar--preview" : "",
-    isSidebarFocused ? "home-sidebar--focused" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  const rootClassName = [
-    "home-page",
-    isDesktopLayout ? "home-page--desktop" : "home-page--mobile",
-    isDesktopLayout && isBookingPickMode ? "home-page--pick-mode" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
   return (
-    <div className={rootClassName} style={homePageStyle}>
-      <div className="home-grid" style={gridStyle}>
-        <div ref={calendarRef} className="home-page__calendar-wrap" style={calendarWrapStyle}>
+    <div className="home-page home-page--sidebar-layout">
+      <div
+        className={[
+          "home-grid",
+          isDesktop ? "home-grid--desktop" : "home-grid--mobile",
+          isDesktop && isSidebarExpanded ? "home-grid--sidebar-open" : "",
+          isDesktop && !isSidebarExpanded ? "home-grid--sidebar-collapsed" : "",
+          isBookingPickMode ? "home-grid--pick-mode" : "",
+        ].filter(Boolean).join(" ")}
+      >
+        <div ref={calendarRef} className="home-calendar-stack home-calendar-stack--shell">
           <HomeCalendarSection
             selectedDate={selectedDate}
             currentMonth={currentMonth}
@@ -399,9 +305,8 @@ export default function HomePage() {
           />
         </div>
 
-        <div ref={sidebarRef} className="home-page__sidebar-wrap" style={sidebarWrapStyle}>
+        <div ref={sidebarRef} className="home-sidebar-anchor">
           <HomeSidebar
-            className={sidebarClassName}
             selectedDate={selectedDate}
             events={allEvents}
             activeMonth={timelineMonth}
@@ -412,17 +317,10 @@ export default function HomePage() {
               clearSelection();
               requestQuickBooking();
             }}
-            bookingPickMode={isBookingPickMode}
-            isCollapsed={isDesktopLayout && isBookingPickMode && !isSidebarPreviewOpen}
-            onOpenDayBooking={handleOpenDayBooking}
-            onMouseEnter={() => {
-              if (isDesktopLayout && isBookingPickMode) setIsSidebarPreviewOpen(true);
-            }}
-            onMouseLeave={() => {
-              if (isDesktopLayout && isBookingPickMode) setIsSidebarPreviewOpen(false);
-            }}
-            eyebrow={sidebarMonthLabel}
-            title="MEUS AGENDAMENTOS"
+            onToggleExpanded={() => setIsSidebarExpanded((current) => !current)}
+            onSelectRailDate={handleRailDateSelect}
+            isExpanded={isSidebarExpanded}
+            isDesktop={isDesktop}
           />
         </div>
       </div>

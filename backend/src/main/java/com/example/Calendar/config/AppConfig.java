@@ -4,7 +4,9 @@ import com.example.Calendar.google.CalendarClient;
 import com.example.Calendar.integrations.DummyWhatsAppClient;
 import com.example.Calendar.integrations.MetaWhatsAppClient;
 import com.example.Calendar.integrations.WhatsAppClient;
+import com.example.Calendar.integrations.geoapify.GeoapifyRoutesClient;
 import com.example.Calendar.integrations.google.GoogleRoutesClient;
+import com.example.Calendar.integrations.routes.RouteClient;
 import com.example.Calendar.integrations.supabase.SupabaseClient;
 import com.example.Calendar.service.*;
 import com.example.Calendar.service.store.*;
@@ -182,12 +184,35 @@ public class AppConfig {
     }
 
     @Bean
+    public GeoapifyRoutesClient geoapifyRoutesClient(RestTemplate http, AppProperties props) {
+        return new GeoapifyRoutesClient(
+                http,
+                props.getGeoapifyApiKey(),
+                props.getGeoapifyRoutingMode(),
+                props.getGeoapifyRoutingUnits(),
+                props.getGeoapifyRoutingLang(),
+                props.getGeoapifyGeocodingCountry());
+    }
+
+    @Bean
+    public RouteClient routeClient(
+            AppProperties props,
+            GeoapifyRoutesClient geoapifyRoutesClient,
+            GoogleRoutesClient googleRoutesClient) {
+        if (props.isGeoapifyEnabled() && !props.getGeoapifyApiKey().isBlank()) {
+            return geoapifyRoutesClient;
+        }
+        return googleRoutesClient;
+    }
+
+    @Bean
     public RoutesService routesService(
             CalendarClient calendarClient,
             TokenUtil tokenUtil,
-            GoogleRoutesClient googleRoutesClient,
+            RouteClient routeClient,
             AppProperties props) {
-        boolean enabled = props.isGoogleMapsEnabled() && !props.getGoogleMapsApiKey().isBlank();
-        return new RoutesService(calendarClient, tokenUtil, googleRoutesClient, enabled);
+        boolean enabled = (props.isGeoapifyEnabled() && !props.getGeoapifyApiKey().isBlank())
+                || (props.isGoogleMapsEnabled() && !props.getGoogleMapsApiKey().isBlank());
+        return new RoutesService(calendarClient, tokenUtil, routeClient, enabled);
     }
 }

@@ -54,3 +54,57 @@ export type VerifyStartResponse = {
 export type VerifyConfirmResponse = {
   verified: boolean;
 };
+
+export type PublicBootstrapResponse = {
+  timezone: string;
+  schedule: {
+    cycleStart: string | null;
+    workStart: string;
+    workEnd: string;
+    lunchStart: string;
+    lunchEnd: string;
+  };
+  booking: {
+    slotMinutes: number;
+    allowedMinuteMarks: number[];
+    maxFutureMonthsAhead: number;
+    pendingTtlSeconds: number;
+    blockOtherBookingsWhenPending: boolean;
+    statuses: string[];
+  };
+  verification: {
+    otpTtlSeconds: number;
+    otpResendAfterSeconds: number;
+  };
+  serviceArea: {
+    allowedCities: string[];
+    allowedStates: string[];
+  };
+};
+
+export type CepLookupResponse = {
+  cep: string;
+  street: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  ibge?: string;
+  gia?: string;
+  ddd?: string;
+  siafi?: string;
+};
+
+export type GeoapifyAddressSuggestion = {
+  placeId: string;
+  formatted: string;
+  latitude: number;
+  longitude: number;
+  addressLine1: string;
+  addressLine2?: string;
+  street: string;
+  houseNumber: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  postcode: string;
+};

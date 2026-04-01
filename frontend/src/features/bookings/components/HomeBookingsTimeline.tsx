@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { getCityTone } from "../../../data/allowed-cities";
+import { useAdminRoute } from "../../admin/hooks/useAdminRoute";
 import type { CalendarEvent } from "../../calendar/types";
-import { normalizeCityTone } from "../../../data/allowed-cities";
+import RouteSummaryCard from "../../maps/components/RouteSummaryCard";
+import { useUserGeolocation } from "../../maps/hooks/useUserGeolocation";
+import { buildStaticRouteMapUrl } from "../../maps/utils/map-formatters";
 
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
@@ -29,8 +33,12 @@ function formatDayLabel(dateString: string) {
   const isToday = dateString === todayIso;
 
   return {
-    day: isToday ? "Hoje" : new Intl.DateTimeFormat("pt-BR", { day: "2-digit" }).format(date),
-    week: new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(date).replace(".", ""),
+    day: isToday
+      ? "Hoje"
+      : new Intl.DateTimeFormat("pt-BR", { day: "2-digit" }).format(date),
+    week: new Intl.DateTimeFormat("pt-BR", { weekday: "short" })
+      .format(date)
+      .replace(".", ""),
     isToday,
   };
 }
@@ -56,13 +64,11 @@ type HomeBookingsTimelineProps = {
   nextAllowedMonth: string;
   onChangeMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
-  bookingPickMode?: boolean;
-  isCollapsed?: boolean;
   onOpenDayBooking: (date: string) => void;
-  showSelectedDayCta?: boolean;
+  hideQuickBooking?: boolean;
   eyebrow?: string;
   title?: string;
-  hideQuickBooking?: boolean;
+  isAdminMode?: boolean;
 };
 
 export default function HomeBookingsTimeline({
@@ -73,34 +79,44 @@ export default function HomeBookingsTimeline({
   nextAllowedMonth,
   onChangeMonth,
   onQuickBooking,
-  bookingPickMode = false,
-  isCollapsed = false,
   onOpenDayBooking,
-  showSelectedDayCta = true,
-  eyebrow,
-  title,
   hideQuickBooking = false,
+  eyebrow = "Agendamentos",
+  title,
+  isAdminMode = false,
 }: HomeBookingsTimelineProps) {
-  const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
-  const resolvedEyebrow = eyebrow ?? monthLabel.toUpperCase();
-  const resolvedTitle = title ?? "MEUS AGENDAMENTOS";
+  const resolvedTitle =
+    title ??
+    new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
   const todayIso = getTodayIso();
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
+  const { coords, error: locationError, isLoading: isLocating, requestLocation } = useUserGeolocation();
+  const routeQuery = useAdminRoute(
+    activeEvent?.id ?? "",
+    coords?.lat,
+    coords?.lng,
+    isAdminMode && Boolean(activeEvent) && Boolean(coords),
+  );
 
   useEffect(() => {
     setActiveEvent(null);
-  }, [selectedDate, activeMonth, bookingPickMode]);
+  }, [selectedDate, activeMonth]);
 
-  const tabs = [
-    {
-      key: currentAllowedMonth,
-      label: new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(toLocalDate(currentAllowedMonth)).replace(".", ""),
-    },
-    {
-      key: nextAllowedMonth,
-      label: new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(toLocalDate(nextAllowedMonth)).replace(".", ""),
-    },
-  ];
+  useEffect(() => {
+    if (!isAdminMode || !activeEvent || coords || isLocating) return;
+    requestLocation();
+  }, [activeEvent, coords, isAdminMode, isLocating, requestLocation]);
+
+  const tabs = useMemo(
+    () =>
+      Array.from(new Set([currentAllowedMonth, nextAllowedMonth])).map((monthStart) => ({
+        key: monthStart,
+        label: new Intl.DateTimeFormat("pt-BR", { month: "short" })
+          .format(toLocalDate(monthStart))
+          .replace(".", ""),
+      })),
+    [currentAllowedMonth, nextAllowedMonth],
+  );
 
   const grouped = useMemo<TimelineGroup[]>(() => {
     const monthEvents = events
@@ -119,14 +135,17 @@ export default function HomeBookingsTimeline({
       map.set(event.date, list);
     }
 
+    const normalizedSelectedDate = selectedDate && selectedDate.length >= 10 ? selectedDate : "";
     const baseDate =
-      selectedDate && toMonthStart(selectedDate) === activeMonth && selectedDate >= todayIso
-        ? selectedDate
+      normalizedSelectedDate &&
+      toMonthStart(normalizedSelectedDate) === activeMonth &&
+      normalizedSelectedDate >= todayIso
+        ? normalizedSelectedDate
         : activeMonth === currentAllowedMonth
           ? todayIso
           : activeMonth;
 
-    if (toMonthStart(baseDate) === activeMonth && !map.has(baseDate)) {
+    if (!map.has(baseDate) && toMonthStart(baseDate) === activeMonth) {
       map.set(baseDate, []);
     }
 
@@ -136,54 +155,49 @@ export default function HomeBookingsTimeline({
       .map(([date, items]) => ({ date, items }));
   }, [events, activeMonth, currentAllowedMonth, selectedDate, todayIso]);
 
+  const primaryRoute = routeQuery.data?.primary ?? null;
+  const staticMapUrl = buildStaticRouteMapUrl(primaryRoute);
+
   return (
     <>
-      <section
-        className={[
-          "timeline-panel",
-          bookingPickMode ? "timeline-panel--pick-mode" : "",
-          isCollapsed ? "timeline-panel--collapsed" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
+      <section className="timeline-panel">
         <header className="timeline-panel__header">
-          <div className="timeline-panel__title-block timeline-panel__title-block--bookings">
-            <h2 className="timeline-panel__title timeline-panel__title--month">{resolvedTitle}</h2>
-            <span className="timeline-panel__separator timeline-panel__title-separator" aria-hidden="true">|</span>
-            <span className="timeline-panel__eyebrow timeline-panel__eyebrow--bookings">{resolvedEyebrow}</span>
+          <div className="timeline-panel__title-block">
+            <span className="timeline-panel__eyebrow">{eyebrow}</span>
+            <h2 className="timeline-panel__title">{resolvedTitle}</h2>
           </div>
 
-          <div className="timeline-panel__tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                className={[
-                  "timeline-panel__tab",
-                  activeMonth === tab.key ? "timeline-panel__tab--active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onClick={() => onChangeMonth(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {tabs.length > 1 ? (
+            <div className="timeline-panel__tabs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={[
+                    "timeline-panel__tab",
+                    activeMonth === tab.key ? "timeline-panel__tab--active" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => onChangeMonth(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </header>
 
         <div className="timeline-panel__body">
           {grouped.length === 0 ? (
             <div className="timeline-card timeline-card--empty">
               <strong>Nenhum agendamento futuro</strong>
-              <span>Esse mês ainda não possui atendimentos a partir da data selecionada.</span>
+              <span>{isAdminMode ? "Nenhum atendimento retornado para os filtros atuais." : "Crie seu primeiro atendimento neste mês para começar."}</span>
             </div>
           ) : (
             grouped.map(({ date, items }) => {
               const label = formatDayLabel(date);
-              const isSelectedGroup = date === selectedDate;
-              const dayTone = normalizeCityTone(items[0]?.city);
+              const isSelectedGroup = selectedDate === date;
 
               return (
                 <div
@@ -191,7 +205,6 @@ export default function HomeBookingsTimeline({
                   className={[
                     "timeline-group",
                     isSelectedGroup ? "timeline-group--selected" : "",
-                    `timeline-group--tone-${dayTone}`,
                   ]
                     .filter(Boolean)
                     .join(" ")}
@@ -204,23 +217,25 @@ export default function HomeBookingsTimeline({
                   <div className="timeline-group__content">
                     {items.length === 0 ? (
                       <div className="timeline-card timeline-card--empty timeline-card--today-empty">
-                        <strong>{label.isToday ? "Sem agendamentos para hoje" : "Sem agendamentos para esse dia"}</strong>
+                        <strong>
+                          {label.isToday ? "Sem agendamentos para hoje" : "Sem agendamentos para esse dia"}
+                        </strong>
                         <span>
                           {label.isToday
                             ? "Use o botão abaixo para criar um novo atendimento."
-                            : "Esse dia ainda não possui atendimentos visíveis na agenda."}
+                            : "Esse dia ainda não possui atendimentos na agenda."}
                         </span>
                       </div>
                     ) : (
-                      items.map((item, index) => {
-                        const tone = normalizeCityTone(item.city);
+                      items.map((item) => {
+                        const tone = getCityTone(item.city);
+
                         return (
                           <button
                             key={item.id}
                             type="button"
                             className={[
                               "timeline-card",
-                              index === 0 ? "timeline-card--primary" : "timeline-card--secondary",
                               "timeline-card--button",
                               `timeline-card--tone-${tone}`,
                             ]
@@ -233,18 +248,14 @@ export default function HomeBookingsTimeline({
                               <span>{item.startTime}</span>
                             </div>
 
-                            <small className="timeline-card__address">{item.customerAddress ?? item.city ?? "Endereço não informado"}</small>
+                            <small className="timeline-card__city">{item.city ?? "Cidade"}</small>
+                            <small className="timeline-card__address">
+                              {item.customerAddress ?? item.city ?? "Endereço não informado"}
+                            </small>
                           </button>
                         );
                       })
                     )}
-
-                    {isSelectedGroup && showSelectedDayCta ? (
-                      <button type="button" className="timeline-day-cta" onClick={() => onOpenDayBooking(date)}>
-                        <span className="timeline-day-cta__icon" aria-hidden="true">+</span>
-                        <span>Agendar nesse dia</span>
-                      </button>
-                    ) : null}
                   </div>
                 </div>
               );
@@ -252,7 +263,7 @@ export default function HomeBookingsTimeline({
           )}
         </div>
 
-        {!hideQuickBooking ? (
+        {!hideQuickBooking && !isAdminMode ? (
           <button
             type="button"
             className="timeline-panel__fab"
@@ -274,25 +285,82 @@ export default function HomeBookingsTimeline({
             aria-label="Fechar detalhes"
           />
 
-          <div className="booking-detail-modal__card">
+          <div className="booking-detail-modal__card booking-detail-modal__card--route">
             <div className="booking-detail-modal__header">
               <div>
                 <span className="booking-preview-modal__eyebrow">Detalhes do atendimento</span>
-                <h3 className="booking-preview-modal__title">{activeEvent.customerName ?? activeEvent.title}</h3>
+                <h3 className="booking-preview-modal__title">
+                  {activeEvent.customerName ?? activeEvent.title}
+                </h3>
               </div>
 
-              <button type="button" className="booking-preview-modal__close" onClick={() => setActiveEvent(null)} aria-label="Fechar">
+              <button
+                type="button"
+                className="booking-preview-modal__close"
+                onClick={() => setActiveEvent(null)}
+                aria-label="Fechar"
+              >
                 ×
               </button>
             </div>
 
             <div className="booking-detail-modal__body">
-              <div className="booking-detail-modal__row"><span>Data</span><strong>{formatLongDate(activeEvent.date)}</strong></div>
-              <div className="booking-detail-modal__row"><span>Horário</span><strong>{activeEvent.startTime} - {activeEvent.endTime}</strong></div>
-              <div className="booking-detail-modal__row"><span>Endereço</span><strong>{activeEvent.customerAddress ?? "Não informado"}</strong></div>
-              <div className="booking-detail-modal__row"><span>E-mail</span><strong>{activeEvent.customerEmail ?? "Não informado"}</strong></div>
-              <div className="booking-detail-modal__row"><span>Telefone</span><strong>{activeEvent.customerPhone ?? "Não informado"}</strong></div>
+              <div className="booking-detail-modal__row">
+                <span>Data</span>
+                <strong>{formatLongDate(activeEvent.date)}</strong>
+              </div>
+              <div className="booking-detail-modal__row">
+                <span>Horário</span>
+                <strong>
+                  {activeEvent.startTime} - {activeEvent.endTime}
+                </strong>
+              </div>
+              <div className="booking-detail-modal__row">
+                <span>Cidade</span>
+                <strong>{activeEvent.city ?? "Não informada"}</strong>
+              </div>
+              <div className="booking-detail-modal__row">
+                <span>Endereço</span>
+                <strong>{activeEvent.customerAddress ?? "Não informado"}</strong>
+              </div>
+              <div className="booking-detail-modal__row">
+                <span>E-mail</span>
+                <strong>{activeEvent.customerEmail ?? "Não informado"}</strong>
+              </div>
+              <div className="booking-detail-modal__row">
+                <span>Telefone</span>
+                <strong>{activeEvent.customerPhone ?? "Não informado"}</strong>
+              </div>
             </div>
+
+            {isAdminMode ? (
+              <div className="booking-detail-modal__route">
+                <div className="booking-detail-modal__route-header">
+                  <span className="booking-preview-modal__eyebrow">Rota administrativa</span>
+                  <button type="button" className="secondary-action" onClick={requestLocation}>
+                    {coords ? "Atualizar localização" : "Usar minha localização"}
+                  </button>
+                </div>
+
+                {locationError ? <p className="booking-form__feedback booking-form__feedback--error">{locationError}</p> : null}
+                {isLocating ? <div className="booking-preview-modal__empty"><strong>Buscando sua localização...</strong></div> : null}
+                {routeQuery.isLoading ? <div className="booking-preview-modal__empty"><strong>Calculando rota...</strong></div> : null}
+                {routeQuery.error ? <p className="booking-form__feedback booking-form__feedback--error">{routeQuery.error instanceof Error ? routeQuery.error.message : "Não foi possível calcular a rota."}</p> : null}
+                {primaryRoute ? <RouteSummaryCard route={primaryRoute} /> : null}
+                {staticMapUrl ? (
+                  <div className="route-map-card">
+                    <img src={staticMapUrl} alt="Mapa da rota calculada" className="route-map-card__image" />
+                    <small className="route-map-card__caption">Powered by Geoapify, OpenStreetMap e OpenMapTiles</small>
+                  </div>
+                ) : null}
+                {!locationError && !isLocating && !routeQuery.isLoading && !primaryRoute ? (
+                  <div className="booking-preview-modal__empty">
+                    <strong>Rota indisponível</strong>
+                    <p>Permita a localização para calcular distância e tempo estimado desse agendamento.</p>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

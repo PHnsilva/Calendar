@@ -23,10 +23,12 @@ type HomeSidebarProps = {
   nextAllowedMonth: string;
   onChangeTimelineMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
+  onOpenDayBooking: (date: string) => void;
   onToggleExpanded: () => void;
   onSelectRailDate: (date: string) => void;
   isExpanded: boolean;
   isDesktop: boolean;
+  isAdminMode?: boolean;
 };
 
 export default function HomeSidebar({
@@ -37,10 +39,12 @@ export default function HomeSidebar({
   nextAllowedMonth,
   onChangeTimelineMonth,
   onQuickBooking,
+  onOpenDayBooking,
   onToggleExpanded,
   onSelectRailDate,
   isExpanded,
   isDesktop,
+  isAdminMode = false,
 }: HomeSidebarProps) {
   const todayIso = getTodayIso();
 
@@ -114,15 +118,17 @@ export default function HomeSidebar({
             })}
           </div>
 
-          <button
-            type="button"
-            className="booking-sidebar-rail__quick-add"
-            onClick={onQuickBooking}
-            aria-label="Novo agendamento"
-            title="Novo agendamento"
-          >
-            +
-          </button>
+          {!isAdminMode ? (
+            <button
+              type="button"
+              className="booking-sidebar-rail__quick-add"
+              onClick={onQuickBooking}
+              aria-label="Novo agendamento"
+              title="Novo agendamento"
+            >
+              +
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -135,9 +141,11 @@ export default function HomeSidebar({
           nextAllowedMonth={nextAllowedMonth}
           onChangeMonth={onChangeTimelineMonth}
           onQuickBooking={onQuickBooking}
-          hideQuickBooking={isDesktop}
-          eyebrow="MEUS AGENDAMENTOS"
+          onOpenDayBooking={onOpenDayBooking}
+          hideQuickBooking={isDesktop || isAdminMode}
+          eyebrow={isAdminMode ? "AGENDA ADMIN" : "MEUS AGENDAMENTOS"}
           title={monthLabel}
+          isAdminMode={isAdminMode}
         />
       </div>
     </aside>

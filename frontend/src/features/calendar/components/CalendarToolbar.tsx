@@ -16,24 +16,22 @@ function shiftMonth(monthStart: string, delta: number): string {
 
 type CalendarToolbarProps = {
   currentMonth: string;
+  currentAllowedMonth: string;
+  nextAllowedMonth: string;
   onMonthChange: (month: string) => void;
   onHelpOpen: () => void;
 };
 
 export default function CalendarToolbar({
   currentMonth,
+  currentAllowedMonth,
+  nextAllowedMonth,
   onMonthChange,
   onHelpOpen,
 }: CalendarToolbarProps) {
   const currentMonthLabel = new Intl.DateTimeFormat("pt-BR", {
     month: "long",
   }).format(toLocalDate(currentMonth));
-
-  const today = new Date();
-  const currentAllowedMonth = toMonthStart(today);
-  const nextAllowedMonth = toMonthStart(
-    new Date(today.getFullYear(), today.getMonth() + 1, 1),
-  );
 
   const canGoPrev = currentMonth !== currentAllowedMonth;
   const canGoNext = currentMonth !== nextAllowedMonth;

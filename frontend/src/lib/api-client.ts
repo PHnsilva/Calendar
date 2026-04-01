@@ -15,6 +15,7 @@ export class ApiError extends Error {
 type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
   query?: Record<string, string | number | boolean | undefined | null>;
+  adminToken?: string;
 };
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
@@ -46,13 +47,14 @@ async function parseResponse(response: Response) {
 }
 
 export async function apiClient<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { body, headers, query, ...rest } = options;
+  const { body, headers, query, adminToken, ...rest } = options;
 
   const response = await fetch(buildUrl(path, query), {
     ...rest,
     headers: {
       Accept: "application/json",
       ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+      ...(adminToken ? { "X-ADMIN-TOKEN": adminToken } : {}),
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -73,4 +75,19 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
   }
 
   return payload as T;
+}
+
+export function apiGet<T>(path: string, options: Omit<RequestOptions, "method" | "body"> = {}) {
+  return apiClient<T>(path, {
+    ...options,
+    method: "GET",
+  });
+}
+
+export function apiPost<T>(path: string, body?: unknown, options: Omit<RequestOptions, "method" | "body"> = {}) {
+  return apiClient<T>(path, {
+    ...options,
+    method: "POST",
+    body,
+  });
 }

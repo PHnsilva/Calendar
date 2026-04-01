@@ -3,5 +3,23 @@ export type BookingFormValues = {
   clientLastName: string;
   clientEmail: string;
   clientPhone: string;
-  clientAddress: string;
+  clientCep: string;
+  clientStreet: string;
+  clientNeighborhood: string;
+  clientNumber: string;
+  clientComplement: string;
+  clientCity: string;
+  clientState: string;
+};
+
+export type AdminBulkCancelRequest = {
+  eventIds: string[];
+  reason?: string;
+};
+
+export type AdminDashboardSummaryResponse = {
+  totalBookings?: number;
+  totalRevenue?: number;
+  byStatus?: Record<string, number>;
+  byCity?: Record<string, number>;
 };

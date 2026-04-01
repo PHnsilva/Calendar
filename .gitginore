@@ -61,3 +61,16 @@ dist-ssr/
 # Reports/Coverage (opcional)
 **/coverage/
 **/reports/
+
+# ===== Env =====
+.env
+.env.*
+!.env.example
+
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+frontend/.env
+frontend/.env.*
+!frontend/.env.example

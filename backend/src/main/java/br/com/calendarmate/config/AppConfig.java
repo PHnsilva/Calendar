@@ -1,13 +1,15 @@
 package br.com.calendarmate.config;
 
-import br.com.calendarmate.google.CalendarClient;
-import br.com.calendarmate.integrations.DummyWhatsAppClient;
-import br.com.calendarmate.integrations.MetaWhatsAppClient;
-import br.com.calendarmate.integrations.WhatsAppClient;
-import br.com.calendarmate.integrations.google.GoogleRoutesClient;
-import br.com.calendarmate.integrations.supabase.SupabaseClient;
-import br.com.calendarmate.service.*;
-import br.com.calendarmate.service.store.*;
+import com.example.Calendar.google.CalendarClient;
+import com.example.Calendar.integrations.DummyWhatsAppClient;
+import com.example.Calendar.integrations.MetaWhatsAppClient;
+import com.example.Calendar.integrations.WhatsAppClient;
+import com.example.Calendar.integrations.geoapify.GeoapifyRoutesClient;
+import com.example.Calendar.integrations.google.GoogleRoutesClient;
+import com.example.Calendar.integrations.routes.RouteClient;
+import com.example.Calendar.integrations.supabase.SupabaseClient;
+import com.example.Calendar.service.*;
+import com.example.Calendar.service.store.*;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -184,12 +186,35 @@ public class AppConfig {
     }
 
     @Bean
+    public GeoapifyRoutesClient geoapifyRoutesClient(RestTemplate http, AppProperties props) {
+        return new GeoapifyRoutesClient(
+                http,
+                props.getGeoapifyApiKey(),
+                props.getGeoapifyRoutingMode(),
+                props.getGeoapifyRoutingUnits(),
+                props.getGeoapifyRoutingLang(),
+                props.getGeoapifyGeocodingCountry());
+    }
+
+    @Bean
+    public RouteClient routeClient(
+            AppProperties props,
+            GeoapifyRoutesClient geoapifyRoutesClient,
+            GoogleRoutesClient googleRoutesClient) {
+        if (props.isGeoapifyEnabled() && !props.getGeoapifyApiKey().isBlank()) {
+            return geoapifyRoutesClient;
+        }
+        return googleRoutesClient;
+    }
+
+    @Bean
     public RoutesService routesService(
             CalendarClient calendarClient,
             TokenUtil tokenUtil,
-            GoogleRoutesClient googleRoutesClient,
+            RouteClient routeClient,
             AppProperties props) {
-        boolean enabled = props.isGoogleMapsEnabled() && !props.getGoogleMapsApiKey().isBlank();
-        return new RoutesService(calendarClient, tokenUtil, googleRoutesClient, enabled);
+        boolean enabled = (props.isGeoapifyEnabled() && !props.getGeoapifyApiKey().isBlank())
+                || (props.isGoogleMapsEnabled() && !props.getGoogleMapsApiKey().isBlank());
+        return new RoutesService(calendarClient, tokenUtil, routeClient, enabled);
     }
 }

@@ -1,65 +1,41 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { clearAdminToken, getStoredAdminToken, saveAdminToken } from "../../../lib/storage";
 
 type AdminTokenGateProps = {
-  initialToken?: string;
-  onSubmit: (token: string) => void;
-  onClear?: () => void;
+  redirectTo?: string;
 };
 
-export default function AdminTokenGate({
-  initialToken = "",
-  onSubmit,
-  onClear,
-}: AdminTokenGateProps) {
-  const [token, setToken] = useState(initialToken);
+export default function AdminTokenGate({ redirectTo = "/admin/dashboard" }: AdminTokenGateProps) {
+  const navigate = useNavigate();
+  const [value, setValue] = useState(getStoredAdminToken());
 
-  useEffect(() => {
-    setToken(initialToken);
-  }, [initialToken]);
+  const handleSubmit = () => {
+    if (!value.trim()) return;
+    saveAdminToken(value.trim());
+    navigate(redirectTo, { replace: true });
+  };
 
   return (
-    <section className="admin-gate panel">
-      <div className="admin-gate__copy">
-        <span className="admin-gate__eyebrow">Área administrativa</span>
-        <h1 className="admin-gate__title">Entrar com token do admin</h1>
-        <p className="admin-gate__description">
-          Essa área usa o header estático do backend. Guarde o token localmente apenas neste navegador.
-        </p>
+    <section className="admin-gate-card">
+      <span className="booking-preview-modal__eyebrow">Admin</span>
+      <h1 className="booking-preview-modal__title">Acessar painel administrativo</h1>
+      <p className="booking-form__hint">Cole o X-ADMIN-TOKEN para liberar agenda, detalhes e rotas.</p>
+      <input
+        type="password"
+        className="booking-form__input"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        placeholder="Cole o token administrativo"
+      />
+      <div className="admin-gate-card__actions">
+        <button type="button" className="secondary-action" onClick={() => { clearAdminToken(); setValue(""); }}>
+          Limpar
+        </button>
+        <button type="button" className="primary-action" onClick={handleSubmit} disabled={!value.trim()}>
+          Entrar
+        </button>
       </div>
-
-      <form
-        className="admin-gate__form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!token.trim()) {
-            return;
-          }
-          onSubmit(token.trim());
-        }}
-      >
-        <label className="admin-field">
-          <span>Token</span>
-          <input
-            type="password"
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-            placeholder="Cole aqui o X-ADMIN-TOKEN"
-            autoComplete="off"
-          />
-        </label>
-
-        <div className="admin-gate__actions">
-          {onClear ? (
-            <button type="button" className="admin-btn admin-btn--ghost" onClick={onClear}>
-              Limpar
-            </button>
-          ) : null}
-
-          <button type="submit" className="admin-btn admin-btn--primary">
-            Entrar no dashboard
-          </button>
-        </div>
-      </form>
     </section>
   );
 }

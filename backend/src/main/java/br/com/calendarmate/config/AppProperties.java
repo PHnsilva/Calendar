@@ -122,8 +122,60 @@ public class AppProperties {
     @Value("${google.maps.routes.fieldMask:routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline}")
     private String googleRoutesFieldMask;
 
+    @Value("${geoapify.enabled:false}")
+    private boolean geoapifyEnabled;
+
+    @Value("${geoapify.apiKey:}")
+    private String geoapifyApiKey;
+
+    @Value("${geoapify.routing.mode:drive}")
+    private String geoapifyRoutingMode;
+
+    @Value("${geoapify.routing.units:metric}")
+    private String geoapifyRoutingUnits;
+
+    @Value("${geoapify.routing.lang:pt-BR}")
+    private String geoapifyRoutingLang;
+
+    @Value("${geoapify.geocoding.country:br}")
+    private String geoapifyGeocodingCountry;
+
     @Value("${app.history.retentionMonths:2}")
     private int historyRetentionMonths;
+
+
+    public int getBookingSlotMinutes() {
+        return 60;
+    }
+
+    public List<Integer> getAllowedMinuteMarks() {
+        return List.of(0);
+    }
+
+    public int getMaxFutureMonthsAhead() {
+        return 1;
+    }
+
+    public List<String> getAllowedCitiesDisplay() {
+        String csv = (allowedCitiesCsv == null ? "" : allowedCitiesCsv.trim());
+        if (csv.isBlank()) {
+            String legacy = getServiceCity();
+            return legacy.isBlank() ? List.of() : List.of(legacy);
+        }
+        return Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getAllowedStatesDisplay() {
+        Set<String> states = getAllowedStatesUpper();
+        if (!states.isEmpty()) {
+            return new ArrayList<>(states);
+        }
+        String legacy = getServiceState();
+        return legacy.isBlank() ? List.of() : List.of(LocationNormalizer.normalizeState(legacy));
+    }
 
     public int getHistoryRetentionMonths() {
         return Math.max(0, Math.min(historyRetentionMonths, 24));
@@ -330,6 +382,31 @@ public class AppProperties {
 
     public String getGoogleRoutesFieldMask() {
         return googleRoutesFieldMask == null ? "" : googleRoutesFieldMask.trim();
+    }
+
+
+    public boolean isGeoapifyEnabled() {
+        return geoapifyEnabled;
+    }
+
+    public String getGeoapifyApiKey() {
+        return geoapifyApiKey == null ? "" : geoapifyApiKey.trim();
+    }
+
+    public String getGeoapifyRoutingMode() {
+        return geoapifyRoutingMode == null ? "drive" : geoapifyRoutingMode.trim();
+    }
+
+    public String getGeoapifyRoutingUnits() {
+        return geoapifyRoutingUnits == null ? "metric" : geoapifyRoutingUnits.trim();
+    }
+
+    public String getGeoapifyRoutingLang() {
+        return geoapifyRoutingLang == null ? "pt-BR" : geoapifyRoutingLang.trim();
+    }
+
+    public String getGeoapifyGeocodingCountry() {
+        return geoapifyGeocodingCountry == null ? "br" : geoapifyGeocodingCountry.trim();
     }
 
     public LocalDate getScheduleCycleStart() {

@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCityTone } from "../../../data/allowed-cities";
+import { useAdminRoute } from "../../admin/hooks/useAdminRoute";
 import type { CalendarEvent } from "../../calendar/types";
+import RouteSummaryCard from "../../maps/components/RouteSummaryCard";
+import { useUserGeolocation } from "../../maps/hooks/useUserGeolocation";
+import { buildStaticRouteMapUrl } from "../../maps/utils/map-formatters";
 
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
@@ -60,9 +64,11 @@ type HomeBookingsTimelineProps = {
   nextAllowedMonth: string;
   onChangeMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
+  onOpenDayBooking: (date: string) => void;
   hideQuickBooking?: boolean;
   eyebrow?: string;
   title?: string;
+  isAdminMode?: boolean;
 };
 
 export default function HomeBookingsTimeline({
@@ -73,34 +79,44 @@ export default function HomeBookingsTimeline({
   nextAllowedMonth,
   onChangeMonth,
   onQuickBooking,
+  onOpenDayBooking,
   hideQuickBooking = false,
   eyebrow = "Agendamentos",
   title,
+  isAdminMode = false,
 }: HomeBookingsTimelineProps) {
   const resolvedTitle =
     title ??
     new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
   const todayIso = getTodayIso();
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
+  const { coords, error: locationError, isLoading: isLocating, requestLocation } = useUserGeolocation();
+  const routeQuery = useAdminRoute(
+    activeEvent?.id ?? "",
+    coords?.lat,
+    coords?.lng,
+    isAdminMode && Boolean(activeEvent) && Boolean(coords),
+  );
 
   useEffect(() => {
     setActiveEvent(null);
   }, [selectedDate, activeMonth]);
 
-  const tabs = [
-    {
-      key: currentAllowedMonth,
-      label: new Intl.DateTimeFormat("pt-BR", { month: "short" })
-        .format(toLocalDate(currentAllowedMonth))
-        .replace(".", ""),
-    },
-    {
-      key: nextAllowedMonth,
-      label: new Intl.DateTimeFormat("pt-BR", { month: "short" })
-        .format(toLocalDate(nextAllowedMonth))
-        .replace(".", ""),
-    },
-  ];
+  useEffect(() => {
+    if (!isAdminMode || !activeEvent || coords || isLocating) return;
+    requestLocation();
+  }, [activeEvent, coords, isAdminMode, isLocating, requestLocation]);
+
+  const tabs = useMemo(
+    () =>
+      Array.from(new Set([currentAllowedMonth, nextAllowedMonth])).map((monthStart) => ({
+        key: monthStart,
+        label: new Intl.DateTimeFormat("pt-BR", { month: "short" })
+          .format(toLocalDate(monthStart))
+          .replace(".", ""),
+      })),
+    [currentAllowedMonth, nextAllowedMonth],
+  );
 
   const grouped = useMemo<TimelineGroup[]>(() => {
     const monthEvents = events
@@ -139,6 +155,9 @@ export default function HomeBookingsTimeline({
       .map(([date, items]) => ({ date, items }));
   }, [events, activeMonth, currentAllowedMonth, selectedDate, todayIso]);
 
+  const primaryRoute = routeQuery.data?.primary ?? null;
+  const staticMapUrl = buildStaticRouteMapUrl(primaryRoute);
+
   return (
     <>
       <section className="timeline-panel">
@@ -148,30 +167,32 @@ export default function HomeBookingsTimeline({
             <h2 className="timeline-panel__title">{resolvedTitle}</h2>
           </div>
 
-          <div className="timeline-panel__tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                className={[
-                  "timeline-panel__tab",
-                  activeMonth === tab.key ? "timeline-panel__tab--active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onClick={() => onChangeMonth(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {tabs.length > 1 ? (
+            <div className="timeline-panel__tabs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={[
+                    "timeline-panel__tab",
+                    activeMonth === tab.key ? "timeline-panel__tab--active" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => onChangeMonth(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </header>
 
         <div className="timeline-panel__body">
           {grouped.length === 0 ? (
             <div className="timeline-card timeline-card--empty">
               <strong>Nenhum agendamento futuro</strong>
-              <span>Esse mês ainda não possui atendimentos a partir da data selecionada.</span>
+              <span>{isAdminMode ? "Nenhum atendimento retornado para os filtros atuais." : "Crie seu primeiro atendimento neste mês para começar."}</span>
             </div>
           ) : (
             grouped.map(({ date, items }) => {
@@ -202,7 +223,7 @@ export default function HomeBookingsTimeline({
                         <span>
                           {label.isToday
                             ? "Use o botão abaixo para criar um novo atendimento."
-                            : "Esse dia ainda não possui atendimentos visíveis na agenda."}
+                            : "Esse dia ainda não possui atendimentos na agenda."}
                         </span>
                       </div>
                     ) : (
@@ -242,7 +263,7 @@ export default function HomeBookingsTimeline({
           )}
         </div>
 
-        {!hideQuickBooking ? (
+        {!hideQuickBooking && !isAdminMode ? (
           <button
             type="button"
             className="timeline-panel__fab"
@@ -264,7 +285,7 @@ export default function HomeBookingsTimeline({
             aria-label="Fechar detalhes"
           />
 
-          <div className="booking-detail-modal__card">
+          <div className="booking-detail-modal__card booking-detail-modal__card--route">
             <div className="booking-detail-modal__header">
               <div>
                 <span className="booking-preview-modal__eyebrow">Detalhes do atendimento</span>
@@ -311,6 +332,35 @@ export default function HomeBookingsTimeline({
                 <strong>{activeEvent.customerPhone ?? "Não informado"}</strong>
               </div>
             </div>
+
+            {isAdminMode ? (
+              <div className="booking-detail-modal__route">
+                <div className="booking-detail-modal__route-header">
+                  <span className="booking-preview-modal__eyebrow">Rota administrativa</span>
+                  <button type="button" className="secondary-action" onClick={requestLocation}>
+                    {coords ? "Atualizar localização" : "Usar minha localização"}
+                  </button>
+                </div>
+
+                {locationError ? <p className="booking-form__feedback booking-form__feedback--error">{locationError}</p> : null}
+                {isLocating ? <div className="booking-preview-modal__empty"><strong>Buscando sua localização...</strong></div> : null}
+                {routeQuery.isLoading ? <div className="booking-preview-modal__empty"><strong>Calculando rota...</strong></div> : null}
+                {routeQuery.error ? <p className="booking-form__feedback booking-form__feedback--error">{routeQuery.error instanceof Error ? routeQuery.error.message : "Não foi possível calcular a rota."}</p> : null}
+                {primaryRoute ? <RouteSummaryCard route={primaryRoute} /> : null}
+                {staticMapUrl ? (
+                  <div className="route-map-card">
+                    <img src={staticMapUrl} alt="Mapa da rota calculada" className="route-map-card__image" />
+                    <small className="route-map-card__caption">Powered by Geoapify, OpenStreetMap e OpenMapTiles</small>
+                  </div>
+                ) : null}
+                {!locationError && !isLocating && !routeQuery.isLoading && !primaryRoute ? (
+                  <div className="booking-preview-modal__empty">
+                    <strong>Rota indisponível</strong>
+                    <p>Permita a localização para calcular distância e tempo estimado desse agendamento.</p>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

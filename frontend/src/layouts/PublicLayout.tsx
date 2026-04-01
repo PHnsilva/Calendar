@@ -6,7 +6,7 @@ import { useHomeBookingSelection } from "../app/home-booking-provider";
 
 export default function PublicLayout() {
   const location = useLocation();
-  const { requestQuickBooking } = useHomeBookingSelection();
+  const { requestQuickBooking, requestOpenBookings } = useHomeBookingSelection();
 
   const isHomePage = location.pathname === "/";
 
@@ -20,16 +20,27 @@ export default function PublicLayout() {
         <ThemeToggle />
 
         {isHomePage ? (
-          <button
-            type="button"
-            className="header-booking-action"
-            onClick={requestQuickBooking}
-          >
-            <span className="header-booking-action__icon" aria-hidden="true">
-              +
-            </span>
-            <span>Agendamentos</span>
-          </button>
+          <>
+            <button
+              type="button"
+              className="header-booking-action header-booking-action--compact-plus"
+              onClick={requestQuickBooking}
+              aria-label="Novo agendamento"
+              title="Novo agendamento"
+            >
+              <span className="header-booking-action__icon" aria-hidden="true">
+                +
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="header-booking-action header-booking-action--sidebar-focus"
+              onClick={requestOpenBookings}
+            >
+              <span>Meus agendamentos</span>
+            </button>
+          </>
         ) : null}
       </div>
     </header>

@@ -50,6 +50,8 @@ export default function HomeCalendarSection({
         <section className="panel home-main-panel home-main-panel--calendar">
           <CalendarToolbar
             currentMonth={currentMonth}
+            currentAllowedMonth={currentAllowedMonth}
+            nextAllowedMonth={nextAllowedMonth}
             onMonthChange={onMonthChange}
             onHelpOpen={() => setIsHelpOpen(true)}
           />

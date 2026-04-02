@@ -17,7 +17,7 @@ type CalendarDateCellProps = {
   isCurrentMonth?: boolean;
   isPast?: boolean;
   variant?: "big" | "preview" | "mini";
-  tone?: CityTone;
+  tone?: CityTone | null;
 };
 
 export default function CalendarDateCell({
@@ -32,25 +32,23 @@ export default function CalendarDateCell({
   tone,
 }: CalendarDateCellProps) {
   const numericLabel = toLocalDate(date).getDate();
-  const label = isToday ? "Hoje" : String(numericLabel);
+  const label = String(numericLabel);
 
   return (
     <span
       className={cn(
         "calendar-date-cell",
         `calendar-date-cell--${variant}`,
+        tone && `calendar-date-cell--tone-${tone}`,
         isToday && "calendar-date-cell--today",
         isSelected && "calendar-date-cell--selected",
         isUnavailable && "calendar-date-cell--unavailable",
         hasEvents && "calendar-date-cell--has-events",
         !isCurrentMonth && "calendar-date-cell--outside",
         isPast && "calendar-date-cell--past",
-        isToday && "calendar-date-cell--today-label",
-        tone && `calendar-date-cell--tone-${tone}`,
       )}
-      aria-hidden="true"
     >
-      <span className="calendar-date-cell__label">{label}</span>
+      {label}
     </span>
   );
 }

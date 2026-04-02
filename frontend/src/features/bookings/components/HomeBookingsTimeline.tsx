@@ -198,12 +198,14 @@ export default function HomeBookingsTimeline({
             grouped.map(({ date, items }) => {
               const label = formatDayLabel(date);
               const isSelectedGroup = selectedDate === date;
+              const groupTone = getCityTone(items[0]?.city);
 
               return (
                 <div
                   key={date}
                   className={[
                     "timeline-group",
+                    `timeline-group--tone-${groupTone}`,
                     isSelectedGroup ? "timeline-group--selected" : "",
                   ]
                     .filter(Boolean)

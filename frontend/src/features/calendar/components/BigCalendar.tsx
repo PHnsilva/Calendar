@@ -99,7 +99,7 @@ export default function BigCalendar({
           const cityTones = Array.from(
             new Set(dayEvents.map((event) => getCityTone(event.city)).filter(Boolean)),
           ).slice(0, 3);
-
+          const dominantTone = cityTones[0];
           const isUnavailable = unavailableDates.includes(day.date);
           const isOutside = !day.isCurrentMonth;
           const isPast = day.date < today;
@@ -114,6 +114,7 @@ export default function BigCalendar({
               className={[
                 "calendar-grid__cell",
                 "calendar-grid__cell--slim",
+                dominantTone ? `calendar-grid__cell--tone-${dominantTone}` : "",
                 isSelected ? "calendar-grid__cell--selected" : "",
                 isUnavailable ? "calendar-grid__cell--unavailable" : "",
                 isOutside ? "calendar-grid__cell--outside" : "",
@@ -145,6 +146,7 @@ export default function BigCalendar({
                   hasEvents={hasEvents}
                   isCurrentMonth={day.isCurrentMonth}
                   isPast={isPast}
+                  tone={dominantTone}
                 />
               </div>
 

@@ -1,3 +1,5 @@
+import type { CityTone } from "../../../data/allowed-cities";
+
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
 }
@@ -15,6 +17,7 @@ type CalendarDateCellProps = {
   isCurrentMonth?: boolean;
   isPast?: boolean;
   variant?: "big" | "preview" | "mini";
+  tone?: CityTone;
 };
 
 export default function CalendarDateCell({
@@ -26,6 +29,7 @@ export default function CalendarDateCell({
   isCurrentMonth = true,
   isPast = false,
   variant = "big",
+  tone,
 }: CalendarDateCellProps) {
   const numericLabel = toLocalDate(date).getDate();
   const label = isToday ? "Hoje" : String(numericLabel);
@@ -42,6 +46,7 @@ export default function CalendarDateCell({
         !isCurrentMonth && "calendar-date-cell--outside",
         isPast && "calendar-date-cell--past",
         isToday && "calendar-date-cell--today-label",
+        tone && `calendar-date-cell--tone-${tone}`,
       )}
       aria-hidden="true"
     >

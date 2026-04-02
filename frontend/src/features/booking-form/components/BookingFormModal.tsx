@@ -105,6 +105,12 @@ function normalizeCity(value?: string | null) {
   return (value ?? "").trim().toLowerCase();
 }
 
+function buildPersistedNumber(number: string, complement: string) {
+  const normalizedNumber = normalizeText(number);
+  const normalizedComplement = normalizeText(complement);
+  return normalizedComplement ? `${normalizedNumber} - Compl.: ${normalizedComplement}` : normalizedNumber;
+}
+
 function validateForm(values: BookingFormValues, addressInput: string, selectedCity: string, selectedSuggestion: AddressSuggestion | null, selectedSlot: HomeSelectedSlot): ValidationErrors {
   const errors: ValidationErrors = {};
   if (!normalizeText(values.clientFirstName)) errors.clientFirstName = "Informe seu nome.";
@@ -119,13 +125,16 @@ function validateForm(values: BookingFormValues, addressInput: string, selectedC
     selectedSuggestion &&
     normalizeText(values.clientStreet) &&
     normalizeText(values.clientNeighborhood) &&
-    normalizeText(values.clientNumber) &&
     cepDigits.length === 8,
   );
   const suggestionMatchesCity = Boolean(
     selectedSuggestion &&
     (!selectedSuggestion.city || normalizeCity(selectedSuggestion.city) === normalizeCity(selectedCity)),
   );
+
+  if (selectedSuggestion && !normalizeText(values.clientNumber)) {
+    errors.clientNumber = "Informe o número.";
+  }
 
   if (!normalizeText(addressInput) || !hasStructuredAddress || !suggestionMatchesCity) {
     errors.addressInput = GENERIC_ADDRESS_ERROR;
@@ -258,13 +267,16 @@ export default function BookingFormModal({
       clientCep: digitsOnly(suggestion.postcode ?? current.clientCep).slice(0, 8),
       clientStreet: normalizeText(suggestion.street || suggestion.addressLine1 || suggestion.formatted),
       clientNeighborhood: normalizeText(suggestion.neighborhood || current.clientNeighborhood),
-      clientNumber: normalizeText(suggestion.houseNumber || current.clientNumber),
+      clientNumber: normalizeText(suggestion.houseNumber),
+      clientComplement: "",
       clientCity: selectedCity,
       clientState: normalizeText((suggestion.stateCode || suggestion.state || current.clientState || "MG")).toUpperCase(),
     }));
     setValidationErrors((current) => {
       const next = { ...current };
       delete next.addressInput;
+      delete next.clientNumber;
+      delete next.clientComplement;
       return next;
     });
   };
@@ -277,12 +289,15 @@ export default function BookingFormModal({
       clientStreet: value,
       clientNeighborhood: "",
       clientNumber: "",
+      clientComplement: "",
       clientCep: "",
       clientCity: selectedCity,
     }));
     setValidationErrors((current) => {
       const next = { ...current };
       delete next.addressInput;
+      delete next.clientNumber;
+      delete next.clientComplement;
       return next;
     });
   };
@@ -291,6 +306,8 @@ export default function BookingFormModal({
     const errors = validateForm(formValues, addressInput, selectedCity, selectedAddress, draftSlot);
     setValidationErrors(errors);
     if (Object.keys(errors).length > 0 || !draftSlot) return;
+
+    const normalizedComplement = normalizeText(formValues.clientComplement);
 
     try {
       const response = await createBookingMutation.mutateAsync({
@@ -304,8 +321,8 @@ export default function BookingFormModal({
         clientCep: digitsOnly(formValues.clientCep).slice(0, 8),
         clientStreet: normalizeText(formValues.clientStreet),
         clientNeighborhood: normalizeText(formValues.clientNeighborhood),
-        clientNumber: normalizeText(formValues.clientNumber),
-        clientComplement: normalizeText(formValues.clientComplement) || undefined,
+        clientNumber: buildPersistedNumber(formValues.clientNumber, normalizedComplement),
+        clientComplement: undefined,
         clientCity: selectedCity,
         clientState: normalizeText(formValues.clientState || "MG").slice(0, 2).toUpperCase(),
       });
@@ -338,6 +355,8 @@ export default function BookingFormModal({
 
   const submitDisabled = createBookingMutation.isPending || isUnavailable || isLoadingSlots;
   const backendError = createBookingMutation.error ? mapCreateError(createBookingMutation.error.message) : null;
+  const shouldShowComplementField = Boolean(selectedAddress);
+  const shouldShowNumberField = Boolean(selectedAddress && !normalizeText(selectedAddress.houseNumber));
 
   return (
     <>
@@ -443,6 +462,32 @@ export default function BookingFormModal({
                     />
                     {validationErrors.addressInput ? <small className="booking-form__field-error">{validationErrors.addressInput}</small> : null}
                   </label>
+
+                  {shouldShowNumberField ? (
+                    <label className="booking-form__field booking-form__field--with-error">
+                      <span>Número</span>
+                      <input
+                        value={formValues.clientNumber}
+                        onChange={(event) => handleFieldChange("clientNumber", event.target.value)}
+                        className="booking-form__input"
+                        inputMode="numeric"
+                        placeholder="123"
+                      />
+                      {validationErrors.clientNumber ? <small className="booking-form__field-error">{validationErrors.clientNumber}</small> : null}
+                    </label>
+                  ) : null}
+
+                  {shouldShowComplementField ? (
+                    <label className={["booking-form__field", shouldShowNumberField ? "" : "booking-form__field--full"].filter(Boolean).join(" ")}>
+                      <span>Complemento</span>
+                      <input
+                        value={formValues.clientComplement}
+                        onChange={(event) => handleFieldChange("clientComplement", event.target.value)}
+                        className="booking-form__input"
+                        placeholder="Apto, bloco, referência..."
+                      />
+                    </label>
+                  ) : null}
                 </div>
 
                 <p className="booking-form__hint">Escolha a cidade e selecione o endereço sugerido para preencher o agendamento com mais precisão.</p>

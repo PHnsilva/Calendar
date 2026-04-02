@@ -23,7 +23,7 @@ export default function PublicLayout() {
           <>
             <button
               type="button"
-              className="header-booking-action header-booking-action--compact-plus"
+              className="header-booking-action header-booking-action--compact-plus header-booking-action--accent-orange"
               onClick={requestQuickBooking}
               aria-label="Novo agendamento"
               title="Novo agendamento"
@@ -35,7 +35,7 @@ export default function PublicLayout() {
 
             <button
               type="button"
-              className="header-booking-action header-booking-action--sidebar-focus"
+              className="header-booking-action header-booking-action--sidebar-focus header-booking-action--bookings"
               onClick={requestOpenBookings}
             >
               <span>Meus agendamentos</span>

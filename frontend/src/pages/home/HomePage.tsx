@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "../../app/home-layout.css";
 import "../../app/booking-sidebar.css";
+import "../../app/calendar-final-pass.css";
 import HomeCalendarSection from "../../features/home/components/HomeCalendarSection";
 import HomeSidebar from "../../features/home/components/HomeSidebar";
 import BookingFormModal from "../../features/booking-form/components/BookingFormModal";
 import BookingStartHintModal from "../../components/ui/BookingStartHintModal";
 import { useHomeCalendarView } from "../../features/home/hooks/useHomeCalendarView";
 import { useHomeBookingSelection } from "../../app/home-booking-provider";
+import { ALLOWED_CITIES } from "../../data/allowed-cities";
 import type { CalendarEvent } from "../../features/calendar/types";
 import { getLocalCalendarEvents, getStoredAdminToken } from "../../lib/storage";
 import { useAvailableMonthDates } from "../../features/calendar/hooks/useAvailableMonthDates";
@@ -58,112 +60,67 @@ function buildUnavailableFromAvailability(monthStart: string, availableDates: st
   return getMonthDates(monthStart).filter((date) => !available.has(date));
 }
 
+const ENABLE_LAYOUT_STRESS_PREVIEW_MOCK = true;
 
-// Mock descartável para pré-visualizar a paleta por cidade no calendário.
-const ENABLE_CITY_COLOR_PREVIEW_MOCK = true;
+function buildStressPreviewEvents(currentAllowedMonth: string, nextAllowedMonth: string): CalendarEvent[] {
+  const current = toLocalDate(currentAllowedMonth);
+  const next = toLocalDate(nextAllowedMonth);
+  const cityAddresses: Record<string, string> = {
+    "Belo Horizonte": "Av. Afonso Pena, 1377 - Centro - Belo Horizonte/MG CEP: 30130-008",
+    Itabirito: "Rua Felipe Camarão, 158 - Compl.: casa - Vila Gonçalo - Itabirito/MG CEP: 35450069",
+    "Ouro Preto": "Rua Direita, 210 - Centro - Ouro Preto/MG CEP: 35400-000",
+    Moeda: "Rua das Flores, 85 - Centro - Moeda/MG CEP: 35470-000",
+    "Nova Lima": "Alameda dos Ipês, 420 - Jardim Canadá - Nova Lima/MG CEP: 34007-000",
+    Congonhas: "Rua Barão de Congonhas, 210 - Centro - Congonhas/MG CEP: 36415-000",
+    "Rio Acima": "Rua da Serra, 56 - Centro - Rio Acima/MG CEP: 34300-000",
+    Brumadinho: "Rua da Matriz, 98 - Centro - Brumadinho/MG CEP: 35460-000",
+  };
 
-function addDays(baseDate: Date, days: number): Date {
-  const next = new Date(baseDate);
-  next.setDate(baseDate.getDate() + days);
-  return next;
-}
+  const slots = [
+    [2, "08:00", "09:00"],
+    [3, "09:30", "10:30"],
+    [4, "11:00", "12:00"],
+    [4, "13:30", "14:30"],
+    [6, "15:00", "16:00"],
+    [8, "09:00", "10:00"],
+    [8, "10:30", "11:30"],
+    [10, "14:00", "15:00"],
+    [11, "16:00", "17:00"],
+    [13, "08:30", "09:30"],
+    [15, "09:00", "10:00"],
+    [15, "11:00", "12:00"],
+    [17, "13:00", "14:00"],
+    [18, "15:30", "16:30"],
+    [22, "08:00", "09:00"],
+    [22, "10:00", "11:00"],
+    [24, "12:30", "13:30"],
+    [25, "14:30", "15:30"],
+    [3, "08:00", "09:00", "next"],
+    [5, "10:00", "11:00", "next"],
+    [7, "13:00", "14:00", "next"],
+    [10, "15:00", "16:00", "next"],
+  ] as const;
 
-function buildPreviewMockEvents(today: Date): CalendarEvent[] {
-  const previewConfigs = [
-    {
-      id: "mock-city-preview-1",
-      date: addDays(today, 1),
-      startTime: "08:00",
-      endTime: "09:00",
-      city: "Itabirito",
-      customerName: "Carlos A.",
-      customerAddress: "Rua José Antônio, 120 - Centro - Itabirito/MG CEP: 35450-000",
-      serviceLabel: "Instalação elétrica",
-    },
-    {
-      id: "mock-city-preview-2",
-      date: addDays(today, 3),
-      startTime: "10:30",
-      endTime: "11:30",
-      city: "Ouro Preto",
-      customerName: "Mariana P.",
-      customerAddress: "Rua das Mercês, 88 - Antônio Dias - Ouro Preto/MG CEP: 35400-000",
-      serviceLabel: "Reparo hidráulico",
-    },
-    {
-      id: "mock-city-preview-3",
-      date: addDays(today, 5),
-      startTime: "14:00",
-      endTime: "15:00",
-      city: "Moeda",
-      customerName: "Rafael M.",
-      customerAddress: "Av. Principal, 45 - Centro - Moeda/MG CEP: 35470-000",
-      serviceLabel: "Pintura interna",
-    },
-    {
-      id: "mock-city-preview-4",
-      date: addDays(today, 8),
-      startTime: "16:30",
-      endTime: "17:30",
-      city: "Nova Lima",
-      customerName: "Juliana S.",
-      customerAddress: "Alameda das Flores, 310 - Jardim Canadá - Nova Lima/MG CEP: 34007-000",
-      serviceLabel: "Montagem",
-    },
-    {
-      id: "mock-city-preview-5",
-      date: addDays(today, 11),
-      startTime: "09:00",
-      endTime: "10:00",
-      city: "Congonhas",
-      customerName: "Eduardo T.",
-      customerAddress: "Rua Barão de Congonhas, 210 - Centro - Congonhas/MG CEP: 36415-000",
-      serviceLabel: "Limpeza técnica",
-    },
-    {
-      id: "mock-city-preview-6",
-      date: addDays(today, 14),
-      startTime: "13:30",
-      endTime: "14:30",
-      city: "Rio Acima",
-      customerName: "Patrícia L.",
-      customerAddress: "Rua da Serra, 56 - Centro - Rio Acima/MG CEP: 34300-000",
-      serviceLabel: "Manutenção",
-    },
-    {
-      id: "mock-city-preview-7",
-      date: addDays(today, 18),
-      startTime: "11:00",
-      endTime: "12:00",
-      city: "Belo Horizonte",
-      customerName: "Fernanda C.",
-      customerAddress: "Rua dos Timbiras, 1500 - Lourdes - Belo Horizonte/MG CEP: 30140-061",
-      serviceLabel: "Instalação",
-    },
-    {
-      id: "mock-city-preview-8",
-      date: addDays(today, 22),
-      startTime: "15:30",
-      endTime: "16:30",
-      city: "Brumadinho",
-      customerName: "Lucas R.",
-      customerAddress: "Rua das Acácias, 95 - Centro - Brumadinho/MG CEP: 35460-000",
-      serviceLabel: "Revisão geral",
-    },
-  ];
+  return slots.map(([day, startTime, endTime, monthFlag], index) => {
+    const monthBase = monthFlag === "next" ? next : current;
+    const date = toIsoDate(new Date(monthBase.getFullYear(), monthBase.getMonth(), day));
+    const city = ALLOWED_CITIES[index % ALLOWED_CITIES.length];
 
-  return previewConfigs.map((item) => ({
-    id: item.id,
-    title: item.serviceLabel,
-    date: toIsoDate(item.date),
-    startTime: item.startTime,
-    endTime: item.endTime,
-    city: item.city,
-    customerName: item.customerName,
-    customerAddress: item.customerAddress,
-    serviceLabel: item.serviceLabel,
-    status: "booked" as const,
-  }));
+    return {
+      id: `layout-preview-${date}-${index}`,
+      title: `Atendimento ${city}`,
+      date,
+      startTime,
+      endTime,
+      city,
+      customerName: ["Eduardo T.", "Patrícia L.", "Ana Beatriz", "Carlos M.", "Juliana P.", "Roberto S.", "Marina C.", "Lucas V."][index % 8],
+      customerAddress: cityAddresses[city] ?? city,
+      customerEmail: `preview${index + 1}@exemplo.com`,
+      customerPhone: `(31) 98888-0${`${index}`.padStart(3, "0")}`,
+      serviceLabel: index % 3 === 0 ? "Vistoria técnica" : index % 3 === 1 ? "Manutenção" : "Instalação",
+      status: "booked",
+    };
+  });
 }
 
 function mergeEvents(events: CalendarEvent[]) {
@@ -206,7 +163,7 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
   const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
   const [isBookingGuideOpen, setIsBookingGuideOpen] = useState(false);
   const [isBookingPickMode, setIsBookingPickMode] = useState(false);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => window.innerWidth > 730);
   const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
@@ -214,17 +171,21 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
 
   const isDesktop = viewportWidth > 730;
   const adminBookings = useAdminBookings({}, isAdminMode && Boolean(getStoredAdminToken()));
-  const previewMockEvents = useMemo(
-    () => (ENABLE_CITY_COLOR_PREVIEW_MOCK ? buildPreviewMockEvents(toLocalDate(todayIso)) : []),
-    [todayIso],
-  );
 
   const currentMonthAvailability = useAvailableMonthDates(currentAllowedMonth, !isAdminMode);
   const nextMonthAvailability = useAvailableMonthDates(nextAllowedMonth, !isAdminMode);
 
+  const previewEvents = useMemo(
+    () =>
+      ENABLE_LAYOUT_STRESS_PREVIEW_MOCK && !isAdminMode
+        ? buildStressPreviewEvents(currentAllowedMonth, nextAllowedMonth)
+        : [],
+    [currentAllowedMonth, isAdminMode, nextAllowedMonth],
+  );
+
   const allEvents = useMemo(
-    () => mergeEvents([...(isAdminMode ? adminBookings.calendarEvents : localEvents), ...previewMockEvents]),
-    [adminBookings.calendarEvents, isAdminMode, localEvents, previewMockEvents],
+    () => (isAdminMode ? mergeEvents(adminBookings.calendarEvents) : mergeEvents([...previewEvents, ...localEvents])),
+    [adminBookings.calendarEvents, isAdminMode, localEvents, previewEvents],
   );
 
   const allUnavailableDates = useMemo(() => {

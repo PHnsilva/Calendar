@@ -78,7 +78,13 @@ export default function HomeSidebar({
       ].join(" ")}
     >
       {isDesktop ? (
-        <div className="booking-sidebar-rail" aria-label="Dias com agendamento">
+        <div
+          className={[
+            "booking-sidebar-rail",
+            isExpanded ? "booking-sidebar-rail--expanded" : "",
+          ].join(" ")}
+          aria-label="Dias com agendamento"
+        >
           <button
             type="button"
             className={[
@@ -89,34 +95,40 @@ export default function HomeSidebar({
             aria-label={isExpanded ? "Recolher meus agendamentos" : "Expandir meus agendamentos"}
             title={isExpanded ? "Recolher meus agendamentos" : "Expandir meus agendamentos"}
           >
-            <span aria-hidden="true">{isExpanded ? "✕" : "←"}</span>
+            <span className="booking-sidebar-rail__toggle-face" aria-hidden="true">
+              {isExpanded ? "✕" : "←"}
+            </span>
           </button>
 
-          <div className="booking-sidebar-rail__days">
-            {railDays.map((entry) => {
-              const label = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", weekday: "short" }).formatToParts(toLocalDate(entry.date));
-              const day = label.find((part) => part.type === "day")?.value ?? entry.date.slice(8, 10);
-              const week = (label.find((part) => part.type === "weekday")?.value ?? "").replace(".", "");
-              const isSelected = selectedDate === entry.date;
+          {!isExpanded ? (
+            <div className="booking-sidebar-rail__days">
+              {railDays.map((entry) => {
+                const label = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", weekday: "short" }).formatToParts(toLocalDate(entry.date));
+                const day = label.find((part) => part.type === "day")?.value ?? entry.date.slice(8, 10);
+                const week = (label.find((part) => part.type === "weekday")?.value ?? "").replace(".", "");
+                const isSelected = selectedDate === entry.date;
 
-              return (
-                <button
-                  key={entry.date}
-                  type="button"
-                  className={[
-                    "booking-sidebar-rail__day",
-                    `booking-sidebar-rail__day--${entry.tone}`,
-                    isSelected ? "booking-sidebar-rail__day--selected" : "",
-                  ].join(" ")}
-                  onClick={() => onSelectRailDate(entry.date)}
-                  title={entry.date}
-                >
-                  <strong>{day}</strong>
-                  <span>{week}</span>
-                </button>
-              );
-            })}
-          </div>
+                return (
+                  <button
+                    key={entry.date}
+                    type="button"
+                    className={[
+                      "booking-sidebar-rail__day",
+                      `booking-sidebar-rail__day--${entry.tone}`,
+                      isSelected ? "booking-sidebar-rail__day--selected" : "",
+                    ].join(" ")}
+                    onClick={() => onSelectRailDate(entry.date)}
+                    title={entry.date}
+                  >
+                    <strong>{day}</strong>
+                    <span>{week}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="booking-sidebar-rail__spacer" aria-hidden="true" />
+          )}
 
           {!isAdminMode ? (
             <button
@@ -142,7 +154,7 @@ export default function HomeSidebar({
           onChangeMonth={onChangeTimelineMonth}
           onQuickBooking={onQuickBooking}
           onOpenDayBooking={onOpenDayBooking}
-          hideQuickBooking={isDesktop || isAdminMode}
+          hideQuickBooking={isAdminMode}
           eyebrow={isAdminMode ? "AGENDA ADMIN" : "MEUS AGENDAMENTOS"}
           title={monthLabel}
           isAdminMode={isAdminMode}

@@ -51,6 +51,18 @@ function formatLongDate(dateString: string) {
   }).format(toLocalDate(dateString));
 }
 
+function getMonthBadgeParts(monthStart: string) {
+  const date = toLocalDate(monthStart);
+  return {
+    shortMonth: new Intl.DateTimeFormat("pt-BR", { month: "short" })
+      .format(date)
+      .replace(".", "")
+      .toUpperCase(),
+    monthNumber: `${date.getMonth() + 1}`.padStart(2, "0"),
+    year: `${date.getFullYear()}`,
+  };
+}
+
 type TimelineGroup = {
   date: string;
   items: CalendarEvent[];
@@ -157,35 +169,44 @@ export default function HomeBookingsTimeline({
 
   const primaryRoute = routeQuery.data?.primary ?? null;
   const staticMapUrl = buildStaticRouteMapUrl(primaryRoute);
+  const monthBadge = getMonthBadgeParts(activeMonth);
 
   return (
     <>
       <section className="timeline-panel">
-        <header className="timeline-panel__header">
-          <div className="timeline-panel__title-block">
-            <span className="timeline-panel__eyebrow">{eyebrow}</span>
-            <h2 className="timeline-panel__title">{resolvedTitle}</h2>
+        <header className="timeline-panel__header timeline-panel__header--with-badge">
+          <div className="timeline-panel__header-main">
+            <div className="timeline-panel__title-block">
+              <span className="timeline-panel__eyebrow">{eyebrow}</span>
+              <h2 className="timeline-panel__title">{resolvedTitle}</h2>
+            </div>
+
+            {tabs.length > 1 ? (
+              <div className="timeline-panel__tabs">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    className={[
+                      "timeline-panel__tab",
+                      activeMonth === tab.key ? "timeline-panel__tab--active" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    onClick={() => onChangeMonth(tab.key)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
 
-          {tabs.length > 1 ? (
-            <div className="timeline-panel__tabs">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  className={[
-                    "timeline-panel__tab",
-                    activeMonth === tab.key ? "timeline-panel__tab--active" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => onChangeMonth(tab.key)}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          ) : null}
+          <div className="timeline-month-badge" aria-label={`Mês ${resolvedTitle}`}>
+            <span className="timeline-month-badge__month">{monthBadge.shortMonth}</span>
+            <strong className="timeline-month-badge__number">{monthBadge.monthNumber}</strong>
+            <span className="timeline-month-badge__year">{monthBadge.year}</span>
+          </div>
         </header>
 
         <div className="timeline-panel__body">
@@ -198,7 +219,7 @@ export default function HomeBookingsTimeline({
             grouped.map(({ date, items }) => {
               const label = formatDayLabel(date);
               const isSelectedGroup = selectedDate === date;
-              const groupTone = getCityTone(items[0]?.city);
+              const groupTone = items[0] ? getCityTone(items[0].city) : "violet";
 
               return (
                 <div
@@ -247,13 +268,14 @@ export default function HomeBookingsTimeline({
                           >
                             <div className="timeline-card__main">
                               <strong>{item.customerName ?? item.title}</strong>
-                              <span>{item.startTime}</span>
+                              <span className="timeline-card__time">{item.startTime}</span>
                             </div>
 
                             <small className="timeline-card__city">{item.city ?? "Cidade"}</small>
                             <small className="timeline-card__address">
                               {item.customerAddress ?? item.city ?? "Endereço não informado"}
                             </small>
+                            <small className="timeline-card__meta">{item.serviceLabel ?? "Visita técnica"}</small>
                           </button>
                         );
                       })
@@ -266,15 +288,18 @@ export default function HomeBookingsTimeline({
         </div>
 
         {!hideQuickBooking && !isAdminMode ? (
-          <button
-            type="button"
-            className="timeline-panel__fab"
-            onClick={onQuickBooking}
-            aria-label="Novo agendamento"
-            title="Novo agendamento"
-          >
-            +
-          </button>
+          <footer className="timeline-panel__footer">
+            <button
+              type="button"
+              className="timeline-panel__cta"
+              onClick={onQuickBooking}
+              aria-label="Novo agendamento"
+              title="Novo agendamento"
+            >
+              <span className="timeline-panel__cta-icon" aria-hidden="true">+</span>
+              <span className="timeline-panel__cta-label">Agendamentos</span>
+            </button>
+          </footer>
         ) : null}
       </section>
 

@@ -1,3 +1,22 @@
+/* allow the logo to cross the shell padding and header gap without moving layout */
+.app-shell,
+.app-shell__frame,
+.public-header,
+.brand-lockup,
+.brand-lockup__inner {
+  overflow: visible !important;
+}
+
+.public-header {
+  position: relative;
+  z-index: 20;
+}
+
+.public-layout__content {
+  position: relative;
+  z-index: 1;
+}
+
 /* self-contained refresh for calendar header and bookings actions */
 
 .header-booking-action--accent-orange .header-booking-action__icon {
@@ -49,6 +68,22 @@ body,
 
 .booking-sidebar-rail {
   padding: 10px 8px 14px !important;
+  overflow: hidden !important;
+}
+
+.booking-sidebar-rail__days,
+.timeline-panel__body {
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.booking-sidebar-rail__days::-webkit-scrollbar,
+.timeline-panel__body::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
 }
 
 .booking-sidebar-rail__days {

@@ -190,10 +190,13 @@ textarea:focus-visible {
 }
 
 .app-shell {
+  --app-shell-pad: 12px;
+  --public-header-pad-x: 12px;
+  --public-header-pad-y: 10px;
   min-height: 100vh;
   height: 100vh;
   width: 100%;
-  padding: 12px;
+  padding: var(--app-shell-pad);
   position: relative;
   overflow: hidden;
 }
@@ -207,7 +210,7 @@ textarea:focus-visible {
 .app-shell__frame {
   position: relative;
   z-index: 1;
-  min-height: calc(100vh - 24px);
+  min-height: calc(100vh - (var(--app-shell-pad) * 2));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 12px;
@@ -228,7 +231,7 @@ textarea:focus-visible {
 }
 
 .public-header--chrome {
-  padding: 10px 12px;
+  padding: var(--public-header-pad-y) var(--public-header-pad-x);
   border: 1px solid #d6dee9;
   border-radius: var(--radius-xl);
   background: rgba(255, 255, 255, 0.94);
@@ -249,47 +252,58 @@ textarea:focus-visible {
   position: relative;
   overflow: visible;
   isolation: isolate;
+  z-index: 4;
 }
 
 .brand-lockup__inner {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   position: relative;
   overflow: visible;
+  padding: 8px 8px 0px 12px;
+  min-width: 0;
 }
 
 .brand-lockup__media {
   position: relative;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
   overflow: visible;
+  transform: translate(
+    calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-x) - 2px)),
+    calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-y) - 2px))
+  );
+  z-index: 2;
 }
 
 .brand-lockup__logo {
   position: absolute;
-  top: 52%;
-  left: -18px;
-  width: 96px;
-  height: 96px;
+  inset: 0 auto auto 0;
+  width: 84px;
+  height: 84px;
   max-width: none;
   object-fit: contain;
-  transform: translateY(-50%);
+  object-position: left top;
   z-index: 2;
   pointer-events: none;
   filter:
     drop-shadow(0 12px 20px rgba(16, 24, 40, 0.22))
     drop-shadow(0 3px 8px rgba(59, 82, 120, 0.18));
+    
 }
 
 .brand-lockup__copy {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 2px;
   position: relative;
   z-index: 3;
-  padding-left: 74px;
+  min-width: 0;
+  padding-left: 25px;
+  transform: translateX(0);
 }
 
 .brand-lockup__copy strong {
@@ -301,9 +315,10 @@ textarea:focus-visible {
 .brand-lockup__copy small {
   color: var(--text-muted);
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: rgb(71, 0, 0);
 }
 
 .theme-icon-button,
@@ -1733,30 +1748,34 @@ textarea:focus-visible {
 
 @media (max-width: 640px) {
   .app-shell {
-    padding: 8px;
+    --app-shell-pad: 8px;
+    padding: var(--app-shell-pad);
   }
 
   .public-header--chrome {
-    padding: 10px;
+    --public-header-pad-x: 10px;
+    --public-header-pad-y: 10px;
+    padding: var(--public-header-pad-y) var(--public-header-pad-x);
     border-radius: 20px;
   }
 
   .brand-lockup__inner {
-    gap: 10px;
+    gap: 4px;
   }
 
   .brand-lockup__media {
-    width: 44px;
-    height: 44px;
-    flex-basis: 44px;
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
   }
 
   .brand-lockup__logo {
-    width: 86px;
-    height: 86px;
-    max-width: none;
-    left: -12px;
-    top: 52%;
+    width: 70px;
+    height: 70px;
+  }
+
+  .brand-lockup__copy {
+    padding-left: 14px;
   }
 
   .brand-lockup__copy strong {
@@ -2167,6 +2186,8 @@ textarea {
 
 .timeline-group__date strong {
   font-size: 1.42rem;
+  position: relative;
+  right: 3%;
 }
 
 .timeline-group__date span {
@@ -2344,11 +2365,12 @@ textarea {
 /* larger desktops */
 @media (min-width: 1440px) {
   .app-shell {
-    padding: 14px;
+    --app-shell-pad: 14px;
+    padding: var(--app-shell-pad);
   }
 
   .app-shell__frame {
-    min-height: calc(100vh - 28px);
+    min-height: calc(100vh - (var(--app-shell-pad) * 2));
   }
 
   .home-grid {

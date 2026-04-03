@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getCityTone } from "../../../data/allowed-cities";
 import { useAdminRoute } from "../../admin/hooks/useAdminRoute";
 import type { CalendarEvent } from "../../calendar/types";
@@ -77,6 +77,7 @@ type HomeBookingsTimelineProps = {
   onChangeMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
   onOpenDayBooking: (date: string) => void;
+  focusDayRequestId?: number;
   hideQuickBooking?: boolean;
   eyebrow?: string;
   title?: string;
@@ -92,6 +93,7 @@ export default function HomeBookingsTimeline({
   onChangeMonth,
   onQuickBooking,
   onOpenDayBooking,
+  focusDayRequestId = 0,
   hideQuickBooking = false,
   eyebrow = "Agendamentos",
   title,
@@ -102,6 +104,8 @@ export default function HomeBookingsTimeline({
     new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(activeMonth));
   const todayIso = getTodayIso();
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const groupRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { coords, error: locationError, isLoading: isLocating, requestLocation } = useUserGeolocation();
   const routeQuery = useAdminRoute(
     activeEvent?.id ?? "",
@@ -111,8 +115,44 @@ export default function HomeBookingsTimeline({
   );
 
   useEffect(() => {
-    setActiveEvent(null);
-  }, [selectedDate, activeMonth]);
+    if (focusDayRequestId === 0 || !selectedDate) return;
+
+    const scrollToSelectedGroup = (behavior: ScrollBehavior) => {
+      const body = bodyRef.current;
+      const target = groupRefs.current[selectedDate];
+      if (!body || !target) return false;
+
+      const bodyRect = body.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const nextTop = body.scrollTop + targetRect.top - bodyRect.top - 6;
+
+      body.scrollTo({
+        top: Math.max(nextTop, 0),
+        behavior,
+      });
+      return true;
+    };
+
+    let retryTimeoutId = 0;
+    let settleTimeoutId = 0;
+    const frame = window.requestAnimationFrame(() => {
+      if (!scrollToSelectedGroup("smooth")) {
+        retryTimeoutId = window.setTimeout(() => {
+          scrollToSelectedGroup("smooth");
+        }, 50);
+      }
+
+      settleTimeoutId = window.setTimeout(() => {
+        scrollToSelectedGroup("auto");
+      }, 220);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (retryTimeoutId) window.clearTimeout(retryTimeoutId);
+      if (settleTimeoutId) window.clearTimeout(settleTimeoutId);
+    };
+  }, [focusDayRequestId, selectedDate, activeMonth]);
 
   useEffect(() => {
     if (!isAdminMode || !activeEvent || coords || isLocating) return;
@@ -209,7 +249,7 @@ export default function HomeBookingsTimeline({
           </div>
         </header>
 
-        <div className="timeline-panel__body">
+        <div ref={bodyRef} className="timeline-panel__body">
           {grouped.length === 0 ? (
             <div className="timeline-card timeline-card--empty">
               <strong>Nenhum agendamento futuro</strong>
@@ -224,6 +264,9 @@ export default function HomeBookingsTimeline({
               return (
                 <div
                   key={date}
+                  ref={(element) => {
+                    groupRefs.current[date] = element;
+                  }}
                   className={[
                     "timeline-group",
                     `timeline-group--tone-${groupTone}`,

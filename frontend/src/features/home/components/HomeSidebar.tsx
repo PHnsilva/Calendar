@@ -24,6 +24,7 @@ type HomeSidebarProps = {
   onChangeTimelineMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
   onOpenDayBooking: (date: string) => void;
+  focusDayRequestId?: number;
   onToggleExpanded: () => void;
   onSelectRailDate: (date: string) => void;
   isExpanded: boolean;
@@ -40,6 +41,7 @@ export default function HomeSidebar({
   onChangeTimelineMonth,
   onQuickBooking,
   onOpenDayBooking,
+  focusDayRequestId = 0,
   onToggleExpanded,
   onSelectRailDate,
   isExpanded,
@@ -95,9 +97,27 @@ export default function HomeSidebar({
             aria-label={isExpanded ? "Recolher meus agendamentos" : "Expandir meus agendamentos"}
             title={isExpanded ? "Recolher meus agendamentos" : "Expandir meus agendamentos"}
           >
-            <span className="booking-sidebar-rail__toggle-face" aria-hidden="true">
-              {isExpanded ? "✕" : "←"}
-            </span>
+            {isExpanded ? (
+              <span
+                className="booking-sidebar-rail__toggle-face booking-sidebar-rail__toggle-face--close"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 40 40" focusable="false" aria-hidden="true">
+                  <path d="M11 11L29 29" />
+                  <path d="M29 11L11 29" />
+                </svg>
+              </span>
+            ) : (
+              <span
+                className="booking-sidebar-rail__toggle-face booking-sidebar-rail__toggle-face--arrow"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <path d="M20 12H7.5" />
+                  <path d="M11.5 7.5L7 12l4.5 4.5" />
+                </svg>
+              </span>
+            )}
           </button>
 
           {!isExpanded ? (
@@ -157,6 +177,7 @@ export default function HomeSidebar({
           onChangeMonth={onChangeTimelineMonth}
           onQuickBooking={onQuickBooking}
           onOpenDayBooking={onOpenDayBooking}
+          focusDayRequestId={focusDayRequestId}
           hideQuickBooking={isAdminMode}
           eyebrow={isAdminMode ? "AGENDA ADMIN" : "MEUS AGENDAMENTOS"}
           title={monthLabel}

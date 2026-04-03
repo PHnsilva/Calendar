@@ -35,6 +35,15 @@ function getWeekdayIndex(dateString: string): number {
   return toLocalDate(dateString).getDay();
 }
 
+function sortEventsByStartTime(events: CalendarEvent[]): CalendarEvent[] {
+  return [...events].sort(
+    (left, right) =>
+      left.startTime.localeCompare(right.startTime) ||
+      left.endTime.localeCompare(right.endTime) ||
+      left.id.localeCompare(right.id),
+  );
+}
+
 type BigCalendarProps = {
   currentMonth: string;
   selectedDate: string;
@@ -95,7 +104,8 @@ export default function BigCalendar({
 
       <div className="calendar-grid__body calendar-grid__body--slim">
         {days.map((day, index) => {
-          const dayEvents = events.filter((event) => event.date === day.date);
+          const dayEvents = sortEventsByStartTime(events.filter((event) => event.date === day.date));
+          const earliestTone = dayEvents[0] ? getCityTone(dayEvents[0].city) : null;
           const cityTones = Array.from(
             new Set(dayEvents.map((event) => getCityTone(event.city)).filter(Boolean)),
           ).slice(0, 3);
@@ -145,6 +155,7 @@ export default function BigCalendar({
                   hasEvents={hasEvents}
                   isCurrentMonth={day.isCurrentMonth}
                   isPast={isPast}
+                  tone={earliestTone}
                 />
               </div>
 
@@ -164,8 +175,6 @@ export default function BigCalendar({
                   <span className="calendar-indicator calendar-indicator--idle" />
                 )}
               </div>
-
-
             </div>
           );
         })}

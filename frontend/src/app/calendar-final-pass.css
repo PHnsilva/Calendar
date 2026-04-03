@@ -87,16 +87,23 @@
 }
 
 .calendar-toolbar__month-nav {
-  border: 1px solid rgba(77, 101, 143, 0.18);
-  background: linear-gradient(180deg, #ffffff, #ecf2fb);
-  color: #28446d;
-  box-shadow: 0 10px 22px rgba(28, 45, 79, 0.1);
+  border: 1px solid rgba(112, 86, 224, 0.24);
+  background: linear-gradient(180deg, #ffffff, #f1ebff);
+  color: #5b3cc4;
+  box-shadow: 0 10px 22px rgba(91, 60, 196, 0.14);
+  cursor: pointer;
+}
+
+.calendar-toolbar__month-nav:hover {
+  border-color: rgba(112, 86, 224, 0.34);
+  background: linear-gradient(180deg, #ffffff, #e9deff);
+  color: #4d2eb8;
 }
 
 .calendar-toolbar__month-chip {
-  border: 1px dashed rgba(77, 101, 143, 0.22);
-  background: rgba(234, 240, 250, 0.8);
-  color: #587198;
+  border: 1px dashed rgba(112, 86, 224, 0.28);
+  background: rgba(239, 232, 255, 0.82);
+  color: #7b66ba;
 }
 
 .calendar-grid__weekday--active::after,
@@ -243,8 +250,8 @@
 }
 
 .timeline-group {
-  grid-template-columns: 66px minmax(0, 1fr) !important;
-  gap: 12px !important;
+  grid-template-columns: 58px minmax(0, 1fr) !important;
+  gap: 10px !important;
   align-items: stretch;
 }
 
@@ -254,11 +261,11 @@
 }
 
 .timeline-group__date {
-  min-height: 96px;
+  min-height: 84px;
   border-radius: 18px !important;
   box-shadow: 0 16px 28px rgba(24, 45, 74, 0.12) !important;
   color: #fff;
-  padding: 14px 8px !important;
+  padding: 12px 6px !important;
 }
 
 .timeline-group__date span {

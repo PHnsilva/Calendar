@@ -232,7 +232,14 @@ export default function HomeBookingsTimeline({
                     .filter(Boolean)
                     .join(" ")}
                 >
-                  <div className="timeline-group__date">
+                  <div
+                    className={[
+                      "timeline-group__date",
+                      label.isToday ? "timeline-group__date--today" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
                     <strong>{label.day}</strong>
                     <span>{label.week}</span>
                   </div>

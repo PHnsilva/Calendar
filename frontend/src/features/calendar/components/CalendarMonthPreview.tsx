@@ -1,3 +1,4 @@
+import { getCityTone } from "../../../data/allowed-cities";
 import CalendarDateCell from "./CalendarDateCell";
 import type { CalendarEvent } from "../types";
 
@@ -19,6 +20,17 @@ function getPreviewDays(monthStart: string): string[] {
   return Array.from({ length: Math.min(days, 14) }, (_, index) =>
     toIsoDate(new Date(reference.getFullYear(), reference.getMonth(), index + 1)),
   );
+}
+
+function getEarliestTone(events: CalendarEvent[]) {
+  const earliestEvent = [...events].sort(
+    (left, right) =>
+      left.startTime.localeCompare(right.startTime) ||
+      left.endTime.localeCompare(right.endTime) ||
+      left.id.localeCompare(right.id),
+  )[0];
+
+  return earliestEvent ? getCityTone(earliestEvent.city) : null;
 }
 
 type CalendarMonthPreviewProps = {
@@ -57,8 +69,10 @@ export default function CalendarMonthPreview({
 
       <div className="month-preview__grid">
         {days.map((date) => {
+          const dayEvents = events.filter((event) => event.date === date);
+          const earliestTone = getEarliestTone(dayEvents);
           const isUnavailable = unavailableDates.includes(date);
-          const hasEvents = events.some((event) => event.date === date);
+          const hasEvents = dayEvents.length > 0;
           const isPast = date < today;
 
           return (
@@ -71,6 +85,7 @@ export default function CalendarMonthPreview({
                 hasEvents={hasEvents}
                 isCurrentMonth
                 isPast={isPast}
+                tone={earliestTone}
               />
             </span>
           );

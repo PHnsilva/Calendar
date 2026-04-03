@@ -65,6 +65,19 @@ const ENABLE_LAYOUT_STRESS_PREVIEW_MOCK = true;
 function buildStressPreviewEvents(currentAllowedMonth: string, nextAllowedMonth: string): CalendarEvent[] {
   const current = toLocalDate(currentAllowedMonth);
   const next = toLocalDate(nextAllowedMonth);
+  const customerNames = [
+    "Ana Beatriz",
+    "Carlos M.",
+    "Eduardo T.",
+    "Fernanda L.",
+    "Juliana P.",
+    "Lucas V.",
+    "Marina C.",
+    "Patrícia L.",
+    "Roberto S.",
+    "Vanessa G.",
+  ];
+
   const cityAddresses: Record<string, string> = {
     "Belo Horizonte": "Av. Afonso Pena, 1377 - Centro - Belo Horizonte/MG CEP: 30130-008",
     Itabirito: "Rua Felipe Camarão, 158 - Compl.: casa - Vila Gonçalo - Itabirito/MG CEP: 35450069",
@@ -76,51 +89,54 @@ function buildStressPreviewEvents(currentAllowedMonth: string, nextAllowedMonth:
     Brumadinho: "Rua da Matriz, 98 - Centro - Brumadinho/MG CEP: 35460-000",
   };
 
-  const slots = [
-    [2, "08:00", "09:00"],
-    [3, "09:30", "10:30"],
-    [4, "11:00", "12:00"],
-    [4, "13:30", "14:30"],
-    [6, "15:00", "16:00"],
-    [8, "09:00", "10:00"],
-    [8, "10:30", "11:30"],
-    [10, "14:00", "15:00"],
-    [11, "16:00", "17:00"],
-    [13, "08:30", "09:30"],
-    [15, "09:00", "10:00"],
-    [15, "11:00", "12:00"],
-    [17, "13:00", "14:00"],
-    [18, "15:30", "16:30"],
-    [22, "08:00", "09:00"],
-    [22, "10:00", "11:00"],
-    [24, "12:30", "13:30"],
-    [25, "14:30", "15:30"],
-    [3, "08:00", "09:00", "next"],
-    [5, "10:00", "11:00", "next"],
-    [7, "13:00", "14:00", "next"],
-    [10, "15:00", "16:00", "next"],
+  const plan = [
+    { month: "current", day: 1, times: ["08:00", "09:30"], cities: ["Itabirito", "Ouro Preto"] },
+    { month: "current", day: 3, times: ["08:00", "10:00", "13:30"], cities: ["Belo Horizonte", "Itabirito", "Congonhas"] },
+    { month: "current", day: 5, times: ["09:00", "11:00"], cities: ["Moeda", "Nova Lima"] },
+    { month: "current", day: 7, times: ["08:30", "14:00"], cities: ["Rio Acima", "Brumadinho"] },
+    { month: "current", day: 9, times: ["09:00", "12:00", "15:00"], cities: ["Ouro Preto", "Congonhas", "Itabirito"] },
+    { month: "current", day: 11, times: ["08:00", "10:00", "13:00", "16:00"], cities: ["Belo Horizonte", "Nova Lima", "Rio Acima", "Moeda"] },
+    { month: "current", day: 14, times: ["09:00", "11:30"], cities: ["Brumadinho", "Congonhas"] },
+    { month: "current", day: 16, times: ["08:00", "10:30", "14:30"], cities: ["Itabirito", "Ouro Preto", "Belo Horizonte"] },
+    { month: "current", day: 18, times: ["09:00"], cities: ["Nova Lima"] },
+    { month: "current", day: 20, times: ["08:00", "09:00", "13:00", "15:30"], cities: ["Moeda", "Rio Acima", "Congonhas", "Brumadinho"] },
+    { month: "current", day: 23, times: ["10:00", "12:30"], cities: ["Belo Horizonte", "Itabirito"] },
+    { month: "current", day: 25, times: ["08:00", "11:00", "14:00"], cities: ["Ouro Preto", "Nova Lima", "Rio Acima"] },
+    { month: "current", day: 27, times: ["09:30", "13:00"], cities: ["Moeda", "Congonhas"] },
+    { month: "next", day: 2, times: ["08:00", "10:00"], cities: ["Itabirito", "Belo Horizonte"] },
+    { month: "next", day: 4, times: ["09:00", "11:00", "15:00"], cities: ["Ouro Preto", "Nova Lima", "Congonhas"] },
+    { month: "next", day: 6, times: ["08:30", "12:30"], cities: ["Rio Acima", "Moeda"] },
+    { month: "next", day: 9, times: ["09:00", "14:00"], cities: ["Brumadinho", "Itabirito"] },
+    { month: "next", day: 12, times: ["08:00", "10:00", "13:00"], cities: ["Belo Horizonte", "Ouro Preto", "Nova Lima"] },
   ] as const;
 
-  return slots.map(([day, startTime, endTime, monthFlag], index) => {
-    const monthBase = monthFlag === "next" ? next : current;
-    const date = toIsoDate(new Date(monthBase.getFullYear(), monthBase.getMonth(), day));
-    const city = ALLOWED_CITIES[index % ALLOWED_CITIES.length];
+  return plan.flatMap((entry, planIndex) =>
+    entry.times.map((startTime, itemIndex) => {
+      const monthBase = entry.month === "next" ? next : current;
+      const city = entry.cities[itemIndex] ?? ALLOWED_CITIES[(planIndex + itemIndex) % ALLOWED_CITIES.length];
+      const endHour = Number(startTime.slice(0, 2)) + 1;
+      const endTime = `${`${endHour}`.padStart(2, "0")}:${startTime.slice(3, 5)}`;
+      const date = toIsoDate(new Date(monthBase.getFullYear(), monthBase.getMonth(), entry.day));
+      const id = `layout-preview-${entry.month}-${entry.day}-${itemIndex}`;
+      const customerName = customerNames[(planIndex + itemIndex) % customerNames.length];
+      const serviceLabel = ["Vistoria técnica", "Instalação", "Manutenção", "Visita preventiva"][(planIndex + itemIndex) % 4];
 
-    return {
-      id: `layout-preview-${date}-${index}`,
-      title: `Atendimento ${city}`,
-      date,
-      startTime,
-      endTime,
-      city,
-      customerName: ["Eduardo T.", "Patrícia L.", "Ana Beatriz", "Carlos M.", "Juliana P.", "Roberto S.", "Marina C.", "Lucas V."][index % 8],
-      customerAddress: cityAddresses[city] ?? city,
-      customerEmail: `preview${index + 1}@exemplo.com`,
-      customerPhone: `(31) 98888-0${`${index}`.padStart(3, "0")}`,
-      serviceLabel: index % 3 === 0 ? "Vistoria técnica" : index % 3 === 1 ? "Manutenção" : "Instalação",
-      status: "booked",
-    };
-  });
+      return {
+        id,
+        title: `Atendimento ${city}`,
+        date,
+        startTime,
+        endTime,
+        city,
+        customerName,
+        customerAddress: cityAddresses[city] ?? city,
+        customerEmail: `preview${planIndex + 1}${itemIndex}@exemplo.com`,
+        customerPhone: `(31) 98888-${`${planIndex}${itemIndex}`.padStart(4, "0")}`,
+        serviceLabel,
+        status: "booked",
+      } satisfies CalendarEvent;
+    }),
+  );
 }
 
 function mergeEvents(events: CalendarEvent[]) {

@@ -104,7 +104,10 @@ export default function HomeSidebar({
             <div className="booking-sidebar-rail__days">
               {railDays.map((entry) => {
                 const label = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", weekday: "short" }).formatToParts(toLocalDate(entry.date));
-                const day = label.find((part) => part.type === "day")?.value ?? entry.date.slice(8, 10);
+                const isToday = entry.date === todayIso;
+                const day = isToday
+                  ? "HOJE"
+                  : label.find((part) => part.type === "day")?.value ?? entry.date.slice(8, 10);
                 const week = (label.find((part) => part.type === "weekday")?.value ?? "").replace(".", "");
                 const isSelected = selectedDate === entry.date;
 
@@ -130,7 +133,7 @@ export default function HomeSidebar({
             <div className="booking-sidebar-rail__spacer" aria-hidden="true" />
           )}
 
-          {!isAdminMode ? (
+          {!isExpanded && !isAdminMode ? (
             <button
               type="button"
               className="booking-sidebar-rail__quick-add"

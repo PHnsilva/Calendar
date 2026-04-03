@@ -5,7 +5,7 @@ export default function Logo() {
       <img
         src={logo}
         alt="Logo SG Pequenos Reparos"
-        className="h-12 w-12 object-contain"
+        className="brand-lockup__logo object-contain"
       />
 
       <span className="brand-lockup__copy">

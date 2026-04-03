@@ -224,6 +224,7 @@ textarea:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  overflow: visible;
 }
 
 .public-header--chrome {
@@ -233,6 +234,7 @@ textarea:focus-visible {
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow-sm);
+  overflow: visible;
 }
 
 .public-header__actions {
@@ -244,18 +246,50 @@ textarea:focus-visible {
 .brand-lockup {
   display: inline-flex;
   align-items: center;
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
 }
 
 .brand-lockup__inner {
   display: inline-flex;
   align-items: center;
   gap: 12px;
+  position: relative;
+  overflow: visible;
+}
+
+.brand-lockup__media {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  overflow: visible;
+}
+
+.brand-lockup__logo {
+  position: absolute;
+  top: 52%;
+  left: -18px;
+  width: 96px;
+  height: 96px;
+  max-width: none;
+  object-fit: contain;
+  transform: translateY(-50%);
+  z-index: 2;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 12px 20px rgba(16, 24, 40, 0.22))
+    drop-shadow(0 3px 8px rgba(59, 82, 120, 0.18));
 }
 
 .brand-lockup__copy {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  position: relative;
+  z-index: 3;
+  padding-left: 74px;
 }
 
 .brand-lockup__copy strong {
@@ -425,6 +459,43 @@ textarea:focus-visible {
   opacity: 0.45;
   cursor: not-allowed;
   transform: none;
+}
+
+
+.calendar-toolbar__month-nav,
+.calendar-toolbar__month-chip {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: capitalize;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.calendar-toolbar__month-nav {
+  border: 1px solid rgba(123, 97, 255, 0.22);
+  background: linear-gradient(180deg, rgba(124, 77, 255, 0.12), rgba(91, 62, 196, 0.08));
+  color: #5c3fc5;
+  box-shadow: 0 8px 18px rgba(91, 62, 196, 0.10);
+  cursor: pointer;
+}
+
+.calendar-toolbar__month-nav:hover {
+  transform: translateY(-1px);
+  border-color: rgba(123, 97, 255, 0.38);
+  background: linear-gradient(180deg, rgba(124, 77, 255, 0.18), rgba(91, 62, 196, 0.12));
+  color: #4f36b6;
+}
+
+.calendar-toolbar__month-chip {
+  border: 1px dashed rgba(123, 97, 255, 0.24);
+  background: linear-gradient(180deg, rgba(124, 77, 255, 0.08), rgba(124, 77, 255, 0.04));
+  color: #6d58b6;
+  user-select: none;
 }
 
 .calendar-fade-wrap {
@@ -639,6 +710,8 @@ textarea:focus-visible {
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1;
+  --calendar-date-tone: transparent;
+  box-shadow: inset 0 0 0 1px transparent;
 }
 
 .calendar-date-cell--big {
@@ -672,9 +745,41 @@ textarea:focus-visible {
   box-shadow: inset 0 0 0 2px var(--today-ring);
 }
 
+.calendar-date-cell--tone-violet {
+  --calendar-date-tone: var(--city-violet);
+}
+
+.calendar-date-cell--tone-cyan {
+  --calendar-date-tone: var(--city-cyan);
+}
+
+.calendar-date-cell--tone-indigo {
+  --calendar-date-tone: var(--city-indigo);
+}
+
+.calendar-date-cell--tone-orange {
+  --calendar-date-tone: var(--city-orange);
+}
+
+.calendar-date-cell--tone-teal {
+  --calendar-date-tone: var(--city-teal);
+}
+
+.calendar-date-cell--tone-amber {
+  --calendar-date-tone: var(--city-amber);
+}
+
+.calendar-date-cell--tone-royal {
+  --calendar-date-tone: var(--city-royal);
+}
+
 .calendar-date-cell--selected {
   background: var(--accent-strong);
   color: var(--text-inverse);
+}
+
+.calendar-date-cell--selected.calendar-date-cell--has-events {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--calendar-date-tone, var(--accent-strong)) 82%, white 18%);
 }
 
 .calendar-date-cell--unavailable {
@@ -682,7 +787,15 @@ textarea:focus-visible {
 }
 
 .calendar-date-cell--has-events:not(.calendar-date-cell--selected):not(.calendar-date-cell--unavailable) {
-  color: var(--accent-strong);
+  color: var(--calendar-date-tone, var(--accent-strong));
+  background: color-mix(in srgb, var(--calendar-date-tone, var(--accent-strong)) 10%, var(--app-surface-solid));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--calendar-date-tone, var(--accent-strong)) 82%, white 18%);
+}
+
+.calendar-date-cell--today.calendar-date-cell--has-events:not(.calendar-date-cell--selected):not(.calendar-date-cell--unavailable) {
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--calendar-date-tone, var(--accent-strong)) 82%, white 18%),
+    0 0 0 2px color-mix(in srgb, var(--today-ring) 72%, transparent);
 }
 
 .calendar-date-cell--outside,
@@ -853,10 +966,11 @@ textarea:focus-visible {
 .timeline-panel__tabs {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--border-soft);
+  border: 1px solid rgba(124, 77, 255, 0.18);
   border-radius: 999px;
   overflow: hidden;
   width: fit-content;
+  background: linear-gradient(180deg, rgba(124, 77, 255, 0.06), rgba(124, 77, 255, 0.02));
 }
 
 .timeline-panel__tab {
@@ -865,14 +979,20 @@ textarea:focus-visible {
   padding: 0 14px;
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: #6b5d96;
   font-weight: 700;
   cursor: pointer;
 }
 
+.timeline-panel__tab:hover:not(.timeline-panel__tab--active) {
+  background: rgba(124, 77, 255, 0.09);
+  color: #5b36b3;
+}
+
 .timeline-panel__tab--active {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
+  background: linear-gradient(135deg, rgba(124, 77, 255, 0.2), rgba(99, 102, 241, 0.12));
+  color: #5327b8;
+  box-shadow: inset 0 0 0 1px rgba(124, 77, 255, 0.16);
 }
 
 .timeline-panel__body {
@@ -1625,6 +1745,20 @@ textarea:focus-visible {
     gap: 10px;
   }
 
+  .brand-lockup__media {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+
+  .brand-lockup__logo {
+    width: 86px;
+    height: 86px;
+    max-width: none;
+    left: -12px;
+    top: 52%;
+  }
+
   .brand-lockup__copy strong {
     font-size: 1rem;
   }
@@ -2070,7 +2204,7 @@ textarea {
   min-height: 42px;
   display: inline-flex;
   align-items: center;
-  padding: 0 18px;
+  padding: 0 16px;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
   color: #fff;

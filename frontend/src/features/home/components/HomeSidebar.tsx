@@ -24,7 +24,6 @@ type HomeSidebarProps = {
   onChangeTimelineMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
   onOpenDayBooking: (date: string) => void;
-  focusDayRequestId?: number;
   onToggleExpanded: () => void;
   onSelectRailDate: (date: string) => void;
   isExpanded: boolean;
@@ -41,7 +40,6 @@ export default function HomeSidebar({
   onChangeTimelineMonth,
   onQuickBooking,
   onOpenDayBooking,
-  focusDayRequestId = 0,
   onToggleExpanded,
   onSelectRailDate,
   isExpanded,
@@ -97,27 +95,31 @@ export default function HomeSidebar({
             aria-label={isExpanded ? "Recolher meus agendamentos" : "Expandir meus agendamentos"}
             title={isExpanded ? "Recolher meus agendamentos" : "Expandir meus agendamentos"}
           >
-            {isExpanded ? (
-              <span
-                className="booking-sidebar-rail__toggle-face booking-sidebar-rail__toggle-face--close"
-                aria-hidden="true"
-              >
-                <svg viewBox="0 0 40 40" focusable="false" aria-hidden="true">
-                  <path d="M11 11L29 29" />
-                  <path d="M29 11L11 29" />
+            <span className="booking-sidebar-rail__toggle-face" aria-hidden="true">
+              {isExpanded ? (
+                <svg
+                  className="booking-sidebar-rail__toggle-icon booking-sidebar-rail__toggle-icon--close"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M7 7L17 17" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+                  <path d="M17 7L7 17" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
                 </svg>
-              </span>
-            ) : (
-              <span
-                className="booking-sidebar-rail__toggle-face booking-sidebar-rail__toggle-face--arrow"
-                aria-hidden="true"
-              >
-                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                  <path d="M20 12H7.5" />
-                  <path d="M11.5 7.5L7 12l4.5 4.5" />
-                </svg>
-              </span>
-            )}
+              ) : (
+                <span className="booking-sidebar-rail__toggle-icon-shell">
+                  <svg
+                    className="booking-sidebar-rail__toggle-icon booking-sidebar-rail__toggle-icon--arrow"
+                    viewBox="0 0 30 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M12 6L5 12L12 18" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M6.5 12H24" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" />
+                  </svg>
+                </span>
+              )}
+            </span>
           </button>
 
           {!isExpanded ? (
@@ -177,7 +179,6 @@ export default function HomeSidebar({
           onChangeMonth={onChangeTimelineMonth}
           onQuickBooking={onQuickBooking}
           onOpenDayBooking={onOpenDayBooking}
-          focusDayRequestId={focusDayRequestId}
           hideQuickBooking={isAdminMode}
           eyebrow={isAdminMode ? "AGENDA ADMIN" : "MEUS AGENDAMENTOS"}
           title={monthLabel}

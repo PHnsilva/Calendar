@@ -178,7 +178,7 @@
     box-shadow: none;
     padding: 0;
     gap: 0;
-    overflow: visible;
+    overflow: visible !important;
     z-index: 3;
     pointer-events: none;
     align-items: flex-start;

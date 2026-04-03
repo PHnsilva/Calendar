@@ -162,51 +162,47 @@
 }
 
 .booking-sidebar-rail__toggle {
-  width: 44px !important;
-  height: 44px !important;
+  width: 42px !important;
+  height: 42px !important;
   margin: 0 auto !important;
   padding: 0;
+  overflow: visible;
   border-radius: 14px !important;
   border: 2px solid rgba(255, 255, 255, 0.72) !important;
-  background: linear-gradient(90deg, #0d1726 0%, #2a394f 49%, #8ca3ad 50%, #d9e0e3 100%) !important;
+  background: linear-gradient(90deg, #0d1726 0%, #2a394f 68%, #8ca3ad 69%, #d9e0e3 100%) !important;
   box-shadow: 0 12px 20px rgba(12, 22, 37, 0.2) !important;
-  display: grid;
-  place-items: center;
-  overflow: visible !important;
 }
 
 .booking-sidebar-rail__toggle-face {
+  position: relative;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   width: 100%;
   height: 100%;
-  line-height: 0;
-  overflow: visible;
   color: #fff;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
 }
 
-.booking-sidebar-rail__toggle-face svg {
+.booking-sidebar-rail__toggle-icon-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68%;
+  height: 100%;
+}
+
+.booking-sidebar-rail__toggle-icon {
   display: block;
   overflow: visible;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.24));
+  flex: 0 0 auto;
 }
 
-.booking-sidebar-rail__toggle-face--arrow {
-  justify-content: flex-start;
-  padding-left: 6px;
-}
-
-.booking-sidebar-rail__toggle-face--arrow svg {
+.booking-sidebar-rail__toggle-icon--arrow {
   width: 24px;
   height: 24px;
-}
-
-.booking-sidebar-rail__toggle-face--arrow path {
-  fill: none;
-  stroke: #ffffff;
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
 }
 
 .booking-sidebar-rail__toggle--expanded {
@@ -215,24 +211,15 @@
   box-shadow: 0 10px 22px rgba(230, 102, 102, 0.12) !important;
 }
 
-.booking-sidebar-rail__toggle-face--close {
+.booking-sidebar-rail__toggle--expanded .booking-sidebar-rail__toggle-face {
   justify-content: center;
+  color: #d64b4b;
+  text-shadow: none;
 }
 
-.booking-sidebar-rail__toggle-face--close svg {
-  width: 28px;
-  height: 28px;
-}
-
-.booking-sidebar-rail__toggle-face--close path {
-  fill: none;
-  stroke: #d64b4b;
-  stroke-width: 3.05;
-  stroke-linecap: round;
-}
-
-.booking-sidebar-rail__toggle--expanded .booking-sidebar-rail__toggle-face svg {
-  filter: none;
+.booking-sidebar-rail__toggle--expanded .booking-sidebar-rail__toggle-icon--close {
+  width: 23px;
+  height: 23px;
 }
 
 .booking-sidebar-rail__spacer {

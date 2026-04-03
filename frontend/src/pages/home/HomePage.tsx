@@ -179,7 +179,6 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
   const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
   const [isBookingGuideOpen, setIsBookingGuideOpen] = useState(false);
   const [isBookingPickMode, setIsBookingPickMode] = useState(false);
-  const [focusDayRequestId, setFocusDayRequestId] = useState(0);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => window.innerWidth > 730);
   const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
@@ -306,21 +305,15 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
     });
   }, [openBookingsRequestId]);
 
-  const requestDayFocus = () => {
-    setFocusDayRequestId((current) => current + 1);
-  };
-
   const handleCalendarDateSelect = (date: string, options?: { unavailable?: boolean }) => {
     if (options?.unavailable) return;
 
     handleDateSelect(date);
-    setTimelineMonth(toMonthStart(date));
-    setIsSidebarExpanded(true);
-    requestDayFocus();
 
     if (!isAdminMode && isBookingPickMode) {
       setIsBookingGuideOpen(false);
       setIsBookingPickMode(false);
+      setIsSidebarExpanded(true);
       openBookingModal();
     }
 
@@ -333,18 +326,30 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
 
   const handleCalendarMonthChange = (month: string) => {
     clearSelection();
-    closeBookingModal();
     setCurrentMonth(month);
     setTimelineMonth(month);
+
+    if (isBookingPickMode) {
+      setIsBookingGuideOpen(true);
+      return;
+    }
+
+    closeBookingModal();
     setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
   };
 
   const handleTimelineMonthChange = (month: string) => {
     clearSelection();
-    closeBookingModal();
     setTimelineMonth(month);
     setCurrentMonth(month);
+
+    if (isBookingPickMode) {
+      setIsBookingGuideOpen(true);
+      return;
+    }
+
+    closeBookingModal();
     setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
   };
@@ -352,14 +357,12 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
   const handleOpenDayBooking = (date: string) => {
     if (isAdminMode) {
       handleDateSelect(date);
-      requestDayFocus();
       setIsSidebarExpanded(true);
       return;
     }
 
     clearSelection();
     handleDateSelect(date);
-    requestDayFocus();
     setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
     setIsSidebarExpanded(true);
@@ -369,14 +372,7 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
   const handleRailDateSelect = (date: string) => {
     handleDateSelect(date);
     setTimelineMonth(toMonthStart(date));
-    setIsSidebarExpanded(true);
-    requestDayFocus();
-
-    if (!isDesktop) {
-      window.requestAnimationFrame(() => {
-        sidebarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
+    if (isDesktop) setIsSidebarExpanded(true);
   };
 
   const handleCloseBookingGuide = () => {
@@ -388,7 +384,6 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
     setLocalEvents((current) => mergeEvents([...current, event]));
     setTimelineMonth(toMonthStart(event.date));
     handleDateSelect(event.date);
-    requestDayFocus();
     setIsSidebarExpanded(true);
   };
 
@@ -432,7 +427,6 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
               requestQuickBooking();
             }}
             onOpenDayBooking={handleOpenDayBooking}
-            focusDayRequestId={focusDayRequestId}
             onToggleExpanded={() => setIsSidebarExpanded((current) => !current)}
             onSelectRailDate={handleRailDateSelect}
             isExpanded={isSidebarExpanded}

@@ -2,8 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "../../app/home-layout.css";
 import "../../app/booking-sidebar.css";
 import "../../app/calendar-final-pass.css";
+import "../../app/home-mobile-dock.css";
+import "../../app/home-mobile-sheet.css";
+import "../../app/calendar-mobile-compact.css";
 import HomeCalendarSection from "../../features/home/components/HomeCalendarSection";
 import HomeSidebar from "../../features/home/components/HomeSidebar";
+import HomeMobileDock from "../../features/home/components/HomeMobileDock";
+import HomeMobileBookingsSheet from "../../features/home/components/HomeMobileBookingsSheet";
 import BookingFormModal from "../../features/booking-form/components/BookingFormModal";
 import BookingStartHintModal from "../../components/ui/BookingStartHintModal";
 import { useHomeCalendarView } from "../../features/home/hooks/useHomeCalendarView";
@@ -158,7 +163,6 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
   const todayIso = toIsoDate(today);
   const currentAllowedMonth = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-01`;
   const nextAllowedMonth = shiftMonth(currentAllowedMonth, 1);
-  const calendarRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
 
   const {
@@ -181,14 +185,13 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
   const [isBookingPickMode, setIsBookingPickMode] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => window.innerWidth > 730);
   const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
-  const [timelineFocusRequestId, setTimelineFocusRequestId] = useState(0);
+  const [isMobileBookingsOpen, setIsMobileBookingsOpen] = useState(false);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
   );
 
   const isDesktop = viewportWidth > 730;
   const adminBookings = useAdminBookings({}, isAdminMode && Boolean(getStoredAdminToken()));
-
   const currentMonthAvailability = useAvailableMonthDates(currentAllowedMonth, !isAdminMode);
   const nextMonthAvailability = useAvailableMonthDates(nextAllowedMonth, !isAdminMode);
 
@@ -242,20 +245,14 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
-
-    if (isDesktop) {
-      html.classList.add("home-scroll-locked");
-      body.classList.add("home-scroll-locked");
-    } else {
-      html.classList.remove("home-scroll-locked");
-      body.classList.remove("home-scroll-locked");
-    }
+    html.classList.add("home-scroll-locked");
+    body.classList.add("home-scroll-locked");
 
     return () => {
       html.classList.remove("home-scroll-locked");
       body.classList.remove("home-scroll-locked");
     };
-  }, [isDesktop]);
+  }, []);
 
   useEffect(() => {
     if (!isDesktop) {
@@ -264,6 +261,12 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
     }
     setIsSidebarExpanded((current) => current && !isBookingPickMode);
   }, [isDesktop, isBookingPickMode]);
+
+  useEffect(() => {
+    if (isDesktop) {
+      setIsMobileBookingsOpen(false);
+    }
+  }, [isDesktop]);
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -284,13 +287,8 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
     setIsBookingPickMode(true);
     setIsBookingGuideOpen(true);
     setIsSidebarExpanded(false);
-
-    if (!isDesktop) {
-      window.requestAnimationFrame(() => {
-        calendarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
-  }, [quickBookingRequestId, clearSelection, closeBookingModal, isDesktop, isAdminMode]);
+    setIsMobileBookingsOpen(false);
+  }, [quickBookingRequestId, clearSelection, closeBookingModal, isAdminMode]);
 
   useEffect(() => {
     if (openBookingsRequestId === 0) return;
@@ -299,12 +297,17 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
 
     setIsBookingPickMode(false);
     setIsBookingGuideOpen(false);
-    setIsSidebarExpanded(true);
 
-    window.requestAnimationFrame(() => {
-      sidebarRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "end" });
-    });
-  }, [openBookingsRequestId]);
+    if (isDesktop) {
+      setIsSidebarExpanded(true);
+      window.requestAnimationFrame(() => {
+        sidebarRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "end" });
+      });
+      return;
+    }
+
+    setIsMobileBookingsOpen((current) => !current);
+  }, [isDesktop, openBookingsRequestId]);
 
   const handleCalendarDateSelect = (date: string, options?: { unavailable?: boolean }) => {
     if (options?.unavailable) return;
@@ -316,17 +319,15 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
       setIsBookingGuideOpen(false);
       setIsBookingPickMode(false);
       setIsSidebarExpanded(true);
-      setTimelineFocusRequestId((current) => current + 1);
+      setIsMobileBookingsOpen(false);
       openBookingModal();
-    } else {
-      setIsSidebarExpanded(true);
-      setTimelineFocusRequestId((current) => current + 1);
+      return;
     }
 
+    setIsSidebarExpanded(true);
+
     if (!isDesktop) {
-      window.requestAnimationFrame(() => {
-        sidebarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
+      setIsMobileBookingsOpen(true);
     }
   };
 
@@ -358,7 +359,7 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
     setIsBookingGuideOpen(false);
     setIsBookingPickMode(false);
     setIsSidebarExpanded(true);
-    setTimelineFocusRequestId((current) => current + 1);
+    setIsMobileBookingsOpen(false);
 
     if (!isAdminMode) {
       openBookingModal();
@@ -369,7 +370,6 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
     handleDateSelect(date);
     setTimelineMonth(toMonthStart(date));
     setIsSidebarExpanded(true);
-    setTimelineFocusRequestId((current) => current + 1);
   };
 
   const handleCloseBookingGuide = () => {
@@ -382,6 +382,9 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
     setTimelineMonth(toMonthStart(event.date));
     handleDateSelect(event.date);
     setIsSidebarExpanded(true);
+    if (!isDesktop) {
+      setIsMobileBookingsOpen(true);
+    }
   };
 
   return (
@@ -395,7 +398,7 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
           !isAdminMode && isBookingPickMode ? "home-grid--pick-mode" : "",
         ].filter(Boolean).join(" ")}
       >
-        <div ref={calendarRef} className="home-calendar-stack home-calendar-stack--shell">
+        <div className="home-calendar-stack home-calendar-stack--shell">
           <HomeCalendarSection
             selectedDate={selectedDate}
             currentMonth={currentMonth}
@@ -404,45 +407,66 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
             events={allEvents}
             unavailableDates={allUnavailableDates}
             bookingPickMode={!isAdminMode && isBookingPickMode}
+            compactMode={!isDesktop}
+            showMonthPreview={isDesktop}
             onDateSelect={handleCalendarDateSelect}
             onMonthChange={handleCalendarMonthChange}
             onOpenDayBooking={handleOpenDayBooking}
           />
         </div>
 
-        <div ref={sidebarRef} className="home-sidebar-anchor">
-          <HomeSidebar
+        {isDesktop ? (
+          <div ref={sidebarRef} className="home-sidebar-anchor">
+            <HomeSidebar
+              selectedDate={selectedDate}
+              events={allEvents}
+              activeMonth={timelineMonth}
+              currentAllowedMonth={currentAllowedMonth}
+              nextAllowedMonth={nextAllowedMonth}
+              onChangeTimelineMonth={handleTimelineMonthChange}
+              onQuickBooking={() => {
+                if (isAdminMode) return;
+                clearSelection();
+                requestQuickBooking();
+              }}
+              onOpenDayBooking={handleOpenDayBooking}
+              onToggleExpanded={() => setIsSidebarExpanded((current) => !current)}
+              onSelectRailDate={handleRailDateSelect}
+              isExpanded={isSidebarExpanded}
+              isDesktop={isDesktop}
+              isAdminMode={isAdminMode}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {!isDesktop ? (
+        <>
+          <HomeMobileBookingsSheet
+            open={isMobileBookingsOpen}
             selectedDate={selectedDate}
             events={allEvents}
             activeMonth={timelineMonth}
             currentAllowedMonth={currentAllowedMonth}
             nextAllowedMonth={nextAllowedMonth}
+            onClose={() => setIsMobileBookingsOpen(false)}
             onChangeTimelineMonth={handleTimelineMonthChange}
+            onOpenDayBooking={handleOpenDayBooking}
+            isAdminMode={isAdminMode}
+          />
+
+          <HomeMobileDock
             onQuickBooking={() => {
               if (isAdminMode) return;
               clearSelection();
               requestQuickBooking();
             }}
-            onOpenDayBooking={handleOpenDayBooking}
-            onToggleExpanded={() => {
-              setIsSidebarExpanded((current) => {
-                const next = !current;
-                if (next && selectedDate) {
-                  window.requestAnimationFrame(() => {
-                    setTimelineFocusRequestId((value) => value + 1);
-                  });
-                }
-                return next;
-              });
-            }}
-            onSelectRailDate={handleRailDateSelect}
-            isExpanded={isSidebarExpanded}
-            isDesktop={isDesktop}
-            isAdminMode={isAdminMode}
-            focusRequestId={timelineFocusRequestId}
+            onOpenBookings={() => setIsMobileBookingsOpen((current) => !current)}
+            isBookingsOpen={isMobileBookingsOpen}
+            showQuickBooking={!isAdminMode}
           />
-        </div>
-      </div>
+        </>
+      ) : null}
 
       {!isAdminMode ? <BookingStartHintModal open={isBookingGuideOpen} onClose={handleCloseBookingGuide} /> : null}
 

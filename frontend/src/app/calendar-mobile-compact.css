@@ -1,0 +1,221 @@
+@media (max-width: 730px) {
+  .home-page--sidebar-layout .home-main-panel--calendar {
+    gap: 10px;
+  }
+
+  .home-page--sidebar-layout .calendar-toolbar {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 6px;
+  }
+
+  .home-page--sidebar-layout .calendar-toolbar__title {
+    margin: 0;
+    text-align: center;
+    font-size: 1.45rem;
+    line-height: 1.1;
+    font-weight: 800;
+    color: #2f3e58;
+    text-transform: capitalize;
+  }
+
+  .home-page--sidebar-layout .calendar-toolbar__nav-group {
+    grid-column: 1 / -1;
+    justify-content: center;
+    width: 100%;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .home-page--sidebar-layout .calendar-toolbar__help,
+  .home-page--sidebar-layout .calendar-toolbar__month-nav,
+  .home-page--sidebar-layout .calendar-toolbar__month-chip {
+    min-height: 42px;
+    border-color: rgba(150, 134, 213, 0.18) !important;
+    box-shadow: none !important;
+  }
+
+  .home-page--sidebar-layout .calendar-toolbar__help {
+    background: #f5f7fb !important;
+    color: #5b6c88 !important;
+  }
+
+  .home-page--sidebar-layout .calendar-toolbar__month-nav,
+  .home-page--sidebar-layout .calendar-toolbar__month-chip {
+    padding-inline: 18px;
+    border-radius: 999px !important;
+    background: rgba(118, 92, 216, 0.08) !important;
+    color: #7560c9 !important;
+    text-transform: none;
+    font-weight: 700;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact {
+    gap: 10px;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__weekdays {
+    gap: 0;
+    padding-inline: 6px;
+    border-bottom: 1px solid rgba(120, 102, 194, 0.14);
+    padding-bottom: 8px;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__weekday {
+    padding: 0 0 4px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(88, 102, 130, 0.62) !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__weekday--active {
+    color: #ff4f8f !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__body--slim {
+    min-height: 0 !important;
+    height: 100% !important;
+    border: none !important;
+    background: transparent !important;
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    column-gap: 2px;
+    row-gap: 4px;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__cell {
+    min-height: 0 !important;
+    padding: 6px 2px;
+    gap: 0;
+    align-items: center;
+    justify-items: center;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__date-row {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__indicator-stack {
+    display: none;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini {
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none !important;
+    border-radius: 999px;
+    background: transparent !important;
+    color: #2f3e58 !important;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    display: inline-grid;
+    place-items: center;
+    box-shadow: none !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--outside {
+    color: rgba(47, 62, 88, 0.18) !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--past,
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--unavailable {
+    color: rgba(47, 62, 88, 0.34) !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--tone-cyan,
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--tone-teal {
+    color: #22c7ef !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--tone-orange,
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--tone-amber {
+    color: #ffbf20 !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--tone-violet,
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--tone-indigo,
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--tone-royal {
+    color: #ff4f95 !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--selected,
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--today {
+    background: linear-gradient(180deg, #31d8ff, #13b5f7) !important;
+    color: #fff !important;
+    box-shadow: 0 10px 20px rgba(39, 201, 255, 0.22) !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--selected.calendar-date-cell--tone-orange,
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--selected.calendar-date-cell--tone-amber {
+    background: linear-gradient(180deg, #ffce2e, #ffad1e) !important;
+    box-shadow: 0 10px 20px rgba(255, 190, 31, 0.24) !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--selected.calendar-date-cell--tone-violet,
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--selected.calendar-date-cell--tone-indigo,
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--selected.calendar-date-cell--tone-royal {
+    background: linear-gradient(180deg, #ff67b3, #ff3f93) !important;
+    box-shadow: 0 10px 20px rgba(255, 92, 169, 0.26) !important;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__cell--pick-mode::after {
+    display: none;
+  }
+
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-toolbar__title {
+    color: #f6f2ff;
+  }
+
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-toolbar__help,
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-toolbar__month-nav,
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-toolbar__month-chip {
+    border-color: rgba(225, 208, 255, 0.18) !important;
+  }
+
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-toolbar__help {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #efe6ff !important;
+  }
+
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-toolbar__month-nav,
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-toolbar__month-chip {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #c7afff !important;
+  }
+
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__weekdays {
+    border-bottom-color: rgba(244, 238, 255, 0.12);
+  }
+
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__weekday {
+    color: rgba(231, 223, 255, 0.62) !important;
+  }
+
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__weekday--active {
+    color: #ff5f9f !important;
+  }
+
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini {
+    color: #f5eeff !important;
+  }
+
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--outside {
+    color: rgba(245, 238, 255, 0.22) !important;
+  }
+
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--past,
+  :root[data-theme="dark"] .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--unavailable {
+    color: rgba(245, 238, 255, 0.38) !important;
+  }
+}

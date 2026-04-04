@@ -23,6 +23,8 @@ type HomeCalendarSectionProps = {
   onMonthChange: (month: string) => void;
   onOpenDayBooking: (date: string) => void;
   bookingPickMode?: boolean;
+  compactMode?: boolean;
+  showMonthPreview?: boolean;
   onCancelBookingPick?: () => void;
 };
 
@@ -37,6 +39,8 @@ export default function HomeCalendarSection({
   onMonthChange,
   onOpenDayBooking,
   bookingPickMode = false,
+  compactMode = false,
+  showMonthPreview = true,
   onCancelBookingPick,
 }: HomeCalendarSectionProps) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -65,18 +69,21 @@ export default function HomeCalendarSection({
               onDateSelect={onDateSelect}
               onOpenDayBooking={onOpenDayBooking}
               bookingPickMode={bookingPickMode}
+              compactMode={compactMode}
             />
           </div>
         </section>
 
-        <CalendarMonthPreview
-          monthStart={previewMonth}
-          selectedDate={selectedDate}
-          events={events}
-          unavailableDates={unavailableDates}
-          disabled={previewDisabled || currentMonth === nextAllowedMonth}
-          onMonthActivate={onMonthChange}
-        />
+        {showMonthPreview ? (
+          <CalendarMonthPreview
+            monthStart={previewMonth}
+            selectedDate={selectedDate}
+            events={events}
+            unavailableDates={unavailableDates}
+            disabled={previewDisabled || currentMonth === nextAllowedMonth}
+            onMonthActivate={onMonthChange}
+          />
+        ) : null}
       </section>
 
       <CalendarHelpModal

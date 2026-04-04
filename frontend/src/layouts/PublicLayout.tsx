@@ -11,12 +11,12 @@ export default function PublicLayout() {
   const isHomePage = location.pathname === "/";
 
   const header = (
-    <header className="public-header">
+    <header className={["public-header", isHomePage ? "public-header--home" : ""].filter(Boolean).join(" ")}>
       <Link to="/" className="brand-lockup" aria-label="Ir para a página inicial">
         <Logo />
       </Link>
 
-      <div className="public-header__actions">
+      <div className={["public-header__actions", isHomePage ? "public-header__actions--home" : ""].filter(Boolean).join(" ")}>
         <ThemeToggle />
 
         {isHomePage ? (

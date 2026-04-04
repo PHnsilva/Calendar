@@ -81,6 +81,7 @@ type HomeBookingsTimelineProps = {
   eyebrow?: string;
   title?: string;
   isAdminMode?: boolean;
+  focusRequestId?: number;
 };
 
 export default function HomeBookingsTimeline({
@@ -96,6 +97,7 @@ export default function HomeBookingsTimeline({
   eyebrow = "Agendamentos",
   title,
   isAdminMode = false,
+  focusRequestId = 0,
 }: HomeBookingsTimelineProps) {
   const resolvedTitle =
     title ??
@@ -172,7 +174,7 @@ export default function HomeBookingsTimeline({
   useEffect(() => {
     if (!selectedDate) return;
     timelineBodyRef.current?.scrollTo({ top: 0, behavior: "auto" });
-  }, [selectedDate]);
+  }, [selectedDate, focusRequestId]);
 
   const primaryRoute = routeQuery.data?.primary ?? null;
   const staticMapUrl = buildStaticRouteMapUrl(primaryRoute);

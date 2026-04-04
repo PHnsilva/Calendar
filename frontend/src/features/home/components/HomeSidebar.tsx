@@ -29,6 +29,7 @@ type HomeSidebarProps = {
   isExpanded: boolean;
   isDesktop: boolean;
   isAdminMode?: boolean;
+  focusRequestId?: number;
 };
 
 export default function HomeSidebar({
@@ -45,6 +46,7 @@ export default function HomeSidebar({
   isExpanded,
   isDesktop,
   isAdminMode = false,
+  focusRequestId = 0,
 }: HomeSidebarProps) {
   const todayIso = getTodayIso();
 
@@ -183,6 +185,7 @@ export default function HomeSidebar({
           eyebrow={isAdminMode ? "AGENDA ADMIN" : "MEUS AGENDAMENTOS"}
           title={monthLabel}
           isAdminMode={isAdminMode}
+          focusRequestId={focusRequestId}
         />
       </div>
     </aside>

@@ -50,6 +50,7 @@ type BigCalendarProps = {
   events: CalendarEvent[];
   unavailableDates: string[];
   bookingPickMode?: boolean;
+  compactMode?: boolean;
   onDateSelect: (date: string, options?: { unavailable?: boolean }) => void;
   onOpenDayBooking: (date: string) => void;
 };
@@ -62,8 +63,8 @@ export default function BigCalendar({
   events,
   unavailableDates,
   bookingPickMode = false,
+  compactMode = false,
   onDateSelect,
-  onOpenDayBooking,
 }: BigCalendarProps) {
   const today = toIsoDate(new Date());
   const days = getMonthDays(currentMonth);
@@ -84,7 +85,7 @@ export default function BigCalendar({
   }
 
   return (
-    <div className="calendar-grid calendar-grid--slim">
+    <div className={["calendar-grid", "calendar-grid--slim", compactMode ? "calendar-grid--compact" : ""].filter(Boolean).join(" ")}>
       <div className="calendar-grid__weekdays calendar-grid__weekdays--slim">
         {weekLabels.map((label, index) => (
           <span
@@ -148,7 +149,7 @@ export default function BigCalendar({
               <div className="calendar-grid__date-row">
                 <CalendarDateCell
                   date={day.date}
-                  variant="big"
+                  variant={compactMode ? "mini" : "big"}
                   isToday={today === day.date}
                   isSelected={isSelected}
                   isUnavailable={isUnavailable || isPast}

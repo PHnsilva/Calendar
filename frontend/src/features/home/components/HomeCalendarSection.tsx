@@ -1,15 +1,15 @@
-import { useMemo, useState } from "react";
-import CalendarToolbar from "../../calendar/components/CalendarToolbar";
-import BigCalendar from "../../calendar/components/BigCalendar";
-import CalendarMonthPreview from "../../calendar/components/CalendarMonthPreview";
-import CalendarHelpModal from "../../../components/ui/CalendarHelpModal";
-import BookingStartHintModal from "../../../components/ui/BookingStartHintModal";
-import type { CalendarEvent } from "../../calendar/types";
+import { useMemo, useState } from 'react';
+import CalendarToolbar from '../../calendar/components/CalendarToolbar';
+import BigCalendar from '../../calendar/components/BigCalendar';
+import CalendarMonthPreview from '../../calendar/components/CalendarMonthPreview';
+import CalendarHelpModal from '../../../components/ui/CalendarHelpModal';
+import BookingStartHintModal from '../../../components/ui/BookingStartHintModal';
+import type { CalendarEvent } from '../../calendar/types';
 
 function shiftMonth(monthStart: string, delta: number): string {
   const base = new Date(`${monthStart}T12:00:00`);
   const next = new Date(base.getFullYear(), base.getMonth() + delta, 1);
-  return `${next.getFullYear()}-${`${next.getMonth() + 1}`.padStart(2, "0")}-01`;
+  return `${next.getFullYear()}-${`${next.getMonth() + 1}`.padStart(2, '0')}-01`;
 }
 
 type HomeCalendarSectionProps = {
@@ -26,6 +26,9 @@ type HomeCalendarSectionProps = {
   compactMode?: boolean;
   showMonthPreview?: boolean;
   onCancelBookingPick?: () => void;
+  adminSelectionEnabled?: boolean;
+  adminSelectedDates?: string[];
+  onAdminSelectedDatesChange?: (dates: string[]) => void;
 };
 
 export default function HomeCalendarSection({
@@ -42,6 +45,9 @@ export default function HomeCalendarSection({
   compactMode = false,
   showMonthPreview = true,
   onCancelBookingPick,
+  adminSelectionEnabled = false,
+  adminSelectedDates = [],
+  onAdminSelectedDatesChange,
 }: HomeCalendarSectionProps) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -50,7 +56,7 @@ export default function HomeCalendarSection({
 
   return (
     <>
-      <section className={["home-calendar-stack", bookingPickMode ? "home-calendar-stack--booking-pick" : ""].filter(Boolean).join(" ")}>
+      <section className={['home-calendar-stack', bookingPickMode ? 'home-calendar-stack--booking-pick' : ''].filter(Boolean).join(' ')}>
         <section className="panel home-main-panel home-main-panel--calendar">
           <CalendarToolbar
             currentMonth={currentMonth}
@@ -70,6 +76,9 @@ export default function HomeCalendarSection({
               onOpenDayBooking={onOpenDayBooking}
               bookingPickMode={bookingPickMode}
               compactMode={compactMode}
+              adminSelectionEnabled={adminSelectionEnabled}
+              adminSelectedDates={adminSelectedDates}
+              onAdminSelectedDatesChange={onAdminSelectedDatesChange}
             />
           </div>
         </section>
@@ -86,15 +95,8 @@ export default function HomeCalendarSection({
         ) : null}
       </section>
 
-      <CalendarHelpModal
-        open={isHelpOpen}
-        onClose={() => setIsHelpOpen(false)}
-      />
-
-      <BookingStartHintModal
-        open={bookingPickMode}
-        onClose={() => onCancelBookingPick?.()}
-      />
+      <CalendarHelpModal open={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      <BookingStartHintModal open={bookingPickMode} onClose={() => onCancelBookingPick?.()} />
     </>
   );
 }

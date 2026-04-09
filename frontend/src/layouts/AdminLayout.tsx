@@ -1,14 +1,16 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import AppShell from "./AppShell";
-import Logo from "../components/branding/Logo";
-import { ThemeToggle } from "../components/ui/ThemeToggle";
-import { clearAdminToken, getStoredAdminToken } from "../lib/storage";
-import { env } from "../lib/env";
+import { useState } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import AppShell from './AppShell';
+import Logo from '../components/branding/Logo';
+import { ThemeToggle } from '../components/ui/ThemeToggle';
+import { clearAdminToken, getStoredAdminToken } from '../lib/storage';
+import { env } from '../lib/env';
 
 export default function AdminLayout() {
   const location = useLocation();
   const hasToken = Boolean(getStoredAdminToken());
-  const isGatePage = location.pathname === "/admin";
+  const isGatePage = location.pathname === '/admin';
+  const [blockingEnabled, setBlockingEnabled] = useState(false);
 
   if (!env.adminEnabled) {
     return <Navigate to="/403" replace />;
@@ -25,15 +27,32 @@ export default function AdminLayout() {
       </div>
 
       <div className="public-header__actions">
-        <span className="booking-sidebar-rail__admin-badge">Admin</span>
+        {hasToken ? (
+          <button
+            type="button"
+            className={[
+              'booking-sidebar-rail__admin-badge',
+              'booking-sidebar-rail__admin-badge--button',
+              blockingEnabled ? 'booking-sidebar-rail__admin-badge--active' : '',
+            ].filter(Boolean).join(' ')}
+            onClick={() => {
+              setBlockingEnabled((current) => !current);
+              window.dispatchEvent(new CustomEvent('admin:blocking-toggle'));
+            }}
+          >
+            {blockingEnabled ? 'Selecionando' : 'Bloqueios'}
+          </button>
+        ) : null}
+
         <ThemeToggle />
+
         {hasToken ? (
           <button
             type="button"
             className="secondary-action"
             onClick={() => {
               clearAdminToken();
-              window.location.href = "/admin";
+              window.location.href = '/admin';
             }}
           >
             Sair

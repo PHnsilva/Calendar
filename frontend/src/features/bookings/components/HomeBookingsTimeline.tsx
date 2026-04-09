@@ -267,7 +267,7 @@ export default function HomeBookingsTimeline({
                       </div>
                     ) : (
                       items.map((item) => {
-                        const tone = getCityTone(item.city);
+                        const tone = item.status === "blocked" ? "amber" : getCityTone(item.city);
 
                         return (
                           <button
@@ -283,11 +283,11 @@ export default function HomeBookingsTimeline({
                             onClick={() => setActiveEvent(item)}
                           >
                             <div className="timeline-card__main">
-                              <strong>{item.customerName ?? item.title}</strong>
+                              <strong>{item.status === "blocked" ? item.title : item.customerName ?? item.title}</strong>
                               <span className="timeline-card__time">{item.startTime}</span>
                             </div>
 
-                            <small className="timeline-card__city">{item.city ?? "Cidade"}</small>
+                            <small className="timeline-card__city">{item.status === "blocked" ? "Agenda bloqueada" : item.city ?? "Cidade"}</small>
                             <small className="timeline-card__address">
                               {item.customerAddress ?? item.city ?? "Endereço não informado"}
                             </small>

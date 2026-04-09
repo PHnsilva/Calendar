@@ -1,9 +1,9 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getFinanceHealth } from "../api/get-finance-health";
-import { getStatement } from "../api/get-statement";
-import type { ServicoResponse } from "../../../types/api";
-import type { AdminStatementItem } from "../../../types/finance";
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getFinanceHealth } from '../api/get-finance-health';
+import { getStatement } from '../api/get-statement';
+import type { ServicoResponse } from '../../../types/api';
+import type { AdminStatementItem } from '../../../types/finance';
 
 type StatementSheetProps = {
   open: boolean;
@@ -21,21 +21,21 @@ type DisplayEntry = {
 
 function formatDateLabel(dateString: string) {
   const date = new Date(`${dateString}T12:00:00`);
-  const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "long" }).format(date);
-  const day = new Intl.DateTimeFormat("pt-BR", { day: "2-digit" }).format(date);
-  const month = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(date);
+  const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date);
+  const day = new Intl.DateTimeFormat('pt-BR', { day: '2-digit' }).format(date);
+  const month = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(date);
   return `${weekday}, ${day} de ${month}`;
 }
 
 function bookingName(booking: ServicoResponse) {
-  return `${booking.clientFirstName ?? ""} ${booking.clientLastName ?? ""}`.trim() || booking.serviceType || "Atendimento";
+  return `${booking.clientFirstName ?? ''} ${booking.clientLastName ?? ''}`.trim() || booking.serviceType || 'Atendimento';
 }
 
 function fallbackEntriesFromBookings(bookings: ServicoResponse[]): DisplayEntry[] {
   return bookings.slice(0, 8).map((booking, index) => ({
     id: `fallback-${booking.eventId}`,
     date: booking.start.slice(0, 10),
-    description: booking.clientAddressLine ?? booking.serviceType ?? booking.clientCity ?? "Serviço vinculado",
+    description: booking.clientAddressLine ?? booking.serviceType ?? booking.clientCity ?? 'Serviço vinculado',
     amount: `R$ ${(25 + index * 8).toFixed(2).replace('.', ',')}`,
     booking,
   }));
@@ -47,13 +47,12 @@ function associateStatementToBookings(items: AdminStatementItem[], bookings: Ser
 
     let nearest = exactDate;
     if (!nearest) {
-      nearest =
-        bookings.find((booking) => {
-          const bookingDate = new Date(`${booking.start.slice(0, 10)}T12:00:00`).getTime();
-          const statementDate = new Date(`${item.date}T12:00:00`).getTime();
-          const diffDays = Math.abs(bookingDate - statementDate) / (1000 * 60 * 60 * 24);
-          return diffDays <= 2;
-        }) ?? null;
+      nearest = bookings.find((booking) => {
+        const bookingDate = new Date(`${booking.start.slice(0, 10)}T12:00:00`).getTime();
+        const statementDate = new Date(`${item.date}T12:00:00`).getTime();
+        const diffDays = Math.abs(bookingDate - statementDate) / (1000 * 60 * 60 * 24);
+        return diffDays <= 2;
+      }) ?? null;
     }
 
     return {
@@ -68,14 +67,14 @@ function associateStatementToBookings(items: AdminStatementItem[], bookings: Ser
 
 export default function StatementSheet({ open, onClose, bookings = [] }: StatementSheetProps) {
   const statementQuery = useQuery({
-    queryKey: ["admin", "finance", "statement"],
+    queryKey: ['admin', 'finance', 'statement'],
     queryFn: () => getStatement(),
     enabled: open,
     retry: 0,
   });
 
   const healthQuery = useQuery({
-    queryKey: ["admin", "finance", "health"],
+    queryKey: ['admin', 'finance', 'health'],
     queryFn: getFinanceHealth,
     enabled: open,
     retry: 0,
@@ -102,24 +101,23 @@ export default function StatementSheet({ open, onClose, bookings = [] }: Stateme
   if (!open) return null;
 
   return (
-    <div className="admin-sheet-modal" role="dialog" aria-modal="true">
-      <button type="button" className="admin-sheet-modal__backdrop" onClick={onClose} aria-label="Fechar extrato" />
-      <section className="admin-sheet-modal__card statement-sheet">
-        <header className="admin-sheet-modal__header">
+    <div className="admin-bottom-sheet admin-bottom-sheet--statement" role="dialog" aria-modal="false">
+      <section className="admin-bottom-sheet__card statement-sheet">
+        <header className="admin-bottom-sheet__header">
           <div>
-            <span className="admin-sheet-modal__eyebrow">Admin</span>
-            <h3 className="admin-sheet-modal__title">Extrato</h3>
+            <span className="admin-bottom-sheet__eyebrow">Admin</span>
+            <h3 className="admin-bottom-sheet__title">Extrato</h3>
           </div>
-          <button type="button" className="admin-sheet-modal__close" onClick={onClose}>×</button>
+          <button type="button" className="admin-bottom-sheet__close" onClick={onClose}>×</button>
         </header>
 
         <div className="statement-sheet__health">
-          <strong>{healthQuery.data?.ok ? "Financeiro online" : "Modo demonstração"}</strong>
-          <span>{healthQuery.data?.provider ?? "mock"}</span>
-          <small>{healthQuery.data?.message ?? "Sem mensagem no momento."}</small>
+          <strong>{healthQuery.data?.ok ? 'Financeiro online' : 'Modo demonstração'}</strong>
+          <span>{healthQuery.data?.provider ?? 'mock-admin-finance'}</span>
+          <small>{healthQuery.data?.message ?? 'Extrato simulado para validação visual'}</small>
         </div>
 
-        <div className="statement-sheet__list">
+        <div className="admin-bottom-sheet__body statement-sheet__list">
           {statementQuery.isLoading ? (
             <div className="timeline-card timeline-card--empty">
               <strong>Carregando extrato</strong>
@@ -146,14 +144,12 @@ export default function StatementSheet({ open, onClose, bookings = [] }: Stateme
                     <strong>{item.booking ? bookingName(item.booking) : item.description}</strong>
                     <p>{item.description}</p>
                     {item.booking ? (
-                      <small>
-                        {item.booking.start.slice(11, 16)} • {item.booking.clientCity ?? "Cidade não informada"}
-                      </small>
+                      <small>{item.booking.start.slice(11, 16)} • {item.booking.clientCity ?? 'Cidade não informada'}</small>
                     ) : null}
                   </div>
 
                   <div className="statement-sheet__entry-meta">
-                    <strong className="statement-sheet__amount">{item.amount || "R$ 0,00"}</strong>
+                    <strong className="statement-sheet__amount">{item.amount || 'R$ 0,00'}</strong>
                     {item.booking ? <span>associado</span> : <span>sem vínculo</span>}
                   </div>
                 </article>

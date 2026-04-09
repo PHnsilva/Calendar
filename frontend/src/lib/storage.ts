@@ -3,6 +3,9 @@ import type { CalendarEvent } from "../features/calendar/types";
 const ADMIN_TOKEN_STORAGE_KEY = "calendar.admin.token";
 const MANAGE_TOKENS_KEY = "calendar.manageTokens";
 const LOCAL_EVENTS_KEY = "calendar.localEvents";
+const ADMIN_CALENDAR_MODE_KEY = "calendar.admin.mode";
+
+type AdminCalendarMode = "view" | "block";
 
 function getStorage(): Storage | null {
   if (typeof window === "undefined") {
@@ -29,6 +32,11 @@ function writeJson<T>(key: string, value: T): void {
   const storage = getStorage();
   if (!storage) return;
   storage.setItem(key, JSON.stringify(value));
+}
+
+function dispatchAdminMode(mode: AdminCalendarMode): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("admin:calendar-mode", { detail: mode }));
 }
 
 export function getStoredAdminToken(): string {
@@ -84,6 +92,23 @@ export function saveLocalCalendarEvent(event: CalendarEvent): void {
   writeJson(LOCAL_EVENTS_KEY, [event, ...current]);
 }
 
+export function getAdminCalendarMode(): AdminCalendarMode {
+  const value = getStorage()?.getItem(ADMIN_CALENDAR_MODE_KEY);
+  return value === "block" ? "block" : "view";
+}
+
+export function setAdminCalendarMode(mode: AdminCalendarMode): void {
+  const storage = getStorage();
+  if (!storage) return;
+  storage.setItem(ADMIN_CALENDAR_MODE_KEY, mode);
+  dispatchAdminMode(mode);
+}
+
+export function toggleAdminCalendarMode(): AdminCalendarMode {
+  const nextMode = getAdminCalendarMode() === "block" ? "view" : "block";
+  setAdminCalendarMode(nextMode);
+  return nextMode;
+}
 
 export const getAdminToken = getStoredAdminToken;
 export const saveStoredAdminToken = setStoredAdminToken;

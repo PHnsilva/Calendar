@@ -65,6 +65,38 @@ function associateStatementToBookings(items: AdminStatementItem[], bookings: Ser
   });
 }
 
+function getHealthDisplay(health: { ok: boolean; provider: string; message: string } | undefined, hasError: boolean) {
+  if (hasError) {
+    return {
+      title: 'Integração indisponível',
+      provider: 'admin-finance',
+      message: 'Não foi possível consultar o status do financeiro no backend.',
+    };
+  }
+
+  if (!health) {
+    return {
+      title: 'Verificando integração',
+      provider: 'admin-finance',
+      message: 'Consultando o backend do financeiro.',
+    };
+  }
+
+  if (health.message === 'disabled->dummy') {
+    return {
+      title: 'Financeiro em modo dummy',
+      provider: health.provider,
+      message: 'O backend está preparado, mas a integração bancária ainda não foi ativada.',
+    };
+  }
+
+  return {
+    title: health.ok ? 'Financeiro online' : 'Financeiro com atenção',
+    provider: health.provider,
+    message: health.message,
+  };
+}
+
 export default function StatementSheet({ open, onClose, bookings = [] }: StatementSheetProps) {
   const statementQuery = useQuery({
     queryKey: ['admin', 'finance', 'statement'],
@@ -87,6 +119,8 @@ export default function StatementSheet({ open, onClose, bookings = [] }: Stateme
     }
     return fallbackEntriesFromBookings(bookings);
   }, [statementQuery.data?.items, bookings]);
+
+  const healthDisplay = useMemo(() => getHealthDisplay(healthQuery.data, healthQuery.isError), [healthQuery.data, healthQuery.isError]);
 
   const groupedEntries = useMemo(() => {
     const map = new Map<string, DisplayEntry[]>();
@@ -112,9 +146,9 @@ export default function StatementSheet({ open, onClose, bookings = [] }: Stateme
         </header>
 
         <div className="statement-sheet__health">
-          <strong>{healthQuery.data?.ok ? 'Financeiro online' : 'Modo demonstração'}</strong>
-          <span>{healthQuery.data?.provider ?? 'mock-admin-finance'}</span>
-          <small>{healthQuery.data?.message ?? 'Extrato simulado para validação visual'}</small>
+          <strong>{healthDisplay.title}</strong>
+          <span>{healthDisplay.provider}</span>
+          <small>{healthDisplay.message}</small>
         </div>
 
         <div className="admin-bottom-sheet__body statement-sheet__list">

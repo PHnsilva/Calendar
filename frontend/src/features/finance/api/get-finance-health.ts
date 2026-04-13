@@ -1,7 +1,15 @@
-import type { AdminFinanceHealthResponse } from "../../../types/finance"
+import { apiGet } from "../../../lib/api-client";
+import { getStoredAdminToken } from "../../../lib/storage";
+import type { AdminFinanceHealthResponse } from "../../../types/finance";
 
-export const getFinanceHealth = async (): Promise<AdminFinanceHealthResponse> => ({
-  ok: true,
-  provider: "mock-admin-finance",
-  message: "Extrato simulado para validação visual"
-})
+export function getFinanceHealth(): Promise<AdminFinanceHealthResponse> {
+  const adminToken = getStoredAdminToken();
+
+  if (!adminToken) {
+    throw new Error("Admin token missing");
+  }
+
+  return apiGet<AdminFinanceHealthResponse>("/api/admin/finance/health", {
+    adminToken,
+  });
+}

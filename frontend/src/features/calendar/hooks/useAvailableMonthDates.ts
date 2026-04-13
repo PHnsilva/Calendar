@@ -1,4 +1,5 @@
 import { useQueries } from "@tanstack/react-query";
+import { isBookableDate } from "../../../lib/dates";
 import { queryKeys } from "../../../lib/query-keys";
 import { getAvailableSlots } from "../api/get-available-slots";
 
@@ -20,17 +21,27 @@ function getMonthDates(monthStart: string): string[] {
   );
 }
 
-export function useAvailableMonthDates(monthStart: string, enabled: boolean, slotMinutes = 60) {
+export function useAvailableMonthDates(
+  monthStart: string,
+  enabled: boolean,
+  city = "Itabirito",
+  slotMinutes = 60,
+) {
+  const normalizedCity = typeof city === "string" ? city.trim() : "";
   const monthDates = getMonthDates(monthStart);
 
   const queries = useQueries({
-    queries: monthDates.map((date) => ({
-      queryKey: queryKeys.availableSlots(date, slotMinutes),
-      queryFn: () => getAvailableSlots(date, slotMinutes),
-      enabled,
-      staleTime: 30_000,
-      retry: 1,
-    })),
+    queries: monthDates.map((date) => {
+      const queryEnabled = enabled && Boolean(normalizedCity) && isBookableDate(date);
+
+      return {
+        queryKey: queryKeys.availableSlots(date, normalizedCity, slotMinutes),
+        queryFn: () => getAvailableSlots(date, normalizedCity, slotMinutes),
+        enabled: queryEnabled,
+        staleTime: 30_000,
+        retry: 1,
+      };
+    }),
   });
 
   const availableDates = monthDates.filter((date, index) => (queries[index]?.data?.length ?? 0) > 0);

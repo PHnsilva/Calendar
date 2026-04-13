@@ -18,8 +18,10 @@ export type AdminBulkCancelRequest = {
 };
 
 export type AdminDashboardSummaryResponse = {
-  totalBookings?: number;
-  totalRevenue?: number;
-  byStatus?: Record<string, number>;
-  byCity?: Record<string, number>;
+  totalBookings: number;
+  pendingBookings: number;
+  confirmedBookings: number;
+  otherBookings: number;
+  totalAmountCents: number;
+  totalBlocks: number;
 };

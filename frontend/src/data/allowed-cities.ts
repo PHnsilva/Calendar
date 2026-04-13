@@ -8,7 +8,6 @@ export const OTHER_CITIES = [
   "Nova Lima",
   "Congonhas",
   "Rio Acima",
-  "Brumadinho",
 ] as const;
 
 export const ALLOWED_CITIES = [PRIMARY_CITY, ...OTHER_CITIES] as const;
@@ -31,7 +30,6 @@ const CITY_TONE_BY_CITY: Record<string, CityTone> = {
   "Nova Lima": "teal",
   Congonhas: "amber",
   "Rio Acima": "royal",
-  Brumadinho: "cyan",
 };
 
 export function getCityTone(city?: string | null): CityTone {

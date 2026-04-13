@@ -1,4 +1,5 @@
 import { apiClient } from "../../../lib/api-client";
+import { isBookableDate } from "../../../lib/dates";
 import type { CalendarSlot } from "../types";
 
 type AvailableSlotLike =
@@ -11,6 +12,7 @@ type AvailableSlotLike =
       endTime?: string;
       startDateTime?: string;
       endDateTime?: string;
+      durationMinutes?: number;
       available?: boolean;
       isAvailable?: boolean;
     };
@@ -101,11 +103,15 @@ function toSlotArray(payload: AvailableResponseLike | null | undefined): Availab
   return [];
 }
 
-export async function getAvailableSlots(date: string, slotMinutes = 60): Promise<CalendarSlot[]> {
+export async function getAvailableSlots(date: string, city: string, slotMinutes = 60): Promise<CalendarSlot[]> {
+  const normalizedCity = typeof city === "string" ? city.trim() : "";
+  if (!isBookableDate(date) || !normalizedCity) return [];
+
   const response = await apiClient<AvailableResponseLike | null>("/api/servicos/available", {
     method: "GET",
     query: {
       date,
+      city: normalizedCity,
       slotMinutes,
     },
   });

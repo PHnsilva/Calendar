@@ -150,7 +150,7 @@ export const useAdminStore = () => {
   const bookings = useMemo(() => adminBookings, [])
 
   const openStatement = async () => {
-    setStatementItems(await getStatement())
+    setStatementItems((await getStatement()).items)
     setFinanceHealth(await getFinanceHealth())
     setIsStatementOpen(true)
   }

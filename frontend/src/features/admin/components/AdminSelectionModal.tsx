@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ServicoResponse } from '../../../types/api';
 import type { AdminBlockMode, AdminBlockEntry } from '../api/manage-admin-blocks';
+import { usePublicBootstrap } from '../../public-config/hooks/usePublicBootstrap';
+import { getScheduleTimeOptions } from '../../../lib/bootstrap-config';
 
 type AdminSelectionModalMode = 'block' | 'cancel' | 'view';
 
@@ -18,8 +20,6 @@ type AdminSelectionModalProps = {
   onConfirmBlock: (payload: BlockConfirmPayload) => void | Promise<void>;
   onConfirmCancel: (bookingIds: string[]) => void | Promise<void>;
 };
-
-const TIME_OPTIONS = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'] as const;
 
 type DayDraft = {
   date: string;
@@ -51,18 +51,20 @@ export default function AdminSelectionModal({
   const [blockMode, setBlockMode] = useState<AdminBlockMode>('full-day');
   const [draftDays, setDraftDays] = useState<DayDraft[]>([]);
   const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>([]);
+  const { data: bootstrap } = usePublicBootstrap(open);
+  const timeOptions = useMemo(() => getScheduleTimeOptions(bootstrap), [bootstrap]);
 
   useEffect(() => {
     if (!open || !mode) return;
 
     if (mode === 'block') {
       setBlockMode('full-day');
-      setDraftDays(selectedDates.map((date) => ({ date, selected: true, times: [...TIME_OPTIONS] })));
+      setDraftDays(selectedDates.map((date) => ({ date, selected: true, times: [...timeOptions] })));
       return;
     }
 
     setSelectedBookingIds(mode === 'cancel' ? bookings.map((booking) => booking.eventId) : []);
-  }, [bookings, mode, open, selectedDates]);
+  }, [bookings, mode, open, selectedDates, timeOptions]);
 
   const groupedBookings = useMemo(() => {
     const map = new Map<string, ServicoResponse[]>();
@@ -142,7 +144,7 @@ export default function AdminSelectionModal({
 
                   {blockMode === 'specific-hours' ? (
                     <div className="admin-selection-card__chips">
-                      {TIME_OPTIONS.map((time) => {
+                      {timeOptions.map((time) => {
                         const active = day.times.includes(time);
                         return (
                           <button

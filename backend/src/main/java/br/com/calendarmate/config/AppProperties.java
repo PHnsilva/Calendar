@@ -130,6 +130,12 @@ public class AppProperties {
     @Value("${app.history.retentionMonths:2}")
     private int historyRetentionMonths;
 
+    @Value("${app.booking.defaultDurationMinutes:60}")
+    private int bookingDefaultDurationMinutes;
+
+    @Value("${app.booking.durationByCity:}")
+    private String bookingDurationByCity;
+
 
     public int getBookingSlotMinutes() {
         return 60;
@@ -162,6 +168,28 @@ public class AppProperties {
         }
         String legacy = getServiceState();
         return legacy.isBlank() ? List.of() : List.of(LocationNormalizer.normalizeState(legacy));
+    }
+
+    public int getBookingDefaultDurationMinutes() {
+        int value = bookingDefaultDurationMinutes <= 0 ? 60 : bookingDefaultDurationMinutes;
+        return normalizeDurationMinutes(value);
+    }
+
+    public int getBookingDurationMinutesForCity(String city) {
+        String normalizedCity = LocationNormalizer.normalizeCity(city);
+        if (normalizedCity.isBlank()) {
+            return getBookingDefaultDurationMinutes();
+        }
+        return getBookingDurationMinutesByCityNormalized().getOrDefault(normalizedCity, getBookingDefaultDurationMinutes());
+    }
+
+    public Map<String, Integer> getBookingDurationMinutesByCityDisplay() {
+        LinkedHashMap<String, Integer> out = new LinkedHashMap<>();
+        for (String city : getAllowedCitiesDisplay()) {
+            out.put(city, getBookingDurationMinutesForCity(city));
+        }
+        getBookingDurationEntries().forEach(entry -> out.putIfAbsent(entry.displayCity(), entry.durationMinutes()));
+        return out;
     }
 
     public int getHistoryRetentionMonths() {
@@ -366,6 +394,53 @@ public class AppProperties {
         return parseTimeOrDefault(lunchEnd, LocalTime.of(13, 0));
     }
 
+    private Map<String, Integer> getBookingDurationMinutesByCityNormalized() {
+        LinkedHashMap<String, Integer> out = new LinkedHashMap<>();
+        for (BookingDurationEntry entry : getBookingDurationEntries()) {
+            out.put(LocationNormalizer.normalizeCity(entry.displayCity()), entry.durationMinutes());
+        }
+        return out;
+    }
+
+    private List<BookingDurationEntry> getBookingDurationEntries() {
+        String raw = bookingDurationByCity == null ? "" : bookingDurationByCity.trim();
+        if (raw.isBlank()) {
+            return List.of();
+        }
+
+        List<BookingDurationEntry> out = new ArrayList<>();
+        for (String token : raw.split(";")) {
+            String entry = token == null ? "" : token.trim();
+            if (entry.isBlank()) {
+                continue;
+            }
+
+            String[] parts = entry.split(":", 2);
+            if (parts.length != 2) {
+                continue;
+            }
+
+            String city = parts[0].trim();
+            String minutesRaw = parts[1].trim();
+            if (city.isBlank() || minutesRaw.isBlank()) {
+                continue;
+            }
+
+            try {
+                int duration = normalizeDurationMinutes(Integer.parseInt(minutesRaw));
+                out.add(new BookingDurationEntry(city, duration));
+            } catch (Exception ignored) {
+            }
+        }
+        return out;
+    }
+
+    private int normalizeDurationMinutes(int minutes) {
+        int safe = Math.max(60, minutes);
+        int remainder = safe % 60;
+        return remainder == 0 ? safe : safe + (60 - remainder);
+    }
+
     private LocalTime parseTimeOrDefault(String raw, LocalTime def) {
         try {
             String v = raw == null ? "" : raw.trim();
@@ -375,5 +450,8 @@ public class AppProperties {
         } catch (Exception e) {
             return def;
         }
+    }
+
+    private record BookingDurationEntry(String displayCity, int durationMinutes) {
     }
 }

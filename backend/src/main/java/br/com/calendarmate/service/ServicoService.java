@@ -1,6 +1,7 @@
 package br.com.calendarmate.service;
 
 import br.com.calendarmate.config.AppProperties;
+import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.dto.ServicoResponse;
@@ -34,7 +35,6 @@ public class ServicoService {
     private final PendingStore pendingStore;
 
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
-    private static final int DEFAULT_DURATION_MINUTES = 60;
     private static final Set<Integer> ALLOWED_MINUTES = Set.of(0);
 
     public ServicoService(
@@ -64,8 +64,9 @@ public class ServicoService {
             throw new ConflictException("Você já tem um agendamento pendente de confirmação");
         }
 
+        int durationMinutes = props.getBookingDurationMinutesForCity(req.getClientCity());
         ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
-        ZonedDateTime endZ = startZ.plusMinutes(DEFAULT_DURATION_MINUTES);
+        ZonedDateTime endZ = startZ.plusMinutes(durationMinutes);
         Instant start = startZ.toInstant();
         Instant end = endZ.toInstant();
 
@@ -232,8 +233,9 @@ public class ServicoService {
             throw new ForbiddenException("Token inválido");
         }
 
+        int durationMinutes = props.getBookingDurationMinutesForCity(req.getClientCity());
         ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
-        ZonedDateTime endZ = startZ.plusMinutes(DEFAULT_DURATION_MINUTES);
+        ZonedDateTime endZ = startZ.plusMinutes(durationMinutes);
         Instant start = startZ.toInstant();
         Instant end = endZ.toInstant();
 
@@ -258,7 +260,9 @@ public class ServicoService {
                 return true;
             Instant bs = Instant.ofEpochMilli(tp.getStart().getValue());
             Instant be = Instant.ofEpochMilli(tp.getEnd().getValue());
-            boolean isSelf = bs.equals(oldStart) && be.equals(oldEnd);
+            boolean isSelf = oldStart != null && oldEnd != null
+                    && !bs.isBefore(oldStart)
+                    && !be.isAfter(oldEnd);
             return !isSelf;
         });
 
@@ -429,10 +433,10 @@ public class ServicoService {
         calendar.deleteEvent(eventId);
     }
 
-    public List<String> getAvailableSlots(LocalDate date, int slotMinutes) throws IOException {
+    public List<AvailableSlotResponse> getAvailableSlots(LocalDate date, String city, int slotMinutes) throws IOException {
         validateDateWindow(date);
 
-        if (slotMinutes != DEFAULT_DURATION_MINUTES) {
+        if (slotMinutes != props.getBookingSlotMinutes()) {
             throw new BadRequestException("slotMinutes deve ser 60");
         }
 
@@ -443,6 +447,7 @@ public class ServicoService {
             return Collections.emptyList();
         }
 
+        int durationMinutes = props.getBookingDurationMinutesForCity(city);
         ZonedDateTime dayStart = ZonedDateTime.of(date, props.getWorkStart(), ZONE);
         ZonedDateTime dayEnd = ZonedDateTime.of(date, props.getWorkEnd(), ZONE);
 
@@ -454,12 +459,12 @@ public class ServicoService {
             busy = Collections.emptyList();
         }
 
-        List<ZonedDateTime> slots = new ArrayList<>();
+        List<AvailableSlotResponse> slots = new ArrayList<>();
         ZonedDateTime current = dayStart;
 
-        while (!current.plusMinutes(slotMinutes).isAfter(dayEnd)) {
+        while (!current.plusMinutes(durationMinutes).isAfter(dayEnd)) {
             Instant slotStart = current.toInstant();
-            Instant slotEnd = current.plusMinutes(slotMinutes).toInstant();
+            Instant slotEnd = current.plusMinutes(durationMinutes).toInstant();
 
             TimeWindow requested = new TimeWindow(slotStart, slotEnd);
             if (!isInsideAllowedWindows(requested, allowedWindows)) {
@@ -482,15 +487,17 @@ public class ServicoService {
             }
 
             if (!conflict) {
-                slots.add(current);
+                slots.add(new AvailableSlotResponse(
+                        date.toString(),
+                        current.toLocalTime().toString(),
+                        current.plusMinutes(durationMinutes).toLocalTime().toString(),
+                        durationMinutes));
             }
 
             current = current.plusMinutes(slotMinutes);
         }
 
-        return slots.stream()
-                .map(z -> z.toOffsetDateTime().toString())
-                .collect(Collectors.toList());
+        return slots;
     }
 
     private void validateRequestedWindowAvailable(Instant start, Instant end) throws IOException {

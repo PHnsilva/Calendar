@@ -1,5 +1,6 @@
 package br.com.calendarmate.controller;
 
+import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.dto.ServicoResponse;
@@ -89,10 +90,11 @@ public class ServicoController {
 
     // AVAILABLE
     @GetMapping("/available")
-    public ResponseEntity<List<String>> getAvailable(
+    public ResponseEntity<List<AvailableSlotResponse>> getAvailable(
             @RequestParam LocalDate date,
+            @RequestParam(required = false) String city,
             @RequestParam(defaultValue = "60") int slotMinutes) throws IOException {
 
-        return ResponseEntity.ok(service.getAvailableSlots(date, slotMinutes));
+        return ResponseEntity.ok(service.getAvailableSlots(date, city, slotMinutes));
     }
 }

@@ -30,6 +30,8 @@ public class PublicBootstrapResponse {
         private int maxFutureMonthsAhead;
         private long pendingTtlSeconds;
         private boolean blockOtherBookingsWhenPending;
+        private int defaultDurationMinutes;
+        private java.util.Map<String, Integer> durationMinutesByCity = new java.util.LinkedHashMap<>();
         private List<String> statuses = new ArrayList<>();
 
         public int getSlotMinutes() { return slotMinutes; }
@@ -42,6 +44,10 @@ public class PublicBootstrapResponse {
         public void setPendingTtlSeconds(long pendingTtlSeconds) { this.pendingTtlSeconds = pendingTtlSeconds; }
         public boolean isBlockOtherBookingsWhenPending() { return blockOtherBookingsWhenPending; }
         public void setBlockOtherBookingsWhenPending(boolean blockOtherBookingsWhenPending) { this.blockOtherBookingsWhenPending = blockOtherBookingsWhenPending; }
+        public int getDefaultDurationMinutes() { return defaultDurationMinutes; }
+        public void setDefaultDurationMinutes(int defaultDurationMinutes) { this.defaultDurationMinutes = defaultDurationMinutes; }
+        public java.util.Map<String, Integer> getDurationMinutesByCity() { return durationMinutesByCity; }
+        public void setDurationMinutesByCity(java.util.Map<String, Integer> durationMinutesByCity) { this.durationMinutesByCity = durationMinutesByCity; }
         public List<String> getStatuses() { return statuses; }
         public void setStatuses(List<String> statuses) { this.statuses = statuses; }
     }

@@ -1,49 +1,45 @@
 type RecoveryConfirmModalProps = {
   code: string;
+  setCode: (value: string) => void;
   expiresLabel: string;
-  resendCooldown: number;
-  onCodeChange: (value: string) => void;
+  resendAfter: number;
   onConfirm: () => void;
   onResend: () => void;
   canConfirm: boolean;
   canResend: boolean;
   isConfirming: boolean;
   isResending: boolean;
+  error?: Error | null;
 };
 
 export function RecoveryConfirmModal({
   code,
+  setCode,
   expiresLabel,
-  resendCooldown,
-  onCodeChange,
+  resendAfter,
   onConfirm,
   onResend,
   canConfirm,
   canResend,
   isConfirming,
   isResending,
+  error,
 }: RecoveryConfirmModalProps) {
   return (
-    <section style={{ display: "grid", gap: 12, border: "1px solid rgba(15,23,42,.12)", borderRadius: 20, padding: 18, background: "white" }}>
-      <h2 style={{ margin: 0 }}>Confirmar recuperação</h2>
-      <p style={{ margin: 0, opacity: 0.8 }}>Digite o código de 3 dígitos. Ele expira em {expiresLabel}.</p>
-      <label style={{ display: "grid", gap: 6 }}>
+    <section className="recovery-card">
+      <h2>Digite o código</h2>
+      <p>O código expira em <strong>{expiresLabel}</strong>.</p>
+      <label>
         <span>Código</span>
-        <input
-          className="booking-form__input"
-          value={code}
-          onChange={(event) => onCodeChange(event.target.value.replace(/\D/g, "").slice(0, 3))}
-          placeholder="123"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-        />
+        <input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" maxLength={3} placeholder="000" />
       </label>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        <button type="button" className="secondary-action" disabled={!canResend} onClick={onResend}>
-          {isResending ? "Reenviando..." : canResend ? "Reenviar código" : `Reenviar em ${resendCooldown}s`}
+      {error ? <p className="recovery-card__error">{error.message}</p> : null}
+      <div className="recovery-card__actions">
+        <button type="button" className="primary-action" onClick={onConfirm} disabled={!canConfirm}>
+          {isConfirming ? "Confirmando..." : "Confirmar"}
         </button>
-        <button type="button" className="primary-action" disabled={!canConfirm} onClick={onConfirm}>
-          {isConfirming ? "Confirmando..." : "Confirmar e listar"}
+        <button type="button" className="secondary-action" onClick={onResend} disabled={!canResend}>
+          {isResending ? "Reenviando..." : resendAfter > 0 ? `Reenviar em ${resendAfter}s` : "Reenviar código"}
         </button>
       </div>
     </section>

@@ -1,116 +1,101 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { apiPost } from "../../../lib/api-client";
-import { confirmRecovery } from "../api/confirm-recovery";
+import { confirmRecovery, resendRecovery } from "../api/confirm-recovery";
 import { startRecovery } from "../api/start-recovery";
-import type { RecoverStartResponse, RecoverConfirmResponse } from "../../../types/api";
+import type { RecoverConfirmResponse } from "../../../types/api";
+import { saveRecoveredBookings } from "../../../lib/storage";
 
-type UseRecoveryFlowResult = {
-  phone: string;
-  setPhone: (value: string) => void;
-  code: string;
-  setCode: (value: string) => void;
-  verificationId: string;
-  expiresIn: number;
-  resendCooldown: number;
-  expiresLabel: string;
-  start: () => void;
-  resend: () => void;
-  confirm: () => void;
-  canStart: boolean;
-  canResend: boolean;
-  canConfirm: boolean;
-  startResponse: RecoverStartResponse | null;
-  confirmResponse: RecoverConfirmResponse | null;
-  step: "start" | "confirm" | "success";
-  errorMessage: string | null;
-  isStarting: boolean;
-  isConfirming: boolean;
-  isResending: boolean;
-};
+type Step = "start" | "confirm" | "success";
 
-export function useRecoveryFlow(): UseRecoveryFlowResult {
+export function useRecoveryFlow() {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [verificationId, setVerificationId] = useState("");
   const [expiresIn, setExpiresIn] = useState(0);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [confirmResponse, setConfirmResponse] = useState<RecoverConfirmResponse | null>(null);
-  const [startResponse, setStartResponse] = useState<RecoverStartResponse | null>(null);
-
-  useEffect(() => {
-    if (expiresIn <= 0) return;
-    const timer = window.setTimeout(() => setExpiresIn((value) => value - 1), 1000);
-    return () => window.clearTimeout(timer);
-  }, [expiresIn]);
-
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const timer = window.setTimeout(() => setResendCooldown((value) => value - 1), 1000);
-    return () => window.clearTimeout(timer);
-  }, [resendCooldown]);
+  const [resendAfter, setResendAfter] = useState(0);
+  const [recovered, setRecovered] = useState<RecoverConfirmResponse | null>(null);
+  const [step, setStep] = useState<Step>("start");
 
   const startMutation = useMutation({
-    mutationFn: () => startRecovery({ phone }),
+    mutationFn: () => startRecovery(phone),
     onSuccess: (response) => {
-      setStartResponse(response);
-      setConfirmResponse(null);
       setVerificationId(response.verificationId);
       setExpiresIn(response.expiresInSeconds);
-      setResendCooldown(response.resendAfterSeconds);
+      setResendAfter(response.resendAfterSeconds);
       setCode("");
-    },
-  });
-
-  const resendMutation = useMutation({
-    mutationFn: () => apiPost<RecoverStartResponse>("/api/recovery/resend", { verificationId }),
-    onSuccess: (response) => {
-      setStartResponse(response);
-      setExpiresIn(response.expiresInSeconds);
-      setResendCooldown(response.resendAfterSeconds);
+      setStep("confirm");
     },
   });
 
   const confirmMutation = useMutation({
-    mutationFn: () => confirmRecovery({ verificationId, code }),
+    mutationFn: () => confirmRecovery(verificationId, code),
     onSuccess: (response) => {
-      setConfirmResponse(response);
+      saveRecoveredBookings(response.servicos);
+      setRecovered(response);
+      setStep("success");
     },
   });
 
+  const resendMutation = useMutation({
+    mutationFn: () => resendRecovery(verificationId),
+    onSuccess: (response) => {
+      setExpiresIn(response.expiresInSeconds);
+      setResendAfter(response.resendAfterSeconds);
+    },
+  });
+
+  useEffect(() => {
+    if (step !== "confirm") return;
+    if (expiresIn <= 0 && resendAfter <= 0) return;
+
+    const timer = window.setTimeout(() => {
+      setExpiresIn((current) => Math.max(0, current - 1));
+      setResendAfter((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [step, expiresIn, resendAfter]);
+
+  const canStart = phone.replace(/\D/g, "").length >= 10 && !startMutation.isPending;
+  const canConfirm = code.trim().length === 3 && expiresIn > 0 && !confirmMutation.isPending;
+  const canResend = resendAfter <= 0 && expiresIn > 0 && !resendMutation.isPending;
+
   const expiresLabel = useMemo(() => {
     const minutes = Math.floor(expiresIn / 60);
-    const seconds = `${Math.max(0, expiresIn % 60)}`.padStart(2, "0");
+    const seconds = String(expiresIn % 60).padStart(2, "0");
     return `${minutes}:${seconds}`;
   }, [expiresIn]);
 
-  const errorMessage =
-    startMutation.error?.message ??
-    resendMutation.error?.message ??
-    confirmMutation.error?.message ??
-    null;
-
   return {
+    step,
     phone,
     setPhone,
     code,
     setCode,
-    verificationId,
+    recovered,
     expiresIn,
-    resendCooldown,
+    resendAfter,
     expiresLabel,
-    start: () => startMutation.mutate(),
-    resend: () => resendMutation.mutate(),
-    confirm: () => confirmMutation.mutate(),
-    canStart: phone.replace(/\D/g, "").length >= 10 && !startMutation.isPending,
-    canResend: Boolean(verificationId) && resendCooldown <= 0 && expiresIn > 0 && !resendMutation.isPending,
-    canConfirm: code.trim().length === 3 && Boolean(verificationId) && expiresIn > 0 && !confirmMutation.isPending,
-    startResponse,
-    confirmResponse,
-    step: confirmResponse?.verified ? "success" : verificationId ? "confirm" : "start",
-    errorMessage,
+    verificationId,
+    startError: startMutation.error,
+    confirmError: confirmMutation.error,
+    resendError: resendMutation.error,
     isStarting: startMutation.isPending,
     isConfirming: confirmMutation.isPending,
     isResending: resendMutation.isPending,
+    canStart,
+    canConfirm,
+    canResend,
+    submitStart: () => startMutation.mutate(),
+    submitConfirm: () => confirmMutation.mutate(),
+    submitResend: () => resendMutation.mutate(),
+    reset: () => {
+      setStep("start");
+      setRecovered(null);
+      setCode("");
+      setVerificationId("");
+      setExpiresIn(0);
+      setResendAfter(0);
+    },
   };
 }

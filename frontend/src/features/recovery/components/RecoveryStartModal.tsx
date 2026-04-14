@@ -1,28 +1,24 @@
 type RecoveryStartModalProps = {
   phone: string;
-  onPhoneChange: (value: string) => void;
+  setPhone: (value: string) => void;
   onStart: () => void;
-  canStart: boolean;
-  isStarting: boolean;
+  disabled: boolean;
+  isLoading: boolean;
+  error?: Error | null;
 };
 
-export function RecoveryStartModal({ phone, onPhoneChange, onStart, canStart, isStarting }: RecoveryStartModalProps) {
+export function RecoveryStartModal({ phone, setPhone, onStart, disabled, isLoading, error }: RecoveryStartModalProps) {
   return (
-    <section style={{ display: "grid", gap: 12, border: "1px solid rgba(15,23,42,.12)", borderRadius: 20, padding: 18, background: "white" }}>
-      <h2 style={{ margin: 0 }}>Recuperar agendamentos</h2>
-      <p style={{ margin: 0, opacity: 0.8 }}>Informe o mesmo telefone usado no agendamento para receber o código.</p>
-      <label style={{ display: "grid", gap: 6 }}>
+    <section className="recovery-card">
+      <h2>Recuperar acesso aos seus agendamentos</h2>
+      <p>Informe o telefone usado no agendamento. Vamos enviar um código para listar seus atendimentos e restaurar o acesso neste navegador.</p>
+      <label>
         <span>Telefone</span>
-        <input
-          className="booking-form__input"
-          value={phone}
-          onChange={(event) => onPhoneChange(event.target.value)}
-          placeholder="(31) 99999-9999"
-          inputMode="tel"
-        />
+        <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(31) 99999-9999" />
       </label>
-      <button type="button" className="primary-action" disabled={!canStart} onClick={onStart}>
-        {isStarting ? "Enviando..." : "Enviar código"}
+      {error ? <p className="recovery-card__error">{error.message}</p> : null}
+      <button type="button" className="primary-action" onClick={onStart} disabled={disabled}>
+        {isLoading ? "Enviando..." : "Enviar código"}
       </button>
     </section>
   );

@@ -2,8 +2,15 @@ export interface AdminStatementItem {
   id: string;
   date: string;
   description: string;
-  amount: string;
+  amount?: string;
   amountCents: number;
+  kind?: "credit" | "debit";
+  bookingId?: string;
+  title?: string;
+  subtitle?: string;
+  grossAmountCents?: number;
+  rateLabel?: string;
+  icon?: string;
 }
 
 export interface AdminStatementResponse {

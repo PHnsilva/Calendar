@@ -9,7 +9,9 @@ export const FALLBACK_ALLOWED_CITIES = [
   "Congonhas",
   "Rio Acima",
 ] as const;
+
 export const FALLBACK_ALLOWED_STATES = ["MG"] as const;
+
 const FALLBACK_CITY_DURATIONS: Record<string, number> = {
   Itabirito: 60,
   "Rio Acima": 180,
@@ -23,7 +25,7 @@ const FALLBACK_CITY_DURATIONS: Record<string, number> = {
 type Bootstrap = PublicBootstrapResponse | null | undefined;
 
 function unique(values: string[]): string[] {
-  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+  return Array.from(new Set((values ?? []).map((value) => String(value).trim()).filter(Boolean)));
 }
 
 function sortCities(values: string[]): string[] {
@@ -33,9 +35,21 @@ function sortCities(values: string[]): string[] {
     const rightIndex = preferred.indexOf(right);
     const normalizedLeft = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
     const normalizedRight = rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
+
     if (normalizedLeft !== normalizedRight) return normalizedLeft - normalizedRight;
     return left.localeCompare(right, "pt-BR");
   });
+}
+
+function toMinutes(time: string): number {
+  const [hours, minutes] = String(time ?? "00:00").split(":").map(Number);
+  return (Number.isFinite(hours) ? hours : 0) * 60 + (Number.isFinite(minutes) ? minutes : 0);
+}
+
+function toTime(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${`${hours}`.padStart(2, "0")}:${`${minutes}`.padStart(2, "0")}`;
 }
 
 export function getAllowedCities(bootstrap?: Bootstrap): string[] {
@@ -55,17 +69,6 @@ export function getDefaultCity(bootstrap?: Bootstrap): string {
 
 export function getDefaultState(bootstrap?: Bootstrap): string {
   return getAllowedStates(bootstrap)[0] ?? FALLBACK_ALLOWED_STATES[0];
-}
-
-function toMinutes(time: string): number {
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * 60 + minutes;
-}
-
-function toTime(totalMinutes: number): string {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${`${hours}`.padStart(2, "0")}:${`${minutes}`.padStart(2, "0")}`;
 }
 
 export function getScheduleTimeOptions(bootstrap?: Bootstrap): string[] {
@@ -91,14 +94,13 @@ export function getScheduleTimeOptions(bootstrap?: Bootstrap): string[] {
 }
 
 export function getBookingDurationMinutesByCity(bootstrap?: Bootstrap): Record<string, number> {
-  return bootstrap?.booking?.durationMinutesByCity && Object.keys(bootstrap.booking.durationMinutesByCity).length > 0
-    ? bootstrap.booking.durationMinutesByCity
-    : FALLBACK_CITY_DURATIONS;
+  const configured = bootstrap?.booking?.durationMinutesByCity;
+  return configured && Object.keys(configured).length > 0 ? configured : FALLBACK_CITY_DURATIONS;
 }
 
 export function getBookingDurationMinutes(city: string, bootstrap?: Bootstrap): number {
   const values = getBookingDurationMinutesByCity(bootstrap);
-  return values[city] ?? bootstrap?.booking?.defaultDurationMinutes ?? 60;
+  return values[String(city ?? "").trim()] ?? bootstrap?.booking?.defaultDurationMinutes ?? 60;
 }
 
 export function formatDurationLabel(durationMinutes: number): string {

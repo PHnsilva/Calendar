@@ -34,6 +34,7 @@ export type ServicoResponse = {
   clientState: string;
   clientAddressLine: string;
   status: string;
+  manageToken?: string;
 };
 
 export type ServicoCreateResponse = {
@@ -55,6 +56,17 @@ export type VerifyConfirmResponse = {
   verified: boolean;
 };
 
+export type RecoverStartResponse = {
+  verificationId: string;
+  expiresInSeconds: number;
+  resendAfterSeconds: number;
+};
+
+export type RecoverConfirmResponse = {
+  verified: boolean;
+  servicos: ServicoResponse[];
+};
+
 export type PublicBootstrapResponse = {
   timezone: string;
   schedule: {
@@ -70,8 +82,6 @@ export type PublicBootstrapResponse = {
     maxFutureMonthsAhead: number;
     pendingTtlSeconds: number;
     blockOtherBookingsWhenPending: boolean;
-    defaultDurationMinutes: number;
-    durationMinutesByCity: Record<string, number>;
     statuses: string[];
   };
   verification: {
@@ -81,6 +91,7 @@ export type PublicBootstrapResponse = {
   serviceArea: {
     allowedCities: string[];
     allowedStates: string[];
+    durationByCity?: Record<string, number>;
   };
 };
 
@@ -109,30 +120,4 @@ export type GeoapifyAddressSuggestion = {
   city: string;
   state: string;
   postcode: string;
-};
-
-
-export type RecoverStartRequest = {
-  phone: string;
-};
-
-export type RecoverConfirmRequest = {
-  verificationId: string;
-  code: string;
-};
-
-export type RecoverStartResponse = {
-  verificationId: string;
-  expiresInSeconds: number;
-  resendAfterSeconds: number;
-};
-
-export type RecoverConfirmItem = {
-  servico: ServicoResponse;
-  manageToken: string;
-};
-
-export type RecoverConfirmResponse = {
-  verified: boolean;
-  items: RecoverConfirmItem[];
 };

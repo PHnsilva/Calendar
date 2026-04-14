@@ -1,33 +1,103 @@
+function pad(value: number): string {
+  return `${value}`.padStart(2, "0");
+}
+
+function parseDateInput(value: Date | string): Date {
+  if (value instanceof Date) {
+    return new Date(value.getTime());
+  }
+
+  const normalized = value.length <= 10 ? `${value}T12:00:00` : value;
+  return new Date(normalized);
+}
+
+function parseMonthInput(value: Date | string): { year: number; month: number } {
+  if (value instanceof Date) {
+    return { year: value.getFullYear(), month: value.getMonth() };
+  }
+
+  const date = parseDateInput(value.length === 7 ? `${value}-01` : value);
+  return { year: date.getFullYear(), month: date.getMonth() };
+}
+
 export function getTodayIso(): string {
-  const today = new Date();
-  return toIsoDate(today);
+  return toIsoDatePart(new Date());
 }
 
-export function toIsoDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
+export function toIsoDatePart(value: Date | string): string {
+  const date = parseDateInput(value);
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-export function toLocalDate(dateString: string): Date {
-  return new Date(`${dateString}T12:00:00`);
+export function toIsoDate(value: Date | string): string {
+  return toIsoDatePart(value);
 }
 
-export function isDateBeforeToday(dateString?: string | null): boolean {
-  if (!dateString) return false;
-  return dateString < getTodayIso();
+export function toLocalDate(value: Date | string): Date {
+  return parseDateInput(value);
 }
 
-export function isBookableIsoDate(dateString?: string | null): boolean {
-  if (!dateString) return false;
-  return !isDateBeforeToday(dateString);
+export function isDateBeforeToday(value: Date | string): boolean {
+  return toIsoDatePart(value) < getTodayIso();
 }
 
-export function isBookableDate(dateString?: string | null): boolean {
-  return isBookableIsoDate(dateString);
+export function isPastIsoDate(value: string): boolean {
+  return isDateBeforeToday(value);
 }
 
-export function isBookableDateInMonth(dateString: string, monthStart: string): boolean {
-  return dateString.startsWith(monthStart.slice(0, 7)) && isBookableIsoDate(dateString);
+export function isBookableDate(value: Date | string): boolean {
+  return !isDateBeforeToday(value);
+}
+
+export function isBookableIsoDate(value: string): boolean {
+  return isBookableDate(value);
+}
+
+export function isBookableDateInMonth(
+  dateValue: Date | string,
+  monthValue: Date | string,
+  allowedMonthSpan = 1,
+): boolean {
+  if (!isBookableDate(dateValue)) {
+    return false;
+  }
+
+  const targetDate = parseDateInput(dateValue);
+  const targetMonthIndex = targetDate.getFullYear() * 12 + targetDate.getMonth();
+  const { year, month } = parseMonthInput(monthValue);
+  const baseMonthIndex = year * 12 + month;
+
+  return targetMonthIndex >= baseMonthIndex && targetMonthIndex <= baseMonthIndex + allowedMonthSpan;
+}
+
+export function isDateBlocked(
+  value: Date | string,
+  unavailableDates: string[] = [],
+): boolean {
+  return unavailableDates.includes(toIsoDatePart(value));
+}
+
+export function formatDate(value: Date | string): string {
+  const date = parseDateInput(value);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+export function formatDateTime(value: Date | string): string {
+  const date = parseDateInput(value);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+export function isWithinTwoHours(value: Date | string): boolean {
+  const date = parseDateInput(value);
+  return date.getTime() - Date.now() < 2 * 60 * 60 * 1000;
 }

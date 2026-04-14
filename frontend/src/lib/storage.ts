@@ -1,23 +1,29 @@
 import type { CalendarEvent } from "../features/calendar/types";
+import type { ServicoResponse } from "../types/api";
 
 const ADMIN_TOKEN_STORAGE_KEY = "calendar.admin.token";
 const MANAGE_TOKENS_KEY = "calendar.manageTokens";
-const MANAGE_TOKEN_BY_EVENT_KEY = "calendar.manageTokensByEvent";
+const MANAGE_TOKEN_MAP_KEY = "calendar.manageTokenByEvent";
 const LOCAL_EVENTS_KEY = "calendar.localEvents";
 const ADMIN_CALENDAR_MODE_KEY = "calendar.admin.mode";
 const LOCAL_EVENTS_CHANGED_EVENT = "calendar:local-events-changed";
+const GEOAPIFY_AUTOCOMPLETE_DISABLED_KEY = "calendar.geoapifyAutocomplete.disabled";
 
 type AdminCalendarMode = "view" | "block";
-type ManageTokenByEventMap = Record<string, string>;
+type ManageTokenMap = Record<string, string>;
 
 function getStorage(): Storage | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") {
+    return null;
+  }
+
   return window.localStorage;
 }
 
 function readJson<T>(key: string, fallback: T): T {
   const storage = getStorage();
   if (!storage) return fallback;
+
   try {
     const raw = storage.getItem(key);
     if (!raw) return fallback;
@@ -50,11 +56,13 @@ export function getStoredAdminToken(): string {
 export function setStoredAdminToken(token: string): void {
   const normalized = token.trim();
   const storage = getStorage();
+
   if (!storage) return;
   if (!normalized) {
     storage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
     return;
   }
+
   storage.setItem(ADMIN_TOKEN_STORAGE_KEY, normalized);
 }
 
@@ -66,13 +74,16 @@ export function getManageTokens(): string[] {
   return readJson<string[]>(MANAGE_TOKENS_KEY, []);
 }
 
-export function getManageTokensByEvent(): ManageTokenByEventMap {
-  return readJson<ManageTokenByEventMap>(MANAGE_TOKEN_BY_EVENT_KEY, {});
+export function getManageTokenMap(): ManageTokenMap {
+  return readJson<ManageTokenMap>(MANAGE_TOKEN_MAP_KEY, {});
+}
+
+export function getManageTokensByEvent(): ManageTokenMap {
+  return getManageTokenMap();
 }
 
 export function getManageTokenByEventId(eventId: string): string {
-  if (!eventId) return "";
-  return getManageTokensByEvent()[eventId]?.trim() ?? "";
+  return getManageTokenMap()[eventId]?.trim() ?? "";
 }
 
 export function getStoredManageToken(): string {
@@ -91,12 +102,22 @@ export function saveManageToken(token: string, eventId?: string): void {
   writeJson(MANAGE_TOKENS_KEY, [normalized, ...current].slice(0, 20));
 
   if (eventId?.trim()) {
-    const currentMap = getManageTokensByEvent();
-    writeJson(MANAGE_TOKEN_BY_EVENT_KEY, {
-      ...currentMap,
-      [eventId.trim()]: normalized,
-    });
+    const map = getManageTokenMap();
+    map[eventId.trim()] = normalized;
+    writeJson(MANAGE_TOKEN_MAP_KEY, map);
   }
+}
+
+export function saveRecoveredBookings(bookings: ServicoResponse[]): void {
+  bookings.forEach((booking) => {
+    if (booking.manageToken?.trim()) {
+      saveManageToken(booking.manageToken, booking.eventId);
+    }
+  });
+}
+
+export function resolveManageToken(booking: Pick<ServicoResponse, "eventId" | "manageToken">): string {
+  return booking.manageToken?.trim() || getManageTokenByEventId(booking.eventId) || getStoredManageToken();
 }
 
 export function getLocalCalendarEvents(): CalendarEvent[] {
@@ -110,19 +131,39 @@ export function saveLocalCalendarEvent(event: CalendarEvent): void {
 }
 
 export function removeLocalCalendarEvent(eventId: string): void {
-  if (!eventId) return;
+  if (!eventId?.trim()) return;
+
   const next = getLocalCalendarEvents().filter((item) => item.id !== eventId);
   writeJson(LOCAL_EVENTS_KEY, next);
-  const currentMap = getManageTokensByEvent();
-  if (currentMap[eventId]) {
-    const { [eventId]: _removed, ...rest } = currentMap;
-    writeJson(MANAGE_TOKEN_BY_EVENT_KEY, rest);
+
+  const map = getManageTokenMap();
+  if (map[eventId]) {
+    const { [eventId]: _removed, ...rest } = map;
+    writeJson(MANAGE_TOKEN_MAP_KEY, rest);
   }
+
   dispatchLocalEventsChanged();
 }
 
 export function getLocalEventsChangedEventName(): string {
   return LOCAL_EVENTS_CHANGED_EVENT;
+}
+
+export function canUseGeoapifyAutocomplete(): boolean {
+  const value = getStorage()?.getItem(GEOAPIFY_AUTOCOMPLETE_DISABLED_KEY);
+  return value !== "true";
+}
+
+export function setGeoapifyAutocompleteEnabled(enabled: boolean): void {
+  const storage = getStorage();
+  if (!storage) return;
+
+  if (enabled) {
+    storage.removeItem(GEOAPIFY_AUTOCOMPLETE_DISABLED_KEY);
+    return;
+  }
+
+  storage.setItem(GEOAPIFY_AUTOCOMPLETE_DISABLED_KEY, "true");
 }
 
 export function getAdminCalendarMode(): AdminCalendarMode {

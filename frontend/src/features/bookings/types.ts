@@ -1,7 +1,14 @@
-import type { BookingRecord } from "../../types/booking";
+import type { ServicoRequest, ServicoResponse } from "../../types/api";
 
-export type BookingWorkspaceSelection = {
+export type BookingItem = ServicoResponse;
+
+export type UpdateBookingInput = {
   eventId: string;
+  token: string;
+  payload: ServicoRequest;
 };
 
-export type BookingSummaryItem = BookingRecord;
+export type DeleteBookingInput = {
+  eventId: string;
+  token: string;
+};

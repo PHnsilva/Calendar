@@ -1,16 +1,4 @@
-export const PRIMARY_CITY = "Belo Horizonte";
-export const SECONDARY_CITY = "Itabirito";
-
-export const OTHER_CITIES = [
-  "Itabirito",
-  "Ouro Preto",
-  "Moeda",
-  "Nova Lima",
-  "Congonhas",
-  "Rio Acima",
-] as const;
-
-export const ALLOWED_CITIES = [PRIMARY_CITY, ...OTHER_CITIES] as const;
+export const ALLOWED_CITIES = ["Itabirito", "Ouro Preto", "Moeda"] as const;
 
 export type AllowedCity = (typeof ALLOWED_CITIES)[number];
 export type CityTone =
@@ -23,13 +11,13 @@ export type CityTone =
   | "royal";
 
 const CITY_TONE_BY_CITY: Record<string, CityTone> = {
-  "Belo Horizonte": "violet",
   Itabirito: "cyan",
   "Ouro Preto": "indigo",
   Moeda: "orange",
   "Nova Lima": "teal",
   Congonhas: "amber",
   "Rio Acima": "royal",
+  "Belo Horizonte": "violet",
 };
 
 export function getCityTone(city?: string | null): CityTone {
@@ -40,6 +28,7 @@ export function getCityTone(city?: string | null): CityTone {
 export function isAllowedCity(value?: string | null): value is AllowedCity {
   return Boolean(value && ALLOWED_CITIES.includes(value as AllowedCity));
 }
+
 export function normalizeCityTone(city?: string | null): CityTone {
   return getCityTone(city);
 }

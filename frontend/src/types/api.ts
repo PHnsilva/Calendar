@@ -70,9 +70,8 @@ export type PublicBootstrapResponse = {
     maxFutureMonthsAhead: number;
     pendingTtlSeconds: number;
     blockOtherBookingsWhenPending: boolean;
-    defaultDurationMinutes: number;
-    durationMinutesByCity: Record<string, number>;
     statuses: string[];
+    durationByCity?: Record<string, number>;
   };
   verification: {
     otpTtlSeconds: number;

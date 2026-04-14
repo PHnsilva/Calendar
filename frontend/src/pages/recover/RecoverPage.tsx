@@ -10,7 +10,9 @@ export default function RecoverPage() {
   const recovery = useRecoveryFlow();
 
   const handleOpenMyBookings = () => {
-    (recovery.confirmResponse?.items ?? []).forEach((item) => saveManageToken(item.manageToken));
+    (recovery.confirmResponse?.items ?? []).forEach((item) =>
+      saveManageToken(item.manageToken, item.servico.eventId),
+    );
 
     const firstToken = recovery.confirmResponse?.items?.[0]?.manageToken ?? "";
     navigate(firstToken ? `/my?token=${encodeURIComponent(firstToken)}` : "/my");

@@ -70,8 +70,9 @@ export type PublicBootstrapResponse = {
     maxFutureMonthsAhead: number;
     pendingTtlSeconds: number;
     blockOtherBookingsWhenPending: boolean;
+    defaultDurationMinutes: number;
+    durationMinutesByCity: Record<string, number>;
     statuses: string[];
-    durationByCity?: Record<string, number>;
   };
   verification: {
     otpTtlSeconds: number;
@@ -108,4 +109,30 @@ export type GeoapifyAddressSuggestion = {
   city: string;
   state: string;
   postcode: string;
+};
+
+
+export type RecoverStartRequest = {
+  phone: string;
+};
+
+export type RecoverConfirmRequest = {
+  verificationId: string;
+  code: string;
+};
+
+export type RecoverStartResponse = {
+  verificationId: string;
+  expiresInSeconds: number;
+  resendAfterSeconds: number;
+};
+
+export type RecoverConfirmItem = {
+  servico: ServicoResponse;
+  manageToken: string;
+};
+
+export type RecoverConfirmResponse = {
+  verified: boolean;
+  items: RecoverConfirmItem[];
 };

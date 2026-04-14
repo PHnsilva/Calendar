@@ -7,13 +7,18 @@ import { RecoveryEmptyState } from "../../features/recovery/components/RecoveryE
 import { getStoredManageToken, saveManageToken } from "../../lib/storage";
 import type { ServicoRequest } from "../../types/api";
 
+type FeedbackState = {
+  tone: "success" | "error";
+  message: string;
+} | null;
+
 export default function MyBookingsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tokenFromUrl = searchParams.get("token")?.trim() ?? "";
   const [token, setToken] = useState(tokenFromUrl || getStoredManageToken());
   const [selectedEventId, setSelectedEventId] = useState("");
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   useEffect(() => {
     if (!tokenFromUrl) return;
@@ -34,22 +39,33 @@ export default function MyBookingsPage() {
 
   const hasToken = Boolean(token.trim());
   const hasBookings = bookings.length > 0;
-
   const selectedBooking = useMemo(
     () => bookings.find((booking) => booking.eventId === selectedEventId) ?? bookings[0] ?? null,
     [bookings, selectedEventId],
   );
 
   const handleSave = async (eventId: string, payload: ServicoRequest) => {
-    await updateMutation.mutateAsync({ eventId, payload });
-    setFeedback("Agendamento atualizado com sucesso.");
+    try {
+      await updateMutation.mutateAsync({ eventId, payload });
+      setFeedback({ tone: "success", message: "Agendamento atualizado com sucesso." });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Não foi possível atualizar o agendamento.";
+      setFeedback({ tone: "error", message });
+    }
   };
 
   const handleDelete = async (eventId: string) => {
-    await deleteMutation.mutateAsync(eventId);
-    setFeedback("Agendamento cancelado com sucesso.");
-    setSelectedEventId("");
+    try {
+      await deleteMutation.mutateAsync(eventId);
+      setFeedback({ tone: "success", message: "Agendamento cancelado com sucesso." });
+      setSelectedEventId("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Não foi possível cancelar o agendamento.";
+      setFeedback({ tone: "error", message });
+    }
   };
+
+  const needsRecovery = feedback?.tone === "error" && /token/i.test(feedback.message);
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px", display: "grid", gap: 16 }}>
@@ -57,13 +73,27 @@ export default function MyBookingsPage() {
         <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.65 }}>Sprint 2</span>
         <h1 style={{ margin: 0 }}>Meus agendamentos</h1>
         <p style={{ margin: 0, opacity: 0.8 }}>
-          Listagem real por token, com edição e cancelamento usando os endpoints já expostos pelo backend.
+          Listagem real por token, com edição e cancelamento protegidos também pelas regras do backend.
         </p>
       </header>
 
       {feedback ? (
-        <div style={{ padding: 12, borderRadius: 14, background: "rgba(22,163,74,.08)", color: "#166534" }}>
-          {feedback}
+        <div
+          style={{
+            padding: 12,
+            borderRadius: 14,
+            background: feedback.tone === "success" ? "rgba(22,163,74,.08)" : "rgba(220,38,38,.08)",
+            color: feedback.tone === "success" ? "#166534" : "#991b1b",
+            display: "grid",
+            gap: 10,
+          }}
+        >
+          <span>{feedback.message}</span>
+          {needsRecovery ? (
+            <div>
+              <button type="button" className="secondary-action" onClick={() => navigate("/recover")}>Recuperar acesso ao atendimento</button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -97,7 +127,10 @@ export default function MyBookingsPage() {
         <BookingWorkspace
           bookings={bookings}
           selectedEventId={selectedBooking?.eventId}
-          onSelect={setSelectedEventId}
+          onSelect={(eventId) => {
+            setSelectedEventId(eventId);
+            setFeedback(null);
+          }}
           onSave={handleSave}
           onDelete={handleDelete}
           isSaving={updateMutation.isPending}

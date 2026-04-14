@@ -1,3 +1,4 @@
+import { isDateBeforeToday } from "../../../lib/dates";
 import { getCityTone } from "../../../data/allowed-cities";
 import CalendarDateCell from "./CalendarDateCell";
 import type { CalendarEvent } from "../types";
@@ -71,9 +72,9 @@ export default function CalendarMonthPreview({
         {days.map((date) => {
           const dayEvents = events.filter((event) => event.date === date);
           const earliestTone = getEarliestTone(dayEvents);
-          const isUnavailable = unavailableDates.includes(date);
+          const isPast = isDateBeforeToday(date);
+          const isUnavailable = unavailableDates.includes(date) || isPast;
           const hasEvents = dayEvents.length > 0;
-          const isPast = date < today;
 
           return (
             <span key={date} className="month-preview__day">

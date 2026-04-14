@@ -1,3 +1,4 @@
+import { isDateBeforeToday } from "../../../lib/dates";
 import CalendarDateCell from "./CalendarDateCell";
 
 function toLocalDate(dateString: string): Date {
@@ -69,7 +70,7 @@ export default function MiniCalendar({
 
       <div className="mini-calendar__grid">
         {days.map((day) => {
-          const isDisabled = !day.isCurrentMonth;
+          const isDisabled = !day.isCurrentMonth || unavailableDates.includes(day.date) || isDateBeforeToday(day.date);
 
           return (
             <button
@@ -87,9 +88,10 @@ export default function MiniCalendar({
                 variant="mini"
                 isToday={today === day.date}
                 isSelected={selectedDate === day.date}
-                isUnavailable={unavailableDates.includes(day.date)}
+                isUnavailable={unavailableDates.includes(day.date) || isDateBeforeToday(day.date)}
                 hasEvents={datesWithEvents.includes(day.date)}
                 isCurrentMonth={day.isCurrentMonth}
+                isPast={isDateBeforeToday(day.date)}
               />
             </button>
           );

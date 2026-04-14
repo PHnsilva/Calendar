@@ -1,19 +1,15 @@
-import { apiGet } from "../../../lib/api-client";
-import { getStoredAdminToken } from "../../../lib/storage";
-import type { AdminStatementResponse } from "../../../types/finance";
+import { apiGet } from '../../../lib/api-client';
+import { getStoredAdminToken } from '../../../lib/storage';
+import type { AdminStatementResponse } from '../../../types/finance';
 
-export function getStatement(filters: { from?: string; to?: string } = {}): Promise<AdminStatementResponse> {
+export async function getStatement(): Promise<AdminStatementResponse> {
   const adminToken = getStoredAdminToken();
 
   if (!adminToken) {
-    throw new Error("Admin token missing");
+    throw new Error('Admin token missing');
   }
 
-  return apiGet<AdminStatementResponse>("/api/admin/finance/statement", {
+  return apiGet<AdminStatementResponse>('/api/admin/finance/statement', {
     adminToken,
-    query: {
-      from: filters.from,
-      to: filters.to,
-    },
   });
 }

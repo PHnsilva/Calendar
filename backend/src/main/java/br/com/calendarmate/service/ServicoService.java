@@ -233,6 +233,9 @@ public class ServicoService {
             throw new ForbiddenException("Token inválido");
         }
 
+        validateManageWindow(existing);
+        validateCityImmutable(req, ext0);
+
         int durationMinutes = props.getBookingDurationMinutesForCity(req.getClientCity());
         ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
         ZonedDateTime endZ = startZ.plusMinutes(durationMinutes);
@@ -336,6 +339,8 @@ public class ServicoService {
         if (!vt.getClientEmail().equalsIgnoreCase(email)) {
             throw new ForbiddenException("Token inválido");
         }
+
+        validateManageWindow(e);
 
         pendingStore.deleteByEventId(eventId);
         calendar.deleteEvent(eventId);
@@ -565,6 +570,33 @@ public class ServicoService {
             if (reqCityNorm.isBlank() || !legacyCity.equals(reqCityNorm)) {
                 throw new BadRequestException("Atendimento não disponível para esta cidade");
             }
+        }
+    }
+
+
+    private void validateManageWindow(Event event) {
+        Instant start = instantFrom(event.getStart());
+        if (start == null) {
+            throw new BadRequestException("Agendamento inválido");
+        }
+
+        Instant cutoff = ZonedDateTime.now(ZONE).plusHours(2).toInstant();
+        if (!start.isAfter(cutoff)) {
+            throw new BadRequestException("Edição e cancelamento exigem pelo menos 2 horas de antecedência");
+        }
+    }
+
+    private void validateCityImmutable(ServicoRequest req, Map<String, String> ext) {
+        String currentCity = LocationNormalizer.normalizeCity(ext.getOrDefault("clientCity", ""));
+        String requestedCity = LocationNormalizer.normalizeCity(req.getClientCity());
+        if (!currentCity.equals(requestedCity)) {
+            throw new BadRequestException("A cidade do atendimento não pode ser alterada");
+        }
+
+        String currentState = LocationNormalizer.normalizeState(ext.getOrDefault("clientState", ""));
+        String requestedState = LocationNormalizer.normalizeState(req.getClientState());
+        if (!currentState.equals(requestedState)) {
+            throw new BadRequestException("O estado do atendimento não pode ser alterado");
         }
     }
 

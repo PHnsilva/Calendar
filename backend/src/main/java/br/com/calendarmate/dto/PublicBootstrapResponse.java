@@ -13,7 +13,6 @@ public class PublicBootstrapResponse {
         private String workEnd;
         private String lunchStart;
         private String lunchEnd;
-
         public String getCycleStart() { return cycleStart; }
         public void setCycleStart(String cycleStart) { this.cycleStart = cycleStart; }
         public String getWorkStart() { return workStart; }
@@ -33,8 +32,6 @@ public class PublicBootstrapResponse {
         private long pendingTtlSeconds;
         private boolean blockOtherBookingsWhenPending;
         private List<String> statuses = new ArrayList<>();
-        private Map<String, Integer> durationByCity = new LinkedHashMap<>();
-
         public int getSlotMinutes() { return slotMinutes; }
         public void setSlotMinutes(int slotMinutes) { this.slotMinutes = slotMinutes; }
         public List<Integer> getAllowedMinuteMarks() { return allowedMinuteMarks; }
@@ -47,14 +44,11 @@ public class PublicBootstrapResponse {
         public void setBlockOtherBookingsWhenPending(boolean blockOtherBookingsWhenPending) { this.blockOtherBookingsWhenPending = blockOtherBookingsWhenPending; }
         public List<String> getStatuses() { return statuses; }
         public void setStatuses(List<String> statuses) { this.statuses = statuses; }
-        public Map<String, Integer> getDurationByCity() { return durationByCity; }
-        public void setDurationByCity(Map<String, Integer> durationByCity) { this.durationByCity = durationByCity; }
     }
 
     public static class VerificationConfig {
         private long otpTtlSeconds;
         private long otpResendAfterSeconds;
-
         public long getOtpTtlSeconds() { return otpTtlSeconds; }
         public void setOtpTtlSeconds(long otpTtlSeconds) { this.otpTtlSeconds = otpTtlSeconds; }
         public long getOtpResendAfterSeconds() { return otpResendAfterSeconds; }
@@ -64,11 +58,13 @@ public class PublicBootstrapResponse {
     public static class ServiceAreaConfig {
         private List<String> allowedCities = new ArrayList<>();
         private List<String> allowedStates = new ArrayList<>();
-
+        private Map<String, Integer> durationByCity = new LinkedHashMap<>();
         public List<String> getAllowedCities() { return allowedCities; }
         public void setAllowedCities(List<String> allowedCities) { this.allowedCities = allowedCities; }
         public List<String> getAllowedStates() { return allowedStates; }
         public void setAllowedStates(List<String> allowedStates) { this.allowedStates = allowedStates; }
+        public Map<String, Integer> getDurationByCity() { return durationByCity; }
+        public void setDurationByCity(Map<String, Integer> durationByCity) { this.durationByCity = durationByCity; }
     }
 
     private String timezone;
@@ -76,7 +72,6 @@ public class PublicBootstrapResponse {
     private BookingConfig booking;
     private VerificationConfig verification;
     private ServiceAreaConfig serviceArea;
-
     public String getTimezone() { return timezone; }
     public void setTimezone(String timezone) { this.timezone = timezone; }
     public ScheduleConfig getSchedule() { return schedule; }

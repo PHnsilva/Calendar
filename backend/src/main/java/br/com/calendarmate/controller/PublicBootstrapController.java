@@ -38,7 +38,6 @@ public class PublicBootstrapController {
         booking.setPendingTtlSeconds(props.getPendingTtl().getSeconds());
         booking.setBlockOtherBookingsWhenPending(props.isBlockOtherBookingsWhenPending());
         booking.setStatuses(List.of("PENDING_PHONE", "CONFIRMED", "CANCELLED"));
-        booking.setDurationByCity(props.getBookingDurationByCityDisplay());
         response.setBooking(booking);
 
         PublicBootstrapResponse.VerificationConfig verification = new PublicBootstrapResponse.VerificationConfig();
@@ -49,6 +48,7 @@ public class PublicBootstrapController {
         PublicBootstrapResponse.ServiceAreaConfig serviceArea = new PublicBootstrapResponse.ServiceAreaConfig();
         serviceArea.setAllowedCities(props.getAllowedCitiesDisplay());
         serviceArea.setAllowedStates(props.getAllowedStatesDisplay());
+        serviceArea.setDurationByCity(props.getBookingDurationByCityDisplay());
         response.setServiceArea(serviceArea);
 
         return response;

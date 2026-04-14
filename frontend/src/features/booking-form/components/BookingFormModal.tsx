@@ -9,7 +9,7 @@ import { saveLocalCalendarEvent, saveManageToken } from "../../../lib/storage";
 import type { ServicoResponse } from "../../../types/api";
 import type { BookingFormValues } from "../../../types/booking";
 import type { HomeSelectedSlot } from "../../home/types";
-import { OTHER_CITIES, PRIMARY_CITY, SECONDARY_CITY } from "../../../data/allowed-cities";
+import { formatDurationLabel, getAllowedCities, getBookingDurationMinutesByCity, getDefaultCity, getDefaultState, getSlotMinutes } from "../../../lib/bootstrap-config";
 import { usePublicBootstrap } from "../../public-config/hooks/usePublicBootstrap";
 
 type BookingFormModalProps = {
@@ -43,7 +43,7 @@ const INITIAL_FORM: BookingFormValues = {
   clientNeighborhood: "",
   clientNumber: "",
   clientComplement: "",
-  clientCity: PRIMARY_CITY,
+  clientCity: "",
   clientState: "MG",
 };
 
@@ -166,7 +166,7 @@ export default function BookingFormModal({
 
   const [draftSlot, setDraftSlot] = useState<HomeSelectedSlot>(selectedSlot);
   const [formValues, setFormValues] = useState<BookingFormValues>(INITIAL_FORM);
-  const [selectedCity, setSelectedCity] = useState<string>(PRIMARY_CITY);
+  const [selectedCity, setSelectedCity] = useState<string>("");
   const [addressInput, setAddressInput] = useState("");
   const [selectedAddress, setSelectedAddress] = useState<AddressSuggestion | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
@@ -174,11 +174,19 @@ export default function BookingFormModal({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { data: bootstrap } = usePublicBootstrap(open);
-  const slotMinutes = bootstrap?.booking?.slotMinutes ?? 60;
+  const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
+  const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
+  const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);
+  const slotMinutes = getSlotMinutes(bootstrap);
+  const bookingDurationMinutes = getBookingDurationMinutesByCity(bootstrap, selectedCity || defaultCity);
+  const primaryCities = allowedCities.slice(0, 2);
+  const extraCities = allowedCities.slice(2);
 
   const { data: availableSlots = [], isLoading: isLoadingSlots, error: slotsError } = useAvailableSlots(
     selectedDate,
+    selectedCity || defaultCity,
     slotMinutes,
+    bookingDurationMinutes,
     open && !isUnavailable,
   );
   const createBookingMutation = useCreateBooking();
@@ -186,22 +194,34 @@ export default function BookingFormModal({
   const dayEvents = useMemo(() => events.filter((event) => event.date === selectedDate), [events, selectedDate]);
 
   useEffect(() => {
+    if (!allowedCities.includes(selectedCity)) {
+      setSelectedCity(defaultCity);
+    }
+
+    setFormValues((current) => ({
+      ...current,
+      clientCity: allowedCities.includes(current.clientCity) ? current.clientCity : defaultCity,
+      clientState: current.clientState || defaultState,
+    }));
+  }, [allowedCities, defaultCity, defaultState, selectedCity]);
+
+  useEffect(() => {
     if (!open) return;
     setDraftSlot(selectedSlot);
-    setFormValues({ ...INITIAL_FORM, clientCity: PRIMARY_CITY });
-    setSelectedCity(PRIMARY_CITY);
+    setFormValues({ ...INITIAL_FORM, clientCity: defaultCity, clientState: defaultState });
+    setSelectedCity(defaultCity);
     setAddressInput("");
     setSelectedAddress(null);
     setValidationErrors({});
     setSuccessMessage(null);
     setVerificationState(null);
-  }, [open, selectedDate, selectedSlot]);
+  }, [defaultCity, defaultState, open, selectedDate, selectedSlot]);
 
   useEffect(() => {
     setFormValues((current) => ({
       ...current,
       clientCity: selectedCity,
-      clientState: current.clientState || "MG",
+      clientState: current.clientState || defaultState,
     }));
     setAddressInput("");
     setSelectedAddress(null);
@@ -212,14 +232,14 @@ export default function BookingFormModal({
       clientNumber: "",
       clientCep: "",
       clientCity: selectedCity,
-      clientState: current.clientState || "MG",
+      clientState: current.clientState || defaultState,
     }));
     setValidationErrors((current) => {
       const next = { ...current };
       delete next.addressInput;
       return next;
     });
-  }, [selectedCity]);
+  }, [defaultState, selectedCity]);
 
   useEffect(() => {
     if (!open) return;
@@ -270,7 +290,7 @@ export default function BookingFormModal({
       clientNumber: normalizeText(suggestion.houseNumber),
       clientComplement: "",
       clientCity: selectedCity,
-      clientState: normalizeText((suggestion.stateCode || suggestion.state || current.clientState || "MG")).toUpperCase(),
+      clientState: normalizeText((suggestion.stateCode || suggestion.state || current.clientState || defaultState)).toUpperCase(),
     }));
     setValidationErrors((current) => {
       const next = { ...current };
@@ -324,10 +344,10 @@ export default function BookingFormModal({
         clientNumber: buildPersistedNumber(formValues.clientNumber, normalizedComplement),
         clientComplement: undefined,
         clientCity: selectedCity,
-        clientState: normalizeText(formValues.clientState || "MG").slice(0, 2).toUpperCase(),
+        clientState: normalizeText(formValues.clientState || defaultState).slice(0, 2).toUpperCase(),
       });
 
-      saveManageToken(response.manageToken, response.servico.eventId);
+      saveManageToken(response.manageToken);
       const newEvent = mapServicoToCalendarEvent(response.servico);
       saveLocalCalendarEvent(newEvent);
       onBookingCreated?.(newEvent);
@@ -357,6 +377,7 @@ export default function BookingFormModal({
   const backendError = createBookingMutation.error ? mapCreateError(createBookingMutation.error.message) : null;
   const shouldShowComplementField = Boolean(selectedAddress);
   const shouldShowNumberField = Boolean(selectedAddress && !normalizeText(selectedAddress.houseNumber));
+  const durationLabel = formatDurationLabel(bookingDurationMinutes);
 
   return (
     <>
@@ -432,24 +453,29 @@ export default function BookingFormModal({
                   <div className="booking-form__field booking-form__field--full">
                     <span>Cidade</span>
                     <div className="booking-city-picker">
-                      <button type="button" className={["booking-city-choice", selectedCity === PRIMARY_CITY ? "booking-city-choice--active" : "booking-city-choice--muted"].join(" ")} onClick={() => setSelectedCity(PRIMARY_CITY)}>
-                        <span className="booking-city-choice__icon">A</span>
-                        <span>{PRIMARY_CITY}</span>
-                      </button>
+                      {primaryCities.map((city, index) => (
+                        <button
+                          key={city}
+                          type="button"
+                          className={["booking-city-choice", selectedCity === city ? "booking-city-choice--active" : "booking-city-choice--muted"].join(" ")}
+                          onClick={() => setSelectedCity(city)}
+                        >
+                          <span className="booking-city-choice__icon">{String.fromCharCode(65 + index)}</span>
+                          <span>{city}</span>
+                        </button>
+                      ))}
 
-                      <button type="button" className={["booking-city-choice", selectedCity === SECONDARY_CITY ? "booking-city-choice--active" : "booking-city-choice--muted"].join(" ")} onClick={() => setSelectedCity(SECONDARY_CITY)}>
-                        <span className="booking-city-choice__icon">B</span>
-                        <span>{SECONDARY_CITY}</span>
-                      </button>
-
-                      <label className={["booking-city-select", ![PRIMARY_CITY, SECONDARY_CITY].includes(selectedCity) ? "booking-city-select--active" : "booking-city-select--muted"].join(" ")}>
-                        <span className="booking-city-choice__icon">C</span>
-                        <select value={[PRIMARY_CITY, SECONDARY_CITY].includes(selectedCity) ? "" : selectedCity} onChange={(event) => setSelectedCity(event.target.value || OTHER_CITIES[0])}>
-                          <option value="">Outros</option>
-                          {OTHER_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
-                        </select>
-                      </label>
+                      {extraCities.length > 0 ? (
+                        <label className={["booking-city-select", !primaryCities.includes(selectedCity) ? "booking-city-select--active" : "booking-city-select--muted"].join(" ")}>
+                          <span className="booking-city-choice__icon">+</span>
+                          <select value={primaryCities.includes(selectedCity) ? "" : selectedCity} onChange={(event) => setSelectedCity(event.target.value || extraCities[0])}>
+                            <option value="">Outras</option>
+                            {extraCities.map((city) => <option key={city} value={city}>{city}</option>)}
+                          </select>
+                        </label>
+                      ) : null}
                     </div>
+                    <small className="booking-form__hint">Cidade carregada do sistema. Duração estimada deste atendimento: <strong>{durationLabel}</strong>.</small>
                   </div>
 
                   <label className="booking-form__field booking-form__field--full booking-form__field--with-error">

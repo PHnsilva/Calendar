@@ -29,8 +29,7 @@ export default function CalendarDayAgenda({
   onRequestBookingDate,
 }: CalendarDayAgendaProps) {
   const dayEvents = events.filter((event) => event.date === selectedDate);
-  const isPastDate = isDateBeforeToday(selectedDate);
-  const isUnavailable = unavailableDates.includes(selectedDate) || isPastDate;
+  const isUnavailable = unavailableDates.includes(selectedDate) || isDateBeforeToday(selectedDate);
 
   return (
     <div className="agenda" id="day-agenda-panel">
@@ -57,7 +56,7 @@ export default function CalendarDayAgenda({
         {isUnavailable ? (
           <div className="agenda__empty">
             <strong>Data indisponível</strong>
-            <p>{isPastDate ? "Dias passados não podem receber novos agendamentos." : "Esse dia está bloqueado para novos agendamentos."}</p>
+            <p>Esse dia está bloqueado para novos agendamentos.</p>
           </div>
         ) : dayEvents.length > 0 ? (
           <div className="agenda__events">
@@ -97,13 +96,13 @@ export default function CalendarDayAgenda({
           ]
             .filter(Boolean)
             .join(" ")}
-          onClick={onRequestBookingDate}
+          onClick={() => { if (!isUnavailable) onRequestBookingDate(); }}
           disabled={isUnavailable}
         >
           <span className="booking-cta__icon" aria-hidden="true">
             +
           </span>
-          <span>{isSelectingDate ? "Selecione um dia" : "Agendamentos"}</span>
+          <span>{isUnavailable ? "Dia indisponível" : isSelectingDate ? "Selecione um dia" : "Agendamentos"}</span>
         </button>
       </div>
     </div>

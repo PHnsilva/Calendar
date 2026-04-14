@@ -15,8 +15,11 @@ import BookingStartHintModal from '../../components/ui/BookingStartHintModal';
 import { useHomeCalendarView } from '../../features/home/hooks/useHomeCalendarView';
 import { useHomeBookingSelection } from '../../app/home-booking-provider';
 import { ALLOWED_CITIES } from '../../data/allowed-cities';
+import { usePublicBootstrap } from '../../features/public-config/hooks/usePublicBootstrap';
+import { getBookingDurationMinutesByCity, getDefaultCity, getSlotMinutes } from '../../lib/bootstrap-config';
+import { isDateBeforeToday } from '../../lib/dates';
 import type { CalendarEvent } from '../../features/calendar/types';
-import { getLocalCalendarEvents, getLocalEventsChangedEventName } from '../../lib/storage';
+import { getLocalCalendarEvents } from '../../lib/storage';
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
 import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
 import type { ServicoResponse } from '../../types/api';
@@ -72,7 +75,7 @@ function buildUnavailableFromAvailability(monthStart: string, availableDates: st
   return getMonthDates(monthStart).filter((date) => !available.has(date));
 }
 
-const ENABLE_LAYOUT_STRESS_PREVIEW_MOCK = true;
+const ENABLE_LAYOUT_STRESS_PREVIEW_MOCK = false;
 
 function buildStressPreviewEvents(currentAllowedMonth: string, nextAllowedMonth: string): CalendarEvent[] {
   const current = toLocalDate(currentAllowedMonth);
@@ -98,27 +101,26 @@ function buildStressPreviewEvents(currentAllowedMonth: string, nextAllowedMonth:
     'Nova Lima': 'Alameda dos Ipês, 420 - Jardim Canadá - Nova Lima/MG CEP: 34007-000',
     Congonhas: 'Rua Barão de Congonhas, 210 - Centro - Congonhas/MG CEP: 36415-000',
     'Rio Acima': 'Rua da Serra, 56 - Centro - Rio Acima/MG CEP: 34300-000',
-    Brumadinho: 'Rua da Matriz, 98 - Centro - Brumadinho/MG CEP: 35460-000',
   };
 
   const plan = [
     { month: 'current', day: 1, times: ['08:00', '09:30'], cities: ['Itabirito', 'Ouro Preto'] },
     { month: 'current', day: 3, times: ['08:00', '10:00', '13:30'], cities: ['Belo Horizonte', 'Itabirito', 'Congonhas'] },
     { month: 'current', day: 5, times: ['09:00', '11:00'], cities: ['Moeda', 'Nova Lima'] },
-    { month: 'current', day: 7, times: ['08:30', '14:00'], cities: ['Rio Acima', 'Brumadinho'] },
+    { month: 'current', day: 7, times: ['08:30', '14:00'], cities: ['Rio Acima', 'Itabirito'] },
     { month: 'current', day: 9, times: ['09:00', '12:00', '15:00'], cities: ['Ouro Preto', 'Congonhas', 'Itabirito'] },
     { month: 'current', day: 11, times: ['08:00', '10:00', '13:00', '16:00'], cities: ['Belo Horizonte', 'Nova Lima', 'Rio Acima', 'Moeda'] },
-    { month: 'current', day: 14, times: ['09:00', '11:30'], cities: ['Brumadinho', 'Congonhas'] },
+    { month: 'current', day: 14, times: ['09:00', '11:30'], cities: ['Itabirito', 'Congonhas'] },
     { month: 'current', day: 16, times: ['08:00', '10:30', '14:30'], cities: ['Itabirito', 'Ouro Preto', 'Belo Horizonte'] },
     { month: 'current', day: 18, times: ['09:00'], cities: ['Nova Lima'] },
-    { month: 'current', day: 20, times: ['08:00', '09:00', '13:00', '15:30'], cities: ['Moeda', 'Rio Acima', 'Congonhas', 'Brumadinho'] },
+    { month: 'current', day: 20, times: ['08:00', '09:00', '13:00', '15:30'], cities: ['Moeda', 'Rio Acima', 'Congonhas', 'Itabirito'] },
     { month: 'current', day: 23, times: ['10:00', '12:30'], cities: ['Belo Horizonte', 'Itabirito'] },
     { month: 'current', day: 25, times: ['08:00', '11:00', '14:00'], cities: ['Ouro Preto', 'Nova Lima', 'Rio Acima'] },
     { month: 'current', day: 27, times: ['09:30', '13:00'], cities: ['Moeda', 'Congonhas'] },
     { month: 'next', day: 2, times: ['08:00', '10:00'], cities: ['Itabirito', 'Belo Horizonte'] },
     { month: 'next', day: 4, times: ['09:00', '11:00', '15:00'], cities: ['Ouro Preto', 'Nova Lima', 'Congonhas'] },
     { month: 'next', day: 6, times: ['08:30', '12:30'], cities: ['Rio Acima', 'Moeda'] },
-    { month: 'next', day: 9, times: ['09:00', '14:00'], cities: ['Brumadinho', 'Itabirito'] },
+    { month: 'next', day: 9, times: ['09:00', '14:00'], cities: ['Moeda', 'Itabirito'] },
     { month: 'next', day: 12, times: ['08:00', '10:00', '13:00'], cities: ['Belo Horizonte', 'Ouro Preto', 'Nova Lima'] },
   ] as const;
 
@@ -198,6 +200,10 @@ export default function HomePage({
   const currentAllowedMonth = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, '0')}-01`;
   const nextAllowedMonth = shiftMonth(currentAllowedMonth, 1);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const { data: bootstrap } = usePublicBootstrap(!isAdminMode);
+  const defaultBookingCity = getDefaultCity(bootstrap);
+  const slotMinutes = getSlotMinutes(bootstrap);
+  const defaultBookingDuration = getBookingDurationMinutesByCity(bootstrap, defaultBookingCity);
 
   const {
     selectedDate,
@@ -230,8 +236,8 @@ export default function HomePage({
 
   const isDesktop = viewportWidth > 730;
   const adminBookingsQuery = useAdminBookings({}, isAdminMode && !adminBookings);
-  const currentMonthAvailability = useAvailableMonthDates(currentAllowedMonth, !isAdminMode);
-  const nextMonthAvailability = useAvailableMonthDates(nextAllowedMonth, !isAdminMode);
+  const currentMonthAvailability = useAvailableMonthDates(currentAllowedMonth, defaultBookingCity, !isAdminMode, slotMinutes, defaultBookingDuration);
+  const nextMonthAvailability = useAvailableMonthDates(nextAllowedMonth, defaultBookingCity, !isAdminMode, slotMinutes, defaultBookingDuration);
 
   const previewEvents = useMemo(
     () =>
@@ -261,18 +267,19 @@ export default function HomePage({
       return adminBlockedDates;
     }
 
-    const currentFallback = build4x4UnavailableDates(currentAllowedMonth, todayIso);
-    const nextFallback = build4x4UnavailableDates(nextAllowedMonth, todayIso);
-
     const currentUnavailable = currentMonthAvailability.hasError || currentMonthAvailability.isLoading
-      ? currentFallback
+      ? []
       : buildUnavailableFromAvailability(currentAllowedMonth, currentMonthAvailability.availableDates);
 
     const nextUnavailable = nextMonthAvailability.hasError || nextMonthAvailability.isLoading
-      ? nextFallback
+      ? []
       : buildUnavailableFromAvailability(nextAllowedMonth, nextMonthAvailability.availableDates);
 
-    return [...currentUnavailable, ...nextUnavailable];
+    const pastDates = [currentAllowedMonth, nextAllowedMonth]
+      .flatMap((monthStart) => getMonthDates(monthStart))
+      .filter((date) => isDateBeforeToday(date));
+
+    return Array.from(new Set([...pastDates, ...currentUnavailable, ...nextUnavailable]));
   }, [
     adminBlockedDates,
     currentAllowedMonth,
@@ -284,7 +291,6 @@ export default function HomePage({
     nextMonthAvailability.availableDates,
     nextMonthAvailability.hasError,
     nextMonthAvailability.isLoading,
-    todayIso,
   ]);
 
   const selectedPeriodBookings = useMemo(
@@ -299,19 +305,6 @@ export default function HomePage({
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
-
-  useEffect(() => {
-    const syncLocalEvents = () => {
-      setLocalEvents(getLocalCalendarEvents().filter((event) => event.date >= todayIso));
-    };
-    const eventName = getLocalEventsChangedEventName();
-    window.addEventListener(eventName, syncLocalEvents as EventListener);
-    window.addEventListener("storage", syncLocalEvents);
-    return () => {
-      window.removeEventListener(eventName, syncLocalEvents as EventListener);
-      window.removeEventListener("storage", syncLocalEvents);
-    };
-  }, [todayIso]);
 
   useEffect(() => {
     const html = document.documentElement;

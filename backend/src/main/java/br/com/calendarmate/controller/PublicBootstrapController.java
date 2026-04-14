@@ -37,9 +37,8 @@ public class PublicBootstrapController {
         booking.setMaxFutureMonthsAhead(props.getMaxFutureMonthsAhead());
         booking.setPendingTtlSeconds(props.getPendingTtl().getSeconds());
         booking.setBlockOtherBookingsWhenPending(props.isBlockOtherBookingsWhenPending());
-        booking.setDefaultDurationMinutes(props.getBookingDefaultDurationMinutes());
-        booking.setDurationMinutesByCity(props.getBookingDurationMinutesByCityDisplay());
         booking.setStatuses(List.of("PENDING_PHONE", "CONFIRMED", "CANCELLED"));
+        booking.setDurationByCity(props.getBookingDurationByCityDisplay());
         response.setBooking(booking);
 
         PublicBootstrapResponse.VerificationConfig verification = new PublicBootstrapResponse.VerificationConfig();

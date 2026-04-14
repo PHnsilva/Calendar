@@ -1,221 +1,139 @@
-import { useEffect, useMemo, useState } from "react";
-import type { BookingRecord } from "../../../types/booking";
-import type { ServicoRequest } from "../../../types/api";
-import { useAvailableSlots } from "../../calendar/hooks/useAvailableSlots";
+import { useMemo, useState } from "react";
+import type { ServicoRequest, ServicoResponse } from "../../../types/api";
+import { formatDateTime, isWithinTwoHours } from "../../../lib/dates";
+import { resolveManageToken } from "../../../lib/storage";
 import { BookingActions } from "./BookingActions";
 import { BookingStatusBadge } from "./BookingStatusBadge";
+import { useBookingMutations } from "../hooks/useBookingMutations";
 
-function toDateInput(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "";
-  return parsed.toISOString().slice(0, 10);
-}
+type BookingDetailCardProps = {
+  booking: ServicoResponse;
+};
 
-function toTimeInput(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "";
-  return parsed.toISOString().slice(11, 16);
-}
-
-function toEditableAddress(booking: BookingRecord): string {
-  if (booking.clientStreet?.trim() && booking.clientNumber?.trim()) {
-    return `${booking.clientStreet.trim()}, ${booking.clientNumber.trim()}`;
-  }
-  return booking.clientStreet?.trim() || booking.clientAddressLine || "";
-}
-
-function parseStreetAndNumber(addressLine: string, booking: BookingRecord) {
-  const normalized = addressLine.trim();
-  if (!normalized) {
-    return {
-      street: booking.clientStreet,
-      number: booking.clientNumber,
-    };
-  }
-
-  const parts = normalized.split(",");
-  if (parts.length < 2) {
-    return {
-      street: normalized,
-      number: booking.clientNumber,
-    };
-  }
-
-  return {
-    street: parts.slice(0, -1).join(",").trim() || booking.clientStreet,
-    number: parts[parts.length - 1].trim() || booking.clientNumber,
-  };
-}
-
-function buildPayload(booking: BookingRecord, date: string, time: string, addressLine: string): ServicoRequest {
-  const parsedAddress = parseStreetAndNumber(addressLine, booking);
+function toFormState(booking: ServicoResponse): ServicoRequest {
+  const start = new Date(booking.start);
+  const pad = (value: number) => String(value).padStart(2, "0");
   return {
     serviceType: booking.serviceType,
-    date,
-    time,
+    date: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
+    time: `${pad(start.getHours())}:${pad(start.getMinutes())}`,
     clientFirstName: booking.clientFirstName,
     clientLastName: booking.clientLastName,
     clientEmail: booking.clientEmail,
     clientPhone: booking.clientPhone,
     clientCep: booking.clientCep,
-    clientStreet: parsedAddress.street,
+    clientStreet: booking.clientStreet,
     clientNeighborhood: booking.clientNeighborhood,
-    clientNumber: parsedAddress.number,
+    clientNumber: booking.clientNumber,
     clientComplement: booking.clientComplement,
     clientCity: booking.clientCity,
     clientState: booking.clientState,
   };
 }
 
-function formatDateTime(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "full", timeStyle: "short" }).format(parsed);
-}
+export function BookingDetailCard({ booking }: BookingDetailCardProps) {
+  const token = useMemo(() => resolveManageToken(booking), [booking]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [form, setForm] = useState<ServicoRequest>(() => toFormState(booking));
+  const { updateBooking, deleteBooking, isUpdating, isDeleting, updateError, deleteError } = useBookingMutations();
 
-function isManageAllowed(start: string): boolean {
-  const parsed = new Date(start);
-  if (Number.isNaN(parsed.getTime())) return false;
-  return parsed.getTime() - Date.now() > 2 * 60 * 60 * 1000;
-}
+  const lockedByTime = isWithinTwoHours(booking.start);
+  const canManage = Boolean(token) && !lockedByTime;
 
-type BookingDetailCardProps = {
-  booking: BookingRecord;
-  onSave: (eventId: string, payload: ServicoRequest) => Promise<void> | void;
-  onDelete: (eventId: string) => Promise<void> | void;
-  isSaving: boolean;
-  isDeleting: boolean;
-};
+  const onChange = (field: keyof ServicoRequest, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
 
-export function BookingDetailCard({ booking, onSave, onDelete, isSaving, isDeleting }: BookingDetailCardProps) {
-  const [editing, setEditing] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [date, setDate] = useState(toDateInput(booking.start));
-  const [time, setTime] = useState(toTimeInput(booking.start));
-  const [addressLine, setAddressLine] = useState(toEditableAddress(booking));
+  const submitUpdate = async () => {
+    if (!token) return;
+    await updateBooking({ eventId: booking.eventId, token, payload: form });
+    setIsEditing(false);
+  };
 
-  useEffect(() => {
-    setEditing(false);
-    setConfirmingDelete(false);
-    setDate(toDateInput(booking.start));
-    setTime(toTimeInput(booking.start));
-    setAddressLine(toEditableAddress(booking));
-  }, [booking]);
-
-  const canManage = isManageAllowed(booking.start);
-  const disableReason = canManage
-    ? ""
-    : "Edição e cancelamento exigem pelo menos 2 horas de antecedência em relação ao início do atendimento.";
-
-  const slotsQuery = useAvailableSlots(date, booking.clientCity, 60, editing && Boolean(date));
-  const slots = slotsQuery.data ?? [];
-  const currentTimeExists = slots.some((slot) => slot.startTime === time);
-  const canSave = Boolean(date && time && addressLine.trim()) && canManage;
-
-  const payload = useMemo(() => buildPayload(booking, date, time, addressLine), [booking, date, time, addressLine]);
+  const submitDelete = async () => {
+    if (!token) return;
+    await deleteBooking({ eventId: booking.eventId, token });
+    setConfirmCancel(false);
+  };
 
   return (
-    <section
-      style={{
-        border: "1px solid rgba(15,23,42,0.12)",
-        borderRadius: 20,
-        padding: 18,
-        background: "white",
-        display: "grid",
-        gap: 16,
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start" }}>
+    <section className="booking-detail">
+      <div className="booking-detail__header">
         <div>
-          <h2 style={{ margin: 0 }}>{booking.serviceType || "Agendamento"}</h2>
-          <p style={{ margin: "6px 0 0", opacity: 0.8 }}>{formatDateTime(booking.start)}</p>
+          <h2>{booking.serviceType}</h2>
+          <p>{formatDateTime(booking.start)}</p>
         </div>
         <BookingStatusBadge status={booking.status} />
       </div>
 
-      <div style={{ display: "grid", gap: 10 }}>
-        <div><strong>Cliente:</strong> {booking.clientFirstName} {booking.clientLastName}</div>
-        <div><strong>Telefone:</strong> {booking.clientPhone}</div>
-        <div><strong>E-mail:</strong> {booking.clientEmail}</div>
-        <div><strong>Endereço:</strong> {booking.clientAddressLine || `${booking.clientStreet}, ${booking.clientNumber}`}</div>
-        <div><strong>Cidade:</strong> {booking.clientCity} / {booking.clientState}</div>
-      </div>
+      {lockedByTime ? <p className="booking-detail__notice">Alterações só podem ser feitas com pelo menos 2 horas de antecedência.</p> : null}
+      {!token ? <p className="booking-detail__notice">Esse atendimento não tem token salvo neste navegador. Use a recuperação para restaurar o acesso.</p> : null}
 
-      {editing ? (
-        <div style={{ display: "grid", gap: 12, borderTop: "1px solid rgba(15,23,42,0.08)", paddingTop: 16 }}>
-          <strong>Editar atendimento</strong>
-          <label style={{ display: "grid", gap: 6 }}>
-            <span>Nova data</span>
-            <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="booking-form__input" />
-          </label>
-
-          <label style={{ display: "grid", gap: 6 }}>
-            <span>Novo horário</span>
-            <select value={time} onChange={(event) => setTime(event.target.value)} className="booking-form__input">
-              {currentTimeExists ? null : <option value={time}>{time || "Selecione"}</option>}
-              {slots.map((slot) => (
-                <option key={`${slot.date}-${slot.startTime}`} value={slot.startTime}>
-                  {slot.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label style={{ display: "grid", gap: 6 }}>
-            <span>Endereço</span>
-            <input
-              type="text"
-              value={addressLine}
-              onChange={(event) => setAddressLine(event.target.value)}
-              className="booking-form__input"
-              placeholder="Rua, número"
-            />
-          </label>
-
-          <div style={{ display: "grid", gap: 6, fontSize: 14, opacity: 0.8 }}>
-            <div><strong>Bairro:</strong> {booking.clientNeighborhood || "Não informado"}</div>
-            <div><strong>CEP:</strong> {booking.clientCep || "Não informado"}</div>
-            <div><strong>Cidade:</strong> {booking.clientCity} / {booking.clientState} (não pode ser alterada)</div>
-            <div><strong>Complemento:</strong> {booking.clientComplement || "Não informado"} (somente leitura)</div>
+      {isEditing ? (
+        <div className="booking-detail__form">
+          <label><span>Serviço</span><input value={form.serviceType} onChange={(e) => onChange("serviceType", e.target.value)} /></label>
+          <div className="booking-detail__form-grid">
+            <label><span>Data</span><input type="date" value={form.date} onChange={(e) => onChange("date", e.target.value)} /></label>
+            <label><span>Horário</span><input type="time" value={form.time} onChange={(e) => onChange("time", e.target.value)} /></label>
           </div>
+          <div className="booking-detail__form-grid">
+            <label><span>Nome</span><input value={form.clientFirstName} onChange={(e) => onChange("clientFirstName", e.target.value)} /></label>
+            <label><span>Sobrenome</span><input value={form.clientLastName} onChange={(e) => onChange("clientLastName", e.target.value)} /></label>
+          </div>
+          <div className="booking-detail__form-grid">
+            <label><span>E-mail</span><input value={form.clientEmail} onChange={(e) => onChange("clientEmail", e.target.value)} /></label>
+            <label><span>Telefone</span><input value={form.clientPhone} onChange={(e) => onChange("clientPhone", e.target.value)} /></label>
+          </div>
+          <div className="booking-detail__form-grid">
+            <label><span>CEP</span><input value={form.clientCep} onChange={(e) => onChange("clientCep", e.target.value)} /></label>
+            <label><span>Número</span><input value={form.clientNumber} onChange={(e) => onChange("clientNumber", e.target.value)} /></label>
+          </div>
+          <label><span>Rua</span><input value={form.clientStreet} onChange={(e) => onChange("clientStreet", e.target.value)} /></label>
+          <label><span>Bairro</span><input value={form.clientNeighborhood} onChange={(e) => onChange("clientNeighborhood", e.target.value)} /></label>
+          <label><span>Complemento</span><input value={form.clientComplement ?? ""} onChange={(e) => onChange("clientComplement", e.target.value)} /></label>
+          <div className="booking-detail__form-grid">
+            <label><span>Cidade</span><input value={form.clientCity} readOnly /></label>
+            <label><span>Estado</span><input value={form.clientState} readOnly /></label>
+          </div>
+          {updateError ? <p className="booking-detail__error">{(updateError as Error).message}</p> : null}
+          <div className="booking-detail__actions">
+            <button type="button" className="secondary-action" onClick={() => setIsEditing(false)}>Fechar edição</button>
+            <button type="button" className="primary-action" onClick={() => void submitUpdate()} disabled={!canManage || isUpdating}>
+              {isUpdating ? "Salvando..." : "Salvar alterações"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="booking-detail__content">
+          <div className="booking-detail__section">
+            <h3>Cliente</h3>
+            <p>{booking.clientFirstName} {booking.clientLastName}</p>
+            <p>{booking.clientEmail}</p>
+            <p>{booking.clientPhone}</p>
+          </div>
+          <div className="booking-detail__section">
+            <h3>Endereço</h3>
+            <p>{booking.clientAddressLine}</p>
+            <p>{booking.clientCity} - {booking.clientState}</p>
+          </div>
+        </div>
+      )}
 
-          {slotsQuery.isLoading ? <small>Carregando horários disponíveis...</small> : null}
-          {slotsQuery.error ? <small style={{ color: "#b91c1c" }}>{slotsQuery.error.message}</small> : null}
+      {!isEditing ? <BookingActions canManage={canManage} onEdit={() => setIsEditing(true)} onCancel={() => setConfirmCancel(true)} /> : null}
+
+      {confirmCancel ? (
+        <div className="booking-detail__confirm">
+          <p>Deseja cancelar este agendamento?</p>
+          {deleteError ? <p className="booking-detail__error">{(deleteError as Error).message}</p> : null}
+          <div className="booking-detail__actions">
+            <button type="button" className="secondary-action" onClick={() => setConfirmCancel(false)}>Voltar</button>
+            <button type="button" className="primary-action primary-action--danger" onClick={() => void submitDelete()} disabled={!canManage || isDeleting}>
+              {isDeleting ? "Cancelando..." : "Confirmar cancelamento"}
+            </button>
+          </div>
         </div>
       ) : null}
-
-      <BookingActions
-        editing={editing}
-        confirmingDelete={confirmingDelete}
-        canSave={canSave}
-        canManage={canManage}
-        disableReason={disableReason}
-        isSaving={isSaving}
-        isDeleting={isDeleting}
-        onStartEdit={() => {
-          setConfirmingDelete(false);
-          setEditing(true);
-        }}
-        onCancelEdit={() => {
-          setEditing(false);
-          setDate(toDateInput(booking.start));
-          setTime(toTimeInput(booking.start));
-          setAddressLine(toEditableAddress(booking));
-        }}
-        onSave={async () => {
-          await onSave(booking.eventId, payload);
-          setEditing(false);
-        }}
-        onAskDelete={() => {
-          setEditing(false);
-          setConfirmingDelete(true);
-        }}
-        onCancelDelete={() => setConfirmingDelete(false)}
-        onDelete={async () => {
-          await onDelete(booking.eventId);
-          setConfirmingDelete(false);
-        }}
-      />
     </section>
   );
 }

@@ -1,45 +1,26 @@
-import type { BookingRecord } from "../../../types/booking";
 import { BookingStatusBadge } from "./BookingStatusBadge";
-
-function formatDateTime(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(parsed);
-}
+import { formatDateTime } from "../../../lib/dates";
+import type { ServicoResponse } from "../../../types/api";
 
 type BookingListItemProps = {
-  booking: BookingRecord;
-  selected: boolean;
-  onSelect: () => void;
+  booking: ServicoResponse;
+  isActive: boolean;
+  onSelect: (booking: ServicoResponse) => void;
 };
 
-export function BookingListItem({ booking, selected, onSelect }: BookingListItemProps) {
+export function BookingListItem({ booking, isActive, onSelect }: BookingListItemProps) {
   return (
     <button
       type="button"
-      onClick={onSelect}
-      style={{
-        width: "100%",
-        textAlign: "left",
-        border: selected ? "2px solid #0f172a" : "1px solid rgba(15,23,42,0.12)",
-        borderRadius: 16,
-        padding: 14,
-        background: "white",
-        cursor: "pointer",
-      }}
+      className={["my-bookings__item", isActive ? "my-bookings__item--active" : ""].filter(Boolean).join(" ")}
+      onClick={() => onSelect(booking)}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start" }}>
-        <div>
-          <strong style={{ display: "block", marginBottom: 6 }}>{booking.serviceType || "Agendamento"}</strong>
-          <span style={{ display: "block", fontSize: 14, opacity: 0.8 }}>{formatDateTime(booking.start)}</span>
-          <span style={{ display: "block", fontSize: 13, opacity: 0.7, marginTop: 4 }}>{booking.clientCity}</span>
-        </div>
+      <div className="my-bookings__item-top">
+        <strong>{booking.serviceType}</strong>
         <BookingStatusBadge status={booking.status} />
       </div>
+      <span>{formatDateTime(booking.start)}</span>
+      <small>{booking.clientAddressLine || `${booking.clientStreet}, ${booking.clientNumber}`}</small>
     </button>
   );
 }

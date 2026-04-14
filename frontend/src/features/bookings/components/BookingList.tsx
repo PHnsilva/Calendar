@@ -1,21 +1,25 @@
-import type { BookingRecord } from "../../../types/booking";
+import type { ServicoResponse } from "../../../types/api";
 import { BookingListItem } from "./BookingListItem";
 
 type BookingListProps = {
-  bookings: BookingRecord[];
+  bookings: ServicoResponse[];
   selectedEventId?: string;
-  onSelect: (eventId: string) => void;
+  onSelect: (booking: ServicoResponse) => void;
 };
 
 export function BookingList({ bookings, selectedEventId, onSelect }: BookingListProps) {
+  if (bookings.length === 0) {
+    return <p className="my-bookings__empty">Nenhum agendamento encontrado.</p>;
+  }
+
   return (
-    <div style={{ display: "grid", gap: 12 }}>
+    <div className="my-bookings__list">
       {bookings.map((booking) => (
         <BookingListItem
           key={booking.eventId}
           booking={booking}
-          selected={booking.eventId === selectedEventId}
-          onSelect={() => onSelect(booking.eventId)}
+          isActive={booking.eventId === selectedEventId}
+          onSelect={onSelect}
         />
       ))}
     </div>

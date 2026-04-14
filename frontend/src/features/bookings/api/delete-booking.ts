@@ -1,8 +1,8 @@
 import { apiClient } from "../../../lib/api-client";
 
-export function deleteBooking(eventId: string, token: string) {
-  return apiClient<null>(`/api/servicos/me/${eventId}`, {
+export function deleteBooking(input: { eventId: string; token: string }) {
+  return apiClient<void>(`/api/servicos/me/${input.eventId}`, {
     method: "DELETE",
-    query: { token },
+    query: { token: input.token },
   });
 }

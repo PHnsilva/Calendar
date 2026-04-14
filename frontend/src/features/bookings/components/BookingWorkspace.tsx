@@ -1,50 +1,30 @@
-import type { BookingRecord } from "../../../types/booking";
-import type { ServicoRequest } from "../../../types/api";
+import { useEffect, useMemo, useState } from "react";
+import type { ServicoResponse } from "../../../types/api";
 import { BookingDetailCard } from "./BookingDetailCard";
 import { BookingList } from "./BookingList";
 
 type BookingWorkspaceProps = {
-  bookings: BookingRecord[];
-  selectedEventId?: string;
-  onSelect: (eventId: string) => void;
-  onSave: (eventId: string, payload: ServicoRequest) => Promise<void> | void;
-  onDelete: (eventId: string) => Promise<void> | void;
-  isSaving: boolean;
-  isDeleting: boolean;
+  bookings: ServicoResponse[];
 };
 
-export function BookingWorkspace({
-  bookings,
-  selectedEventId,
-  onSelect,
-  onSave,
-  onDelete,
-  isSaving,
-  isDeleting,
-}: BookingWorkspaceProps) {
-  const selectedBooking = bookings.find((booking) => booking.eventId === selectedEventId) ?? bookings[0];
+export function BookingWorkspace({ bookings }: BookingWorkspaceProps) {
+  const [selectedEventId, setSelectedEventId] = useState<string>(bookings[0]?.eventId ?? "");
+
+  useEffect(() => {
+    if (!bookings.find((booking) => booking.eventId === selectedEventId)) {
+      setSelectedEventId(bookings[0]?.eventId ?? "");
+    }
+  }, [bookings, selectedEventId]);
+
+  const selectedBooking = useMemo(
+    () => bookings.find((booking) => booking.eventId === selectedEventId) ?? bookings[0],
+    [bookings, selectedEventId],
+  );
 
   return (
-    <div style={{ display: "grid", gap: 16, gridTemplateColumns: "minmax(280px, 360px) minmax(0, 1fr)" }}>
-      <aside>
-        <BookingList
-          bookings={bookings}
-          selectedEventId={selectedBooking?.eventId}
-          onSelect={onSelect}
-        />
-      </aside>
-
-      <div>
-        {selectedBooking ? (
-          <BookingDetailCard
-            booking={selectedBooking}
-            onSave={onSave}
-            onDelete={onDelete}
-            isSaving={isSaving}
-            isDeleting={isDeleting}
-          />
-        ) : null}
-      </div>
+    <div className="my-bookings__workspace">
+      <BookingList bookings={bookings} selectedEventId={selectedBooking?.eventId} onSelect={(booking) => setSelectedEventId(booking.eventId)} />
+      {selectedBooking ? <BookingDetailCard booking={selectedBooking} /> : <p className="my-bookings__empty">Selecione um agendamento para ver os detalhes.</p>}
     </div>
   );
 }

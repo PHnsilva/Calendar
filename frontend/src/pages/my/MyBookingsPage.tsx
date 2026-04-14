@@ -1,142 +1,47 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { BookingWorkspace } from "../../features/bookings/components/BookingWorkspace";
-import { useBookingMutations } from "../../features/bookings/hooks/useBookingMutations";
+import { Link } from "react-router-dom";
+import { getManageTokens } from "../../lib/storage";
 import { useMyBookings } from "../../features/bookings/hooks/useMyBookings";
-import { RecoveryEmptyState } from "../../features/recovery/components/RecoveryEmptyState";
-import { getStoredManageToken, saveManageToken } from "../../lib/storage";
-import type { ServicoRequest } from "../../types/api";
-
-type FeedbackState = {
-  tone: "success" | "error";
-  message: string;
-} | null;
+import { BookingWorkspace } from "../../features/bookings/components/BookingWorkspace";
 
 export default function MyBookingsPage() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const tokenFromUrl = searchParams.get("token")?.trim() ?? "";
-  const [token, setToken] = useState(tokenFromUrl || getStoredManageToken());
-  const [selectedEventId, setSelectedEventId] = useState("");
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const tokens = getManageTokens();
+  const bookingsQuery = useMyBookings(tokens);
 
-  useEffect(() => {
-    if (!tokenFromUrl) return;
-    saveManageToken(tokenFromUrl);
-    setToken(tokenFromUrl);
-  }, [tokenFromUrl]);
-
-  const bookingsQuery = useMyBookings(token, Boolean(token));
-  const { updateMutation, deleteMutation } = useBookingMutations(token);
-
-  const bookings = bookingsQuery.data ?? [];
-
-  useEffect(() => {
-    if (!selectedEventId && bookings[0]?.eventId) {
-      setSelectedEventId(bookings[0].eventId);
-    }
-  }, [bookings, selectedEventId]);
-
-  const hasToken = Boolean(token.trim());
-  const hasBookings = bookings.length > 0;
-  const selectedBooking = useMemo(
-    () => bookings.find((booking) => booking.eventId === selectedEventId) ?? bookings[0] ?? null,
-    [bookings, selectedEventId],
-  );
-
-  const handleSave = async (eventId: string, payload: ServicoRequest) => {
-    try {
-      await updateMutation.mutateAsync({ eventId, payload });
-      setFeedback({ tone: "success", message: "Agendamento atualizado com sucesso." });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Não foi possível atualizar o agendamento.";
-      setFeedback({ tone: "error", message });
-    }
-  };
-
-  const handleDelete = async (eventId: string) => {
-    try {
-      await deleteMutation.mutateAsync(eventId);
-      setFeedback({ tone: "success", message: "Agendamento cancelado com sucesso." });
-      setSelectedEventId("");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Não foi possível cancelar o agendamento.";
-      setFeedback({ tone: "error", message });
-    }
-  };
-
-  const needsRecovery = feedback?.tone === "error" && /token/i.test(feedback.message);
-
-  return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px", display: "grid", gap: 16 }}>
-      <header style={{ display: "grid", gap: 6 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.65 }}>Sprint 2</span>
-        <h1 style={{ margin: 0 }}>Meus agendamentos</h1>
-        <p style={{ margin: 0, opacity: 0.8 }}>
-          Listagem real por token, com edição e cancelamento protegidos também pelas regras do backend.
-        </p>
-      </header>
-
-      {feedback ? (
-        <div
-          style={{
-            padding: 12,
-            borderRadius: 14,
-            background: feedback.tone === "success" ? "rgba(22,163,74,.08)" : "rgba(220,38,38,.08)",
-            color: feedback.tone === "success" ? "#166534" : "#991b1b",
-            display: "grid",
-            gap: 10,
-          }}
-        >
-          <span>{feedback.message}</span>
-          {needsRecovery ? (
-            <div>
-              <button type="button" className="secondary-action" onClick={() => navigate("/recover")}>Recuperar acesso ao atendimento</button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {!hasToken ? (
-        <>
-          <RecoveryEmptyState />
-          <div style={{ display: "flex", gap: 10 }}>
-            <button type="button" className="primary-action" onClick={() => navigate("/recover")}>Recuperar por telefone</button>
-          </div>
-        </>
-      ) : null}
-
-      {hasToken && bookingsQuery.isLoading ? <div>Carregando agendamentos...</div> : null}
-      {hasToken && bookingsQuery.error ? (
-        <div style={{ padding: 12, borderRadius: 14, background: "rgba(220,38,38,.08)", color: "#991b1b" }}>
-          {bookingsQuery.error.message}
-        </div>
-      ) : null}
-
-      {hasToken && !bookingsQuery.isLoading && !hasBookings ? (
-        <section style={{ display: "grid", gap: 12, border: "1px dashed rgba(15,23,42,.2)", borderRadius: 20, padding: 18, background: "white" }}>
-          <strong>Nenhum agendamento encontrado</strong>
-          <span style={{ opacity: 0.8 }}>Esse token não retornou agendamentos ativos para exibição.</span>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button type="button" className="secondary-action" onClick={() => navigate("/recover")}>Tentar outro telefone</button>
+  if (tokens.length === 0) {
+    return (
+      <main className="my-bookings-page">
+        <section className="my-bookings__panel">
+          <h1>Meus agendamentos</h1>
+          <p>Este navegador ainda não tem acesso salvo a nenhum atendimento.</p>
+          <div className="my-bookings__actions">
+            <Link to="/recover" className="primary-action">Recuperar acesso</Link>
+            <Link to="/" className="secondary-action">Novo agendamento</Link>
           </div>
         </section>
-      ) : null}
+      </main>
+    );
+  }
 
-      {hasToken && hasBookings ? (
-        <BookingWorkspace
-          bookings={bookings}
-          selectedEventId={selectedBooking?.eventId}
-          onSelect={(eventId) => {
-            setSelectedEventId(eventId);
-            setFeedback(null);
-          }}
-          onSave={handleSave}
-          onDelete={handleDelete}
-          isSaving={updateMutation.isPending}
-          isDeleting={deleteMutation.isPending}
-        />
-      ) : null}
+  return (
+    <main className="my-bookings-page">
+      <section className="my-bookings__panel">
+        <div className="my-bookings__panel-header">
+          <div>
+            <h1>Meus agendamentos</h1>
+            <p>Veja seus atendimentos e gerencie o que ainda estiver dentro das regras de alteração.</p>
+          </div>
+          <Link to="/recover" className="secondary-action">Recuperar outro telefone</Link>
+        </div>
+
+        {bookingsQuery.isLoading ? <p className="my-bookings__empty">Carregando agendamentos...</p> : null}
+        {bookingsQuery.isError ? (
+          <div className="my-bookings__empty">
+            <p>{(bookingsQuery.error as Error).message}</p>
+            <Link to="/recover" className="secondary-action">Tentar recuperar novamente</Link>
+          </div>
+        ) : null}
+        {bookingsQuery.data ? <BookingWorkspace bookings={bookingsQuery.data} /> : null}
+      </section>
     </main>
   );
 }

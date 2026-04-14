@@ -2620,167 +2620,158 @@ textarea {
 }
 
 
-.booking-detail-modal--centered {
-  z-index: 200;
-  place-items: center;
-}
-
-.booking-detail-modal__card--centered {
-  width: min(100%, 920px);
+.my-bookings-page,
+.recovery-page {
+  width: min(1120px, 100%);
   margin: 0 auto;
 }
 
-.booking-detail-modal__subtitle {
-  margin: 8px 0 0;
-  color: var(--text-secondary);
-}
-
-.booking-detail-modal__notice {
+.my-bookings__panel,
+.recovery-card {
   display: grid;
-  gap: 6px;
-  padding: 14px 16px;
-  border-radius: 18px;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 28px;
   border: 1px solid var(--border-soft);
-  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
-  margin-bottom: 16px;
+  background: var(--app-surface);
+  box-shadow: var(--shadow-md);
 }
 
-.booking-detail-modal__notice span {
-  color: var(--text-secondary);
-}
-
-.booking-detail-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.booking-detail-modal__section {
-  padding: 14px;
-  border-radius: 20px;
-  border: 1px solid var(--border-soft);
-  background: color-mix(in srgb, var(--app-surface) 92%, white 8%);
-}
-
-.booking-detail-modal__section h4 {
-  margin: 0 0 12px;
-  color: var(--text-secondary);
-  font-size: 0.84rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.booking-detail-modal__actions {
+.my-bookings__panel-header,
+.my-bookings__item-top,
+.booking-detail__header,
+.recovery-card__actions,
+.my-bookings__actions,
+.booking-detail__actions {
   display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  margin-top: 18px;
 }
 
-.booking-detail-modal__danger {
-  color: var(--danger);
-}
-
-.booking-detail-modal__danger-solid {
-  background: linear-gradient(135deg, #d94b4b, #bf2d2d);
-}
-
-.booking-detail-modal__overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 210;
+.my-bookings__workspace {
   display: grid;
-  place-items: center;
-  padding: 18px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 18px;
 }
 
-.booking-detail-modal__overlay-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(15, 23, 35, 0.54);
-  backdrop-filter: blur(6px);
+.my-bookings__list,
+.recovery-card__result-list {
+  display: grid;
+  gap: 12px;
 }
 
-.booking-detail-modal__overlay-card {
-  position: relative;
-  z-index: 1;
-  width: min(100%, 760px);
-  max-height: min(88vh, 760px);
-  overflow: auto;
-  padding: 18px;
-  border-radius: 24px;
+.my-bookings__item,
+.recovery-card__result-item {
   border: 1px solid var(--border-soft);
-  background: var(--app-surface-solid);
-  box-shadow: var(--shadow-lg);
-}
-
-.booking-detail-modal__overlay-card--narrow {
-  width: min(100%, 560px);
-}
-
-.booking-detail-modal__header--compact {
-  margin-bottom: 12px;
-}
-
-.booking-detail-modal__edit-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.booking-detail-modal__field {
+  border-radius: 20px;
+  padding: 16px;
+  background: var(--app-surface-soft);
   display: grid;
   gap: 8px;
+  text-align: left;
 }
 
-.booking-detail-modal__field span {
+.my-bookings__item--active {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 1px rgba(47, 125, 203, 0.18);
+}
+
+.my-bookings__empty,
+.booking-detail__notice,
+.booking-detail__error,
+.recovery-card__error {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--app-surface-soft);
   color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
-.booking-detail-modal__field input,
-.booking-detail-modal__field select,
-.booking-detail-modal__field textarea {
-  width: 100%;
+.booking-detail__error,
+.recovery-card__error {
+  color: #b42318;
+  background: rgba(180, 35, 24, 0.08);
+}
+
+.booking-detail {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid var(--border-soft);
+  background: var(--app-surface-soft);
+}
+
+.booking-detail__content,
+.booking-detail__form,
+.booking-detail__section {
+  display: grid;
+  gap: 12px;
+}
+
+.booking-detail__form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.booking-detail__form label,
+.recovery-card label {
+  display: grid;
+  gap: 6px;
+}
+
+.booking-detail__form input,
+.recovery-card input {
   min-height: 44px;
   border-radius: 14px;
   border: 1px solid var(--border-soft);
-  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
-  color: var(--text-primary);
   padding: 0 14px;
+  background: var(--app-surface);
+  color: inherit;
 }
 
-.booking-detail-modal__field textarea {
-  min-height: 110px;
-  padding: 12px 14px;
-  resize: vertical;
+.booking-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(47, 125, 203, 0.12);
+  color: var(--accent-strong);
 }
 
-.booking-detail-modal__field--full {
-  grid-column: 1 / -1;
+.booking-status-badge--pending_phone {
+  background: rgba(180, 126, 24, 0.12);
+  color: #8a5b00;
 }
 
-.booking-detail-modal__helper {
-  margin: 12px 0 0;
-  color: var(--text-secondary);
-  line-height: 1.5;
+.booking-status-badge--cancelled {
+  background: rgba(180, 35, 24, 0.12);
+  color: #b42318;
 }
 
-.booking-detail-modal__actions--overlay {
-  margin-top: 16px;
+.primary-action--danger {
+  background: #b42318;
+  color: #fff;
 }
 
-@media (max-width: 720px) {
-  .booking-detail-modal__grid,
-  .booking-detail-modal__edit-grid {
+@media (max-width: 900px) {
+  .my-bookings__workspace,
+  .booking-detail__form-grid {
     grid-template-columns: 1fr;
   }
 
-  .booking-detail-modal__actions {
+  .my-bookings__panel-header,
+  .booking-detail__header,
+  .recovery-card__actions,
+  .my-bookings__actions,
+  .booking-detail__actions {
     flex-direction: column;
     align-items: stretch;
   }

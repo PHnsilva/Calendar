@@ -25,6 +25,7 @@ public class ServicoResponse {
 
     private String clientAddressLine;
     private String status;
+    private String manageToken;
 
     public String getEventId() { return eventId; }
     public void setEventId(String eventId) { this.eventId = eventId; }
@@ -79,4 +80,7 @@ public class ServicoResponse {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getManageToken() { return manageToken; }
+    public void setManageToken(String manageToken) { this.manageToken = manageToken; }
 }

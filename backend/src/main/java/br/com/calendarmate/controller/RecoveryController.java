@@ -2,14 +2,12 @@ package br.com.calendarmate.controller;
 
 import br.com.calendarmate.dto.RecoverConfirmRequest;
 import br.com.calendarmate.dto.RecoverConfirmResponse;
+import br.com.calendarmate.dto.RecoverResendRequest;
 import br.com.calendarmate.dto.RecoverStartRequest;
 import br.com.calendarmate.dto.RecoverStartResponse;
 import br.com.calendarmate.service.RecoveryService;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
@@ -30,7 +28,7 @@ public class RecoveryController {
     }
 
     @PostMapping("/resend")
-    public RecoverStartResponse resend(@Valid @RequestBody RecoverConfirmRequest req) {
+    public RecoverStartResponse resend(@Valid @RequestBody RecoverResendRequest req) {
         RecoveryService.StartResult r = recoveryService.resend(req.getVerificationId());
         return new RecoverStartResponse(r.verificationId(), r.expiresInSeconds(), r.resendAfterSeconds());
     }

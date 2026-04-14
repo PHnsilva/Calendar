@@ -16,7 +16,7 @@ import { useHomeCalendarView } from '../../features/home/hooks/useHomeCalendarVi
 import { useHomeBookingSelection } from '../../app/home-booking-provider';
 import { ALLOWED_CITIES } from '../../data/allowed-cities';
 import type { CalendarEvent } from '../../features/calendar/types';
-import { getLocalCalendarEvents } from '../../lib/storage';
+import { getLocalCalendarEvents, getLocalEventsChangedEventName } from '../../lib/storage';
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
 import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
 import type { ServicoResponse } from '../../types/api';
@@ -98,26 +98,27 @@ function buildStressPreviewEvents(currentAllowedMonth: string, nextAllowedMonth:
     'Nova Lima': 'Alameda dos Ipês, 420 - Jardim Canadá - Nova Lima/MG CEP: 34007-000',
     Congonhas: 'Rua Barão de Congonhas, 210 - Centro - Congonhas/MG CEP: 36415-000',
     'Rio Acima': 'Rua da Serra, 56 - Centro - Rio Acima/MG CEP: 34300-000',
+    Brumadinho: 'Rua da Matriz, 98 - Centro - Brumadinho/MG CEP: 35460-000',
   };
 
   const plan = [
     { month: 'current', day: 1, times: ['08:00', '09:30'], cities: ['Itabirito', 'Ouro Preto'] },
     { month: 'current', day: 3, times: ['08:00', '10:00', '13:30'], cities: ['Belo Horizonte', 'Itabirito', 'Congonhas'] },
     { month: 'current', day: 5, times: ['09:00', '11:00'], cities: ['Moeda', 'Nova Lima'] },
-    { month: 'current', day: 7, times: ['08:30', '14:00'], cities: ['Rio Acima'] },
+    { month: 'current', day: 7, times: ['08:30', '14:00'], cities: ['Rio Acima', 'Brumadinho'] },
     { month: 'current', day: 9, times: ['09:00', '12:00', '15:00'], cities: ['Ouro Preto', 'Congonhas', 'Itabirito'] },
     { month: 'current', day: 11, times: ['08:00', '10:00', '13:00', '16:00'], cities: ['Belo Horizonte', 'Nova Lima', 'Rio Acima', 'Moeda'] },
-    { month: 'current', day: 14, times: ['09:00', '11:30'], cities: ['Congonhas'] },
+    { month: 'current', day: 14, times: ['09:00', '11:30'], cities: ['Brumadinho', 'Congonhas'] },
     { month: 'current', day: 16, times: ['08:00', '10:30', '14:30'], cities: ['Itabirito', 'Ouro Preto', 'Belo Horizonte'] },
     { month: 'current', day: 18, times: ['09:00'], cities: ['Nova Lima'] },
-    { month: 'current', day: 20, times: ['08:00', '09:00', '13:00', '15:30'], cities: ['Moeda', 'Rio Acima', 'Congonhas'] },
+    { month: 'current', day: 20, times: ['08:00', '09:00', '13:00', '15:30'], cities: ['Moeda', 'Rio Acima', 'Congonhas', 'Brumadinho'] },
     { month: 'current', day: 23, times: ['10:00', '12:30'], cities: ['Belo Horizonte', 'Itabirito'] },
     { month: 'current', day: 25, times: ['08:00', '11:00', '14:00'], cities: ['Ouro Preto', 'Nova Lima', 'Rio Acima'] },
     { month: 'current', day: 27, times: ['09:30', '13:00'], cities: ['Moeda', 'Congonhas'] },
     { month: 'next', day: 2, times: ['08:00', '10:00'], cities: ['Itabirito', 'Belo Horizonte'] },
     { month: 'next', day: 4, times: ['09:00', '11:00', '15:00'], cities: ['Ouro Preto', 'Nova Lima', 'Congonhas'] },
     { month: 'next', day: 6, times: ['08:30', '12:30'], cities: ['Rio Acima', 'Moeda'] },
-    { month: 'next', day: 9, times: ['09:00', '14:00'], cities: ['Itabirito'] },
+    { month: 'next', day: 9, times: ['09:00', '14:00'], cities: ['Brumadinho', 'Itabirito'] },
     { month: 'next', day: 12, times: ['08:00', '10:00', '13:00'], cities: ['Belo Horizonte', 'Ouro Preto', 'Nova Lima'] },
   ] as const;
 
@@ -298,6 +299,19 @@ export default function HomePage({
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    const syncLocalEvents = () => {
+      setLocalEvents(getLocalCalendarEvents().filter((event) => event.date >= todayIso));
+    };
+    const eventName = getLocalEventsChangedEventName();
+    window.addEventListener(eventName, syncLocalEvents as EventListener);
+    window.addEventListener("storage", syncLocalEvents);
+    return () => {
+      window.removeEventListener(eventName, syncLocalEvents as EventListener);
+      window.removeEventListener("storage", syncLocalEvents);
+    };
+  }, [todayIso]);
 
   useEffect(() => {
     const html = document.documentElement;

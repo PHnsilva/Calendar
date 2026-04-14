@@ -9,14 +9,8 @@ import { saveLocalCalendarEvent, saveManageToken } from "../../../lib/storage";
 import type { ServicoResponse } from "../../../types/api";
 import type { BookingFormValues } from "../../../types/booking";
 import type { HomeSelectedSlot } from "../../home/types";
+import { OTHER_CITIES, PRIMARY_CITY, SECONDARY_CITY } from "../../../data/allowed-cities";
 import { usePublicBootstrap } from "../../public-config/hooks/usePublicBootstrap";
-import {
-  formatDurationLabel,
-  getAllowedCities,
-  getBookingDurationMinutes,
-  getDefaultCity,
-  getDefaultState,
-} from "../../../lib/bootstrap-config";
 
 type BookingFormModalProps = {
   open: boolean;
@@ -49,7 +43,7 @@ const INITIAL_FORM: BookingFormValues = {
   clientNeighborhood: "",
   clientNumber: "",
   clientComplement: "",
-  clientCity: "Itabirito",
+  clientCity: PRIMARY_CITY,
   clientState: "MG",
 };
 
@@ -172,7 +166,7 @@ export default function BookingFormModal({
 
   const [draftSlot, setDraftSlot] = useState<HomeSelectedSlot>(selectedSlot);
   const [formValues, setFormValues] = useState<BookingFormValues>(INITIAL_FORM);
-  const [selectedCity, setSelectedCity] = useState<string>(INITIAL_FORM.clientCity);
+  const [selectedCity, setSelectedCity] = useState<string>(PRIMARY_CITY);
   const [addressInput, setAddressInput] = useState("");
   const [selectedAddress, setSelectedAddress] = useState<AddressSuggestion | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
@@ -180,15 +174,10 @@ export default function BookingFormModal({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { data: bootstrap } = usePublicBootstrap(open);
-  const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
-  const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
-  const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);
   const slotMinutes = bootstrap?.booking?.slotMinutes ?? 60;
-  const cityDurationMinutes = getBookingDurationMinutes(selectedCity || defaultCity, bootstrap);
 
   const { data: availableSlots = [], isLoading: isLoadingSlots, error: slotsError } = useAvailableSlots(
     selectedDate,
-    selectedCity || defaultCity,
     slotMinutes,
     open && !isUnavailable,
   );
@@ -199,22 +188,20 @@ export default function BookingFormModal({
   useEffect(() => {
     if (!open) return;
     setDraftSlot(selectedSlot);
-    const nextCity = defaultCity;
-    const nextState = defaultState;
-    setFormValues({ ...INITIAL_FORM, clientCity: nextCity, clientState: nextState });
-    setSelectedCity(nextCity);
+    setFormValues({ ...INITIAL_FORM, clientCity: PRIMARY_CITY });
+    setSelectedCity(PRIMARY_CITY);
     setAddressInput("");
     setSelectedAddress(null);
     setValidationErrors({});
     setSuccessMessage(null);
     setVerificationState(null);
-  }, [defaultCity, defaultState, open, selectedDate, selectedSlot]);
+  }, [open, selectedDate, selectedSlot]);
 
   useEffect(() => {
     setFormValues((current) => ({
       ...current,
       clientCity: selectedCity,
-      clientState: current.clientState || defaultState,
+      clientState: current.clientState || "MG",
     }));
     setAddressInput("");
     setSelectedAddress(null);
@@ -225,34 +212,22 @@ export default function BookingFormModal({
       clientNumber: "",
       clientCep: "",
       clientCity: selectedCity,
-      clientState: current.clientState || defaultState,
+      clientState: current.clientState || "MG",
     }));
     setValidationErrors((current) => {
       const next = { ...current };
       delete next.addressInput;
       return next;
     });
-  }, [defaultState, selectedCity]);
+  }, [selectedCity]);
 
   useEffect(() => {
     if (!open) return;
-
-    const matchingDraftSlot = availableSlots.find((slot) => slot.startTime === draftSlot?.startTime && slot.date === draftSlot?.date);
-    if (matchingDraftSlot) {
-      setDraftSlot((current) => current && current.endTime === matchingDraftSlot.endTime
-        ? current
-        : { date: matchingDraftSlot.date, startTime: matchingDraftSlot.startTime, endTime: matchingDraftSlot.endTime });
-      return;
+    const selectedStillAvailable = availableSlots.some((slot) => slot.startTime === draftSlot?.startTime && slot.date === draftSlot?.date);
+    if (!selectedStillAvailable) {
+      setDraftSlot(selectedSlot && availableSlots.some((slot) => slot.startTime === selectedSlot.startTime) ? selectedSlot : null);
     }
-
-    const matchingSelectedSlot = availableSlots.find((slot) => slot.startTime === selectedSlot?.startTime && slot.date === selectedSlot?.date);
-    if (matchingSelectedSlot) {
-      setDraftSlot({ date: matchingSelectedSlot.date, startTime: matchingSelectedSlot.startTime, endTime: matchingSelectedSlot.endTime });
-      return;
-    }
-
-    setDraftSlot(null);
-  }, [availableSlots, draftSlot?.date, draftSlot?.endTime, draftSlot?.startTime, open, selectedSlot?.date, selectedSlot?.startTime]);
+  }, [availableSlots, draftSlot, open, selectedSlot]);
 
   useEffect(() => {
     if (!open) {
@@ -349,10 +324,10 @@ export default function BookingFormModal({
         clientNumber: buildPersistedNumber(formValues.clientNumber, normalizedComplement),
         clientComplement: undefined,
         clientCity: selectedCity,
-        clientState: normalizeText(formValues.clientState || defaultState).slice(0, 2).toUpperCase(),
+        clientState: normalizeText(formValues.clientState || "MG").slice(0, 2).toUpperCase(),
       });
 
-      saveManageToken(response.manageToken);
+      saveManageToken(response.manageToken, response.servico.eventId);
       const newEvent = mapServicoToCalendarEvent(response.servico);
       saveLocalCalendarEvent(newEvent);
       onBookingCreated?.(newEvent);
@@ -454,13 +429,28 @@ export default function BookingFormModal({
                   <label className="booking-form__field booking-form__field--with-error"><span>E-mail</span><input value={formValues.clientEmail} onChange={(event) => handleFieldChange("clientEmail", event.target.value)} className="booking-form__input" type="email" placeholder="voce@email.com" />{validationErrors.clientEmail ? <small className="booking-form__field-error">{validationErrors.clientEmail}</small> : null}</label>
                   <label className="booking-form__field booking-form__field--with-error"><span>Telefone</span><input value={formValues.clientPhone} onChange={(event) => handleFieldChange("clientPhone", formatPhoneInput(event.target.value))} className="booking-form__input" inputMode="tel" placeholder="(31) 99999-9999" />{validationErrors.clientPhone ? <small className="booking-form__field-error">{validationErrors.clientPhone}</small> : null}</label>
 
-                  <label className="booking-form__field booking-form__field--full">
+                  <div className="booking-form__field booking-form__field--full">
                     <span>Cidade</span>
-                    <select value={selectedCity} onChange={(event) => setSelectedCity(event.target.value)} className="booking-form__input">
-                      {allowedCities.map((city) => <option key={city} value={city}>{city}</option>)}
-                    </select>
-                    <small className="booking-form__field-help">Para {selectedCity}, a agenda reserva aproximadamente {formatDurationLabel(cityDurationMinutes)} do dia.</small>
-                  </label>
+                    <div className="booking-city-picker">
+                      <button type="button" className={["booking-city-choice", selectedCity === PRIMARY_CITY ? "booking-city-choice--active" : "booking-city-choice--muted"].join(" ")} onClick={() => setSelectedCity(PRIMARY_CITY)}>
+                        <span className="booking-city-choice__icon">A</span>
+                        <span>{PRIMARY_CITY}</span>
+                      </button>
+
+                      <button type="button" className={["booking-city-choice", selectedCity === SECONDARY_CITY ? "booking-city-choice--active" : "booking-city-choice--muted"].join(" ")} onClick={() => setSelectedCity(SECONDARY_CITY)}>
+                        <span className="booking-city-choice__icon">B</span>
+                        <span>{SECONDARY_CITY}</span>
+                      </button>
+
+                      <label className={["booking-city-select", ![PRIMARY_CITY, SECONDARY_CITY].includes(selectedCity) ? "booking-city-select--active" : "booking-city-select--muted"].join(" ")}>
+                        <span className="booking-city-choice__icon">C</span>
+                        <select value={[PRIMARY_CITY, SECONDARY_CITY].includes(selectedCity) ? "" : selectedCity} onChange={(event) => setSelectedCity(event.target.value || OTHER_CITIES[0])}>
+                          <option value="">Outros</option>
+                          {OTHER_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
+                        </select>
+                      </label>
+                    </div>
+                  </div>
 
                   <label className="booking-form__field booking-form__field--full booking-form__field--with-error">
                     <span>Endereço</span>
@@ -501,7 +491,6 @@ export default function BookingFormModal({
                 </div>
 
                 <p className="booking-form__hint">Escolha a cidade e selecione o endereço sugerido para preencher o agendamento com mais precisão.</p>
-                <p className="booking-form__hint">Os horários disponíveis já consideram o deslocamento saindo de Itabirito para {selectedCity}.</p>
                 <p className="booking-form__hint">O tipo de serviço é enviado automaticamente como <strong>{DEFAULT_SERVICE_TYPE}</strong>.</p>
                 {backendError && backendError !== GENERIC_ADDRESS_ERROR ? <p className="booking-form__feedback booking-form__feedback--error">{backendError}</p> : null}
               </>

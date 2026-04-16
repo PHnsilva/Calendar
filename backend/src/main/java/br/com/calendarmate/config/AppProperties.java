@@ -64,6 +64,9 @@ public class AppProperties {
     @Value("${app.admin.bulkCancel.maxItems:200}")
     private int adminBulkCancelMaxItems;
 
+    @Value("${admin.token:${ADMIN_TOKEN:}}")
+    private String adminToken;
+
     @Value("${whatsapp.enabled:false}")
     private boolean whatsappEnabled;
 
@@ -255,6 +258,8 @@ public class AppProperties {
     public Duration getOtpTtl() { return Duration.ofSeconds(otpTtlSeconds); }
     public Duration getOtpResendAfter() { return Duration.ofSeconds(otpResendAfterSeconds); }
     public int getAdminBulkCancelMaxItems() { return Math.max(1, Math.min(adminBulkCancelMaxItems, 1000)); }
+
+    public String getAdminToken() { return adminToken == null ? "" : adminToken.trim(); }
     public boolean isWhatsappEnabled() { return whatsappEnabled; }
     public String getWhatsappToken() { return whatsappToken == null ? "" : whatsappToken.trim(); }
     public String getWhatsappPhoneNumberId() { return whatsappPhoneNumberId == null ? "" : whatsappPhoneNumberId.trim(); }

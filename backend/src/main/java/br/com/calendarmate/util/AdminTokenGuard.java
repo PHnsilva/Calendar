@@ -4,15 +4,23 @@ import br.com.calendarmate.exception.ForbiddenException;
 
 public final class AdminTokenGuard {
 
-    private static final String ADMIN_TOKEN = System.getenv("ADMIN_TOKEN");
+    private static volatile String adminToken = "";
 
     private AdminTokenGuard() {}
 
+    public static void configure(String token) {
+        adminToken = token == null ? "" : token.trim();
+    }
+
+    public static boolean isConfigured() {
+        return adminToken != null && !adminToken.isBlank();
+    }
+
     public static void require(String header) {
-        if (ADMIN_TOKEN == null || ADMIN_TOKEN.isBlank()) {
+        if (!isConfigured()) {
             throw new ForbiddenException("Admin desabilitado (ADMIN_TOKEN não configurado)");
         }
-        if (header == null || !header.equals(ADMIN_TOKEN)) {
+        if (header == null || !header.trim().equals(adminToken)) {
             throw new ForbiddenException("Admin token required");
         }
     }

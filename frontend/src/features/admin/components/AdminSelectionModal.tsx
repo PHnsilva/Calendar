@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ServicoResponse } from '../../../types/api';
-import type { AdminBlockMode, AdminBlockEntry } from '../api/manage-admin-blocks';
-import { usePublicBootstrap } from '../../public-config/hooks/usePublicBootstrap';
-import { getScheduleTimeOptions } from '../../../lib/bootstrap-config';
+import { useQuery } from '@tanstack/react-query';
+import type { ServicoResponse, AvailabilityBlockResponse } from '../../../types/api';
+import { previewAdminBlocks, type AdminBlockMode, type AdminBlockEntry } from '../api/manage-admin-blocks';
 
 type AdminSelectionModalMode = 'block' | 'cancel' | 'view';
 
@@ -16,10 +15,14 @@ type AdminSelectionModalProps = {
   mode: AdminSelectionModalMode | null;
   selectedDates: string[];
   bookings: ServicoResponse[];
+  blocks: AvailabilityBlockResponse[];
   onClose: () => void;
   onConfirmBlock: (payload: BlockConfirmPayload) => void | Promise<void>;
   onConfirmCancel: (bookingIds: string[]) => void | Promise<void>;
+  onDeleteBlock: (blockId: string) => void | Promise<void>;
 };
+
+const TIME_OPTIONS = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'] as const;
 
 type DayDraft = {
   date: string;
@@ -35,8 +38,19 @@ function formatDate(date: string) {
   }).format(new Date(`${date}T12:00:00`));
 }
 
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
 function bookingName(booking: ServicoResponse) {
   return `${booking.clientFirstName ?? ''} ${booking.clientLastName ?? ''}`.trim() || booking.serviceType || 'Agendamento';
+}
+
+function blockDate(block: AvailabilityBlockResponse) {
+  return block.start.slice(0, 10);
 }
 
 export default function AdminSelectionModal({
@@ -44,27 +58,28 @@ export default function AdminSelectionModal({
   mode,
   selectedDates,
   bookings,
+  blocks,
   onClose,
   onConfirmBlock,
   onConfirmCancel,
+  onDeleteBlock,
 }: AdminSelectionModalProps) {
   const [blockMode, setBlockMode] = useState<AdminBlockMode>('full-day');
   const [draftDays, setDraftDays] = useState<DayDraft[]>([]);
   const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>([]);
-  const { data: bootstrap } = usePublicBootstrap(open);
-  const timeOptions = useMemo(() => getScheduleTimeOptions(bootstrap), [bootstrap]);
+  const [deletingBlockId, setDeletingBlockId] = useState('');
 
   useEffect(() => {
     if (!open || !mode) return;
 
     if (mode === 'block') {
       setBlockMode('full-day');
-      setDraftDays(selectedDates.map((date) => ({ date, selected: true, times: [...timeOptions] })));
+      setDraftDays(selectedDates.map((date) => ({ date, selected: true, times: [...TIME_OPTIONS] })));
       return;
     }
 
     setSelectedBookingIds(mode === 'cancel' ? bookings.map((booking) => booking.eventId) : []);
-  }, [bookings, mode, open, selectedDates, timeOptions]);
+  }, [bookings, mode, open, selectedDates]);
 
   const groupedBookings = useMemo(() => {
     const map = new Map<string, ServicoResponse[]>();
@@ -79,17 +94,40 @@ export default function AdminSelectionModal({
     return Array.from(map.entries());
   }, [bookings]);
 
-  if (!open || !mode) return null;
+  const groupedBlocks = useMemo(() => {
+    const map = new Map<string, AvailabilityBlockResponse[]>();
+    [...blocks]
+      .sort((left, right) => left.start.localeCompare(right.start))
+      .forEach((block) => {
+        const key = blockDate(block);
+        const current = map.get(key) ?? [];
+        current.push(block);
+        map.set(key, current);
+      });
+    return Array.from(map.entries());
+  }, [blocks]);
 
   const activeDays = draftDays.filter((day) => day.selected);
-  const selectedBookings = selectedBookingIds.length;
+  const previewQuery = useQuery({
+    queryKey: ['admin-block-preview', blockMode, JSON.stringify(activeDays)],
+    queryFn: () => previewAdminBlocks({
+      mode: blockMode,
+      entries: activeDays.map((day) => ({ date: day.date, times: day.times })),
+    }),
+    enabled: open && mode === 'block' && activeDays.length > 0 && (blockMode === 'full-day' || activeDays.some((day) => day.times.length > 0)),
+    staleTime: 0,
+    retry: 0,
+  });
 
-  const title = mode === 'block' ? 'Bloquear seleção' : mode === 'cancel' ? 'Cancelar agendamentos' : 'Agendamentos selecionados';
+  if (!open || !mode) return null;
+
+  const selectedBookings = selectedBookingIds.length;
+  const title = mode === 'block' ? 'Bloquear seleção' : mode === 'cancel' ? 'Cancelar agendamentos' : 'Resumo da seleção';
   const description = mode === 'block'
-    ? 'Revise os dias selecionados e ajuste os horários antes de confirmar o bloqueio.'
+    ? 'Revise os dias selecionados, consulte conflitos e confirme o bloqueio.'
     : mode === 'cancel'
       ? 'Os cards já vêm marcados. Desmarque o que deve permanecer ativo.'
-      : 'Visualize os agendamentos encontrados. Se quiser, selecione alguns para cancelar.';
+      : 'Veja agendamentos e bloqueios que já ocupam os dias selecionados.';
 
   return (
     <div className="admin-selection-modal" role="dialog" aria-modal="true">
@@ -144,7 +182,7 @@ export default function AdminSelectionModal({
 
                   {blockMode === 'specific-hours' ? (
                     <div className="admin-selection-card__chips">
-                      {timeOptions.map((time) => {
+                      {TIME_OPTIONS.map((time) => {
                         const active = day.times.includes(time);
                         return (
                           <button
@@ -172,6 +210,47 @@ export default function AdminSelectionModal({
               ))}
             </div>
 
+            <div className="admin-selection-preview">
+              <div className="admin-selection-preview__header">
+                <strong>Prévia do bloqueio</strong>
+                {previewQuery.isLoading ? <span>Calculando conflitos…</span> : null}
+              </div>
+
+              {previewQuery.isError ? (
+                <div className="admin-selection-modal__empty">
+                  <strong>Não foi possível gerar a prévia</strong>
+                  <span>{previewQuery.error instanceof Error ? previewQuery.error.message : 'Falha ao consultar conflitos.'}</span>
+                </div>
+              ) : null}
+
+              {!previewQuery.isError && !previewQuery.isLoading && (previewQuery.data?.length ?? 0) === 0 ? (
+                <div className="admin-selection-modal__empty">
+                  <strong>Sem conflitos encontrados</strong>
+                  <span>Os dias selecionados estão livres dentro das regras atuais.</span>
+                </div>
+              ) : null}
+
+              {previewQuery.data?.map((item) => (
+                <article key={item.key} className="admin-selection-preview__card">
+                  <div className="admin-selection-preview__top">
+                    <strong>{formatDate(item.date)}</strong>
+                    <span>{item.startTime ? `${item.startTime} — ${item.endTime}` : 'Dia inteiro'}</span>
+                  </div>
+                  <small>{item.preview.conflictCount} conflito(s) detectado(s)</small>
+                  {item.preview.conflicts.length > 0 ? (
+                    <div className="admin-selection-preview__conflicts">
+                      {item.preview.conflicts.map((conflict) => (
+                        <div key={conflict.eventId} className="admin-selection-preview__conflict">
+                          <strong>{`${conflict.clientFirstName} ${conflict.clientLastName}`.trim() || conflict.serviceType}</strong>
+                          <span>{formatDateTime(conflict.start)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+
             <footer className="admin-selection-modal__footer">
               <button type="button" className="admin-selection-modal__secondary" onClick={onClose}>Fechar</button>
               <button
@@ -187,7 +266,7 @@ export default function AdminSelectionModal({
               </button>
             </footer>
           </>
-        ) : (
+        ) : mode === 'cancel' ? (
           <>
             <div className="admin-selection-modal__list admin-selection-modal__list--bookings">
               {groupedBookings.length === 0 ? (
@@ -233,10 +312,94 @@ export default function AdminSelectionModal({
                 disabled={selectedBookings === 0}
                 onClick={() => onConfirmCancel(selectedBookingIds)}
               >
-                {mode === 'cancel' ? 'Cancelar agendamentos' : 'Cancelar selecionados'}
+                Cancelar agendamentos
               </button>
             </footer>
           </>
+        ) : (
+          <div className="admin-selection-overview">
+            <section className="admin-selection-overview__section">
+              <header className="admin-selection-overview__header">
+                <strong>Bloqueios existentes</strong>
+                <span>{blocks.length} encontrado(s)</span>
+              </header>
+
+              {groupedBlocks.length === 0 ? (
+                <div className="admin-selection-modal__empty">
+                  <strong>Nenhum bloqueio encontrado</strong>
+                  <span>Os dias selecionados ainda não possuem regras administrativas cadastradas.</span>
+                </div>
+              ) : groupedBlocks.map(([date, items]) => (
+                <section key={date} className="admin-selection-booking-group">
+                  <header className="admin-selection-booking-group__header">
+                    <strong>{formatDate(date)}</strong>
+                  </header>
+                  <div className="admin-selection-booking-group__list">
+                    {items.map((block) => (
+                      <article key={block.blockId} className="admin-selection-booking-card admin-selection-booking-card--block">
+                        <div className="admin-selection-booking-card__top">
+                          <strong>{block.type === 'DAY' ? 'Dia inteiro' : `${block.start.slice(11, 16)} — ${block.end.slice(11, 16)}`}</strong>
+                          <button
+                            type="button"
+                            className="admin-selection-booking-card__danger"
+                            disabled={deletingBlockId === block.blockId}
+                            onClick={async () => {
+                              setDeletingBlockId(block.blockId);
+                              try {
+                                await onDeleteBlock(block.blockId);
+                              } finally {
+                                setDeletingBlockId('');
+                              }
+                            }}
+                          >
+                            {deletingBlockId === block.blockId ? 'Removendo…' : 'Remover'}
+                          </button>
+                        </div>
+                        <span>{block.reason || 'Bloqueio administrativo'}</span>
+                        <small>Criado em {block.createdAt ? formatDateTime(block.createdAt) : formatDateTime(block.start)}</small>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </section>
+
+            <section className="admin-selection-overview__section">
+              <header className="admin-selection-overview__header">
+                <strong>Agendamentos no período</strong>
+                <span>{bookings.length} encontrado(s)</span>
+              </header>
+
+              {groupedBookings.length === 0 ? (
+                <div className="admin-selection-modal__empty">
+                  <strong>Nenhum agendamento encontrado</strong>
+                  <span>Não existem atendimentos dentro dos dias selecionados.</span>
+                </div>
+              ) : groupedBookings.map(([date, items]) => (
+                <section key={date} className="admin-selection-booking-group">
+                  <header className="admin-selection-booking-group__header">
+                    <strong>{formatDate(date)}</strong>
+                  </header>
+                  <div className="admin-selection-booking-group__list">
+                    {items.map((booking) => (
+                      <article key={booking.eventId} className="admin-selection-booking-card">
+                        <div className="admin-selection-booking-card__top">
+                          <strong>{bookingName(booking)}</strong>
+                          <span>{booking.start.slice(11, 16)}</span>
+                        </div>
+                        <span>{booking.clientAddressLine || booking.clientCity}</span>
+                        <small>{booking.serviceType}</small>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </section>
+
+            <footer className="admin-selection-modal__footer">
+              <button type="button" className="admin-selection-modal__secondary" onClick={onClose}>Fechar</button>
+            </footer>
+          </div>
         )}
       </section>
     </div>

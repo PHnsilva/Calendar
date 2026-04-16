@@ -1,5 +1,6 @@
-import { apiPost } from '../../../lib/api-client';
+import { apiDelete, apiGet, apiPost } from '../../../lib/api-client';
 import { getStoredAdminToken } from '../../../lib/storage';
+import type { AvailabilityBlockPreviewResponse, AvailabilityBlockResponse } from '../../../types/api';
 
 export type AdminBlockMode = 'full-day' | 'specific-hours';
 
@@ -8,28 +9,48 @@ export type AdminBlockEntry = {
   times?: string[];
 };
 
-export type CreateAdminBlocksInput = {
+type DayPayloadItem = {
+  key: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  payload: Record<string, unknown>;
+};
+
+export type PreviewAdminBlocksInput = {
   entries: AdminBlockEntry[];
   mode: AdminBlockMode;
   slotMinutes?: number;
   reason?: string;
+};
+
+export type CreateAdminBlocksInput = PreviewAdminBlocksInput & {
   cancelConflictingBookings?: boolean;
 };
 
-type BackendBlockType = 'DAY' | 'SLOT';
+export type AdminBlockPreviewItem = {
+  key: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  preview: AvailabilityBlockPreviewResponse;
+};
 
-type PreviewPayload = {
-  mode: 'BLOCK';
-  type: BackendBlockType;
-  date?: string;
-  startAt?: string;
-  endAt?: string;
+export type AdminBlockListFilters = {
+  from?: string;
+  to?: string;
+  mode?: string;
+  type?: string;
   reason?: string;
 };
 
-type CreatePayload = PreviewPayload & {
-  cancelConflictingBookings?: boolean;
-};
+function getAdminTokenOrThrow() {
+  const adminToken = getStoredAdminToken();
+  if (!adminToken) {
+    throw new Error('Token administrativo ausente.');
+  }
+  return adminToken;
+}
 
 function addMinutes(time: string, minutesToAdd: number): string {
   const [hours, minutes] = time.split(':').map(Number);
@@ -37,30 +58,7 @@ function addMinutes(time: string, minutesToAdd: number): string {
   return `${`${Math.floor(total / 60)}`.padStart(2, '0')}:${`${total % 60}`.padStart(2, '0')}`;
 }
 
-function toDateTime(date: string, time: string): string {
-  return `${date}T${time}:00`;
-}
-
-function buildDayPayload(date: string, reason?: string): PreviewPayload {
-  return {
-    mode: 'BLOCK',
-    type: 'DAY',
-    date,
-    reason,
-  };
-}
-
-function buildSlotPayload(date: string, startTime: string, slotMinutes: number, reason?: string): PreviewPayload {
-  return {
-    mode: 'BLOCK',
-    type: 'SLOT',
-    startAt: toDateTime(date, startTime),
-    endAt: toDateTime(date, addMinutes(startTime, slotMinutes)),
-    reason,
-  };
-}
-
-function normalizeEntries(entries: AdminBlockEntry[]): AdminBlockEntry[] {
+function normalizeEntries(entries: AdminBlockEntry[]) {
   return entries
     .map((entry) => ({
       date: entry.date,
@@ -69,49 +67,90 @@ function normalizeEntries(entries: AdminBlockEntry[]): AdminBlockEntry[] {
     .filter((entry) => entry.date);
 }
 
-function toPayloads(entry: AdminBlockEntry, mode: AdminBlockMode, slotMinutes: number, reason?: string): PreviewPayload[] {
+function buildPayloads(entry: AdminBlockEntry, mode: AdminBlockMode, slotMinutes: number, reason?: string): DayPayloadItem[] {
   if (mode === 'full-day') {
-    return [buildDayPayload(entry.date, reason)];
+    return [
+      {
+        key: `${entry.date}-day`,
+        date: entry.date,
+        payload: {
+          mode: 'BLOCK',
+          type: 'DAY',
+          date: entry.date,
+          reason: reason?.trim() || 'Bloqueio administrativo',
+        },
+      },
+    ];
   }
 
-  return (entry.times ?? []).map((time) => buildSlotPayload(entry.date, time, slotMinutes, reason));
+  return (entry.times ?? []).map((startTime) => ({
+    key: `${entry.date}-${startTime}`,
+    date: entry.date,
+    startTime,
+    endTime: addMinutes(startTime, slotMinutes),
+    payload: {
+      mode: 'BLOCK',
+      type: 'SLOT',
+      startAt: `${entry.date}T${startTime}:00`,
+      endAt: `${entry.date}T${addMinutes(startTime, slotMinutes)}:00`,
+      reason: reason?.trim() || 'Bloqueio administrativo',
+    },
+  }));
 }
 
-export async function createAdminBlocks({
-  entries,
-  mode,
-  slotMinutes = 60,
-  reason = 'Bloqueio operacional',
-  cancelConflictingBookings = false,
-}: CreateAdminBlocksInput): Promise<void> {
-  const adminToken = getStoredAdminToken();
+export async function previewAdminBlocks({ entries, mode, slotMinutes = 60, reason }: PreviewAdminBlocksInput): Promise<AdminBlockPreviewItem[]> {
+  const adminToken = getAdminTokenOrThrow();
+  const normalizedEntries = normalizeEntries(entries);
+  const payloads: DayPayloadItem[] = normalizedEntries.flatMap((entry) => buildPayloads(entry, mode, slotMinutes, reason));
 
-  if (!adminToken) {
-    throw new Error('Token administrativo ausente.');
-  }
+  return Promise.all(
+    payloads.map(async (item) => ({
+      key: item.key,
+      date: item.date,
+      startTime: item.startTime,
+      endTime: item.endTime,
+      preview: await apiPost<AvailabilityBlockPreviewResponse>('/api/admin/availability-blocks/preview', item.payload, { adminToken }),
+    })),
+  );
+}
 
+export async function createAdminBlocks({ entries, mode, slotMinutes = 60, reason, cancelConflictingBookings = false }: CreateAdminBlocksInput): Promise<AvailabilityBlockResponse[]> {
+  const adminToken = getAdminTokenOrThrow();
   const normalizedEntries = normalizeEntries(entries);
 
   if (normalizedEntries.length === 0) {
     throw new Error('Selecione pelo menos um dia para bloquear.');
   }
 
-  if (mode === 'specific-hours' && normalizedEntries.every((entry) => (entry.times?.length ?? 0) === 0)) {
+  const payloads: DayPayloadItem[] = normalizedEntries.flatMap((entry) => buildPayloads(entry, mode, slotMinutes, reason));
+
+  if (mode === 'specific-hours' && payloads.length === 0) {
     throw new Error('Selecione ao menos um horário para o bloqueio parcial.');
   }
 
-  for (const entry of normalizedEntries) {
-    const payloads = toPayloads(entry, mode, slotMinutes, reason);
+  return Promise.all(
+    payloads.map((item) =>
+      apiPost<AvailabilityBlockResponse>(
+        '/api/admin/availability-blocks',
+        {
+          ...item.payload,
+          cancelConflictingBookings,
+        },
+        { adminToken },
+      ),
+    ),
+  );
+}
 
-    for (const payload of payloads) {
-      const requestBody: CreatePayload = {
-        ...payload,
-        cancelConflictingBookings,
-      };
+export async function listAdminBlocks(filters: AdminBlockListFilters = {}): Promise<AvailabilityBlockResponse[]> {
+  const adminToken = getAdminTokenOrThrow();
+  return apiGet<AvailabilityBlockResponse[]>('/api/admin/availability-blocks', {
+    adminToken,
+    query: filters,
+  });
+}
 
-      await apiPost('/api/admin/availability-blocks', requestBody, {
-        adminToken,
-      });
-    }
-  }
+export async function deleteAdminBlock(blockId: string): Promise<void> {
+  const adminToken = getAdminTokenOrThrow();
+  await apiDelete<void>(`/api/admin/availability-blocks/${blockId}`, { adminToken });
 }

@@ -1,5 +1,3 @@
-import type { ServicoRequest, ServicoResponse } from "./api";
-
 export type BookingFormValues = {
   clientFirstName: string;
   clientLastName: string;
@@ -14,17 +12,7 @@ export type BookingFormValues = {
   clientState: string;
 };
 
-export type BookingRecord = ServicoResponse;
-export type BookingUpdatePayload = ServicoRequest;
-
 export type AdminBulkCancelRequest = {
   eventIds: string[];
   reason?: string;
-};
-
-export type AdminDashboardSummaryResponse = {
-  totalBookings?: number;
-  totalRevenue?: number;
-  byStatus?: Record<string, number>;
-  byCity?: Record<string, number>;
 };

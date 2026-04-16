@@ -56,17 +56,6 @@ export type VerifyConfirmResponse = {
   verified: boolean;
 };
 
-export type RecoverStartResponse = {
-  verificationId: string;
-  expiresInSeconds: number;
-  resendAfterSeconds: number;
-};
-
-export type RecoverConfirmResponse = {
-  verified: boolean;
-  servicos: ServicoResponse[];
-};
-
 export type PublicBootstrapResponse = {
   timezone: string;
   schedule: {
@@ -120,4 +109,45 @@ export type GeoapifyAddressSuggestion = {
   city: string;
   state: string;
   postcode: string;
+};
+
+export type AdminDashboardSummaryResponse = {
+  totalBookings: number;
+  pendingBookings: number;
+  confirmedBookings: number;
+  otherBookings: number;
+  totalAmountCents: number;
+  totalBlocks: number;
+};
+
+export type AvailabilityConflictItem = {
+  eventId: string;
+  serviceType: string;
+  start: string;
+  end: string;
+  clientFirstName: string;
+  clientLastName: string;
+  clientPhone: string;
+  clientCity: string;
+  status: string;
+};
+
+export type AvailabilityBlockResponse = {
+  blockId: string;
+  mode: string;
+  type: string;
+  start: string;
+  end: string;
+  reason?: string;
+  createdAt?: string;
+};
+
+export type AvailabilityBlockPreviewResponse = {
+  mode: string;
+  type: string;
+  start: string;
+  end: string;
+  reason?: string;
+  conflictCount: number;
+  conflicts: AvailabilityConflictItem[];
 };

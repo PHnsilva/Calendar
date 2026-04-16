@@ -1,12 +1,23 @@
 import { useMemo, useState } from 'react';
 import type { ServicoResponse } from '../../../types/api';
-import { getCityTone } from '../../../data/allowed-cities';
 
 type HistorySheetProps = {
   open: boolean;
   onClose: () => void;
   bookings: ServicoResponse[];
 };
+
+const CITY_TONES: Record<string, string> = {
+  Itabirito: 'cyan',
+  'Ouro Preto': 'violet',
+  Moeda: 'orange',
+  Congonhas: 'teal',
+  'Nova Lima': 'royal',
+};
+
+function getCityTone(city?: string): string {
+  return CITY_TONES[city ?? ''] ?? 'indigo';
+}
 
 function getDayParts(value: string) {
   const date = new Date(value);

@@ -13,9 +13,9 @@ type BlockConfirmPayload = {
 type AdminSelectionModalProps = {
   open: boolean;
   mode: AdminSelectionModalMode | null;
-  selectedDates: string[];
-  bookings: ServicoResponse[];
-  blocks: AvailabilityBlockResponse[];
+  selectedDates?: string[];
+  bookings?: ServicoResponse[];
+  blocks?: AvailabilityBlockResponse[];
   onClose: () => void;
   onConfirmBlock: (payload: BlockConfirmPayload) => void | Promise<void>;
   onConfirmCancel: (bookingIds: string[]) => void | Promise<void>;
@@ -56,9 +56,9 @@ function blockDate(block: AvailabilityBlockResponse) {
 export default function AdminSelectionModal({
   open,
   mode,
-  selectedDates,
-  bookings,
-  blocks,
+  selectedDates = [],
+  bookings = [],
+  blocks = [],
   onClose,
   onConfirmBlock,
   onConfirmCancel,
@@ -69,21 +69,25 @@ export default function AdminSelectionModal({
   const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>([]);
   const [deletingBlockId, setDeletingBlockId] = useState('');
 
+  const safeSelectedDates = Array.isArray(selectedDates) ? selectedDates : [];
+  const safeBookings = Array.isArray(bookings) ? bookings : [];
+  const safeBlocks = Array.isArray(blocks) ? blocks : [];
+
   useEffect(() => {
     if (!open || !mode) return;
 
     if (mode === 'block') {
       setBlockMode('full-day');
-      setDraftDays(selectedDates.map((date) => ({ date, selected: true, times: [...TIME_OPTIONS] })));
+      setDraftDays(safeSelectedDates.map((date) => ({ date, selected: true, times: [...TIME_OPTIONS] })));
       return;
     }
 
-    setSelectedBookingIds(mode === 'cancel' ? bookings.map((booking) => booking.eventId) : []);
-  }, [bookings, mode, open, selectedDates]);
+    setSelectedBookingIds(mode === 'cancel' ? safeBookings.map((booking) => booking.eventId) : []);
+  }, [mode, open, safeBookings, safeSelectedDates]);
 
   const groupedBookings = useMemo(() => {
     const map = new Map<string, ServicoResponse[]>();
-    [...bookings]
+    [...safeBookings]
       .sort((left, right) => left.start.localeCompare(right.start))
       .forEach((booking) => {
         const key = booking.start.slice(0, 10);
@@ -92,11 +96,11 @@ export default function AdminSelectionModal({
         map.set(key, current);
       });
     return Array.from(map.entries());
-  }, [bookings]);
+  }, [safeBookings]);
 
   const groupedBlocks = useMemo(() => {
     const map = new Map<string, AvailabilityBlockResponse[]>();
-    [...blocks]
+    [...safeBlocks]
       .sort((left, right) => left.start.localeCompare(right.start))
       .forEach((block) => {
         const key = blockDate(block);
@@ -105,7 +109,7 @@ export default function AdminSelectionModal({
         map.set(key, current);
       });
     return Array.from(map.entries());
-  }, [blocks]);
+  }, [safeBlocks]);
 
   const activeDays = draftDays.filter((day) => day.selected);
   const previewQuery = useQuery({

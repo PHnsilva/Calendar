@@ -19,9 +19,9 @@ import type { CalendarEvent } from '../../features/calendar/types';
 import { getLocalCalendarEvents } from '../../lib/storage';
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
 import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
-import type { AvailabilityBlockResponse, ServicoResponse } from '../../types/api';
+import type { ServicoResponse } from '../../types/api';
 import type { AdminBlockMode } from '../../features/admin/api/manage-admin-blocks';
-import { createAdminBlocks, deleteAdminBlock, previewAdminBlocks } from '../../features/admin/api/manage-admin-blocks';
+import { createAdminBlocks } from '../../features/admin/api/manage-admin-blocks';
 import { bulkCancelAdminBookings } from '../../features/admin/api/bulk-cancel-admin-bookings';
 import AdminSelectionDock from '../../features/admin/components/AdminSelectionDock';
 import AdminSelectionModal from '../../features/admin/components/AdminSelectionModal';
@@ -183,18 +183,14 @@ type HomePageProps = {
   mode?: 'public' | 'admin';
   adminBookings?: ServicoResponse[];
   onAdminBookingsChange?: Dispatch<SetStateAction<ServicoResponse[]>>;
-  adminBlockedDates?: string[];
-  adminBlocks?: AvailabilityBlockResponse[];
-  onAdminRefresh?: () => void;
+  adminUsesMockData?: boolean;
 };
 
 export default function HomePage({
   mode = 'public',
   adminBookings,
   onAdminBookingsChange,
-  adminBlockedDates: adminBlockedDatesProp = [],
-  adminBlocks = [],
-  onAdminRefresh,
+  adminUsesMockData = false,
 }: HomePageProps) {
   const isAdminMode = mode === 'admin';
   const today = new Date();
@@ -221,7 +217,7 @@ export default function HomePage({
   const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
   const [isBookingGuideOpen, setIsBookingGuideOpen] = useState(false);
   const [isBookingPickMode, setIsBookingPickMode] = useState(false);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => window.innerWidth > 730);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => (window.innerWidth > 730 ? !isAdminMode : false));
   const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
   const [isMobileBookingsOpen, setIsMobileBookingsOpen] = useState(false);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
@@ -230,7 +226,7 @@ export default function HomePage({
   const [adminBlockingEnabled, setAdminBlockingEnabled] = useState(false);
   const [adminSelectedDates, setAdminSelectedDates] = useState<string[]>([]);
   const [adminModalMode, setAdminModalMode] = useState<'block' | 'cancel' | 'view' | null>(null);
-  const [localAdminBlockedDates, setLocalAdminBlockedDates] = useState<string[]>([]);
+  const [adminBlockedDates, setAdminBlockedDates] = useState<string[]>([]);
 
   const isDesktop = viewportWidth > 730;
   const adminBookingsQuery = useAdminBookings({}, isAdminMode && !adminBookings);
@@ -250,6 +246,13 @@ export default function HomePage({
     [adminBookings, adminBookingsQuery.data],
   );
 
+  useEffect(() => {
+    if (!isAdminMode || viewportWidth <= 730) return;
+    if (effectiveAdminBookings.length === 0) {
+      setIsSidebarExpanded(false);
+    }
+  }, [effectiveAdminBookings.length, isAdminMode, viewportWidth]);
+
   const adminCalendarEvents = useMemo(
     () => effectiveAdminBookings.map(mapServicoToCalendarEvent),
     [effectiveAdminBookings],
@@ -262,7 +265,7 @@ export default function HomePage({
 
   const allUnavailableDates = useMemo(() => {
     if (isAdminMode) {
-      return adminBlockedDatesProp.length > 0 ? adminBlockedDatesProp : localAdminBlockedDates;
+      return adminBlockedDates;
     }
 
     const currentFallback = build4x4UnavailableDates(currentAllowedMonth, todayIso);
@@ -278,8 +281,7 @@ export default function HomePage({
 
     return [...currentUnavailable, ...nextUnavailable];
   }, [
-    adminBlockedDatesProp,
-    localAdminBlockedDates,
+    adminBlockedDates,
     currentAllowedMonth,
     currentMonthAvailability.availableDates,
     currentMonthAvailability.hasError,
@@ -297,13 +299,6 @@ export default function HomePage({
       .filter((booking) => adminSelectedDates.includes(booking.start.slice(0, 10)))
       .sort((left, right) => left.start.localeCompare(right.start)),
     [adminSelectedDates, effectiveAdminBookings],
-  );
-
-  const selectedPeriodBlocks = useMemo(
-    () => adminBlocks
-      .filter((block) => adminSelectedDates.includes(block.start.slice(0, 10)))
-      .sort((left, right) => left.start.localeCompare(right.start)),
-    [adminBlocks, adminSelectedDates],
   );
 
   useEffect(() => {
@@ -479,24 +474,17 @@ export default function HomePage({
 
   const handleConfirmBlock = async ({ mode: blockMode, entries }: { mode: AdminBlockMode; entries: { date: string; times?: string[] }[] }) => {
     try {
-      const preview = await previewAdminBlocks({ entries, mode: blockMode });
-      const totalConflicts = preview.reduce((acc, item) => acc + item.preview.conflictCount, 0);
-      const shouldCancelConflicts = totalConflicts > 0
-        ? window.confirm(`Foram encontrados ${totalConflicts} conflito(s). Deseja cancelar os agendamentos conflitantes ao aplicar o bloqueio?`)
-        : false;
-
-      await createAdminBlocks({ entries, mode: blockMode, cancelConflictingBookings: shouldCancelConflicts });
-
-      if (blockMode === 'full-day' && adminBlockedDatesProp.length === 0) {
-        setLocalAdminBlockedDates((current) => Array.from(new Set([...current, ...entries.map((entry) => entry.date)])).sort());
-      }
-
-      onAdminRefresh?.();
-      setAdminModalMode(null);
-      setAdminSelectedDates([]);
+      await createAdminBlocks({ entries, mode: blockMode });
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : 'Falha ao sincronizar bloqueios com o backend.');
+      console.warn('Falha ao sincronizar bloqueios com o backend.', error);
     }
+
+    if (blockMode === 'full-day') {
+      setAdminBlockedDates((current) => Array.from(new Set([...current, ...entries.map((entry) => entry.date)])).sort());
+    }
+
+    setAdminModalMode(null);
+    setAdminSelectedDates([]);
   };
 
   const handleConfirmCancel = async (bookingIds: string[]) => {
@@ -504,22 +492,15 @@ export default function HomePage({
 
     try {
       await bulkCancelAdminBookings({ eventIds: bookingIds });
-      onAdminBookingsChange?.((current) => current.filter((booking) => !bookingIds.includes(booking.eventId)));
-      onAdminRefresh?.();
-      setAdminModalMode(null);
-      setAdminSelectedDates([]);
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : 'Falha ao cancelar os agendamentos selecionados.');
+      if (!adminUsesMockData) {
+        console.warn('Falha ao cancelar no backend. Aplicando atualização visual local.', error);
+      }
     }
-  };
 
-  const handleDeleteBlock = async (blockId: string) => {
-    try {
-      await deleteAdminBlock(blockId);
-      onAdminRefresh?.();
-    } catch (error) {
-      window.alert(error instanceof Error ? error.message : 'Falha ao remover o bloqueio selecionado.');
-    }
+    onAdminBookingsChange?.((current) => current.filter((booking) => !bookingIds.includes(booking.eventId)));
+    setAdminModalMode(null);
+    setAdminSelectedDates([]);
   };
 
   return (
@@ -616,27 +597,14 @@ export default function HomePage({
         />
       ) : null}
 
-      {isAdminMode ? (
-        <div className="admin-selection-banner">
-          <strong>{adminBlockingEnabled ? 'Modo de seleção ativo' : 'Modo de consulta ativo'}</strong>
-          <span>
-            {adminBlockingEnabled
-              ? 'Arraste no calendário para selecionar um intervalo de dias.'
-              : 'Use o botão Bloqueios no cabeçalho para selecionar dias e gerenciar bloqueios ou cancelamentos.'}
-          </span>
-        </div>
-      ) : null}
-
-      <AdminSelectionModal
+     <AdminSelectionModal
         open={Boolean(isAdminMode && adminModalMode)}
         mode={adminModalMode}
         selectedDates={adminSelectedDates}
         bookings={selectedPeriodBookings}
-        blocks={selectedPeriodBlocks}
         onClose={() => setAdminModalMode(null)}
         onConfirmBlock={handleConfirmBlock}
         onConfirmCancel={handleConfirmCancel}
-        onDeleteBlock={handleDeleteBlock}
       />
 
       {!isAdminMode ? <BookingStartHintModal open={isBookingGuideOpen} onClose={handleCloseBookingGuide} /> : null}

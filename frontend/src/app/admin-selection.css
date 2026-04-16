@@ -325,6 +325,7 @@
 }
 
 .admin-calendar-selection-box {
+  display: none;
   position: absolute;
   z-index: 2;
   border-radius: 20px;
@@ -379,104 +380,4 @@
     width: calc(100vw - 20px);
     padding: 18px;
   }
-}
-
-.admin-selection-preview,
-.admin-selection-overview {
-  display: grid;
-  gap: 14px;
-}
-
-.admin-selection-preview__header,
-.admin-selection-overview__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.admin-selection-preview__header strong,
-.admin-selection-overview__header strong {
-  color: var(--text-primary);
-}
-
-.admin-selection-preview__header span,
-.admin-selection-overview__header span {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.admin-selection-preview__card,
-.admin-selection-overview__section {
-  display: grid;
-  gap: 10px;
-  padding: 14px 16px;
-  border-radius: 20px;
-  border: 1px solid var(--border-soft);
-  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
-}
-
-.admin-selection-preview__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.admin-selection-preview__top strong {
-  color: var(--text-primary);
-}
-
-.admin-selection-preview__top span,
-.admin-selection-preview__card small {
-  color: var(--text-secondary);
-}
-
-.admin-selection-preview__conflicts {
-  display: grid;
-  gap: 8px;
-}
-
-.admin-selection-preview__conflict {
-  display: grid;
-  gap: 2px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  border: 1px solid var(--border-soft);
-  background: var(--app-surface-solid);
-}
-
-.admin-selection-preview__conflict strong {
-  color: var(--text-primary);
-}
-
-.admin-selection-preview__conflict span {
-  color: var(--text-secondary);
-  font-size: 0.86rem;
-}
-
-.admin-selection-overview__section {
-  background: transparent;
-  padding: 0;
-  border: none;
-}
-
-.admin-selection-booking-card--block {
-  align-items: start;
-}
-
-.admin-selection-booking-card__danger {
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(214, 69, 80, 0.25);
-  background: linear-gradient(135deg, rgba(214, 69, 80, 0.12), rgba(214, 69, 80, 0.04));
-  color: #a61d2d;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.admin-selection-booking-card__danger:disabled {
-  opacity: 0.6;
-  cursor: wait;
 }

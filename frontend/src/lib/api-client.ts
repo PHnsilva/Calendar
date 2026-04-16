@@ -91,3 +91,11 @@ export function apiPost<T>(path: string, body?: unknown, options: Omit<RequestOp
     body,
   });
 }
+
+
+export function apiDelete<T>(path: string, options: Omit<RequestOptions, "method" | "body"> = {}) {
+  return apiClient<T>(path, {
+    ...options,
+    method: "DELETE",
+  });
+}

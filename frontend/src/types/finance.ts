@@ -43,3 +43,8 @@ export interface AdminBookingItem {
   tone: "royal" | "orange" | "violet" | "teal" | "cyan"
   icon: string
 }
+
+
+export interface AdminStatementResponse {
+  items: AdminStatementItem[]
+}

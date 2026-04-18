@@ -4,7 +4,7 @@ function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
 }
 
-function cn(...values: Array<string | false | undefined>) {
+function cn(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }
 

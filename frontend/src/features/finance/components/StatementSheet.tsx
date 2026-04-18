@@ -59,7 +59,7 @@ function associateStatementToBookings(items: AdminStatementItem[], bookings: Ser
       id: item.id,
       date: item.date,
       description: item.description,
-      amount: item.amount,
+      amount: item.amount ?? "R$ 0,00",
       booking: nearest,
     };
   });

@@ -65,7 +65,6 @@ type BigCalendarProps = {
   adminSelectionEnabled?: boolean;
   adminSelectedDates?: string[];
   onDateSelect: (date: string, options?: { unavailable?: boolean }) => void;
-  onOpenDayBooking: (date: string) => void;
   onAdminSelectedDatesChange?: (dates: string[]) => void;
 };
 
@@ -210,6 +209,7 @@ export default function BigCalendar({
       </div>
 
       <div ref={bodyRef} className={['calendar-grid__body', 'calendar-grid__body--slim', adminSelectionEnabled ? 'calendar-grid__body--admin-selecting' : ''].filter(Boolean).join(' ')}>
+        {selectionBoxStyle ? <div className="admin-calendar-selection-box" style={selectionBoxStyle} /> : null}
         {days.map((day, index) => {
           const dayEvents = sortEventsByStartTime(events.filter((event) => event.date === day.date));
           const earliestTone = dayEvents[0] ? getCityTone(dayEvents[0].city) : null;

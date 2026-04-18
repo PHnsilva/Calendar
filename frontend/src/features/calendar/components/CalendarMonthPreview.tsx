@@ -52,7 +52,6 @@ export default function CalendarMonthPreview({
   onMonthActivate,
 }: CalendarMonthPreviewProps) {
   const label = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(monthStart));
-  const today = toIsoDate(new Date());
   const days = getPreviewDays(monthStart);
 
   return (

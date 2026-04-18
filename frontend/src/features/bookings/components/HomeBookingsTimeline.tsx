@@ -33,7 +33,6 @@ type HomeBookingsTimelineProps = {
   nextAllowedMonth: string;
   onChangeMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
-  onOpenDayBooking: (date: string) => void;
   hideQuickBooking?: boolean;
   eyebrow?: string;
   title?: string;
@@ -224,7 +223,6 @@ export default function HomeBookingsTimeline({
   nextAllowedMonth,
   onChangeMonth,
   onQuickBooking,
-  onOpenDayBooking,
   hideQuickBooking = false,
   eyebrow = "Agendamentos",
   title,
@@ -408,7 +406,7 @@ export default function HomeBookingsTimeline({
       setActionLoading(true);
       setEditError(null);
       const payload = buildUpdatePayload(bookingDetails, editDraft);
-      const updated = await updateBooking(activeEvent.id, manageToken, payload);
+      const updated = await updateBooking({ eventId: activeEvent.id, token: manageToken, payload });
       const updatedEvent = mapServicoToCalendarEvent(updated);
       saveLocalCalendarEvent(updatedEvent);
       saveManageToken(manageToken, updated.eventId);
@@ -427,7 +425,7 @@ export default function HomeBookingsTimeline({
     try {
       setActionLoading(true);
       setDetailError(null);
-      await deleteBooking(activeEvent.id, manageToken);
+      await deleteBooking({ eventId: activeEvent.id, token: manageToken });
       removeLocalCalendarEvent(activeEvent.id);
       setCancelOpen(false);
       setActiveEvent(null);

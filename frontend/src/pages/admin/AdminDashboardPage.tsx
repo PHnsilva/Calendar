@@ -22,7 +22,7 @@ export default function AdminDashboardPage() {
 
   const bookingsQuery = useQuery({
     queryKey: ['admin', 'bookings', 'all'],
-    queryFn: getAdminBookings,
+    queryFn: () => getAdminBookings(),
     enabled: Boolean(token),
     retry: false,
   });

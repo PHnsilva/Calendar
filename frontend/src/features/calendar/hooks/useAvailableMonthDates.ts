@@ -12,14 +12,14 @@ function getMonthDates(monthStart: string): string[] {
   return Array.from({ length: daysInMonth }, (_, index) => toIsoDate(new Date(year, month, index + 1)));
 }
 
-export function useAvailableMonthDates(monthStart: string, city: string, enabled: boolean, slotMinutes = 60, durationMinutes = slotMinutes) {
+export function useAvailableMonthDates(monthStart: string, enabled: boolean, city = "", slotMinutes = 60, durationMinutes = slotMinutes) {
   const monthDates = getMonthDates(monthStart);
 
   const queries = useQueries({
     queries: monthDates.map((date) => ({
       queryKey: queryKeys.availableSlots(date, city, slotMinutes, durationMinutes),
       queryFn: () => getAvailableSlots(date, city, slotMinutes, durationMinutes),
-      enabled: enabled && Boolean(city.trim()) && isBookableDateInMonth(date, monthStart),
+      enabled: enabled && isBookableDateInMonth(date, monthStart),
       staleTime: 30_000,
       retry: 1,
     })),

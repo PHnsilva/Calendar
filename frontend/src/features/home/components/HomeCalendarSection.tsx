@@ -21,7 +21,6 @@ type HomeCalendarSectionProps = {
   unavailableDates: string[];
   onDateSelect: (date: string, options?: { unavailable?: boolean }) => void;
   onMonthChange: (month: string) => void;
-  onOpenDayBooking: (date: string) => void;
   bookingPickMode?: boolean;
   compactMode?: boolean;
   showMonthPreview?: boolean;
@@ -40,7 +39,6 @@ export default function HomeCalendarSection({
   unavailableDates,
   onDateSelect,
   onMonthChange,
-  onOpenDayBooking,
   bookingPickMode = false,
   compactMode = false,
   showMonthPreview = true,
@@ -73,7 +71,6 @@ export default function HomeCalendarSection({
               events={events}
               unavailableDates={unavailableDates}
               onDateSelect={onDateSelect}
-              onOpenDayBooking={onOpenDayBooking}
               bookingPickMode={bookingPickMode}
               compactMode={compactMode}
               adminSelectionEnabled={adminSelectionEnabled}

@@ -14,7 +14,6 @@ type HomeMobileBookingsSheetProps = {
   nextAllowedMonth: string;
   onClose: () => void;
   onChangeTimelineMonth: (monthStart: string) => void;
-  onOpenDayBooking: (date: string) => void;
   isAdminMode?: boolean;
 };
 
@@ -27,7 +26,6 @@ export default function HomeMobileBookingsSheet({
   nextAllowedMonth,
   onClose,
   onChangeTimelineMonth,
-  onOpenDayBooking,
   isAdminMode = false,
 }: HomeMobileBookingsSheetProps) {
   const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(
@@ -65,8 +63,7 @@ export default function HomeMobileBookingsSheet({
             nextAllowedMonth={nextAllowedMonth}
             onChangeMonth={onChangeTimelineMonth}
             onQuickBooking={() => {}}
-            onOpenDayBooking={onOpenDayBooking}
-            hideQuickBooking
+              hideQuickBooking
             eyebrow={isAdminMode ? "AGENDA ADMIN" : "MEUS AGENDAMENTOS"}
             title={monthLabel}
             isAdminMode={isAdminMode}

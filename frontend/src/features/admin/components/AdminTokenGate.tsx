@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, ApiError } from "../../../lib/api-client";
 import { clearAdminToken, saveAdminToken } from "../../../lib/storage";
-import type { AdminDashboardSummaryResponse } from "../../../types/booking";
+import type { AdminDashboardSummaryResponse } from "../../../types/api";
 
 type AdminTokenGateProps = {
   redirectTo?: string;

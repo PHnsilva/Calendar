@@ -1,7 +1,7 @@
 export const queryKeys = {
   geoapifyAutocomplete: (searchText: string, city: string) => ["geoapify-autocomplete", searchText.trim().toLowerCase(), city.trim().toLowerCase()] as const,
   publicBootstrap: ["public-bootstrap"] as const,
-  availableSlots: (date: string, slotMinutes = 60) => ["available-slots", date, slotMinutes] as const,
+  availableSlots: (date: string, city = "", slotMinutes = 60, durationMinutes = slotMinutes) => ["available-slots", date, city.trim().toLowerCase(), slotMinutes, durationMinutes] as const,
   adminBookings: (filtersKey: string) => ["admin-bookings", filtersKey] as const,
   adminSummary: (filtersKey: string) => ["admin-summary", filtersKey] as const,
   adminBlocks: (filtersKey: string) => ["admin-blocks", filtersKey] as const,

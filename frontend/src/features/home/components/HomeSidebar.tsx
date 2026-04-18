@@ -23,7 +23,6 @@ type HomeSidebarProps = {
   nextAllowedMonth: string;
   onChangeTimelineMonth: (monthStart: string) => void;
   onQuickBooking: () => void;
-  onOpenDayBooking: (date: string) => void;
   onToggleExpanded: () => void;
   onSelectRailDate: (date: string) => void;
   isExpanded: boolean;
@@ -40,7 +39,6 @@ export default function HomeSidebar({
   nextAllowedMonth,
   onChangeTimelineMonth,
   onQuickBooking,
-  onOpenDayBooking,
   onToggleExpanded,
   onSelectRailDate,
   isExpanded,
@@ -180,7 +178,6 @@ export default function HomeSidebar({
           nextAllowedMonth={nextAllowedMonth}
           onChangeMonth={onChangeTimelineMonth}
           onQuickBooking={onQuickBooking}
-          onOpenDayBooking={onOpenDayBooking}
           hideQuickBooking={isAdminMode}
           eyebrow={isAdminMode ? "AGENDA ADMIN" : "MEUS AGENDAMENTOS"}
           title={monthLabel}

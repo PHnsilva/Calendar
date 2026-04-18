@@ -438,19 +438,6 @@ export default function HomePage({
     }
   };
 
-  const handleOpenDayBooking = (date: string) => {
-    handleDateSelect(date);
-    setTimelineMonth(toMonthStart(date));
-    setIsBookingGuideOpen(false);
-    setIsBookingPickMode(false);
-    setIsSidebarExpanded(true);
-    setIsMobileBookingsOpen(false);
-
-    if (!isAdminMode) {
-      openBookingModal();
-    }
-  };
-
   const handleRailDateSelect = (date: string) => {
     handleDateSelect(date);
     setTimelineMonth(toMonthStart(date));
@@ -527,7 +514,6 @@ export default function HomePage({
             showMonthPreview={isDesktop}
             onDateSelect={handleCalendarDateSelect}
             onMonthChange={handleCalendarMonthChange}
-            onOpenDayBooking={handleOpenDayBooking}
             adminSelectionEnabled={isAdminMode && adminBlockingEnabled}
             adminSelectedDates={adminSelectedDates}
             onAdminSelectedDatesChange={setAdminSelectedDates}
@@ -548,7 +534,6 @@ export default function HomePage({
                 clearSelection();
                 requestQuickBooking();
               }}
-              onOpenDayBooking={handleOpenDayBooking}
               onToggleExpanded={() => setIsSidebarExpanded((current) => !current)}
               onSelectRailDate={handleRailDateSelect}
               isExpanded={isSidebarExpanded}
@@ -570,7 +555,6 @@ export default function HomePage({
             nextAllowedMonth={nextAllowedMonth}
             onClose={() => setIsMobileBookingsOpen(false)}
             onChangeTimelineMonth={handleTimelineMonthChange}
-            onOpenDayBooking={handleOpenDayBooking}
             isAdminMode={isAdminMode}
           />
 
@@ -597,7 +581,7 @@ export default function HomePage({
         />
       ) : null}
 
-     <AdminSelectionModal
+      <AdminSelectionModal
         open={Boolean(isAdminMode && adminModalMode)}
         mode={adminModalMode}
         selectedDates={adminSelectedDates}
@@ -605,6 +589,7 @@ export default function HomePage({
         onClose={() => setAdminModalMode(null)}
         onConfirmBlock={handleConfirmBlock}
         onConfirmCancel={handleConfirmCancel}
+        onDeleteBlock={() => {}}
       />
 
       {!isAdminMode ? <BookingStartHintModal open={isBookingGuideOpen} onClose={handleCloseBookingGuide} /> : null}

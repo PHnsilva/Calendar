@@ -10,6 +10,8 @@ RUN gradle bootJar -x test --no-daemon
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
+ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=25"
+
 COPY --from=build /workspace/build/libs/backend-app-*.jar /app/app.jar
 
 EXPOSE 8080

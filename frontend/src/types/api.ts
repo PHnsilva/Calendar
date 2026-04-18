@@ -56,6 +56,17 @@ export type VerifyConfirmResponse = {
   verified: boolean;
 };
 
+export type RecoverStartResponse = {
+  verificationId: string;
+  expiresInSeconds: number;
+  resendAfterSeconds: number;
+};
+
+export type RecoverConfirmResponse = {
+  verified: boolean;
+  servicos: ServicoResponse[];
+};
+
 export type PublicBootstrapResponse = {
   timezone: string;
   schedule: {
@@ -76,6 +87,8 @@ export type PublicBootstrapResponse = {
   verification: {
     otpTtlSeconds: number;
     otpResendAfterSeconds: number;
+    deliveryChannel?: string;
+    webOtpEnabled?: boolean;
   };
   serviceArea: {
     allowedCities: string[];

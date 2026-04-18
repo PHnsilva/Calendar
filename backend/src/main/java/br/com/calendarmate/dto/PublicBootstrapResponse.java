@@ -49,10 +49,16 @@ public class PublicBootstrapResponse {
     public static class VerificationConfig {
         private long otpTtlSeconds;
         private long otpResendAfterSeconds;
+        private String deliveryChannel;
+        private boolean webOtpEnabled;
         public long getOtpTtlSeconds() { return otpTtlSeconds; }
         public void setOtpTtlSeconds(long otpTtlSeconds) { this.otpTtlSeconds = otpTtlSeconds; }
         public long getOtpResendAfterSeconds() { return otpResendAfterSeconds; }
         public void setOtpResendAfterSeconds(long otpResendAfterSeconds) { this.otpResendAfterSeconds = otpResendAfterSeconds; }
+        public String getDeliveryChannel() { return deliveryChannel; }
+        public void setDeliveryChannel(String deliveryChannel) { this.deliveryChannel = deliveryChannel; }
+        public boolean isWebOtpEnabled() { return webOtpEnabled; }
+        public void setWebOtpEnabled(boolean webOtpEnabled) { this.webOtpEnabled = webOtpEnabled; }
     }
 
     public static class ServiceAreaConfig {

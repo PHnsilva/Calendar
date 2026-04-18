@@ -43,6 +43,8 @@ public class PublicBootstrapController {
         PublicBootstrapResponse.VerificationConfig verification = new PublicBootstrapResponse.VerificationConfig();
         verification.setOtpTtlSeconds(props.getOtpTtl().getSeconds());
         verification.setOtpResendAfterSeconds(props.getOtpResendAfter().getSeconds());
+        verification.setDeliveryChannel(props.getVerificationChannel());
+        verification.setWebOtpEnabled(props.isWebOtpEnabled());
         response.setVerification(verification);
 
         PublicBootstrapResponse.ServiceAreaConfig serviceArea = new PublicBootstrapResponse.ServiceAreaConfig();

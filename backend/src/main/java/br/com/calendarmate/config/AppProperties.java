@@ -67,6 +67,15 @@ public class AppProperties {
     @Value("${admin.token:${ADMIN_TOKEN:}}")
     private String adminToken;
 
+    @Value("${app.security.hmacSecret:${HMAC_SECRET:dev-secret}}")
+    private String hmacSecret;
+
+    @Value("${frontend.url:${FRONTEND_URL:}}")
+    private String frontendUrl;
+
+    @Value("${verification.channel:${VERIFICATION_CHANNEL:DUMMY}}")
+    private String verificationChannel;
+
     @Value("${whatsapp.enabled:false}")
     private boolean whatsappEnabled;
 
@@ -81,6 +90,18 @@ public class AppProperties {
 
     @Value("${whatsapp.language:pt_BR}")
     private String whatsappLanguage;
+
+    @Value("${sms.twilio.enabled:false}")
+    private boolean smsTwilioEnabled;
+
+    @Value("${sms.twilio.accountSid:}")
+    private String smsTwilioAccountSid;
+
+    @Value("${sms.twilio.authToken:}")
+    private String smsTwilioAuthToken;
+
+    @Value("${sms.twilio.fromNumber:}")
+    private String smsTwilioFromNumber;
 
     @Value("${supabase.enabled:false}")
     private boolean supabaseEnabled;
@@ -260,11 +281,30 @@ public class AppProperties {
     public int getAdminBulkCancelMaxItems() { return Math.max(1, Math.min(adminBulkCancelMaxItems, 1000)); }
 
     public String getAdminToken() { return adminToken == null ? "" : adminToken.trim(); }
+    public String getHmacSecret() { return hmacSecret == null || hmacSecret.isBlank() ? "dev-secret" : hmacSecret.trim(); }
+    public String getFrontendUrl() { return frontendUrl == null ? "" : frontendUrl.trim(); }
+    public String getVerificationChannel() {
+        String value = verificationChannel == null ? "" : verificationChannel.trim().toUpperCase(Locale.ROOT);
+        if ("WHATSAPP".equals(value)) return "META";
+        if ("META".equals(value) || "SMS".equals(value)) return value;
+        return "DUMMY";
+    }
+    public boolean isWebOtpEnabled() { return "SMS".equals(getVerificationChannel()) && !getFrontendUrl().isBlank(); }
     public boolean isWhatsappEnabled() { return whatsappEnabled; }
     public String getWhatsappToken() { return whatsappToken == null ? "" : whatsappToken.trim(); }
     public String getWhatsappPhoneNumberId() { return whatsappPhoneNumberId == null ? "" : whatsappPhoneNumberId.trim(); }
     public String getWhatsappTemplateName() { return whatsappTemplateName == null ? "" : whatsappTemplateName.trim(); }
     public String getWhatsappLanguage() { return whatsappLanguage == null ? "pt_BR" : whatsappLanguage.trim(); }
+    public boolean isSmsTwilioEnabled() { return smsTwilioEnabled; }
+    public String getSmsTwilioAccountSid() { return smsTwilioAccountSid == null ? "" : smsTwilioAccountSid.trim(); }
+    public String getSmsTwilioAuthToken() { return smsTwilioAuthToken == null ? "" : smsTwilioAuthToken.trim(); }
+    public String getSmsTwilioFromNumber() { return smsTwilioFromNumber == null ? "" : smsTwilioFromNumber.trim(); }
+    public boolean isTwilioSmsConfigured() {
+        return isSmsTwilioEnabled()
+                && !getSmsTwilioAccountSid().isBlank()
+                && !getSmsTwilioAuthToken().isBlank()
+                && !getSmsTwilioFromNumber().isBlank();
+    }
 
     public boolean isSupabaseEnabled() {
         return supabaseEnabled && supabaseUrl != null && !supabaseUrl.isBlank() && supabaseKey != null && !supabaseKey.isBlank();

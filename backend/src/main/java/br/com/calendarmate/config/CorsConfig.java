@@ -17,20 +17,24 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
 
                 if (frontendUrl == null || frontendUrl.isBlank()) {
-                    // MODO DESENVOLVIMENTO (sem frontend ainda)
                     registry.addMapping("/**")
                             .allowedOrigins("*")
                             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                             .allowedHeaders("*")
                             .allowCredentials(false);
-                } else {
-                    // MODO PRODUÇÃO (quando definir FRONTEND_URL)
-                    registry.addMapping("/**")
-                            .allowedOrigins(frontendUrl)
-                            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                            .allowedHeaders("*")
-                            .allowCredentials(true);
+                    return;
                 }
+
+                String[] allowedOrigins = java.util.Arrays.stream(frontendUrl.split(","))
+                        .map(String::trim)
+                        .filter(value -> !value.isBlank())
+                        .toArray(String[]::new);
+
+                registry.addMapping("/**")
+                        .allowedOrigins(allowedOrigins)
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
             }
         };
     }

@@ -6,7 +6,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
-public class MetaWhatsAppClient implements WhatsAppClient {
+public class MetaWhatsAppClient implements OtpDeliveryClient {
 
     private final RestTemplate http;
     private final String token;
@@ -67,6 +67,11 @@ public class MetaWhatsAppClient implements WhatsAppClient {
         if (!resp.getStatusCode().is2xxSuccessful()) {
             throw new BadRequestException("Falha ao enviar WhatsApp (status=" + resp.getStatusCode().value() + ")");
         }
+    }
+
+    @Override
+    public String getChannel() {
+        return "META";
     }
 
     private static String toE164BR(String phoneDigits) {

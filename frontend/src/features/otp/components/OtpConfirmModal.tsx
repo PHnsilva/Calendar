@@ -1,6 +1,10 @@
 import { useEffect } from "react";
 import { useOtpFlow } from "../hooks/useOtpFlow";
 
+type WindowWithOtpCredential = Window & {
+  OTPCredential?: unknown;
+};
+
 type OtpConfirmModalProps = {
   open: boolean;
   phone: string;
@@ -13,6 +17,11 @@ type OtpConfirmModalProps = {
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "").slice(0, 3);
+}
+
+function canUseWebOtp() {
+  const otpWindow = window as WindowWithOtpCredential;
+  return "OTPCredential" in otpWindow && "credentials" in navigator;
 }
 
 export default function OtpConfirmModal({
@@ -45,6 +54,38 @@ export default function OtpConfirmModal({
     initialExpiresInSeconds: expiresInSeconds,
     onVerified,
   });
+
+
+  useEffect(() => {
+    if (!open) return;
+    if (!canUseWebOtp()) return;
+
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const credentialsApi = navigator.credentials as CredentialsContainer & {
+          get?: (options?: CredentialRequestOptions & {
+            otp?: { transport: string[] };
+            signal?: AbortSignal;
+          }) => Promise<{ code?: string } | null>;
+        };
+
+        const result = await credentialsApi.get?.({
+          otp: { transport: ["sms"] },
+          signal: controller.signal,
+        });
+
+        const codeFromSms = onlyDigits(result?.code ?? "");
+        if (codeFromSms) {
+          setCode(codeFromSms);
+        }
+      } catch {
+      }
+    })();
+
+    return () => controller.abort();
+  }, [open, setCode]);
 
   useEffect(() => {
     if (!open) return;

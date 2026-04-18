@@ -73,7 +73,7 @@ export function getScheduleTimeOptions(bootstrap?: PublicBootstrapResponse | nul
 }
 
 export function getBookingDurationMinutesByCity(bootstrap: PublicBootstrapResponse | null | undefined, city?: string | null): number {
-  const durationByCity = { ...FALLBACK_DURATION_BY_CITY, ...normalizeDurationMap(bootstrap?.booking?.durationByCity) };
+  const durationByCity = { ...FALLBACK_DURATION_BY_CITY, ...normalizeDurationMap(bootstrap?.serviceArea?.durationByCity) };
   if (!city) return durationByCity[getDefaultCity(bootstrap)] ?? FALLBACK_SLOT_MINUTES;
   return durationByCity[city] ?? durationByCity[getDefaultCity(bootstrap)] ?? FALLBACK_SLOT_MINUTES;
 }

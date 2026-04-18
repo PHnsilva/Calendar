@@ -11,19 +11,19 @@ export default function PublicLayout() {
   const isHomePage = location.pathname === "/";
 
   const header = (
-    <header className="public-header">
+    <header className={["public-header", isHomePage ? "public-header--home" : ""].filter(Boolean).join(" ")}>
       <Link to="/" className="brand-lockup" aria-label="Ir para a página inicial">
         <Logo />
       </Link>
 
-      <div className="public-header__actions">
+      <div className={["public-header__actions", isHomePage ? "public-header__actions--home" : ""].filter(Boolean).join(" ")}>
         <ThemeToggle />
 
         {isHomePage ? (
           <>
             <button
               type="button"
-              className="header-booking-action header-booking-action--compact-plus"
+              className="header-booking-action header-booking-action--compact-plus header-booking-action--accent-orange"
               onClick={requestQuickBooking}
               aria-label="Novo agendamento"
               title="Novo agendamento"
@@ -35,7 +35,7 @@ export default function PublicLayout() {
 
             <button
               type="button"
-              className="header-booking-action header-booking-action--sidebar-focus"
+              className="header-booking-action header-booking-action--sidebar-focus header-booking-action--bookings"
               onClick={requestOpenBookings}
             >
               <span>Meus agendamentos</span>

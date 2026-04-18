@@ -32,9 +32,7 @@ function pad(value: number): string {
 function addMinutes(time: string, minutesToAdd: number): string {
   const [hours, minutes] = time.split(":").map(Number);
   const totalMinutes = hours * 60 + minutes + minutesToAdd;
-  const normalizedHours = Math.floor(totalMinutes / 60);
-  const normalizedMinutes = totalMinutes % 60;
-  return `${pad(normalizedHours)}:${pad(normalizedMinutes)}`;
+  return `${pad(Math.floor(totalMinutes / 60))}:${pad(totalMinutes % 60)}`;
 }
 
 function extractTime(value?: string): string | null {
@@ -42,53 +40,12 @@ function extractTime(value?: string): string | null {
 
   const directMatch = value.match(/(?:T|\s)(\d{2}:\d{2})(?::\d{2})?/);
   if (directMatch) return directMatch[1];
-
   if (/^\d{2}:\d{2}$/.test(value)) return value;
   if (/^\d{2}:\d{2}:\d{2}$/.test(value)) return value.slice(0, 5);
 
   const parsedDate = new Date(value);
   if (Number.isNaN(parsedDate.getTime())) return null;
-
   return `${pad(parsedDate.getHours())}:${pad(parsedDate.getMinutes())}`;
-}
-
-function normalizeSlot(slot: AvailableSlotLike, date: string, slotMinutes: number): CalendarSlot | null {
-  if (typeof slot === "string") {
-    const startTime = extractTime(slot);
-    if (!startTime) return null;
-
-    return {
-      date,
-      startTime,
-      endTime: addMinutes(startTime, slotMinutes),
-      available: true,
-      label: `${startTime} - ${addMinutes(startTime, slotMinutes)}`,
-    };
-  }
-
-  const explicitlyUnavailable = slot.available === false || slot.isAvailable === false;
-  if (explicitlyUnavailable) return null;
-
-  const startTime =
-    extractTime(slot.startTime) ??
-    extractTime(slot.startDateTime) ??
-    extractTime(slot.start);
-
-  if (!startTime) return null;
-
-  const endTime =
-    extractTime(slot.endTime) ??
-    extractTime(slot.endDateTime) ??
-    extractTime(slot.end) ??
-    addMinutes(startTime, slotMinutes);
-
-  return {
-    date: slot.date ?? date,
-    startTime,
-    endTime,
-    available: true,
-    label: `${startTime} - ${endTime}`,
-  };
 }
 
 function toSlotArray(payload: AvailableResponseLike | null | undefined): AvailableSlotLike[] {
@@ -101,17 +58,41 @@ function toSlotArray(payload: AvailableResponseLike | null | undefined): Availab
   return [];
 }
 
-export async function getAvailableSlots(date: string, slotMinutes = 60): Promise<CalendarSlot[]> {
+function normalizeSlot(slot: AvailableSlotLike, date: string, durationMinutes: number): CalendarSlot | null {
+  if (typeof slot === "string") {
+    const startTime = extractTime(slot);
+    if (!startTime) return null;
+    const endTime = addMinutes(startTime, durationMinutes);
+    return { date, startTime, endTime, available: true, label: `${startTime} - ${endTime}` };
+  }
+
+  if (slot.available === false || slot.isAvailable === false) return null;
+
+  const startTime = extractTime(slot.startTime) ?? extractTime(slot.startDateTime) ?? extractTime(slot.start);
+  if (!startTime) return null;
+  const endTime = extractTime(slot.endTime) ?? extractTime(slot.endDateTime) ?? extractTime(slot.end) ?? addMinutes(startTime, durationMinutes);
+
+  return {
+    date: slot.date ?? date,
+    startTime,
+    endTime,
+    available: true,
+    label: `${startTime} - ${endTime}`,
+  };
+}
+
+export async function getAvailableSlots(date: string, city = "", slotMinutes = 60, durationMinutes = slotMinutes): Promise<CalendarSlot[]> {
   const response = await apiClient<AvailableResponseLike | null>("/api/servicos/available", {
     method: "GET",
     query: {
       date,
+      city: city.trim() || undefined,
       slotMinutes,
     },
   });
 
   return toSlotArray(response)
-    .map((slot) => normalizeSlot(slot, date, slotMinutes))
+    .map((slot) => normalizeSlot(slot, date, durationMinutes))
     .filter((slot): slot is CalendarSlot => Boolean(slot))
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
 }

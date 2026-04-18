@@ -1,8 +1,10 @@
+import type { CityTone } from "../../../data/allowed-cities";
+
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
 }
 
-function cn(...values: Array<string | false | undefined>) {
+function cn(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }
 
@@ -15,6 +17,7 @@ type CalendarDateCellProps = {
   isCurrentMonth?: boolean;
   isPast?: boolean;
   variant?: "big" | "preview" | "mini";
+  tone?: CityTone | null;
 };
 
 export default function CalendarDateCell({
@@ -26,26 +29,26 @@ export default function CalendarDateCell({
   isCurrentMonth = true,
   isPast = false,
   variant = "big",
+  tone,
 }: CalendarDateCellProps) {
   const numericLabel = toLocalDate(date).getDate();
-  const label = isToday ? "Hoje" : String(numericLabel);
+  const label = String(numericLabel);
 
   return (
     <span
       className={cn(
         "calendar-date-cell",
         `calendar-date-cell--${variant}`,
+        tone && `calendar-date-cell--tone-${tone}`,
         isToday && "calendar-date-cell--today",
         isSelected && "calendar-date-cell--selected",
         isUnavailable && "calendar-date-cell--unavailable",
         hasEvents && "calendar-date-cell--has-events",
         !isCurrentMonth && "calendar-date-cell--outside",
         isPast && "calendar-date-cell--past",
-        isToday && "calendar-date-cell--today-label",
       )}
-      aria-hidden="true"
     >
-      <span className="calendar-date-cell__label">{label}</span>
+      {label}
     </span>
   );
 }

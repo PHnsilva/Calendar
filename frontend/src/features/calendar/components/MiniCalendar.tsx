@@ -1,14 +1,8 @@
+import { isDateBeforeToday, toIsoDate } from "../../../lib/dates";
 import CalendarDateCell from "./CalendarDateCell";
 
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
-}
-
-function toIsoDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
 }
 
 function getMonthDays(monthStart: string): Array<{
@@ -69,7 +63,7 @@ export default function MiniCalendar({
 
       <div className="mini-calendar__grid">
         {days.map((day) => {
-          const isDisabled = !day.isCurrentMonth;
+          const isDisabled = !day.isCurrentMonth || isDateBeforeToday(day.date) || unavailableDates.includes(day.date);
 
           return (
             <button
@@ -77,7 +71,7 @@ export default function MiniCalendar({
               type="button"
               className="mini-calendar__day-button"
               disabled={isDisabled}
-              onClick={() => onDateSelect(day.date)}
+              onClick={() => { if (!isDisabled) onDateSelect(day.date); }}
               aria-label={`Selecionar dia ${new Date(
                 `${day.date}T12:00:00`,
               ).getDate()}`}

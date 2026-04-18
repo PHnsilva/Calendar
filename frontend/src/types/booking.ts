@@ -16,10 +16,3 @@ export type AdminBulkCancelRequest = {
   eventIds: string[];
   reason?: string;
 };
-
-export type AdminDashboardSummaryResponse = {
-  totalBookings?: number;
-  totalRevenue?: number;
-  byStatus?: Record<string, number>;
-  byCity?: Record<string, number>;
-};

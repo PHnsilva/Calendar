@@ -46,6 +46,9 @@ public class AppProperties {
     @Value("${app.service.allowedStates:}")
     private String allowedStatesCsv;
 
+    @Value("${app.booking.durationByCity:}")
+    private String bookingDurationByCityCsv;
+
     @Value("${app.pending.ttlMinutes:10}")
     private long pendingTtlMinutes;
 
@@ -60,6 +63,9 @@ public class AppProperties {
 
     @Value("${app.admin.bulkCancel.maxItems:200}")
     private int adminBulkCancelMaxItems;
+
+    @Value("${admin.token:${ADMIN_TOKEN:}}")
+    private String adminToken;
 
     @Value("${whatsapp.enabled:false}")
     private boolean whatsappEnabled;
@@ -130,21 +136,14 @@ public class AppProperties {
     @Value("${app.history.retentionMonths:2}")
     private int historyRetentionMonths;
 
+    public int getBookingSlotMinutes() { return 60; }
 
-    public int getBookingSlotMinutes() {
-        return 60;
-    }
+    public List<Integer> getAllowedMinuteMarks() { return List.of(0); }
 
-    public List<Integer> getAllowedMinuteMarks() {
-        return List.of(0);
-    }
-
-    public int getMaxFutureMonthsAhead() {
-        return 1;
-    }
+    public int getMaxFutureMonthsAhead() { return 1; }
 
     public List<String> getAllowedCitiesDisplay() {
-        String csv = (allowedCitiesCsv == null ? "" : allowedCitiesCsv.trim());
+        String csv = allowedCitiesCsv == null ? "" : allowedCitiesCsv.trim();
         if (csv.isBlank()) {
             String legacy = getServiceCity();
             return legacy.isBlank() ? List.of() : List.of(legacy);
@@ -164,27 +163,59 @@ public class AppProperties {
         return legacy.isBlank() ? List.of() : List.of(LocationNormalizer.normalizeState(legacy));
     }
 
-    public int getHistoryRetentionMonths() {
-        return Math.max(0, Math.min(historyRetentionMonths, 24));
+    public Map<String, Integer> getBookingDurationByCityDisplay() {
+        LinkedHashMap<String, Integer> parsed = new LinkedHashMap<>();
+        String raw = bookingDurationByCityCsv == null ? "" : bookingDurationByCityCsv.trim();
+        if (!raw.isBlank()) {
+            for (String entry : raw.split(",")) {
+                String item = entry == null ? "" : entry.trim();
+                if (item.isBlank() || !item.contains("=")) {
+                    continue;
+                }
+                String[] parts = item.split("=", 2);
+                String city = parts[0].trim();
+                String value = parts[1].trim();
+                if (city.isBlank() || value.isBlank()) {
+                    continue;
+                }
+                try {
+                    int minutes = Integer.parseInt(value);
+                    if (minutes > 0) {
+                        parsed.put(city, minutes);
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        if (parsed.isEmpty()) {
+            for (String city : getAllowedCitiesDisplay()) {
+                parsed.put(city, 60);
+            }
+        }
+        return parsed;
     }
 
-    public String getZone() {
-        return zone;
+    public int getBookingDurationMinutesForCity(String city) {
+        if (city == null || city.isBlank()) {
+            return 60;
+        }
+        String normalized = LocationNormalizer.normalizeCity(city);
+        for (Map.Entry<String, Integer> entry : getBookingDurationByCityDisplay().entrySet()) {
+            if (LocationNormalizer.normalizeCity(entry.getKey()).equals(normalized)) {
+                return Math.max(60, entry.getValue());
+            }
+        }
+        return 60;
     }
 
-    public String getServiceCity() {
-        return serviceCity == null ? "" : serviceCity.trim();
-    }
-
-    public String getServiceState() {
-        return serviceState == null ? "" : serviceState.trim();
-    }
+    public int getHistoryRetentionMonths() { return Math.max(0, Math.min(historyRetentionMonths, 24)); }
+    public String getZone() { return zone; }
+    public String getServiceCity() { return serviceCity == null ? "" : serviceCity.trim(); }
+    public String getServiceState() { return serviceState == null ? "" : serviceState.trim(); }
 
     public Set<String> getAllowedCitiesNormalized() {
-        String csv = (allowedCitiesCsv == null ? "" : allowedCitiesCsv.trim());
-        if (csv.isBlank())
-            return Collections.emptySet();
-
+        String csv = allowedCitiesCsv == null ? "" : allowedCitiesCsv.trim();
+        if (csv.isBlank()) return Collections.emptySet();
         return Arrays.stream(csv.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
@@ -194,12 +225,10 @@ public class AppProperties {
     }
 
     public Set<String> getAllowedStatesUpper() {
-        String csv = (allowedStatesCsv == null ? "" : allowedStatesCsv.trim());
-        String single = (allowedState == null ? "" : allowedState.trim());
-        String legacy = (serviceState == null ? "" : serviceState.trim());
-
+        String csv = allowedStatesCsv == null ? "" : allowedStatesCsv.trim();
+        String single = allowedState == null ? "" : allowedState.trim();
+        String legacy = serviceState == null ? "" : serviceState.trim();
         LinkedHashSet<String> out = new LinkedHashSet<>();
-
         if (!csv.isBlank()) {
             Arrays.stream(csv.split(","))
                     .map(String::trim)
@@ -209,168 +238,70 @@ public class AppProperties {
                     .forEach(out::add);
             return out;
         }
-
         if (!single.isBlank()) {
             out.add(LocationNormalizer.normalizeState(single));
             return out;
         }
-
         if (!legacy.isBlank()) {
             out.add(LocationNormalizer.normalizeState(legacy));
             return out;
         }
-
         return Collections.emptySet();
     }
 
     public String getLegacyCityNormalized() {
-        String c = (serviceCity == null ? "" : serviceCity.trim());
-        return LocationNormalizer.normalizeCity(c);
+        return LocationNormalizer.normalizeCity(getServiceCity());
     }
 
-    public Duration getPendingTtl() {
-        return Duration.ofMinutes(pendingTtlMinutes);
-    }
+    public Duration getPendingTtl() { return Duration.ofMinutes(pendingTtlMinutes); }
+    public boolean isBlockOtherBookingsWhenPending() { return blockOtherBookingsWhenPending; }
+    public Duration getOtpTtl() { return Duration.ofSeconds(otpTtlSeconds); }
+    public Duration getOtpResendAfter() { return Duration.ofSeconds(otpResendAfterSeconds); }
+    public int getAdminBulkCancelMaxItems() { return Math.max(1, Math.min(adminBulkCancelMaxItems, 1000)); }
 
-    public boolean isBlockOtherBookingsWhenPending() {
-        return blockOtherBookingsWhenPending;
-    }
-
-    public Duration getOtpTtl() {
-        return Duration.ofSeconds(otpTtlSeconds);
-    }
-
-    public Duration getOtpResendAfter() {
-        return Duration.ofSeconds(otpResendAfterSeconds);
-    }
-
-    public int getAdminBulkCancelMaxItems() {
-        return Math.max(1, Math.min(adminBulkCancelMaxItems, 1000));
-    }
-
-    public boolean isWhatsappEnabled() {
-        return whatsappEnabled;
-    }
-
-    public String getWhatsappToken() {
-        return whatsappToken == null ? "" : whatsappToken.trim();
-    }
-
-    public String getWhatsappPhoneNumberId() {
-        return whatsappPhoneNumberId == null ? "" : whatsappPhoneNumberId.trim();
-    }
-
-    public String getWhatsappTemplateName() {
-        return whatsappTemplateName == null ? "" : whatsappTemplateName.trim();
-    }
-
-    public String getWhatsappLanguage() {
-        return whatsappLanguage == null ? "pt_BR" : whatsappLanguage.trim();
-    }
+    public String getAdminToken() { return adminToken == null ? "" : adminToken.trim(); }
+    public boolean isWhatsappEnabled() { return whatsappEnabled; }
+    public String getWhatsappToken() { return whatsappToken == null ? "" : whatsappToken.trim(); }
+    public String getWhatsappPhoneNumberId() { return whatsappPhoneNumberId == null ? "" : whatsappPhoneNumberId.trim(); }
+    public String getWhatsappTemplateName() { return whatsappTemplateName == null ? "" : whatsappTemplateName.trim(); }
+    public String getWhatsappLanguage() { return whatsappLanguage == null ? "pt_BR" : whatsappLanguage.trim(); }
 
     public boolean isSupabaseEnabled() {
-        return supabaseEnabled
-                && supabaseUrl != null && !supabaseUrl.isBlank()
-                && supabaseKey != null && !supabaseKey.isBlank();
+        return supabaseEnabled && supabaseUrl != null && !supabaseUrl.isBlank() && supabaseKey != null && !supabaseKey.isBlank();
     }
 
-    public String getSupabaseUrl() {
-        return supabaseUrl == null ? "" : supabaseUrl.trim();
-    }
-
-    public String getSupabaseKey() {
-        return supabaseKey == null ? "" : supabaseKey.trim();
-    }
-
-    public String getSupabaseSchema() {
-        return supabaseSchema == null ? "public" : supabaseSchema.trim();
-    }
-
-    public String getTableVerification() {
-        return tableVerification;
-    }
-
-    public String getTablePending() {
-        return tablePending;
-    }
-
-    public String getTableHistory() {
-        return tableHistory;
-    }
-
-    public boolean isGoogleMapsEnabled() {
-        return googleMapsEnabled;
-    }
-
-    public String getGoogleMapsApiKey() {
-        return googleMapsApiKey == null ? "" : googleMapsApiKey.trim();
-    }
-
-    public boolean isGoogleRoutesTraffic() {
-        return googleRoutesTraffic;
-    }
-
-    public String getGoogleRoutesFieldMask() {
-        return googleRoutesFieldMask == null ? "" : googleRoutesFieldMask.trim();
-    }
-
-
-    public boolean isGeoapifyEnabled() {
-        return geoapifyEnabled;
-    }
-
-    public String getGeoapifyApiKey() {
-        return geoapifyApiKey == null ? "" : geoapifyApiKey.trim();
-    }
-
-    public String getGeoapifyRoutingMode() {
-        return geoapifyRoutingMode == null ? "drive" : geoapifyRoutingMode.trim();
-    }
-
-    public String getGeoapifyRoutingUnits() {
-        return geoapifyRoutingUnits == null ? "metric" : geoapifyRoutingUnits.trim();
-    }
-
-    public String getGeoapifyRoutingLang() {
-        return geoapifyRoutingLang == null ? "pt-BR" : geoapifyRoutingLang.trim();
-    }
-
-    public String getGeoapifyGeocodingCountry() {
-        return geoapifyGeocodingCountry == null ? "br" : geoapifyGeocodingCountry.trim();
-    }
+    public String getSupabaseUrl() { return supabaseUrl == null ? "" : supabaseUrl.trim(); }
+    public String getSupabaseKey() { return supabaseKey == null ? "" : supabaseKey.trim(); }
+    public String getSupabaseSchema() { return supabaseSchema == null ? "public" : supabaseSchema.trim(); }
+    public String getTableVerification() { return tableVerification; }
+    public String getTablePending() { return tablePending; }
+    public String getTableHistory() { return tableHistory; }
+    public boolean isGoogleMapsEnabled() { return googleMapsEnabled; }
+    public String getGoogleMapsApiKey() { return googleMapsApiKey == null ? "" : googleMapsApiKey.trim(); }
+    public boolean isGoogleRoutesTraffic() { return googleRoutesTraffic; }
+    public String getGoogleRoutesFieldMask() { return googleRoutesFieldMask == null ? "" : googleRoutesFieldMask.trim(); }
+    public boolean isGeoapifyEnabled() { return geoapifyEnabled; }
+    public String getGeoapifyApiKey() { return geoapifyApiKey == null ? "" : geoapifyApiKey.trim(); }
+    public String getGeoapifyRoutingMode() { return geoapifyRoutingMode == null ? "drive" : geoapifyRoutingMode.trim(); }
+    public String getGeoapifyRoutingUnits() { return geoapifyRoutingUnits == null ? "metric" : geoapifyRoutingUnits.trim(); }
+    public String getGeoapifyRoutingLang() { return geoapifyRoutingLang == null ? "pt-BR" : geoapifyRoutingLang.trim(); }
+    public String getGeoapifyGeocodingCountry() { return geoapifyGeocodingCountry == null ? "br" : geoapifyGeocodingCountry.trim(); }
 
     public LocalDate getScheduleCycleStart() {
-        String v = (scheduleCycleStart == null) ? "" : scheduleCycleStart.trim();
-        if (v.isBlank())
-            return null;
-        try {
-            return LocalDate.parse(v);
-        } catch (Exception e) {
-            return null;
-        }
+        String v = scheduleCycleStart == null ? "" : scheduleCycleStart.trim();
+        if (v.isBlank()) return null;
+        try { return LocalDate.parse(v); } catch (Exception e) { return null; }
     }
 
-    public LocalTime getWorkStart() {
-        return parseTimeOrDefault(workStart, LocalTime.of(8, 0));
-    }
-
-    public LocalTime getWorkEnd() {
-        return parseTimeOrDefault(workEnd, LocalTime.of(18, 0));
-    }
-
-    public LocalTime getLunchStart() {
-        return parseTimeOrDefault(lunchStart, LocalTime.of(12, 0));
-    }
-
-    public LocalTime getLunchEnd() {
-        return parseTimeOrDefault(lunchEnd, LocalTime.of(13, 0));
-    }
+    public LocalTime getWorkStart() { return parseTimeOrDefault(workStart, LocalTime.of(8, 0)); }
+    public LocalTime getWorkEnd() { return parseTimeOrDefault(workEnd, LocalTime.of(18, 0)); }
+    public LocalTime getLunchStart() { return parseTimeOrDefault(lunchStart, LocalTime.of(12, 0)); }
+    public LocalTime getLunchEnd() { return parseTimeOrDefault(lunchEnd, LocalTime.of(13, 0)); }
 
     private LocalTime parseTimeOrDefault(String raw, LocalTime def) {
         try {
             String v = raw == null ? "" : raw.trim();
-            if (v.isBlank())
-                return def;
+            if (v.isBlank()) return def;
             return LocalTime.parse(v);
         } catch (Exception e) {
             return def;

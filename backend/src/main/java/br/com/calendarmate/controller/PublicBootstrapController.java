@@ -48,6 +48,7 @@ public class PublicBootstrapController {
         PublicBootstrapResponse.ServiceAreaConfig serviceArea = new PublicBootstrapResponse.ServiceAreaConfig();
         serviceArea.setAllowedCities(props.getAllowedCitiesDisplay());
         serviceArea.setAllowedStates(props.getAllowedStatesDisplay());
+        serviceArea.setDurationByCity(props.getBookingDurationByCityDisplay());
         response.setServiceArea(serviceArea);
 
         return response;

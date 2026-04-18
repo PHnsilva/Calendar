@@ -1,0 +1,485 @@
+/* allow the logo to cross the shell padding and header gap without moving layout */
+.app-shell,
+.app-shell__frame,
+.public-header,
+.brand-lockup,
+.brand-lockup__inner {
+  overflow: visible !important;
+}
+
+.public-header {
+  position: relative;
+  z-index: 20;
+}
+
+.public-layout__content {
+  position: relative;
+  z-index: 1;
+}
+
+/* self-contained refresh for calendar header and bookings actions */
+
+.header-booking-action--accent-orange .header-booking-action__icon {
+  background: linear-gradient(135deg, #ff9824, #f26b0f) !important;
+  box-shadow: 0 14px 28px rgba(242, 107, 15, 0.28) !important;
+}
+
+.header-booking-action--bookings > span:last-child {
+  background: linear-gradient(135deg, #2360b7, #1a448b) !important;
+  box-shadow: 0 12px 24px rgba(26, 68, 139, 0.24) !important;
+}
+
+/* keep the whole page fitting inside smaller desktop widths */
+html,
+body,
+#root,
+.app-shell,
+.app-shell__frame,
+.public-layout__content,
+.home-page,
+.home-grid,
+.home-sidebar,
+.home-calendar-stack,
+.home-main-panel--calendar {
+  max-width: 100%;
+}
+
+body,
+.app-shell,
+.app-shell__frame,
+.public-layout__content,
+.home-page,
+.home-grid {
+  overflow-x: hidden;
+}
+
+.home-page--sidebar-layout .home-grid {
+  gap: 12px !important;
+}
+
+.home-page--sidebar-layout .home-grid--sidebar-open {
+  grid-template-columns: minmax(0, 1fr) clamp(304px, 28vw, 372px) !important;
+}
+
+.home-sidebar--desktop {
+  grid-template-columns: 72px minmax(0, 1fr) !important;
+  gap: 10px !important;
+}
+
+.booking-sidebar-rail {
+  padding: 10px 8px 14px !important;
+  overflow: hidden !important;
+}
+
+.booking-sidebar-rail__days,
+.timeline-panel__body {
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.booking-sidebar-rail__days::-webkit-scrollbar,
+.timeline-panel__body::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
+}
+
+.booking-sidebar-rail__days {
+  padding-bottom: 8px !important;
+}
+
+.booking-sidebar-rail__quick-add {
+  margin: auto auto 0 !important;
+  display: grid !important;
+  position: relative;
+  overflow: visible !important;
+  isolation: isolate;
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  background: linear-gradient(145deg, #ffa735 0%, #f58216 62%, #ef6f0b 100%) !important;
+  box-shadow:
+    0 18px 30px rgba(240, 106, 13, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -3px 10px rgba(185, 76, 5, 0.16) !important;
+}
+
+.booking-sidebar-rail__quick-add::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: -7px;
+  width: 100%;
+  border-radius: 999px;
+  box-shadow:
+    0 12px 24px rgba(240, 106, 13, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  opacity: 0.98;
+  z-index: -2;
+}
+
+.booking-sidebar-rail__quick-add::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 4px;
+  width: 18px;
+  border-radius: 999px 0 0 999px;
+  opacity: 0.92;
+  z-index: 0;
+}
+
+/* calendar header: helper left, month centered, arrows right */
+.calendar-toolbar--month-badge-layout {
+  display: grid !important;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar-toolbar__left {
+  justify-self: start;
+  display: inline-flex;
+}
+
+.calendar-toolbar__meta {
+  display: grid;
+  gap: 4px;
+}
+
+.calendar-toolbar__meta--centered {
+  justify-self: center;
+  text-align: center;
+}
+
+.calendar-toolbar__eyebrow,
+.calendar-month-badge {
+  display: none !important;
+}
+
+.calendar-toolbar__title {
+  margin: 0;
+  font-size: clamp(1.35rem, 1.6vw, 1.9rem);
+  text-transform: capitalize;
+  color: #19375f;
+}
+
+.calendar-toolbar__actions {
+  display: inline-flex;
+  justify-self: end;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-toolbar__nav-group {
+  display: inline-flex;
+  gap: 8px;
+}
+
+/* timeline badge stays intact */
+.timeline-month-badge {
+  width: 76px;
+  min-width: 76px;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(83, 82, 231, 0.18);
+  background: linear-gradient(180deg, #6d3df2 0%, #4c2fd2 35%, #f4f7fd 35%, #eef3fc 100%);
+  box-shadow: 0 14px 28px rgba(49, 63, 114, 0.16);
+  display: grid;
+  grid-template-rows: 24px auto auto;
+  justify-items: center;
+  align-items: center;
+}
+
+.timeline-month-badge__month {
+  width: 100%;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  font-size: 0.88rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #ffffff;
+}
+
+.timeline-month-badge__number {
+  font-size: 2.35rem;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: #1f3762;
+  padding-top: 8px;
+}
+
+.timeline-month-badge__year {
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: #6f80a5;
+  padding-bottom: 10px;
+}
+
+.timeline-panel__header--with-badge {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.timeline-panel__header-main {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.timeline-panel__title-block {
+  gap: 6px !important;
+}
+
+.timeline-panel__title {
+  margin: 0;
+}
+
+.timeline-panel__eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+}
+
+.home-sidebar--desktop .timeline-panel {
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  padding-bottom: 18px !important;
+}
+
+.timeline-panel__body {
+  padding-bottom: 8px;
+}
+
+.timeline-panel__footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
+}
+
+.timeline-panel__cta {
+  min-height: 52px;
+  width: min(100%, 246px);
+  border: none;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 18px 0 10px;
+  background: linear-gradient(135deg, #ff4f6d, #c61f4b);
+  color: #fff;
+  box-shadow: 0 18px 34px rgba(198, 31, 75, 0.28);
+  cursor: pointer;
+}
+
+.timeline-panel__cta:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+.timeline-panel__cta-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 1.3rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.timeline-panel__cta-label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* main calendar cleanup */
+.calendar-grid__inline-cta,
+.calendar-grid__indicator-stack,
+.calendar-grid__weekday--active::after {
+  display: none !important;
+}
+
+.calendar-grid__cell,
+.home-page--sidebar-layout .calendar-grid__cell {
+  padding-bottom: 12px !important;
+}
+
+.month-preview {
+  min-height: 52px !important;
+  padding: 8px 12px !important;
+}
+
+.month-preview__header {
+  margin-bottom: 6px !important;
+}
+
+.month-preview__header strong {
+  font-size: 0.82rem !important;
+}
+
+.month-preview__grid {
+  gap: 2px !important;
+}
+
+.month-preview__day {
+  min-height: 22px !important;
+}
+
+.calendar-date-cell--preview {
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 4px !important;
+  font-size: 0.68rem !important;
+}
+
+.calendar-grid__cell--unavailable,
+.calendar-grid__cell--past.calendar-grid__cell--blocked,
+.calendar-grid__cell--blocked:not(.calendar-grid__cell--selected):not(.calendar-grid__cell--outside) {
+  background:
+    linear-gradient(180deg, rgba(128, 139, 155, 0.08), rgba(128, 139, 155, 0.03)),
+    repeating-linear-gradient(
+      135deg,
+      transparent,
+      transparent 5px,
+      rgba(128, 139, 155, 0.08) 5px,
+      rgba(128, 139, 155, 0.08) 8px
+    ) !important;
+}
+
+.calendar-date-cell--unavailable {
+  color: #cb3044 !important;
+}
+
+@media (max-width: 1320px) {
+  .home-page--sidebar-layout .home-grid--sidebar-open {
+    grid-template-columns: minmax(0, 1fr) clamp(292px, 27vw, 352px) !important;
+  }
+
+  .home-sidebar--desktop {
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .booking-sidebar-rail__day {
+    min-height: 58px;
+  }
+}
+
+@media (max-width: 860px) {
+  .calendar-toolbar--month-badge-layout {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .calendar-toolbar__title {
+    font-size: 1.25rem;
+  }
+
+  .timeline-month-badge {
+    width: 68px;
+    min-width: 68px;
+  }
+
+  .timeline-month-badge__number {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 730px) {
+  .public-header__actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 85fr) minmax(56px, 15fr);
+    grid-template-areas:
+      "theme theme"
+      "bookings plus";
+    gap: 10px;
+    align-items: center;
+  }
+
+  .public-header__actions .theme-icon-button {
+    grid-area: theme;
+    justify-self: end;
+  }
+
+  .header-booking-action--sidebar-focus {
+    grid-area: bookings;
+    min-width: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-booking-action--compact-plus {
+    grid-area: plus;
+    min-width: 56px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-booking-action--compact-plus .header-booking-action__icon {
+    width: 100%;
+    min-width: 56px;
+  }
+
+  .calendar-toolbar--month-badge-layout {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .calendar-toolbar__actions {
+    gap: 6px;
+  }
+
+  .calendar-toolbar__nav-group {
+    gap: 6px;
+  }
+
+  .timeline-panel__header--with-badge {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .timeline-month-badge {
+    width: 64px;
+    min-width: 64px;
+    border-radius: 16px;
+  }
+
+  .timeline-month-badge__month {
+    font-size: 0.78rem;
+  }
+
+  .timeline-month-badge__number {
+    font-size: 1.8rem;
+    padding-top: 6px;
+  }
+
+  .timeline-month-badge__year {
+    font-size: 0.78rem;
+    padding-bottom: 8px;
+  }
+
+  .timeline-panel__footer {
+    padding-top: 12px;
+  }
+
+  .timeline-panel__cta {
+    width: min(100%, 210px);
+    min-height: 48px;
+    gap: 8px;
+  }
+
+  .timeline-panel__cta-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 1.15rem;
+  }
+}

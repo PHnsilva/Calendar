@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "../../../lib/query-keys";
-import type { ServicoResponse } from "../../../types/api";
-import type { CalendarEvent } from "../../calendar/types";
-import { getAdminBookings } from "../api/get-admin-bookings";
-import type { AdminFilters } from "../types";
+import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '../../../lib/query-keys';
+import type { ServicoResponse } from '../../../types/api';
+import type { CalendarEvent } from '../../calendar/types';
+import { getAdminBookings } from '../api/get-admin-bookings';
+import type { AdminFilters } from '../types';
 
 function buildFiltersKey(filters: AdminFilters) {
   return JSON.stringify(filters ?? {});
@@ -24,7 +24,7 @@ function mapServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
     customerEmail: servico.clientEmail,
     customerPhone: servico.clientPhone,
     serviceLabel: servico.serviceType,
-    status: "booked",
+    status: 'booked',
   };
 }
 
@@ -33,7 +33,10 @@ export function useAdminBookings(filters: AdminFilters = {}, enabled = true) {
     queryKey: queryKeys.adminBookings(buildFiltersKey(filters)),
     queryFn: () => getAdminBookings(filters),
     enabled,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: enabled ? 20_000 : false,
   });
 
   return {

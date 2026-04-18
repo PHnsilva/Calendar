@@ -22,6 +22,10 @@ type CalendarToolbarProps = {
   onHelpOpen: () => void;
 };
 
+function monthLabel(monthStart: string) {
+  return new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(monthStart));
+}
+
 export default function CalendarToolbar({
   currentMonth,
   currentAllowedMonth,
@@ -29,15 +33,14 @@ export default function CalendarToolbar({
   onMonthChange,
   onHelpOpen,
 }: CalendarToolbarProps) {
-  const currentMonthLabel = new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-  }).format(toLocalDate(currentMonth));
-
+  const currentMonthLabel = monthLabel(currentMonth);
+  const previousMonth = shiftMonth(currentMonth, -1);
+  const nextMonth = shiftMonth(currentMonth, 1);
   const canGoPrev = currentMonth !== currentAllowedMonth;
   const canGoNext = currentMonth !== nextAllowedMonth;
 
   return (
-    <div className="calendar-toolbar">
+    <div className="calendar-toolbar calendar-toolbar--month-switcher">
       <button
         type="button"
         className="calendar-toolbar__help"
@@ -51,23 +54,29 @@ export default function CalendarToolbar({
       <strong className="calendar-toolbar__title">{currentMonthLabel}</strong>
 
       <div className="calendar-toolbar__nav-group">
-        <button
-          type="button"
-          className="calendar-toolbar__nav"
-          onClick={() => onMonthChange(shiftMonth(currentMonth, -1))}
-          disabled={!canGoPrev}
-        >
-          Ant
-        </button>
+        {canGoPrev ? (
+          <button
+            type="button"
+            className="calendar-toolbar__month-nav calendar-toolbar__month-nav--prev"
+            onClick={() => onMonthChange(previousMonth)}
+          >
+            {monthLabel(previousMonth)}
+          </button>
+        ) : (
+          <span className="calendar-toolbar__month-chip">mês atual</span>
+        )}
 
-        <button
-          type="button"
-          className="calendar-toolbar__nav"
-          onClick={() => onMonthChange(shiftMonth(currentMonth, 1))}
-          disabled={!canGoNext}
-        >
-          Próx
-        </button>
+        {canGoNext ? (
+          <button
+            type="button"
+            className="calendar-toolbar__month-nav calendar-toolbar__month-nav--next"
+            onClick={() => onMonthChange(nextMonth)}
+          >
+            {monthLabel(nextMonth)}
+          </button>
+        ) : (
+          <span className="calendar-toolbar__month-chip">mês atual</span>
+        )}
       </div>
     </div>
   );

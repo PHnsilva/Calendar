@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { confirmVerification } from "../api/confirm-verification";
-import { resendVerification } from "../api/resend-verification";
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { confirmVerification } from '../api/confirm-verification';
+import { resendVerification } from '../api/resend-verification';
 
 type UseOtpFlowOptions = {
   verificationId: string;
@@ -16,13 +16,14 @@ export function useOtpFlow({
   initialExpiresInSeconds,
   onVerified,
 }: UseOtpFlowOptions) {
-  const [code, setCode] = useState("");
+  const queryClient = useQueryClient();
+  const [code, setCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(initialResendAfterSeconds);
   const [expiresIn, setExpiresIn] = useState(initialExpiresInSeconds);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setCode("");
+    setCode('');
     setResendCooldown(initialResendAfterSeconds);
     setExpiresIn(initialExpiresInSeconds);
     setFeedbackMessage(null);
@@ -42,9 +43,13 @@ export function useOtpFlow({
 
   const confirmMutation = useMutation({
     mutationFn: () => confirmVerification({ verificationId, code }),
-    onSuccess: (response: any) => {
+    onSuccess: async (response: any) => {
       if (response.verified) {
-        setFeedbackMessage("Telefone confirmado com sucesso.");
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] }),
+          queryClient.invalidateQueries({ queryKey: ['admin-bookings'] }),
+        ]);
+        setFeedbackMessage('Telefone confirmado com sucesso.');
         onVerified();
       }
     },
@@ -55,7 +60,7 @@ export function useOtpFlow({
     onSuccess: (response: any) => {
       setResendCooldown(response.resendAfterSeconds);
       setExpiresIn(response.expiresInSeconds);
-      setFeedbackMessage("Novo código enviado.");
+      setFeedbackMessage('Novo código enviado.');
     },
   });
 
@@ -64,7 +69,7 @@ export function useOtpFlow({
 
   const expiresLabel = useMemo(() => {
     const minutes = Math.floor(expiresIn / 60);
-    const seconds = `${expiresIn % 60}`.padStart(2, "0");
+    const seconds = `${expiresIn % 60}`.padStart(2, '0');
     return `${minutes}:${seconds}`;
   }, [expiresIn]);
 

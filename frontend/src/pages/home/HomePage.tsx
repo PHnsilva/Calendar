@@ -1,16 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import "../../app/home-layout.css";
-import "../../app/booking-sidebar.css";
-import HomeCalendarSection from "../../features/home/components/HomeCalendarSection";
-import HomeSidebar from "../../features/home/components/HomeSidebar";
-import BookingFormModal from "../../features/booking-form/components/BookingFormModal";
-import BookingStartHintModal from "../../components/ui/BookingStartHintModal";
-import { useHomeCalendarView } from "../../features/home/hooks/useHomeCalendarView";
-import { useHomeBookingSelection } from "../../app/home-booking-provider";
-import type { CalendarEvent } from "../../features/calendar/types";
-import { getLocalCalendarEvents, getStoredAdminToken } from "../../lib/storage";
-import { useAvailableMonthDates } from "../../features/calendar/hooks/useAvailableMonthDates";
-import { useAdminBookings } from "../../features/admin/hooks/useAdminBookings";
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import '../../app/home-layout.css';
+import '../../app/booking-sidebar.css';
+import '../../app/calendar-final-pass.css';
+import '../../app/home-mobile-dock.css';
+import '../../app/home-mobile-sheet.css';
+import '../../app/calendar-mobile-compact.css';
+import '../../app/admin-selection.css';
+import HomeCalendarSection from '../../features/home/components/HomeCalendarSection';
+import HomeSidebar from '../../features/home/components/HomeSidebar';
+import HomeMobileDock from '../../features/home/components/HomeMobileDock';
+import HomeMobileBookingsSheet from '../../features/home/components/HomeMobileBookingsSheet';
+import BookingFormModal from '../../features/booking-form/components/BookingFormModal';
+import BookingStartHintModal from '../../components/ui/BookingStartHintModal';
+import { useHomeCalendarView } from '../../features/home/hooks/useHomeCalendarView';
+import { useHomeBookingSelection } from '../../app/home-booking-provider';
+import { ALLOWED_CITIES } from '../../data/allowed-cities';
+import type { CalendarEvent } from '../../features/calendar/types';
+import { getLocalCalendarEvents } from '../../lib/storage';
+import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
+import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
+import type { ServicoResponse } from '../../types/api';
+import type { AdminBlockMode } from '../../features/admin/api/manage-admin-blocks';
+import { createAdminBlocks } from '../../features/admin/api/manage-admin-blocks';
+import { bulkCancelAdminBookings } from '../../features/admin/api/bulk-cancel-admin-bookings';
+import AdminSelectionDock from '../../features/admin/components/AdminSelectionDock';
+import AdminSelectionModal from '../../features/admin/components/AdminSelectionModal';
 
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
@@ -18,8 +32,8 @@ function toLocalDate(dateString: string): Date {
 
 function toIsoDate(date: Date): string {
   const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
@@ -30,7 +44,7 @@ function toMonthStart(dateString: string): string {
 function shiftMonth(monthStart: string, delta: number): string {
   const base = new Date(`${monthStart}T12:00:00`);
   const next = new Date(base.getFullYear(), base.getMonth() + delta, 1);
-  return `${next.getFullYear()}-${`${next.getMonth() + 1}`.padStart(2, "0")}-01`;
+  return `${next.getFullYear()}-${`${next.getMonth() + 1}`.padStart(2, '0')}-01`;
 }
 
 function getMonthDates(monthStart: string): string[] {
@@ -58,6 +72,85 @@ function buildUnavailableFromAvailability(monthStart: string, availableDates: st
   return getMonthDates(monthStart).filter((date) => !available.has(date));
 }
 
+const ENABLE_LAYOUT_STRESS_PREVIEW_MOCK = true;
+
+function buildStressPreviewEvents(currentAllowedMonth: string, nextAllowedMonth: string): CalendarEvent[] {
+  const current = toLocalDate(currentAllowedMonth);
+  const next = toLocalDate(nextAllowedMonth);
+  const customerNames = [
+    'Ana Beatriz',
+    'Carlos M.',
+    'Eduardo T.',
+    'Fernanda L.',
+    'Juliana P.',
+    'Lucas V.',
+    'Marina C.',
+    'Patrícia L.',
+    'Roberto S.',
+    'Vanessa G.',
+  ];
+
+  const cityAddresses: Record<string, string> = {
+    'Belo Horizonte': 'Av. Afonso Pena, 1377 - Centro - Belo Horizonte/MG CEP: 30130-008',
+    Itabirito: 'Rua Felipe Camarão, 158 - Compl.: casa - Vila Gonçalo - Itabirito/MG CEP: 35450069',
+    'Ouro Preto': 'Rua Direita, 210 - Centro - Ouro Preto/MG CEP: 35400-000',
+    Moeda: 'Rua das Flores, 85 - Centro - Moeda/MG CEP: 35470-000',
+    'Nova Lima': 'Alameda dos Ipês, 420 - Jardim Canadá - Nova Lima/MG CEP: 34007-000',
+    Congonhas: 'Rua Barão de Congonhas, 210 - Centro - Congonhas/MG CEP: 36415-000',
+    'Rio Acima': 'Rua da Serra, 56 - Centro - Rio Acima/MG CEP: 34300-000',
+    Brumadinho: 'Rua da Matriz, 98 - Centro - Brumadinho/MG CEP: 35460-000',
+  };
+
+  const plan = [
+    { month: 'current', day: 1, times: ['08:00', '09:30'], cities: ['Itabirito', 'Ouro Preto'] },
+    { month: 'current', day: 3, times: ['08:00', '10:00', '13:30'], cities: ['Belo Horizonte', 'Itabirito', 'Congonhas'] },
+    { month: 'current', day: 5, times: ['09:00', '11:00'], cities: ['Moeda', 'Nova Lima'] },
+    { month: 'current', day: 7, times: ['08:30', '14:00'], cities: ['Rio Acima', 'Brumadinho'] },
+    { month: 'current', day: 9, times: ['09:00', '12:00', '15:00'], cities: ['Ouro Preto', 'Congonhas', 'Itabirito'] },
+    { month: 'current', day: 11, times: ['08:00', '10:00', '13:00', '16:00'], cities: ['Belo Horizonte', 'Nova Lima', 'Rio Acima', 'Moeda'] },
+    { month: 'current', day: 14, times: ['09:00', '11:30'], cities: ['Brumadinho', 'Congonhas'] },
+    { month: 'current', day: 16, times: ['08:00', '10:30', '14:30'], cities: ['Itabirito', 'Ouro Preto', 'Belo Horizonte'] },
+    { month: 'current', day: 18, times: ['09:00'], cities: ['Nova Lima'] },
+    { month: 'current', day: 20, times: ['08:00', '09:00', '13:00', '15:30'], cities: ['Moeda', 'Rio Acima', 'Congonhas', 'Brumadinho'] },
+    { month: 'current', day: 23, times: ['10:00', '12:30'], cities: ['Belo Horizonte', 'Itabirito'] },
+    { month: 'current', day: 25, times: ['08:00', '11:00', '14:00'], cities: ['Ouro Preto', 'Nova Lima', 'Rio Acima'] },
+    { month: 'current', day: 27, times: ['09:30', '13:00'], cities: ['Moeda', 'Congonhas'] },
+    { month: 'next', day: 2, times: ['08:00', '10:00'], cities: ['Itabirito', 'Belo Horizonte'] },
+    { month: 'next', day: 4, times: ['09:00', '11:00', '15:00'], cities: ['Ouro Preto', 'Nova Lima', 'Congonhas'] },
+    { month: 'next', day: 6, times: ['08:30', '12:30'], cities: ['Rio Acima', 'Moeda'] },
+    { month: 'next', day: 9, times: ['09:00', '14:00'], cities: ['Brumadinho', 'Itabirito'] },
+    { month: 'next', day: 12, times: ['08:00', '10:00', '13:00'], cities: ['Belo Horizonte', 'Ouro Preto', 'Nova Lima'] },
+  ] as const;
+
+  return plan.flatMap((entry, planIndex) =>
+    entry.times.map((startTime, itemIndex) => {
+      const monthBase = entry.month === 'next' ? next : current;
+      const city = entry.cities[itemIndex] ?? ALLOWED_CITIES[(planIndex + itemIndex) % ALLOWED_CITIES.length];
+      const endHour = Number(startTime.slice(0, 2)) + 1;
+      const endTime = `${`${endHour}`.padStart(2, '0')}:${startTime.slice(3, 5)}`;
+      const date = toIsoDate(new Date(monthBase.getFullYear(), monthBase.getMonth(), entry.day));
+      const id = `layout-preview-${entry.month}-${entry.day}-${itemIndex}`;
+      const customerName = customerNames[(planIndex + itemIndex) % customerNames.length];
+      const serviceLabel = ['Vistoria técnica', 'Instalação', 'Manutenção', 'Visita preventiva'][(planIndex + itemIndex) % 4];
+
+      return {
+        id,
+        title: `Atendimento ${city}`,
+        date,
+        startTime,
+        endTime,
+        city,
+        customerName,
+        customerAddress: cityAddresses[city] ?? city,
+        customerEmail: `preview${planIndex + 1}${itemIndex}@exemplo.com`,
+        customerPhone: `(31) 98888-${`${planIndex}${itemIndex}`.padStart(4, '0')}`,
+        serviceLabel,
+        status: 'booked',
+      } satisfies CalendarEvent;
+    }),
+  );
+}
+
 function mergeEvents(events: CalendarEvent[]) {
   const map = new Map<string, CalendarEvent>();
   for (const event of events) map.set(event.id, event);
@@ -67,17 +160,43 @@ function mergeEvents(events: CalendarEvent[]) {
   });
 }
 
+function mapServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
+  const customerName = `${servico.clientFirstName} ${servico.clientLastName}`.trim();
+
+  return {
+    id: servico.eventId,
+    title: customerName || servico.serviceType,
+    date: servico.start.slice(0, 10),
+    startTime: servico.start.slice(11, 16),
+    endTime: servico.end.slice(11, 16),
+    city: servico.clientCity,
+    customerName,
+    customerAddress: servico.clientAddressLine,
+    customerEmail: servico.clientEmail,
+    customerPhone: servico.clientPhone,
+    serviceLabel: servico.serviceType,
+    status: 'booked',
+  };
+}
+
 type HomePageProps = {
-  mode?: "public" | "admin";
+  mode?: 'public' | 'admin';
+  adminBookings?: ServicoResponse[];
+  onAdminBookingsChange?: Dispatch<SetStateAction<ServicoResponse[]>>;
+  adminUsesMockData?: boolean;
 };
 
-export default function HomePage({ mode = "public" }: HomePageProps) {
-  const isAdminMode = mode === "admin";
+export default function HomePage({
+  mode = 'public',
+  adminBookings,
+  onAdminBookingsChange,
+  adminUsesMockData = false,
+}: HomePageProps) {
+  const isAdminMode = mode === 'admin';
   const today = new Date();
   const todayIso = toIsoDate(today);
-  const currentAllowedMonth = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-01`;
+  const currentAllowedMonth = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, '0')}-01`;
   const nextAllowedMonth = shiftMonth(currentAllowedMonth, 1);
-  const calendarRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
 
   const {
@@ -98,25 +217,56 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
   const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
   const [isBookingGuideOpen, setIsBookingGuideOpen] = useState(false);
   const [isBookingPickMode, setIsBookingPickMode] = useState(false);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => (window.innerWidth > 730 ? !isAdminMode : false));
   const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
+  const [isMobileBookingsOpen, setIsMobileBookingsOpen] = useState(false);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
   );
+  const [adminBlockingEnabled, setAdminBlockingEnabled] = useState(false);
+  const [adminSelectedDates, setAdminSelectedDates] = useState<string[]>([]);
+  const [adminModalMode, setAdminModalMode] = useState<'block' | 'cancel' | 'view' | null>(null);
+  const [adminBlockedDates, setAdminBlockedDates] = useState<string[]>([]);
 
   const isDesktop = viewportWidth > 730;
-  const adminBookings = useAdminBookings({}, isAdminMode && Boolean(getStoredAdminToken()));
-
+  const adminBookingsQuery = useAdminBookings({}, isAdminMode && !adminBookings);
   const currentMonthAvailability = useAvailableMonthDates(currentAllowedMonth, !isAdminMode);
   const nextMonthAvailability = useAvailableMonthDates(nextAllowedMonth, !isAdminMode);
 
+  const previewEvents = useMemo(
+    () =>
+      ENABLE_LAYOUT_STRESS_PREVIEW_MOCK && !isAdminMode
+        ? buildStressPreviewEvents(currentAllowedMonth, nextAllowedMonth)
+        : [],
+    [currentAllowedMonth, isAdminMode, nextAllowedMonth],
+  );
+
+  const effectiveAdminBookings = useMemo(
+    () => adminBookings ?? adminBookingsQuery.data ?? [],
+    [adminBookings, adminBookingsQuery.data],
+  );
+
+  useEffect(() => {
+    if (!isAdminMode || viewportWidth <= 730) return;
+    if (effectiveAdminBookings.length === 0) {
+      setIsSidebarExpanded(false);
+    }
+  }, [effectiveAdminBookings.length, isAdminMode, viewportWidth]);
+
+  const adminCalendarEvents = useMemo(
+    () => effectiveAdminBookings.map(mapServicoToCalendarEvent),
+    [effectiveAdminBookings],
+  );
+
   const allEvents = useMemo(
-    () => (isAdminMode ? mergeEvents(adminBookings.calendarEvents) : mergeEvents(localEvents)),
-    [adminBookings.calendarEvents, isAdminMode, localEvents],
+    () => (isAdminMode ? mergeEvents(adminCalendarEvents) : mergeEvents([...previewEvents, ...localEvents])),
+    [adminCalendarEvents, isAdminMode, localEvents, previewEvents],
   );
 
   const allUnavailableDates = useMemo(() => {
-    if (isAdminMode) return [];
+    if (isAdminMode) {
+      return adminBlockedDates;
+    }
 
     const currentFallback = build4x4UnavailableDates(currentAllowedMonth, todayIso);
     const nextFallback = build4x4UnavailableDates(nextAllowedMonth, todayIso);
@@ -131,6 +281,7 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
 
     return [...currentUnavailable, ...nextUnavailable];
   }, [
+    adminBlockedDates,
     currentAllowedMonth,
     currentMonthAvailability.availableDates,
     currentMonthAvailability.hasError,
@@ -143,29 +294,30 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
     todayIso,
   ]);
 
+  const selectedPeriodBookings = useMemo(
+    () => effectiveAdminBookings
+      .filter((booking) => adminSelectedDates.includes(booking.start.slice(0, 10)))
+      .sort((left, right) => left.start.localeCompare(right.start)),
+    [adminSelectedDates, effectiveAdminBookings],
+  );
+
   useEffect(() => {
     const onResize = () => setViewportWidth(window.innerWidth);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
-
-    if (isDesktop) {
-      html.classList.add("home-scroll-locked");
-      body.classList.add("home-scroll-locked");
-    } else {
-      html.classList.remove("home-scroll-locked");
-      body.classList.remove("home-scroll-locked");
-    }
+    html.classList.add('home-scroll-locked');
+    body.classList.add('home-scroll-locked');
 
     return () => {
-      html.classList.remove("home-scroll-locked");
-      body.classList.remove("home-scroll-locked");
+      html.classList.remove('home-scroll-locked');
+      body.classList.remove('home-scroll-locked');
     };
-  }, [isDesktop]);
+  }, []);
 
   useEffect(() => {
     if (!isDesktop) {
@@ -176,12 +328,36 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
   }, [isDesktop, isBookingPickMode]);
 
   useEffect(() => {
+    if (isDesktop) {
+      setIsMobileBookingsOpen(false);
+    }
+  }, [isDesktop]);
+
+  useEffect(() => {
     if (!selectedDate) return;
     const selectedMonth = toMonthStart(selectedDate);
     if (selectedMonth === currentAllowedMonth || selectedMonth === nextAllowedMonth) {
       setTimelineMonth(selectedMonth);
     }
   }, [selectedDate, currentAllowedMonth, nextAllowedMonth]);
+
+  useEffect(() => {
+    if (!isAdminMode) return;
+
+    const toggleBlockingMode = () => {
+      setAdminBlockingEnabled((current) => {
+        const nextValue = !current;
+        if (!nextValue) {
+          setAdminSelectedDates([]);
+          setAdminModalMode(null);
+        }
+        return nextValue;
+      });
+    };
+
+    window.addEventListener('admin:blocking-toggle', toggleBlockingMode as EventListener);
+    return () => window.removeEventListener('admin:blocking-toggle', toggleBlockingMode as EventListener);
+  }, [isAdminMode]);
 
   useEffect(() => {
     if (isAdminMode) return;
@@ -194,13 +370,8 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
     setIsBookingPickMode(true);
     setIsBookingGuideOpen(true);
     setIsSidebarExpanded(false);
-
-    if (!isDesktop) {
-      window.requestAnimationFrame(() => {
-        calendarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
-  }, [quickBookingRequestId, clearSelection, closeBookingModal, isDesktop, isAdminMode]);
+    setIsMobileBookingsOpen(false);
+  }, [quickBookingRequestId, clearSelection, closeBookingModal, isAdminMode]);
 
   useEffect(() => {
     if (openBookingsRequestId === 0) return;
@@ -209,69 +380,68 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
 
     setIsBookingPickMode(false);
     setIsBookingGuideOpen(false);
-    setIsSidebarExpanded(true);
 
-    window.requestAnimationFrame(() => {
-      sidebarRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "end" });
-    });
-  }, [openBookingsRequestId]);
+    if (isDesktop) {
+      setIsSidebarExpanded(true);
+      window.requestAnimationFrame(() => {
+        sidebarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
+      });
+      return;
+    }
+
+    setIsMobileBookingsOpen((current) => !current);
+  }, [isDesktop, openBookingsRequestId]);
 
   const handleCalendarDateSelect = (date: string, options?: { unavailable?: boolean }) => {
     if (options?.unavailable) return;
+    if (isAdminMode && adminBlockingEnabled) return;
 
     handleDateSelect(date);
+    setTimelineMonth(toMonthStart(date));
 
     if (!isAdminMode && isBookingPickMode) {
       setIsBookingGuideOpen(false);
       setIsBookingPickMode(false);
       setIsSidebarExpanded(true);
+      setIsMobileBookingsOpen(false);
       openBookingModal();
+      return;
     }
 
+    setIsSidebarExpanded(true);
+
     if (!isDesktop) {
-      window.requestAnimationFrame(() => {
-        sidebarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
+      setIsMobileBookingsOpen(true);
     }
   };
 
   const handleCalendarMonthChange = (month: string) => {
-    clearSelection();
     closeBookingModal();
     setCurrentMonth(month);
     setTimelineMonth(month);
-    setIsBookingGuideOpen(false);
-    setIsBookingPickMode(false);
+    setAdminSelectedDates([]);
+
+    if (!isBookingPickMode) {
+      clearSelection();
+      setIsBookingGuideOpen(false);
+    }
   };
 
   const handleTimelineMonthChange = (month: string) => {
-    clearSelection();
     closeBookingModal();
     setTimelineMonth(month);
     setCurrentMonth(month);
-    setIsBookingGuideOpen(false);
-    setIsBookingPickMode(false);
-  };
 
-  const handleOpenDayBooking = (date: string) => {
-    if (isAdminMode) {
-      handleDateSelect(date);
-      setIsSidebarExpanded(true);
-      return;
+    if (!isBookingPickMode) {
+      clearSelection();
+      setIsBookingGuideOpen(false);
     }
-
-    clearSelection();
-    handleDateSelect(date);
-    setIsBookingGuideOpen(false);
-    setIsBookingPickMode(false);
-    setIsSidebarExpanded(true);
-    openBookingModal();
   };
 
   const handleRailDateSelect = (date: string) => {
     handleDateSelect(date);
     setTimelineMonth(toMonthStart(date));
-    if (isDesktop) setIsSidebarExpanded(true);
+    setIsSidebarExpanded(true);
   };
 
   const handleCloseBookingGuide = () => {
@@ -284,20 +454,54 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
     setTimelineMonth(toMonthStart(event.date));
     handleDateSelect(event.date);
     setIsSidebarExpanded(true);
+    if (!isDesktop) {
+      setIsMobileBookingsOpen(true);
+    }
+  };
+
+  const handleConfirmBlock = async ({ mode: blockMode, entries }: { mode: AdminBlockMode; entries: { date: string; times?: string[] }[] }) => {
+    try {
+      await createAdminBlocks({ entries, mode: blockMode });
+    } catch (error) {
+      console.warn('Falha ao sincronizar bloqueios com o backend.', error);
+    }
+
+    if (blockMode === 'full-day') {
+      setAdminBlockedDates((current) => Array.from(new Set([...current, ...entries.map((entry) => entry.date)])).sort());
+    }
+
+    setAdminModalMode(null);
+    setAdminSelectedDates([]);
+  };
+
+  const handleConfirmCancel = async (bookingIds: string[]) => {
+    if (bookingIds.length === 0) return;
+
+    try {
+      await bulkCancelAdminBookings({ eventIds: bookingIds });
+    } catch (error) {
+      if (!adminUsesMockData) {
+        console.warn('Falha ao cancelar no backend. Aplicando atualização visual local.', error);
+      }
+    }
+
+    onAdminBookingsChange?.((current) => current.filter((booking) => !bookingIds.includes(booking.eventId)));
+    setAdminModalMode(null);
+    setAdminSelectedDates([]);
   };
 
   return (
     <div className="home-page home-page--sidebar-layout">
       <div
         className={[
-          "home-grid",
-          isDesktop ? "home-grid--desktop" : "home-grid--mobile",
-          isDesktop && isSidebarExpanded ? "home-grid--sidebar-open" : "",
-          isDesktop && !isSidebarExpanded ? "home-grid--sidebar-collapsed" : "",
-          !isAdminMode && isBookingPickMode ? "home-grid--pick-mode" : "",
-        ].filter(Boolean).join(" ")}
+          'home-grid',
+          isDesktop ? 'home-grid--desktop' : 'home-grid--mobile',
+          isDesktop && isSidebarExpanded ? 'home-grid--sidebar-open' : '',
+          isDesktop && !isSidebarExpanded ? 'home-grid--sidebar-collapsed' : '',
+          !isAdminMode && isBookingPickMode ? 'home-grid--pick-mode' : '',
+        ].filter(Boolean).join(' ')}
       >
-        <div ref={calendarRef} className="home-calendar-stack home-calendar-stack--shell">
+        <div className="home-calendar-stack home-calendar-stack--shell">
           <HomeCalendarSection
             selectedDate={selectedDate}
             currentMonth={currentMonth}
@@ -306,34 +510,87 @@ export default function HomePage({ mode = "public" }: HomePageProps) {
             events={allEvents}
             unavailableDates={allUnavailableDates}
             bookingPickMode={!isAdminMode && isBookingPickMode}
+            compactMode={!isDesktop}
+            showMonthPreview={isDesktop}
             onDateSelect={handleCalendarDateSelect}
             onMonthChange={handleCalendarMonthChange}
-            onOpenDayBooking={handleOpenDayBooking}
+            adminSelectionEnabled={isAdminMode && adminBlockingEnabled}
+            adminSelectedDates={adminSelectedDates}
+            onAdminSelectedDatesChange={setAdminSelectedDates}
           />
         </div>
 
-        <div ref={sidebarRef} className="home-sidebar-anchor">
-          <HomeSidebar
+        {isDesktop ? (
+          <div ref={sidebarRef} className="home-sidebar-anchor">
+            <HomeSidebar
+              selectedDate={selectedDate}
+              events={allEvents}
+              activeMonth={timelineMonth}
+              currentAllowedMonth={currentAllowedMonth}
+              nextAllowedMonth={nextAllowedMonth}
+              onChangeTimelineMonth={handleTimelineMonthChange}
+              onQuickBooking={() => {
+                if (isAdminMode) return;
+                clearSelection();
+                requestQuickBooking();
+              }}
+              onToggleExpanded={() => setIsSidebarExpanded((current) => !current)}
+              onSelectRailDate={handleRailDateSelect}
+              isExpanded={isSidebarExpanded}
+              isDesktop={isDesktop}
+              isAdminMode={isAdminMode}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {!isDesktop ? (
+        <>
+          <HomeMobileBookingsSheet
+            open={isMobileBookingsOpen}
             selectedDate={selectedDate}
             events={allEvents}
             activeMonth={timelineMonth}
             currentAllowedMonth={currentAllowedMonth}
             nextAllowedMonth={nextAllowedMonth}
+            onClose={() => setIsMobileBookingsOpen(false)}
             onChangeTimelineMonth={handleTimelineMonthChange}
+            isAdminMode={isAdminMode}
+          />
+
+          <HomeMobileDock
             onQuickBooking={() => {
               if (isAdminMode) return;
               clearSelection();
               requestQuickBooking();
             }}
-            onOpenDayBooking={handleOpenDayBooking}
-            onToggleExpanded={() => setIsSidebarExpanded((current) => !current)}
-            onSelectRailDate={handleRailDateSelect}
-            isExpanded={isSidebarExpanded}
-            isDesktop={isDesktop}
-            isAdminMode={isAdminMode}
+            onOpenBookings={() => setIsMobileBookingsOpen((current) => !current)}
+            isBookingsOpen={isMobileBookingsOpen}
+            showQuickBooking={!isAdminMode}
           />
-        </div>
-      </div>
+        </>
+      ) : null}
+
+      {isAdminMode && adminBlockingEnabled ? (
+        <AdminSelectionDock
+          selectedCount={adminSelectedDates.length}
+          onBlock={() => setAdminModalMode('block')}
+          onCancelBookings={() => setAdminModalMode('cancel')}
+          onViewBookings={() => setAdminModalMode('view')}
+          onClear={() => setAdminSelectedDates([])}
+        />
+      ) : null}
+
+      <AdminSelectionModal
+        open={Boolean(isAdminMode && adminModalMode)}
+        mode={adminModalMode}
+        selectedDates={adminSelectedDates}
+        bookings={selectedPeriodBookings}
+        onClose={() => setAdminModalMode(null)}
+        onConfirmBlock={handleConfirmBlock}
+        onConfirmCancel={handleConfirmCancel}
+        onDeleteBlock={() => {}}
+      />
 
       {!isAdminMode ? <BookingStartHintModal open={isBookingGuideOpen} onClose={handleCloseBookingGuide} /> : null}
 

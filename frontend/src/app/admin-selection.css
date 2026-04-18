@@ -1,0 +1,383 @@
+.admin-selection-banner {
+  position: fixed;
+  left: 22px;
+  bottom: 22px;
+  z-index: 65;
+  display: grid;
+  gap: 4px;
+  max-width: 320px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-solid) 94%, transparent);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-selection-banner strong {
+  color: var(--text-primary);
+}
+
+.admin-selection-banner span {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.admin-selection-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 76px;
+  z-index: 80;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 24px;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-solid) 96%, transparent);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(16px);
+}
+
+.admin-selection-dock__summary {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-selection-dock__eyebrow {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.admin-selection-dock__summary strong {
+  color: var(--text-primary);
+}
+
+.admin-selection-dock__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-selection-dock__button {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
+  color: var(--text-primary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-selection-dock__button--primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  border-color: transparent;
+}
+
+.admin-selection-dock__button--ghost {
+  color: var(--text-secondary);
+}
+
+.admin-selection-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.admin-selection-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(18, 24, 33, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.admin-selection-modal__card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 920px);
+  max-height: min(86vh, 860px);
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  overflow: auto;
+  border-radius: 28px;
+  border: 1px solid var(--border-soft);
+  background: var(--app-surface-solid);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-selection-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-selection-modal__eyebrow {
+  display: inline-block;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-selection-modal__title {
+  margin: 6px 0 4px;
+  font-size: clamp(1.32rem, 1vw + 1rem, 1.8rem);
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.admin-selection-modal__description {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.admin-selection-modal__close {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-solid) 92%, transparent);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.admin-selection-modal__mode-switch {
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-selection-modal__mode-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
+  color: var(--text-primary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-selection-modal__mode-button--active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  border-color: transparent;
+}
+
+.admin-selection-modal__list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-selection-card,
+.admin-selection-booking-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
+}
+
+.admin-selection-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.admin-selection-card__header strong,
+.admin-selection-booking-card strong {
+  color: var(--text-primary);
+}
+
+.admin-selection-card__header span,
+.admin-selection-card__hint,
+.admin-selection-booking-card span,
+.admin-selection-booking-card small,
+.admin-selection-booking-group__header {
+  color: var(--text-secondary);
+}
+
+.admin-selection-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-selection-card__chip {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: var(--app-surface-solid);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.admin-selection-card__chip--active {
+  background: linear-gradient(135deg, rgba(47, 125, 203, 0.14), rgba(47, 125, 203, 0.06));
+  border-color: rgba(47, 125, 203, 0.35);
+}
+
+.admin-selection-booking-group {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-selection-booking-group__list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-selection-booking-card {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-selection-booking-card--active {
+  background: linear-gradient(135deg, rgba(47, 125, 203, 0.14), rgba(47, 125, 203, 0.06));
+  border-color: rgba(47, 125, 203, 0.32);
+  box-shadow: inset 0 0 0 1px rgba(47, 125, 203, 0.2);
+}
+
+.admin-selection-booking-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-selection-modal__empty {
+  display: grid;
+  gap: 6px;
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px dashed var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
+}
+
+.admin-selection-modal__empty strong {
+  color: var(--text-primary);
+}
+
+.admin-selection-modal__empty span {
+  color: var(--text-secondary);
+}
+
+.admin-selection-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-selection-modal__secondary,
+.admin-selection-modal__primary {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-selection-modal__secondary {
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
+  color: var(--text-primary);
+}
+
+.admin-selection-modal__primary {
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+}
+
+.admin-selection-modal__primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.calendar-grid__body--admin-selecting {
+  position: relative;
+  user-select: none;
+}
+
+.admin-calendar-selection-box {
+  display: none;
+  position: absolute;
+  z-index: 2;
+  border-radius: 20px;
+  background: rgba(47, 125, 203, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(47, 125, 203, 0.22);
+  pointer-events: none;
+}
+
+.calendar-grid__cell--admin-target {
+  cursor: crosshair;
+}
+
+.calendar-grid__cell--admin-selected {
+  background:
+    linear-gradient(180deg, rgba(47, 125, 203, 0.18), rgba(47, 125, 203, 0.05)),
+    color-mix(in srgb, var(--app-surface-solid) 72%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(47, 125, 203, 0.24);
+}
+
+.booking-sidebar-rail__admin-badge--button {
+  border: 1px solid var(--border-soft);
+  cursor: pointer;
+}
+
+.booking-sidebar-rail__admin-badge--active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  border-color: transparent;
+}
+
+@media (max-width: 900px) {
+  .admin-selection-banner {
+    left: 10px;
+    right: 10px;
+    bottom: 84px;
+    max-width: none;
+  }
+
+  .admin-selection-dock {
+    width: calc(100vw - 20px);
+    bottom: 76px;
+    grid-template-columns: 1fr;
+    transform: translateX(-50%);
+  }
+
+  .admin-selection-dock__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .admin-selection-modal__card {
+    width: calc(100vw - 20px);
+    padding: 18px;
+  }
+}

@@ -1,3 +1,4 @@
+import { isDateBeforeToday } from "../../../lib/dates";
 import type { CalendarEvent } from "../types";
 
 function toLocalDate(dateString: string): Date {
@@ -28,7 +29,7 @@ export default function CalendarDayAgenda({
   onRequestBookingDate,
 }: CalendarDayAgendaProps) {
   const dayEvents = events.filter((event) => event.date === selectedDate);
-  const isUnavailable = unavailableDates.includes(selectedDate);
+  const isUnavailable = unavailableDates.includes(selectedDate) || isDateBeforeToday(selectedDate);
 
   return (
     <div className="agenda" id="day-agenda-panel">
@@ -95,12 +96,13 @@ export default function CalendarDayAgenda({
           ]
             .filter(Boolean)
             .join(" ")}
-          onClick={onRequestBookingDate}
+          onClick={() => { if (!isUnavailable) onRequestBookingDate(); }}
+          disabled={isUnavailable}
         >
           <span className="booking-cta__icon" aria-hidden="true">
             +
           </span>
-          <span>{isSelectingDate ? "Selecione um dia" : "Agendamentos"}</span>
+          <span>{isUnavailable ? "Dia indisponível" : isSelectingDate ? "Selecione um dia" : "Agendamentos"}</span>
         </button>
       </div>
     </div>

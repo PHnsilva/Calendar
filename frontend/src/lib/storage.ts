@@ -1,28 +1,31 @@
 import type { CalendarEvent } from "../features/calendar/types";
+import type { ServicoResponse } from "../types/api";
 
+const ADMIN_TOKEN_STORAGE_KEY = "calendar.admin.token";
 const MANAGE_TOKENS_KEY = "calendar.manageTokens";
+const MANAGE_TOKEN_MAP_KEY = "calendar.manageTokenByEvent";
 const LOCAL_EVENTS_KEY = "calendar.localEvents";
-const ADMIN_TOKEN_KEY = "calendar.adminToken";
-const GEOAPIFY_USAGE_KEY = "calendar.geoapifyUsage";
+const ADMIN_CALENDAR_MODE_KEY = "calendar.admin.mode";
+const LOCAL_EVENTS_CHANGED_EVENT = "calendar:local-events-changed";
+const GEOAPIFY_AUTOCOMPLETE_DISABLED_KEY = "calendar.geoapifyAutocomplete.disabled";
 
-const AUTOCOMPLETE_DAILY_LIMIT = 30;
-const ADDRESS_VALIDATION_FAILURE_LIMIT = 3;
+type AdminCalendarMode = "view" | "block";
+type ManageTokenMap = Record<string, string>;
 
-export type GeoapifyUsageState = {
-  day: string;
-  autocompleteRequests: number;
-  addressValidationFailures: number;
-};
+function getStorage(): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
 
-function isBrowser() {
-  return typeof window !== "undefined";
+  return window.localStorage;
 }
 
 function readJson<T>(key: string, fallback: T): T {
-  if (!isBrowser()) return fallback;
+  const storage = getStorage();
+  if (!storage) return fallback;
 
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = storage.getItem(key);
     if (!raw) return fallback;
     return JSON.parse(raw) as T;
   } catch {
@@ -30,113 +33,158 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
-function writeJson<T>(key: string, value: T) {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+function writeJson<T>(key: string, value: T): void {
+  const storage = getStorage();
+  if (!storage) return;
+  storage.setItem(key, JSON.stringify(value));
 }
 
-function getTodayKey() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = `${now.getMonth() + 1}`.padStart(2, "0");
-  const day = `${now.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
+function dispatchAdminMode(mode: AdminCalendarMode): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("admin:calendar-mode", { detail: mode }));
 }
 
-function normalizeUsageState(state?: Partial<GeoapifyUsageState> | null): GeoapifyUsageState {
-  const day = getTodayKey();
-  if (!state || state.day != day) {
-    return {
-      day,
-      autocompleteRequests: 0,
-      addressValidationFailures: 0,
-    };
+function dispatchLocalEventsChanged(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(LOCAL_EVENTS_CHANGED_EVENT));
+}
+
+export function getStoredAdminToken(): string {
+  return getStorage()?.getItem(ADMIN_TOKEN_STORAGE_KEY)?.trim() ?? "";
+}
+
+export function setStoredAdminToken(token: string): void {
+  const normalized = token.trim();
+  const storage = getStorage();
+
+  if (!storage) return;
+  if (!normalized) {
+    storage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    return;
   }
 
-  return {
-    day,
-    autocompleteRequests: Number(state.autocompleteRequests ?? 0),
-    addressValidationFailures: Number(state.addressValidationFailures ?? 0),
-  };
+  storage.setItem(ADMIN_TOKEN_STORAGE_KEY, normalized);
 }
 
-export function getGeoapifyUsageState(): GeoapifyUsageState {
-  return normalizeUsageState(readJson<Partial<GeoapifyUsageState> | null>(GEOAPIFY_USAGE_KEY, null));
-}
-
-function saveGeoapifyUsageState(state: GeoapifyUsageState) {
-  writeJson(GEOAPIFY_USAGE_KEY, state);
-}
-
-export function canUseGeoapifyAutocomplete() {
-  const state = getGeoapifyUsageState();
-  return state.autocompleteRequests < AUTOCOMPLETE_DAILY_LIMIT && state.addressValidationFailures < ADDRESS_VALIDATION_FAILURE_LIMIT;
-}
-
-export function incrementGeoapifyAutocompleteRequests() {
-  const current = getGeoapifyUsageState();
-  const next = {
-    ...current,
-    autocompleteRequests: current.autocompleteRequests + 1,
-  };
-  saveGeoapifyUsageState(next);
-  return next;
-}
-
-export function registerAddressValidationFailure() {
-  const current = getGeoapifyUsageState();
-  const next = {
-    ...current,
-    addressValidationFailures: current.addressValidationFailures + 1,
-  };
-  saveGeoapifyUsageState(next);
-  return next;
-}
-
-export function getGeoapifyAutocompleteStatusMessage() {
-  const state = getGeoapifyUsageState();
-
-  if (state.addressValidationFailures >= ADDRESS_VALIDATION_FAILURE_LIMIT) {
-    return "Digite seu endereço completo. Ex.: Rua João, 123, Alameda Rodrigues.";
-  }
-
-  if (state.autocompleteRequests >= AUTOCOMPLETE_DAILY_LIMIT) {
-    return "Digite seu endereço completo. Ex.: Rua João, 123, Alameda Rodrigues.";
-  }
-
-  return "";
+export function clearStoredAdminToken(): void {
+  getStorage()?.removeItem(ADMIN_TOKEN_STORAGE_KEY);
 }
 
 export function getManageTokens(): string[] {
   return readJson<string[]>(MANAGE_TOKENS_KEY, []);
 }
 
-export function saveManageToken(token: string) {
-  const current = getManageTokens();
-  if (current.includes(token)) return;
-  writeJson(MANAGE_TOKENS_KEY, [token, ...current].slice(0, 10));
+export function getManageTokenMap(): ManageTokenMap {
+  return readJson<ManageTokenMap>(MANAGE_TOKEN_MAP_KEY, {});
+}
+
+export function getManageTokensByEvent(): ManageTokenMap {
+  return getManageTokenMap();
+}
+
+export function getManageTokenByEventId(eventId: string): string {
+  return getManageTokenMap()[eventId]?.trim() ?? "";
+}
+
+export function getStoredManageToken(): string {
+  return getManageTokens()[0] ?? "";
+}
+
+export function setStoredManageToken(token: string): void {
+  saveManageToken(token);
+}
+
+export function saveManageToken(token: string, eventId?: string): void {
+  const normalized = token.trim();
+  if (!normalized) return;
+
+  const current = getManageTokens().filter((item) => item !== normalized);
+  writeJson(MANAGE_TOKENS_KEY, [normalized, ...current].slice(0, 20));
+
+  if (eventId?.trim()) {
+    const map = getManageTokenMap();
+    map[eventId.trim()] = normalized;
+    writeJson(MANAGE_TOKEN_MAP_KEY, map);
+  }
+}
+
+export function saveRecoveredBookings(bookings: ServicoResponse[]): void {
+  bookings.forEach((booking) => {
+    if (booking.manageToken?.trim()) {
+      saveManageToken(booking.manageToken, booking.eventId);
+    }
+  });
+}
+
+export function resolveManageToken(booking: Pick<ServicoResponse, "eventId" | "manageToken">): string {
+  return booking.manageToken?.trim() || getManageTokenByEventId(booking.eventId) || getStoredManageToken();
 }
 
 export function getLocalCalendarEvents(): CalendarEvent[] {
   return readJson<CalendarEvent[]>(LOCAL_EVENTS_KEY, []);
 }
 
-export function saveLocalCalendarEvent(event: CalendarEvent) {
+export function saveLocalCalendarEvent(event: CalendarEvent): void {
   const current = getLocalCalendarEvents().filter((item) => item.id !== event.id);
   writeJson(LOCAL_EVENTS_KEY, [event, ...current]);
+  dispatchLocalEventsChanged();
 }
 
-export function getStoredAdminToken(): string {
-  if (!isBrowser()) return "";
-  return window.localStorage.getItem(ADMIN_TOKEN_KEY)?.trim() || "";
+export function removeLocalCalendarEvent(eventId: string): void {
+  if (!eventId?.trim()) return;
+
+  const next = getLocalCalendarEvents().filter((item) => item.id !== eventId);
+  writeJson(LOCAL_EVENTS_KEY, next);
+
+  const map = getManageTokenMap();
+  if (map[eventId]) {
+    const { [eventId]: _removed, ...rest } = map;
+    writeJson(MANAGE_TOKEN_MAP_KEY, rest);
+  }
+
+  dispatchLocalEventsChanged();
 }
 
-export function saveAdminToken(token: string) {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(ADMIN_TOKEN_KEY, token.trim());
+export function getLocalEventsChangedEventName(): string {
+  return LOCAL_EVENTS_CHANGED_EVENT;
 }
 
-export function clearAdminToken() {
-  if (!isBrowser()) return;
-  window.localStorage.removeItem(ADMIN_TOKEN_KEY);
+export function canUseGeoapifyAutocomplete(): boolean {
+  const value = getStorage()?.getItem(GEOAPIFY_AUTOCOMPLETE_DISABLED_KEY);
+  return value !== "true";
 }
+
+export function setGeoapifyAutocompleteEnabled(enabled: boolean): void {
+  const storage = getStorage();
+  if (!storage) return;
+
+  if (enabled) {
+    storage.removeItem(GEOAPIFY_AUTOCOMPLETE_DISABLED_KEY);
+    return;
+  }
+
+  storage.setItem(GEOAPIFY_AUTOCOMPLETE_DISABLED_KEY, "true");
+}
+
+export function getAdminCalendarMode(): AdminCalendarMode {
+  const value = getStorage()?.getItem(ADMIN_CALENDAR_MODE_KEY);
+  return value === "block" ? "block" : "view";
+}
+
+export function setAdminCalendarMode(mode: AdminCalendarMode): void {
+  const storage = getStorage();
+  if (!storage) return;
+  storage.setItem(ADMIN_CALENDAR_MODE_KEY, mode);
+  dispatchAdminMode(mode);
+}
+
+export function toggleAdminCalendarMode(): AdminCalendarMode {
+  const nextMode = getAdminCalendarMode() === "block" ? "view" : "block";
+  setAdminCalendarMode(nextMode);
+  return nextMode;
+}
+
+export const getAdminToken = getStoredAdminToken;
+export const saveStoredAdminToken = setStoredAdminToken;
+export const saveAdminToken = setStoredAdminToken;
+export const clearAdminToken = clearStoredAdminToken;

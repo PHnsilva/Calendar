@@ -1,19 +1,43 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { clearAdminToken, getStoredAdminToken, saveAdminToken } from "../../../lib/storage";
+import { apiGet, ApiError } from "../../../lib/api-client";
+import { clearAdminToken, saveAdminToken } from "../../../lib/storage";
+import type { AdminDashboardSummaryResponse } from "../../../types/api";
 
 type AdminTokenGateProps = {
   redirectTo?: string;
+  initialToken?: string;
 };
 
-export default function AdminTokenGate({ redirectTo = "/admin/dashboard" }: AdminTokenGateProps) {
+export default function AdminTokenGate({ redirectTo = "/admin/dashboard", initialToken = "" }: AdminTokenGateProps) {
   const navigate = useNavigate();
-  const [value, setValue] = useState(getStoredAdminToken());
+  const [value, setValue] = useState(initialToken);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = () => {
-    if (!value.trim()) return;
-    saveAdminToken(value.trim());
-    navigate(redirectTo, { replace: true });
+  const handleSubmit = async () => {
+    const token = value.trim();
+    if (!token || loading) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      await apiGet<AdminDashboardSummaryResponse>("/api/admin/dashboard/summary", {
+        adminToken: token,
+      });
+      saveAdminToken(token);
+      navigate(redirectTo, { replace: true });
+    } catch (err) {
+      clearAdminToken();
+      if (err instanceof ApiError) {
+        setError(err.message || "Token administrativo inválido ou backend admin desabilitado.");
+      } else {
+        setError("Não foi possível validar o token administrativo.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,12 +52,13 @@ export default function AdminTokenGate({ redirectTo = "/admin/dashboard" }: Admi
         onChange={(event) => setValue(event.target.value)}
         placeholder="Cole o token administrativo"
       />
+      {error ? <p className="booking-form__error">{error}</p> : null}
       <div className="admin-gate-card__actions">
-        <button type="button" className="secondary-action" onClick={() => { clearAdminToken(); setValue(""); }}>
+        <button type="button" className="secondary-action" onClick={() => { clearAdminToken(); setValue(""); setError(""); }}>
           Limpar
         </button>
-        <button type="button" className="primary-action" onClick={handleSubmit} disabled={!value.trim()}>
-          Entrar
+        <button type="button" className="primary-action" onClick={handleSubmit} disabled={!value.trim() || loading}>
+          {loading ? "Validando..." : "Entrar"}
         </button>
       </div>
     </section>

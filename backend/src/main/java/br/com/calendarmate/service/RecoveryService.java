@@ -16,31 +16,29 @@ import java.util.UUID;
 
 public class RecoveryService {
 
-    public record StartResult(
-            String verificationId,
-            long expiresInSeconds,
-            long resendAfterSeconds
-    ) {
-    }
+    public record StartResult(String verificationId, long expiresInSeconds, long resendAfterSeconds) {}
 
     private final VerificationStore verificationStore;
     private final HistoryStore historyStore;
     private final WhatsAppClient whatsAppClient;
     private final AppProperties props;
     private final ServicoService servicoService;
+    private final TokenUtil tokenUtil;
 
     public RecoveryService(
             VerificationStore verificationStore,
             HistoryStore historyStore,
             WhatsAppClient whatsAppClient,
             AppProperties props,
-            ServicoService servicoService
+            ServicoService servicoService,
+            TokenUtil tokenUtil
     ) {
         this.verificationStore = verificationStore;
         this.historyStore = historyStore;
         this.whatsAppClient = whatsAppClient;
         this.props = props;
         this.servicoService = servicoService;
+        this.tokenUtil = tokenUtil;
     }
 
     public StartResult start(String phoneRaw) {
@@ -54,7 +52,6 @@ public class RecoveryService {
         );
 
         whatsAppClient.sendCode(phoneDigits, sess.code);
-
         historyStore.append(new HistoryRecord(
                 "h_" + UUID.randomUUID(),
                 "RECOVER_START",
@@ -64,11 +61,28 @@ public class RecoveryService {
                 null
         ));
 
-        return new StartResult(
-                sess.verificationId,
-                props.getOtpTtl().toSeconds(),
-                props.getOtpResendAfter().toSeconds()
-        );
+        return new StartResult(sess.verificationId, props.getOtpTtl().toSeconds(), props.getOtpResendAfter().toSeconds());
+    }
+
+    public StartResult resend(String verificationId) {
+        VerificationStore.Session sess = verificationStore.get(verificationId);
+        if (sess == null) {
+            throw new BadRequestException("verificationId inválido");
+        }
+        if (sess.isExpired()) {
+            throw new BadRequestException("Código expirou");
+        }
+        if (!sess.canResend()) {
+            throw new BadRequestException("Aguarde para reenviar o código");
+        }
+
+        sess = verificationStore.refreshResend(verificationId, props.getOtpResendAfter().toSeconds());
+        if (sess == null) {
+            throw new BadRequestException("verificationId inválido");
+        }
+
+        whatsAppClient.sendCode(sess.phoneDigits, sess.code);
+        return new StartResult(sess.verificationId, Math.max(0, sess.expiresAtEpochSec - Instant.now().getEpochSecond()), props.getOtpResendAfter().toSeconds());
     }
 
     public RecoverConfirmResponse confirm(String verificationId, String code) throws IOException {
@@ -84,26 +98,36 @@ public class RecoveryService {
         }
 
         List<ServicoResponse> servicos = servicoService.listByPhone(sess.phoneDigits);
+        for (ServicoResponse servico : servicos) {
+            String email = servico.getClientEmail();
+            if (email != null && !email.isBlank()) {
+                servico.setManageToken(tokenUtil.generate(servico.getEventId(), email));
+            }
+        }
 
         verificationStore.delete(verificationId);
-
         historyStore.append(new HistoryRecord(
                 "h_" + UUID.randomUUID(),
                 "RECOVER_CONFIRM",
                 sess.phoneDigits,
                 null,
                 Instant.now().getEpochSecond(),
-                "count=" + (servicos == null ? 0 : servicos.size())
+                "count=" + servicos.size()
         ));
 
         return new RecoverConfirmResponse(true, servicos);
     }
 
     private static String normalizePhone(String phone) {
-        String d = (phone == null) ? "" : phone.replaceAll("\\D", "");
-        if (d.length() < 10 || d.length() > 11) {
+        StringBuilder digits = new StringBuilder();
+        for (char ch : (phone == null ? "" : phone).toCharArray()) {
+            if (Character.isDigit(ch)) {
+                digits.append(ch);
+            }
+        }
+        if (digits.length() < 10 || digits.length() > 11) {
             throw new BadRequestException("Telefone inválido");
         }
-        return d;
+        return digits.toString();
     }
 }

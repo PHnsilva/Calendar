@@ -33,8 +33,9 @@ export function useHomeCalendarView() {
     setSelectedSlot(null);
   };
 
-  const setCurrentMonth = (month: string) => {
+  const setCurrentMonth = (month: string, options?: { preserveSelection?: boolean }) => {
     setCurrentMonthState(month);
+    if (options?.preserveSelection) return;
     setSelectedDate("");
     setSelectedSlot(null);
   };

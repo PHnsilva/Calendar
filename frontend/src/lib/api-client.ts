@@ -1,4 +1,4 @@
-import { env } from "./env";
+import { resolveApiBaseUrl } from "./env";
 
 export class ApiError extends Error {
   status: number;
@@ -20,7 +20,7 @@ type RequestOptions = Omit<RequestInit, "body"> & {
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(normalizedPath, env.apiBaseUrl);
+  const url = new URL(normalizedPath, resolveApiBaseUrl());
 
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -89,5 +89,13 @@ export function apiPost<T>(path: string, body?: unknown, options: Omit<RequestOp
     ...options,
     method: "POST",
     body,
+  });
+}
+
+
+export function apiDelete<T>(path: string, options: Omit<RequestOptions, "method" | "body"> = {}) {
+  return apiClient<T>(path, {
+    ...options,
+    method: "DELETE",
   });
 }

@@ -32,7 +32,7 @@
   .booking-sidebar-rail {
     border-radius: 28px;
     border: 1px solid rgba(115, 141, 170, 0.16);
-    background: rgba(255, 255, 255, 0.78);
+    background: rgba(255, 255, 255, 0);
     box-shadow: 0 14px 32px rgba(24, 45, 74, 0.08);
     display: flex;
     flex-direction: column;
@@ -157,6 +157,43 @@
     pointer-events: none;
   }
 
+  .home-sidebar--desktop.home-sidebar--expanded {
+    position: relative;
+    gap: 0 !important;
+  }
+
+  .home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-panel {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-rail {
+    position: absolute;
+    top: 10px;
+    left: 8px;
+    bottom: 10px;
+    width: 44px;
+    border: none;
+    background: transparent !important;
+    box-shadow: none;
+    padding: 0;
+    gap: 0;
+    overflow: visible !important;
+    z-index: 3;
+    pointer-events: none;
+    align-items: flex-start;
+  }
+
+  .home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-rail__toggle {
+    margin: 0;
+    pointer-events: auto;
+  }
+
+  .home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-rail__days,
+  .home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-rail__quick-add {
+    display: none;
+  }
+
   .home-sidebar--desktop .timeline-panel {
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
@@ -172,6 +209,38 @@
     overflow-x: hidden;
     overscroll-behavior: contain;
     padding-right: 6px;
+  }
+
+  .home-sidebar--desktop.home-sidebar--expanded .timeline-panel {
+    padding-left: 12px;
+    padding-right: 14px;
+  }
+
+  .home-sidebar--desktop.home-sidebar--expanded .timeline-panel__header {
+    padding-left: 58px;
+  }
+
+  .home-sidebar--desktop.home-sidebar--expanded .timeline-panel__body {
+    padding-left: 0;
+    padding-right: 2px;
+    scrollbar-width: none;
+  }
+
+  .home-sidebar--desktop.home-sidebar--expanded .timeline-panel__body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .home-sidebar--desktop.home-sidebar--expanded .timeline-group {
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+  }
+
+  .home-sidebar--desktop.home-sidebar--expanded .timeline-group__date {
+    min-height: 64px;
+    border-radius: 18px;
+    padding: 10px 6px;
   }
 
   .home-sidebar--desktop .timeline-panel__title-block {

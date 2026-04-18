@@ -1,3 +1,5 @@
+import { isDateBeforeToday } from "../../../lib/dates";
+import { getCityTone } from "../../../data/allowed-cities";
 import CalendarDateCell from "./CalendarDateCell";
 import type { CalendarEvent } from "../types";
 
@@ -21,6 +23,17 @@ function getPreviewDays(monthStart: string): string[] {
   );
 }
 
+function getEarliestTone(events: CalendarEvent[]) {
+  const earliestEvent = [...events].sort(
+    (left, right) =>
+      left.startTime.localeCompare(right.startTime) ||
+      left.endTime.localeCompare(right.endTime) ||
+      left.id.localeCompare(right.id),
+  )[0];
+
+  return earliestEvent ? getCityTone(earliestEvent.city) : null;
+}
+
 type CalendarMonthPreviewProps = {
   monthStart: string;
   selectedDate: string;
@@ -39,7 +52,6 @@ export default function CalendarMonthPreview({
   onMonthActivate,
 }: CalendarMonthPreviewProps) {
   const label = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(toLocalDate(monthStart));
-  const today = toIsoDate(new Date());
   const days = getPreviewDays(monthStart);
 
   return (
@@ -57,9 +69,11 @@ export default function CalendarMonthPreview({
 
       <div className="month-preview__grid">
         {days.map((date) => {
-          const isUnavailable = unavailableDates.includes(date);
-          const hasEvents = events.some((event) => event.date === date);
-          const isPast = date < today;
+          const dayEvents = events.filter((event) => event.date === date);
+          const earliestTone = getEarliestTone(dayEvents);
+          const isPast = isDateBeforeToday(date);
+          const isUnavailable = unavailableDates.includes(date) || isPast;
+          const hasEvents = dayEvents.length > 0;
 
           return (
             <span key={date} className="month-preview__day">
@@ -71,6 +85,7 @@ export default function CalendarMonthPreview({
                 hasEvents={hasEvents}
                 isCurrentMonth
                 isPast={isPast}
+                tone={earliestTone}
               />
             </span>
           );

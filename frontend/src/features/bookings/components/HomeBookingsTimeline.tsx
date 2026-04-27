@@ -13,7 +13,8 @@ import { useAdminRoute } from "../../admin/hooks/useAdminRoute";
 import type { CalendarEvent } from "../../calendar/types";
 import RouteSummaryCard from "../../maps/components/RouteSummaryCard";
 import { useUserGeolocation } from "../../maps/hooks/useUserGeolocation";
-import { buildStaticRouteMapUrl } from "../../maps/utils/map-formatters";
+import { useLocationPreview } from "../../maps/hooks/useLocationPreview";
+import { buildMapsSearchUrl, buildStaticPlaceMapUrl, buildStaticRouteMapUrl } from "../../maps/utils/map-formatters";
 import { usePublicBootstrap } from "../../public-config/hooks/usePublicBootstrap";
 import { deleteBooking } from "../api/delete-booking";
 import { getBookingByToken } from "../api/get-booking-by-token";
@@ -102,6 +103,15 @@ function formatLongDate(dateString: string) {
     day: "2-digit",
     month: "long",
   }).format(toLocalDate(dateString));
+}
+
+function getDetailDateCard(dateString: string, startTime: string, endTime: string) {
+  const date = toLocalDate(dateString);
+  return {
+    day: new Intl.DateTimeFormat("pt-BR", { day: "2-digit" }).format(date),
+    month: new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(date),
+    timeRange: `${startTime} - ${endTime}`,
+  };
 }
 
 function getMonthBadgeParts(monthStart: string) {
@@ -396,8 +406,14 @@ export default function HomeBookingsTimeline({
     timelineBodyRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [selectedDate, focusRequestId]);
 
+  const placeAddress = activeEvent?.customerAddress ?? "";
+  const placeCity = activeEvent?.city ?? "";
+  const locationPreview = useLocationPreview(placeAddress, placeCity, Boolean(activeEvent));
+  const placeMapUrl = buildStaticPlaceMapUrl(locationPreview.data?.latitude, locationPreview.data?.longitude);
+  const mapsSearchUrl = buildMapsSearchUrl(placeAddress, placeCity);
   const primaryRoute = routeQuery.data?.primary ?? null;
   const staticMapUrl = buildStaticRouteMapUrl(primaryRoute);
+  const detailDateCard = activeEvent ? getDetailDateCard(activeEvent.date, activeEvent.startTime, activeEvent.endTime) : null;
   const monthBadge = getMonthBadgeParts(activeMonth);
 
   async function handleSaveEdit() {
@@ -451,17 +467,72 @@ export default function HomeBookingsTimeline({
             <button type="button" className="booking-preview-modal__close" onClick={() => setActiveEvent(null)} aria-label="Fechar">×</button>
           </div>
 
-          {!isAdminMode ? (
-            <div className="booking-detail-modal__notice">
-              <strong>
-                {canManage
-                  ? "Você ainda pode editar ou cancelar este atendimento."
-                  : "Esse atendimento só pode ser alterado com pelo menos 2 horas de antecedência."}
-              </strong>
-              {!manageToken ? <span>{detailError ?? "Não foi possível localizar o token correto deste agendamento na navegação."}</span> : null}
-              {manageToken && detailError && !detailLoading ? <span>{detailError}</span> : null}
+          <div className="booking-detail-modal__hero">
+            <div className="booking-detail-modal__hero-main">
+              <span className="booking-detail-modal__status-pill">{isAdminMode ? "Admin" : activeEvent.serviceLabel ?? "Atendimento"}</span>
+              {!isAdminMode ? (
+                <div className="booking-detail-modal__notice booking-detail-modal__notice--inline">
+                  <strong>
+                    {canManage
+                      ? "Você ainda pode editar ou cancelar este atendimento."
+                      : "Esse atendimento só pode ser alterado com pelo menos 2 horas de antecedência."}
+                  </strong>
+                  {!manageToken ? <span>{detailError ?? "Não foi possível localizar o token correto deste agendamento na navegação."}</span> : null}
+                  {manageToken && detailError && !detailLoading ? <span>{detailError}</span> : null}
+                </div>
+              ) : null}
+              <div className="booking-detail-modal__hero-card">
+                <div className="booking-detail-modal__hero-media">
+                  {placeMapUrl || staticMapUrl ? (
+                    <img src={placeMapUrl || staticMapUrl} alt="Mapa do agendamento" className="booking-detail-modal__hero-image" />
+                  ) : (
+                    <div className="booking-detail-modal__hero-fallback">
+                      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M24 25.5C27.3137 25.5 30 22.8137 30 19.5C30 16.1863 27.3137 13.5 24 13.5C20.6863 13.5 18 16.1863 18 19.5C18 22.8137 20.6863 25.5 24 25.5Z" stroke="currentColor" strokeWidth="2.4" />
+                        <path d="M24 40.5C24 40.5 34.5 31.3788 34.5 21C34.5 15.201 29.799 10.5 24 10.5C18.201 10.5 13.5 15.201 13.5 21C13.5 31.3788 24 40.5 24 40.5Z" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                {detailDateCard ? (
+                  <div className="booking-detail-modal__date-card">
+                    <strong>{detailDateCard.day}</strong>
+                    <span>{detailDateCard.month}</span>
+                    <small>{detailDateCard.timeRange}</small>
+                  </div>
+                ) : null}
+              </div>
             </div>
-          ) : null}
+          </div>
+
+          <section className="booking-detail-modal__map-panel">
+            <div className="booking-detail-modal__map-header">
+              <div>
+                <span className="booking-preview-modal__eyebrow">Local do serviço</span>
+                <h4 className="booking-detail-modal__map-title">{activeEvent.customerAddress ?? "Endereço não informado"}</h4>
+              </div>
+              {mapsSearchUrl ? (
+                <a className="secondary-action booking-detail-modal__map-link" href={mapsSearchUrl} target="_blank" rel="noreferrer">
+                  Abrir no mapa
+                </a>
+              ) : null}
+            </div>
+
+            {locationPreview.isLoading ? <div className="booking-preview-modal__empty"><strong>Buscando localização do endereço...</strong></div> : null}
+            {locationPreview.error ? <p className="booking-form__feedback booking-form__feedback--error">{locationPreview.error instanceof Error ? locationPreview.error.message : "Não foi possível localizar o endereço no mapa."}</p> : null}
+            {!locationPreview.isLoading && placeMapUrl ? (
+              <div className="route-map-card route-map-card--place">
+                <img src={placeMapUrl} alt="Mapa do endereço do atendimento" className="route-map-card__image" />
+                <small className="route-map-card__caption">Powered by Geoapify, OpenStreetMap e OpenMapTiles</small>
+              </div>
+            ) : null}
+            {!locationPreview.isLoading && !placeMapUrl ? (
+              <div className="booking-detail-modal__map-empty">
+                <strong>Mapa indisponível no momento</strong>
+                <span>O endereço continua disponível abaixo e pode ser aberto em um aplicativo de mapas.</span>
+              </div>
+            ) : null}
+          </section>
 
           <div className="booking-detail-modal__grid">
             <section className="booking-detail-modal__section">
@@ -475,7 +546,7 @@ export default function HomeBookingsTimeline({
             <section className="booking-detail-modal__section">
               <h4>Cliente</h4>
               <div className="booking-detail-modal__body">
-                <div className="booking-detail-modal__row"><span>Endereço</span><strong>{activeEvent.customerAddress ?? "Não informado"}</strong></div>
+                <div className="booking-detail-modal__row booking-detail-modal__row--location"><span>Endereço</span><strong>{activeEvent.customerAddress ?? "Não informado"}</strong></div>
                 <div className="booking-detail-modal__row"><span>E-mail</span><strong>{activeEvent.customerEmail ?? "Não informado"}</strong></div>
                 <div className="booking-detail-modal__row"><span>Telefone</span><strong>{activeEvent.customerPhone ?? "Não informado"}</strong></div>
               </div>
@@ -485,7 +556,10 @@ export default function HomeBookingsTimeline({
           {isAdminMode ? (
             <div className="booking-detail-modal__route">
               <div className="booking-detail-modal__route-header">
-                <span className="booking-preview-modal__eyebrow">Rota administrativa</span>
+                <div>
+                  <span className="booking-preview-modal__eyebrow">Rota administrativa</span>
+                  <h4 className="booking-detail-modal__map-title">Deslocamento até o serviço</h4>
+                </div>
                 <button type="button" className="secondary-action" onClick={requestLocation}>
                   {coords ? "Atualizar localização" : "Usar minha localização"}
                 </button>
@@ -584,9 +658,25 @@ export default function HomeBookingsTimeline({
 
         <div ref={timelineBodyRef} className="timeline-panel__body">
           {grouped.length === 0 ? (
-            <div className="timeline-card timeline-card--empty">
-              <strong>Nenhum agendamento futuro</strong>
-              <span>{isAdminMode ? "Nenhum atendimento retornado para os filtros atuais." : "Crie seu primeiro atendimento neste mês para começar."}</span>
+            <div className={["timeline-card", "timeline-card--empty", !isAdminMode ? "timeline-card--empty-state" : ""].filter(Boolean).join(" ")}>
+              {!isAdminMode ? (
+                <div className="timeline-empty-emoji" aria-hidden="true">
+                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="32" r="24" fill="url(#timeline-empty-gradient)" />
+                    <circle cx="24" cy="28" r="2.8" fill="#5F4CA8" />
+                    <circle cx="40" cy="28" r="2.8" fill="#5F4CA8" />
+                    <path d="M23 41C25.6 37.8 29 36.2 32 36.2C35 36.2 38.4 37.8 41 41" stroke="#5F4CA8" strokeWidth="3" strokeLinecap="round" />
+                    <defs>
+                      <linearGradient id="timeline-empty-gradient" x1="16" y1="14" x2="48" y2="50" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#FFD66B" />
+                        <stop offset="1" stopColor="#FFB54D" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+              ) : null}
+              <strong>{isAdminMode ? "Nenhum agendamento futuro" : "Ainda não tem agendamentos"}</strong>
+              <span>{isAdminMode ? "Nenhum atendimento retornado para os filtros atuais." : "Toque no botão + para criar seu primeiro atendimento."}</span>
             </div>
           ) : grouped.map(({ date, items }) => {
             const label = formatDayLabel(date);

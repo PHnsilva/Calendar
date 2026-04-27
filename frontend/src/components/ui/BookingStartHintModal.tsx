@@ -1,3 +1,5 @@
+import AlertNotice from './AlertNotice';
+
 type BookingStartHintModalProps = {
   open: boolean;
   onClose: () => void;
@@ -14,23 +16,15 @@ export default function BookingStartHintModal({
   return (
     <div className="booking-start-banner" role="dialog" aria-label="Aviso de seleção de data">
       <div className="booking-start-banner__card">
-        <div className="booking-start-banner__content">
-          <span className="booking-start-banner__eyebrow">Novo agendamento</span>
-          <strong className="booking-start-banner__title">
-            Selecione um dia disponível no calendário.
-          </strong>
-          <p className="booking-start-banner__text">
-            Os dias liberados estão em destaque enquanto este aviso estiver aberto.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="secondary-action booking-start-banner__action"
-          onClick={onClose}
+        <AlertNotice
+          variant="info"
+          title="Selecione um dia disponível no calendário"
+          actionLabel="Entendi"
+          onAction={onClose}
+          className="booking-start-banner__notice"
         >
-          Cancelar
-        </button>
+          <p>Os dias liberados ficam em destaque enquanto este aviso estiver aberto.</p>
+        </AlertNotice>
       </div>
     </div>
   );

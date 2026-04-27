@@ -1,6 +1,6 @@
 @media (max-width: 730px) {
   .home-page--sidebar-layout .home-main-panel--calendar {
-    gap: 10px;
+    gap: 8px;
   }
 
   .home-page--sidebar-layout .calendar-toolbar {
@@ -13,12 +13,25 @@
 
   .home-page--sidebar-layout .calendar-toolbar__title {
     margin: 0;
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 6px;
     text-align: center;
     font-size: 1.45rem;
     line-height: 1.1;
     font-weight: 800;
     color: #2f3e58;
     text-transform: capitalize;
+  }
+
+  .home-page--sidebar-layout .calendar-toolbar__title-month {
+    color: #1f2c44;
+  }
+
+  .home-page--sidebar-layout .calendar-toolbar__title-year {
+    color: #ff5b68;
+    font-size: 1rem;
   }
 
   .home-page--sidebar-layout .calendar-toolbar__nav-group {
@@ -218,4 +231,46 @@
   :root[data-theme="dark"] .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini.calendar-date-cell--unavailable {
     color: rgba(245, 238, 255, 0.38) !important;
   }
+
+
+  /* v5 closer to reference */
+  .home-page--sidebar-layout .calendar-toolbar {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding-bottom: 4px;
+  }
+
+  .home-page--sidebar-layout .calendar-toolbar__help,
+  .home-page--sidebar-layout .calendar-toolbar__nav-group {
+    display: none;
+  }
+
+  .home-page--sidebar-layout .calendar-toolbar__title {
+    justify-content: flex-start;
+    text-align: left;
+    font-size: 1.6rem;
+    padding-inline: 2px;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact {
+    gap: 6px;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__weekdays {
+    padding-inline: 2px;
+    padding-bottom: 6px;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-grid__weekday {
+    font-size: 0.58rem;
+    letter-spacing: 0.06em;
+  }
+
+  .home-page--sidebar-layout .calendar-grid--compact .calendar-date-cell--mini {
+    min-width: 32px;
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
+  }
+
 }

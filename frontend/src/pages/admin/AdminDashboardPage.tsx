@@ -8,6 +8,7 @@ import { getAdminBookings } from '../../features/admin/api/get-admin-bookings';
 import { clearStoredAdminToken, getStoredAdminToken } from '../../lib/storage';
 import { ApiError } from '../../lib/api-client';
 import type { ServicoResponse } from '../../types/api';
+import AlertNotice from '../../components/ui/AlertNotice';
 import '../../app/admin-dashboard.css';
 
 function isPastBooking(booking: ServicoResponse, todayIso: string) {
@@ -43,6 +44,24 @@ export default function AdminDashboardPage() {
     return <Navigate to="/admin" replace />;
   }
 
+  const statusNotice = bookingsQuery.isError
+    ? {
+        variant: 'danger' as const,
+        title: 'Falha ao carregar a agenda administrativa',
+        body: bookingsQuery.error instanceof Error ? bookingsQuery.error.message : 'Não foi possível sincronizar os atendimentos.'
+      }
+    : bookingsQuery.isLoading
+      ? {
+          variant: 'info' as const,
+          title: 'Sincronizando dados do admin',
+          body: 'A agenda está carregando os atendimentos e liberando os painéis auxiliares.'
+        }
+      : {
+          variant: 'warning' as const,
+          title: 'Modo administrativo ativo',
+          body: 'Bloqueios e cancelamentos em lote exigem revisão. Use o dock inferior para abrir histórico e extrato rapidamente.'
+        };
+
   return (
     <>
       <HomePage
@@ -50,6 +69,12 @@ export default function AdminDashboardPage() {
         adminBookings={bookings}
         adminUsesMockData={false}
       />
+
+      <div className="admin-dashboard__status">
+        <AlertNotice variant={statusNotice.variant} title={statusNotice.title} compact className="admin-dashboard__status-card">
+          <p>{statusNotice.body}</p>
+        </AlertNotice>
+      </div>
 
       <div className="admin-dashboard__dock" aria-label="Ações rápidas do admin">
         <button

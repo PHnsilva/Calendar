@@ -1,3 +1,15 @@
+.admin-dashboard__status {
+  position: fixed;
+  top: 96px;
+  right: 16px;
+  z-index: 72;
+  width: min(420px, calc(100vw - 32px));
+}
+
+.admin-dashboard__status-card {
+  backdrop-filter: blur(14px);
+}
+
 .admin-dashboard-page {
   min-height: 100%;
 }
@@ -214,6 +226,14 @@
 }
 
 @media (max-width: 900px) {
+  .admin-dashboard__status {
+    top: auto;
+    left: 10px;
+    right: 10px;
+    bottom: 154px;
+    width: auto;
+  }
+
   .admin-bottom-sheet {
     left: 0;
     right: 0;

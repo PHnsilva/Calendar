@@ -11,6 +11,7 @@ import type { BookingFormValues } from "../../../types/booking";
 import type { HomeSelectedSlot } from "../../home/types";
 import { formatDurationLabel, getAllowedCities, getBookingDurationMinutesByCity, getDefaultCity, getDefaultState, getSlotMinutes } from "../../../lib/bootstrap-config";
 import { usePublicBootstrap } from "../../public-config/hooks/usePublicBootstrap";
+import AlertNotice from '../../../components/ui/AlertNotice';
 
 type BookingFormModalProps = {
   open: boolean;
@@ -402,20 +403,35 @@ export default function BookingFormModal({
               <small>{dayEvents.length} já marcado(s) no dia</small>
             </div>
 
-            {successMessage ? <p className="booking-form__feedback booking-form__feedback--success">{successMessage}</p> : null}
+            {successMessage ? (
+              <AlertNotice variant="success" title="Fluxo iniciado com sucesso" compact>
+                <p>{successMessage}</p>
+              </AlertNotice>
+            ) : null}
 
             {isUnavailable ? (
-              <div className="booking-preview-modal__empty">
-                <strong>{isPastDate ? "Data indisponível" : "Dia indisponível"}</strong>
+              <AlertNotice variant="warning" title={isPastDate ? "Data indisponível" : "Dia indisponível"}>
                 <p>{isPastDate ? "Escolha um dia atual ou futuro para continuar." : "Escolha outro dia no calendário para iniciar um agendamento."}</p>
-              </div>
+              </AlertNotice>
             ) : (
               <>
                 <div className="booking-preview-modal__section-heading"><span>Horário</span></div>
-                {validationErrors.draftSlot ? <p className="booking-form__feedback booking-form__feedback--error">{validationErrors.draftSlot}</p> : null}
+                {validationErrors.draftSlot ? (
+                  <AlertNotice variant="warning" title="Selecione um horário" compact>
+                    <p>{validationErrors.draftSlot}</p>
+                  </AlertNotice>
+                ) : null}
                 {isLoadingSlots ? <div className="booking-preview-modal__empty"><strong>Carregando horários...</strong></div> : null}
-                {slotsError ? <p className="booking-form__feedback booking-form__feedback--error">{slotsError.message}</p> : null}
-                {!isLoadingSlots && availableSlots.length === 0 ? <div className="booking-preview-modal__empty"><strong>Sem horários disponíveis</strong><p>Esse dia está sem slots livres no momento.</p></div> : null}
+                {slotsError ? (
+                  <AlertNotice variant="danger" title="Falha ao carregar horários" compact>
+                    <p>{slotsError.message}</p>
+                  </AlertNotice>
+                ) : null}
+                {!isLoadingSlots && availableSlots.length === 0 ? (
+                  <AlertNotice variant="warning" title="Sem horários disponíveis" compact>
+                    <p>Esse dia está sem slots livres no momento.</p>
+                  </AlertNotice>
+                ) : null}
                 {availableSlots.length > 0 ? (
                   <div className="booking-preview-modal__slots-grid booking-preview-modal__slots-grid--compact">
                     {availableSlots.map((slot) => {
@@ -478,6 +494,14 @@ export default function BookingFormModal({
                     <small className="booking-form__hint">Cidade carregada do sistema. Duração estimada deste atendimento: <strong>{durationLabel}</strong>.</small>
                   </div>
 
+                  {!selectedAddress ? (
+                    <div className="booking-form__field booking-form__field--full">
+                      <AlertNotice variant="info" title="Confirme o endereço pela lista" compact>
+                        <p>Escolha uma sugestão para validar cidade, rua e CEP antes de concluir.</p>
+                      </AlertNotice>
+                    </div>
+                  ) : null}
+
                   <label className="booking-form__field booking-form__field--full booking-form__field--with-error">
                     <span>Endereço</span>
                     <AddressAutocompleteField
@@ -518,7 +542,11 @@ export default function BookingFormModal({
 
                 <p className="booking-form__hint">Escolha a cidade e selecione o endereço sugerido para preencher o agendamento com mais precisão.</p>
                 <p className="booking-form__hint">O tipo de serviço é enviado automaticamente como <strong>{DEFAULT_SERVICE_TYPE}</strong>.</p>
-                {backendError && backendError !== GENERIC_ADDRESS_ERROR ? <p className="booking-form__feedback booking-form__feedback--error">{backendError}</p> : null}
+                {backendError && backendError !== GENERIC_ADDRESS_ERROR ? (
+                  <AlertNotice variant="danger" title="Não foi possível concluir o agendamento" compact>
+                    <p>{backendError}</p>
+                  </AlertNotice>
+                ) : null}
               </>
             )}
           </div>

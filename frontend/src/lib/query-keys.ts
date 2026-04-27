@@ -6,4 +6,5 @@ export const queryKeys = {
   adminSummary: (filtersKey: string) => ["admin-summary", filtersKey] as const,
   adminBlocks: (filtersKey: string) => ["admin-blocks", filtersKey] as const,
   adminRoute: (eventId: string, originLat?: number, originLng?: number) => ["admin-route", eventId, originLat ?? null, originLng ?? null] as const,
+  locationPreview: (addressLine: string, city: string) => ["location-preview", addressLine.trim().toLowerCase(), city.trim().toLowerCase()] as const,
 };

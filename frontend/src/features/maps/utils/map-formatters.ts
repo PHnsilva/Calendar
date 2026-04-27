@@ -68,3 +68,27 @@ export function buildStaticRouteMapUrl(route?: RouteOption | null) {
 
   return `https://maps.geoapify.com/v1/staticmap?${params.toString()}`;
 }
+
+
+export function buildStaticPlaceMapUrl(latitude?: number | null, longitude?: number | null) {
+  if (!env.geoapifyPublicKey) return "";
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return "";
+
+  const params = new URLSearchParams({
+    style: "osm-carto",
+    width: "880",
+    height: "360",
+    center: `lonlat:${longitude},${latitude}`,
+    zoom: "15",
+    marker: encodeMarker({ lat: Number(latitude), lon: Number(longitude) }, "#ff6c47"),
+    apiKey: env.geoapifyPublicKey,
+  });
+
+  return `https://maps.geoapify.com/v1/staticmap?${params.toString()}`;
+}
+
+export function buildMapsSearchUrl(addressLine?: string | null, city?: string | null) {
+  const query = [addressLine, city].filter(Boolean).join(", ").trim();
+  if (!query) return "";
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}

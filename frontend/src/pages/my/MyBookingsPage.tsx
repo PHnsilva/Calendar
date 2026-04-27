@@ -1,7 +1,8 @@
-import { Link } from "react-router-dom";
-import { getManageTokens } from "../../lib/storage";
-import { useMyBookings } from "../../features/bookings/hooks/useMyBookings";
-import { BookingWorkspace } from "../../features/bookings/components/BookingWorkspace";
+import { Link } from 'react-router-dom';
+import { getManageTokens } from '../../lib/storage';
+import { useMyBookings } from '../../features/bookings/hooks/useMyBookings';
+import { BookingWorkspace } from '../../features/bookings/components/BookingWorkspace';
+import AlertNotice from '../../components/ui/AlertNotice';
 
 export default function MyBookingsPage() {
   const tokens = getManageTokens();
@@ -12,7 +13,9 @@ export default function MyBookingsPage() {
       <main className="my-bookings-page">
         <section className="my-bookings__panel">
           <h1>Meus agendamentos</h1>
-          <p>Este navegador ainda não tem acesso salvo a nenhum atendimento.</p>
+          <AlertNotice variant="info" title="Nenhum acesso salvo neste navegador">
+            <p>Recupere um atendimento por telefone ou inicie um novo agendamento.</p>
+          </AlertNotice>
           <div className="my-bookings__actions">
             <Link to="/recover" className="primary-action">Recuperar acesso</Link>
             <Link to="/" className="secondary-action">Novo agendamento</Link>
@@ -33,13 +36,24 @@ export default function MyBookingsPage() {
           <Link to="/recover" className="secondary-action">Recuperar outro telefone</Link>
         </div>
 
-        {bookingsQuery.isLoading ? <p className="my-bookings__empty">Carregando agendamentos...</p> : null}
+        {bookingsQuery.isLoading ? (
+          <AlertNotice variant="info" title="Carregando seus atendimentos" compact>
+            <p>Estamos buscando os dados vinculados aos acessos salvos neste navegador.</p>
+          </AlertNotice>
+        ) : null}
+
         {bookingsQuery.isError ? (
-          <div className="my-bookings__empty">
+          <AlertNotice variant="danger" title="Não foi possível recuperar os agendamentos">
             <p>{(bookingsQuery.error as Error).message}</p>
+          </AlertNotice>
+        ) : null}
+
+        {bookingsQuery.isError ? (
+          <div className="my-bookings__actions">
             <Link to="/recover" className="secondary-action">Tentar recuperar novamente</Link>
           </div>
         ) : null}
+
         {bookingsQuery.data ? <BookingWorkspace bookings={bookingsQuery.data} /> : null}
       </section>
     </main>

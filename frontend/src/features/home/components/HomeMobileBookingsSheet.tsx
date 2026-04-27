@@ -51,7 +51,14 @@ export default function HomeMobileBookingsSheet({
 
       <section className="home-mobile-bookings-sheet__panel" role="dialog" aria-modal="true">
         <header className="home-mobile-bookings-sheet__header">
-          <span className="home-mobile-bookings-sheet__handle" aria-hidden="true" />
+          <div className="home-mobile-bookings-sheet__header-main">
+            <span className="home-mobile-bookings-sheet__handle" aria-hidden="true" />
+            <div className="home-mobile-bookings-sheet__title-block">
+              <span>{isAdminMode ? 'Agenda admin' : 'Agendamentos'}</span>
+              <strong>{monthLabel}</strong>
+            </div>
+          </div>
+          <button type="button" className="home-mobile-bookings-sheet__close" onClick={onClose} aria-label="Fechar agendamentos">×</button>
         </header>
 
         <div className="home-mobile-bookings-sheet__body">

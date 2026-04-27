@@ -1,0 +1,638 @@
+@media (max-width: 730px) {
+  .app-shell__frame:has(.home-page--mobile-planner) {
+    gap: 0;
+  }
+
+  .app-shell__frame:has(.home-page--mobile-planner) .public-header--home {
+    display: none;
+  }
+
+  .app-shell__frame:has(.home-page--mobile-planner) .public-layout__content {
+    overflow: visible;
+  }
+
+  .home-page--mobile-planner {
+    background: #e9edf2;
+  }
+
+  .home-page--mobile-planner .home-grid {
+    gap: 0;
+  }
+
+  .home-page--mobile-planner .home-calendar-stack--shell {
+    padding: 0 0 calc(112px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .home-page--mobile-planner .home-main-panel,
+  .home-page--mobile-planner .home-main-panel--calendar {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-planner {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 14px;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0 14px 0;
+    background: #e9edf2;
+  }
+
+  .mobile-planner__top {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    display: grid;
+    gap: 0;
+    padding-top: calc(8px + env(safe-area-inset-top, 0px));
+    background: linear-gradient(180deg, #f2f4f7 0%, #e6eaf0 100%);
+    border-bottom: 1px solid rgba(30, 72, 124, 0.08);
+  }
+
+  .mobile-planner__weeks {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: none;
+    touch-action: pan-x;
+    scrollbar-width: none;
+    padding: 14px 4px 18px;
+    background: #f2f4f7;
+  }
+
+  .mobile-planner__weeks::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-planner--overview {
+    grid-template-rows: 0 minmax(0, 1fr);
+  }
+
+  .mobile-planner--overview .mobile-planner__top {
+    max-height: 0;
+    min-height: 0;
+    opacity: 0;
+    transform: translateY(-14px);
+    overflow: hidden;
+    pointer-events: none;
+    padding-top: 0;
+    border-bottom-color: transparent;
+    transition: max-height 260ms ease, opacity 220ms ease, transform 260ms ease, border-color 220ms ease, padding 260ms ease;
+  }
+
+  .mobile-planner--overview .mobile-planner__weeks {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .mobile-planner:not(.mobile-planner--overview) .mobile-planner__top {
+    max-height: 140px;
+    opacity: 1;
+    transform: translateY(0);
+    transition: max-height 260ms ease, opacity 220ms ease, transform 260ms ease, border-color 220ms ease;
+  }
+
+
+  .mobile-planner__week {
+    flex: 0 0 calc(100% - 4px);
+    min-width: calc(100% - 4px);
+    min-height: 96px;
+    scroll-snap-align: start;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .mobile-planner__day {
+    min-height: 96px;
+    border: none;
+    background: transparent;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 6px;
+    color: #1f2c44;
+    padding: 10px 0 8px;
+    cursor: pointer;
+    transition: opacity 220ms ease, transform 220ms ease;
+  }
+
+  .mobile-planner__day small {
+    color: rgba(88, 102, 130, 0.6);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .mobile-planner__day span {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+    transition: background 220ms ease, color 220ms ease, transform 220ms ease, box-shadow 220ms ease;
+  }
+
+  .mobile-planner__day--selected span {
+    background: #1f6fd1;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(31, 111, 209, 0.18);
+  }
+
+  .mobile-planner__day--today:not(.mobile-planner__day--selected) span {
+    color: #1f6fd1;
+  }
+
+  .mobile-planner__day--outside-range,
+  .mobile-planner__day--outside-range span,
+  .mobile-planner__day--outside-range small {
+    opacity: 0.22;
+  }
+
+  .mobile-planner__day--past:not(.mobile-planner__day--selected),
+  .mobile-planner__day--disabled:not(.mobile-planner__day--selected) {
+    opacity: 0.46;
+  }
+
+  .mobile-planner__markers {
+    min-height: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+  }
+
+  .mobile-planner__marker {
+    width: 10px;
+    height: 3px;
+    border-radius: 999px;
+    background: #7c4dff;
+  }
+
+  .mobile-planner__marker--violet { background: var(--city-violet); }
+  .mobile-planner__marker--cyan { background: var(--city-cyan); }
+  .mobile-planner__marker--indigo { background: var(--city-indigo); }
+  .mobile-planner__marker--orange { background: var(--city-orange); }
+  .mobile-planner__marker--teal { background: var(--city-teal); }
+  .mobile-planner__marker--amber { background: var(--city-amber); }
+  .mobile-planner__marker--royal { background: var(--city-royal); }
+
+  .mobile-planner__agenda {
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    display: grid;
+    align-content: start;
+    gap: 14px;
+    padding: 8px 2px calc(104px + env(safe-area-inset-bottom, 0px));
+    transition: padding 280ms ease, transform 280ms ease, opacity 220ms ease;
+  }
+
+  .mobile-planner__agenda::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .mobile-planner--overview .mobile-planner__agenda {
+    padding-top: calc(8px + env(safe-area-inset-top, 0px));
+    transform: translateY(-2px);
+  }
+
+
+  .mobile-planner__overview-handle {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    width: 100%;
+    min-height: 34px;
+    display: grid;
+    place-items: center;
+    padding: 6px 0 10px;
+    border: none;
+    background: linear-gradient(180deg, rgba(229, 234, 240, 0.98), rgba(229, 234, 240, 0));
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .mobile-planner__overview-handle span {
+    width: 72px;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(31, 44, 68, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    transition: transform 220ms ease, background 220ms ease, width 220ms ease, opacity 220ms ease;
+  }
+
+  .mobile-planner__overview-handle:active {
+    cursor: grabbing;
+  }
+
+  .mobile-planner__overview-handle:active span {
+    width: 78px;
+    background: rgba(194, 74, 45, 0.36);
+    transform: translateY(2px);
+  }
+
+  .mobile-planner__overview-header {
+    position: sticky;
+    top: 0;
+    z-index: 7;
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 8px 6px 14px;
+    background: linear-gradient(180deg, #e9edf2 0%, rgba(233, 237, 242, 0.98) 82%, rgba(233, 237, 242, 0) 100%);
+    transition: transform 260ms ease, opacity 220ms ease;
+  }
+
+  .mobile-planner__overview-date {
+    width: 52px;
+    min-height: 68px;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 24px 1fr 18px;
+    place-items: center;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid rgba(31, 111, 209, 0.16);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.10);
+  }
+
+  .mobile-planner__overview-date span {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(180deg, #5f3fe0, #4d2ccc);
+    color: #ffffff;
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+  }
+
+  .mobile-planner__overview-date strong {
+    color: #1f2c44;
+    font-size: 1.6rem;
+    line-height: 1;
+    font-weight: 900;
+  }
+
+  .mobile-planner__overview-date small {
+    color: rgba(31, 44, 68, 0.58);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+  }
+
+  .mobile-planner__overview-copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .mobile-planner__overview-copy strong {
+    color: #111827;
+    font-size: 1.04rem;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+
+  .mobile-planner__overview-copy span {
+    color: rgba(31, 44, 68, 0.66);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .mobile-planner__section {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-planner__section-label {
+    color: #d93b3b;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .mobile-planner__section-items {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobile-planner__item {
+    position: relative;
+    width: 100%;
+    border: none;
+    background: transparent;
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .mobile-planner__item-dot {
+    width: 8px;
+    height: 8px;
+    margin-top: 7px;
+    border-radius: 999px;
+    background: #7c4dff;
+  }
+
+  .mobile-planner__item--violet .mobile-planner__item-dot { background: var(--city-violet); }
+  .mobile-planner__item--cyan .mobile-planner__item-dot { background: var(--city-cyan); }
+  .mobile-planner__item--indigo .mobile-planner__item-dot { background: var(--city-indigo); }
+  .mobile-planner__item--orange .mobile-planner__item-dot { background: var(--city-orange); }
+  .mobile-planner__item--teal .mobile-planner__item-dot { background: var(--city-teal); }
+  .mobile-planner__item--amber .mobile-planner__item-dot { background: var(--city-amber); }
+  .mobile-planner__item--royal .mobile-planner__item-dot { background: var(--city-royal); }
+
+  .mobile-planner__item-content {
+    display: grid;
+    gap: 2px;
+  }
+
+  .mobile-planner__item-content strong {
+    color: #1f2c44;
+    font-size: 0.84rem;
+    font-weight: 800;
+  }
+
+  .mobile-planner__item-content span,
+  .mobile-planner__item-content small {
+    color: rgba(31, 44, 68, 0.72);
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .mobile-planner__notice {
+    min-height: 36vh;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 6px;
+    text-align: center;
+    padding: 0 18px;
+  }
+
+  .mobile-planner__notice strong {
+    color: #c24a2d;
+    font-size: 1rem;
+  }
+
+  .mobile-planner__notice span {
+    color: rgba(31, 44, 68, 0.68);
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .mobile-planner__empty {
+    min-height: 34vh;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    padding: 12px 12px 0;
+  }
+
+  .mobile-planner__empty-logo {
+    width: min(92px, 28vw);
+    display: grid;
+    place-items: center;
+    margin: 0 auto;
+    padding: 2px;
+    border-radius: 18px;
+    background: radial-gradient(circle at center, rgba(47, 125, 203, 0.12), rgba(47, 125, 203, 0) 72%);
+  }
+
+  .mobile-planner__empty-logo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .mobile-planner__empty-copy {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+  }
+
+  .mobile-planner__empty strong {
+    max-width: 18ch;
+    color: #1f2c44;
+    font-size: 0.96rem;
+    font-weight: 800;
+    line-height: 1.22;
+    text-align: center;
+  }
+
+  .mobile-planner__empty span {
+    max-width: 24ch;
+    color: rgba(31, 44, 68, 0.72);
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  .mobile-planner__empty-arrow {
+    display: grid;
+    place-items: center;
+    border: none;
+    background: transparent;
+    color: #d93b3b;
+    padding: 4px;
+    margin-top: 2px;
+    cursor: pointer;
+    transition: transform 220ms ease, color 220ms ease, opacity 220ms ease;
+  }
+
+  .mobile-planner__empty-arrow:hover,
+  .mobile-planner__empty-arrow:active {
+    transform: translateY(2px);
+    color: #c53030;
+  }
+
+  .mobile-planner__empty-arrow svg {
+    width: 34px;
+    height: 34px;
+    color: currentColor;
+  }
+
+  .mobile-booking-detail-modal {
+    padding: 14px;
+  }
+
+  .mobile-booking-detail-modal__card {
+    width: min(100%, 420px);
+    max-height: min(88vh, 720px);
+    border-radius: 24px;
+  }
+
+  .mobile-booking-detail-modal__subtitle {
+    margin: 6px 0 0;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .mobile-booking-detail-modal__grid {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobile-booking-detail-modal__footer {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .mobile-booking-detail-modal__footer .secondary-action {
+    min-width: 112px;
+  }
+
+
+  .mobile-booking-detail-modal {
+    padding: 12px;
+    background: rgba(17, 24, 39, 0.38);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-booking-detail-modal__card {
+    width: min(100%, 420px);
+    max-height: min(90vh, 760px);
+    border-radius: 28px;
+    overflow: hidden;
+    background: #e6eaef;
+    box-shadow: 0 28px 48px rgba(15, 23, 42, 0.22);
+    border: 1px solid rgba(31, 44, 68, 0.08);
+  }
+
+  .mobile-booking-detail-modal__hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 84px;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .mobile-booking-detail-modal__map {
+    min-height: 148px;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #f4f6f8;
+    border: 1px solid rgba(31, 44, 68, 0.08);
+  }
+
+  .mobile-booking-detail-modal__map iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  .mobile-booking-detail-modal__date-card {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 4px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #f2f4f7, #dde3ea);
+    border: 1px solid rgba(31, 44, 68, 0.08);
+  }
+
+  .mobile-booking-detail-modal__date-card strong {
+    font-size: 2rem;
+    line-height: 1;
+    color: #111827;
+    font-weight: 900;
+  }
+
+  .mobile-booking-detail-modal__date-card span {
+    color: #4b5563;
+    font-weight: 800;
+  }
+
+  .mobile-booking-detail-modal__date-card small {
+    color: #6b7280;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  .mobile-booking-detail-modal__status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(88, 128, 84, 0.14);
+    color: #476e4e;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .mobile-booking-detail-modal__section-title {
+    color: #1f2937;
+    font-size: 0.86rem;
+    font-weight: 800;
+    margin-top: 4px;
+  }
+
+  .mobile-booking-detail-modal__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .mobile-booking-detail-modal__action {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(31, 44, 68, 0.08);
+    background: #f8fafc;
+    color: #111827;
+    font-weight: 800;
+  }
+
+  .mobile-booking-detail-modal__action--danger {
+    background: #ef5b5b;
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .mobile-booking-detail-modal__action--primary {
+    background: #f5c84b;
+    border-color: transparent;
+    color: #2b2b2b;
+  }
+
+}

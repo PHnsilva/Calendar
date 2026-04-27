@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { ServicoResponse, AvailabilityBlockResponse } from '../../../types/api';
 import { previewAdminBlocks, type AdminBlockMode, type AdminBlockEntry } from '../api/manage-admin-blocks';
+import AlertNotice from '../../../components/ui/AlertNotice';
 
 type AdminSelectionModalMode = 'block' | 'cancel' | 'view';
 
@@ -132,6 +133,23 @@ export default function AdminSelectionModal({
     : mode === 'cancel'
       ? 'Os cards já vêm marcados. Desmarque o que deve permanecer ativo.'
       : 'Veja agendamentos e bloqueios que já ocupam os dias selecionados.';
+  const notice = mode === 'block'
+    ? {
+        variant: 'warning' as const,
+        title: 'Bloqueios alteram a disponibilidade pública',
+        body: 'Use a prévia para validar conflitos antes de confirmar o lote.'
+      }
+    : mode === 'cancel'
+      ? {
+          variant: 'danger' as const,
+          title: 'Cancelamento em lote exige revisão final',
+          body: 'Os agendamentos marcados serão removidos da agenda após a confirmação.'
+        }
+      : {
+          variant: 'info' as const,
+          title: 'Resumo da seleção atual',
+          body: 'Consulte rapidamente o que já ocupa os dias selecionados antes de agir.'
+        };
 
   return (
     <div className="admin-selection-modal" role="dialog" aria-modal="true">
@@ -149,6 +167,10 @@ export default function AdminSelectionModal({
             ×
           </button>
         </header>
+
+        <AlertNotice variant={notice.variant} title={notice.title} compact>
+          <p>{notice.body}</p>
+        </AlertNotice>
 
         {mode === 'block' ? (
           <>
@@ -235,7 +257,13 @@ export default function AdminSelectionModal({
               ) : null}
 
               {previewQuery.data?.map((item) => (
-                <article key={item.key} className="admin-selection-preview__card">
+                <article
+                  key={item.key}
+                  className={[
+                    'admin-selection-preview__card',
+                    item.preview.conflictCount > 0 ? 'admin-selection-preview__card--conflict' : 'admin-selection-preview__card--free',
+                  ].join(' ')}
+                >
                   <div className="admin-selection-preview__top">
                     <strong>{formatDate(item.date)}</strong>
                     <span>{item.startTime ? `${item.startTime} — ${item.endTime}` : 'Dia inteiro'}</span>

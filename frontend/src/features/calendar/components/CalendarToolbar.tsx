@@ -34,6 +34,7 @@ export default function CalendarToolbar({
   onHelpOpen,
 }: CalendarToolbarProps) {
   const currentMonthLabel = monthLabel(currentMonth);
+  const currentYear = currentMonth.slice(0, 4);
   const previousMonth = shiftMonth(currentMonth, -1);
   const nextMonth = shiftMonth(currentMonth, 1);
   const canGoPrev = currentMonth !== currentAllowedMonth;
@@ -51,7 +52,7 @@ export default function CalendarToolbar({
         ?
       </button>
 
-      <strong className="calendar-toolbar__title">{currentMonthLabel}</strong>
+      <strong className="calendar-toolbar__title"><span className="calendar-toolbar__title-month">{currentMonthLabel}</span><span className="calendar-toolbar__title-year">{currentYear}</span></strong>
 
       <div className="calendar-toolbar__nav-group">
         {canGoPrev ? (

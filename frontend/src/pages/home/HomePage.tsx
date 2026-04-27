@@ -6,10 +6,13 @@ import '../../app/home-mobile-dock.css';
 import '../../app/home-mobile-sheet.css';
 import '../../app/calendar-mobile-compact.css';
 import '../../app/admin-selection.css';
+import '../../app/home-mobile-planner.css';
 import HomeCalendarSection from '../../features/home/components/HomeCalendarSection';
 import HomeSidebar from '../../features/home/components/HomeSidebar';
 import HomeMobileDock from '../../features/home/components/HomeMobileDock';
 import HomeMobileBookingsSheet from '../../features/home/components/HomeMobileBookingsSheet';
+import HomeMobilePlanner from '../../features/home/components/HomeMobilePlanner';
+import HomeMobileBookingDetailsModal from '../../features/home/components/HomeMobileBookingDetailsModal';
 import BookingFormModal from '../../features/booking-form/components/BookingFormModal';
 import BookingStartHintModal from '../../components/ui/BookingStartHintModal';
 import { useHomeCalendarView } from '../../features/home/hooks/useHomeCalendarView';
@@ -220,6 +223,8 @@ export default function HomePage({
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => (window.innerWidth > 730 ? !isAdminMode : false));
   const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
   const [isMobileBookingsOpen, setIsMobileBookingsOpen] = useState(false);
+  const [mobileAgendaFocusRequestId, setMobileAgendaFocusRequestId] = useState(0);
+  const [mobileDetailEvent, setMobileDetailEvent] = useState<CalendarEvent | null>(null);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
   );
@@ -389,8 +394,13 @@ export default function HomePage({
       return;
     }
 
-    setIsMobileBookingsOpen((current) => !current);
-  }, [isDesktop, openBookingsRequestId]);
+    if (isAdminMode) {
+      setIsMobileBookingsOpen((current) => !current);
+      return;
+    }
+
+    setMobileAgendaFocusRequestId((current) => current + 1);
+  }, [isAdminMode, isDesktop, openBookingsRequestId]);
 
   const handleCalendarDateSelect = (date: string, options?: { unavailable?: boolean }) => {
     if (options?.unavailable) return;
@@ -411,7 +421,11 @@ export default function HomePage({
     setIsSidebarExpanded(true);
 
     if (!isDesktop) {
-      setIsMobileBookingsOpen(true);
+      if (isAdminMode) {
+        setIsMobileBookingsOpen(true);
+      } else {
+        setMobileAgendaFocusRequestId((current) => current + 1);
+      }
     }
   };
 
@@ -454,8 +468,9 @@ export default function HomePage({
     setTimelineMonth(toMonthStart(event.date));
     handleDateSelect(event.date);
     setIsSidebarExpanded(true);
+
     if (!isDesktop) {
-      setIsMobileBookingsOpen(true);
+      setMobileAgendaFocusRequestId((current) => current + 1);
     }
   };
 
@@ -491,7 +506,13 @@ export default function HomePage({
   };
 
   return (
-    <div className="home-page home-page--sidebar-layout">
+    <div
+      className={[
+        'home-page',
+        'home-page--sidebar-layout',
+        !isDesktop && !isAdminMode ? 'home-page--mobile-planner' : '',
+      ].filter(Boolean).join(' ')}
+    >
       <div
         className={[
           'home-grid',
@@ -502,22 +523,37 @@ export default function HomePage({
         ].filter(Boolean).join(' ')}
       >
         <div className="home-calendar-stack home-calendar-stack--shell">
-          <HomeCalendarSection
-            selectedDate={selectedDate}
-            currentMonth={currentMonth}
-            currentAllowedMonth={currentAllowedMonth}
-            nextAllowedMonth={nextAllowedMonth}
-            events={allEvents}
-            unavailableDates={allUnavailableDates}
-            bookingPickMode={!isAdminMode && isBookingPickMode}
-            compactMode={!isDesktop}
-            showMonthPreview={isDesktop}
-            onDateSelect={handleCalendarDateSelect}
-            onMonthChange={handleCalendarMonthChange}
-            adminSelectionEnabled={isAdminMode && adminBlockingEnabled}
-            adminSelectedDates={adminSelectedDates}
-            onAdminSelectedDatesChange={setAdminSelectedDates}
-          />
+          {!isDesktop && !isAdminMode ? (
+            <HomeMobilePlanner
+              selectedDate={selectedDate}
+              currentMonth={currentMonth}
+              currentAllowedMonth={currentAllowedMonth}
+              nextAllowedMonth={nextAllowedMonth}
+              events={allEvents}
+              unavailableDates={allUnavailableDates}
+              onDateSelect={handleCalendarDateSelect}
+              onMonthChange={handleCalendarMonthChange}
+              onEventSelect={setMobileDetailEvent}
+              agendaFocusRequestId={mobileAgendaFocusRequestId}
+            />
+          ) : (
+            <HomeCalendarSection
+              selectedDate={selectedDate}
+              currentMonth={currentMonth}
+              currentAllowedMonth={currentAllowedMonth}
+              nextAllowedMonth={nextAllowedMonth}
+              events={allEvents}
+              unavailableDates={allUnavailableDates}
+              bookingPickMode={!isAdminMode && isBookingPickMode}
+              compactMode={!isDesktop}
+              showMonthPreview={isDesktop}
+              onDateSelect={handleCalendarDateSelect}
+              onMonthChange={handleCalendarMonthChange}
+              adminSelectionEnabled={isAdminMode && adminBlockingEnabled}
+              adminSelectedDates={adminSelectedDates}
+              onAdminSelectedDatesChange={setAdminSelectedDates}
+            />
+          )}
         </div>
 
         {isDesktop ? (
@@ -546,17 +582,19 @@ export default function HomePage({
 
       {!isDesktop ? (
         <>
-          <HomeMobileBookingsSheet
-            open={isMobileBookingsOpen}
-            selectedDate={selectedDate}
-            events={allEvents}
-            activeMonth={timelineMonth}
-            currentAllowedMonth={currentAllowedMonth}
-            nextAllowedMonth={nextAllowedMonth}
-            onClose={() => setIsMobileBookingsOpen(false)}
-            onChangeTimelineMonth={handleTimelineMonthChange}
-            isAdminMode={isAdminMode}
-          />
+          {isAdminMode ? (
+            <HomeMobileBookingsSheet
+              open={isMobileBookingsOpen}
+              selectedDate={selectedDate}
+              events={allEvents}
+              activeMonth={timelineMonth}
+              currentAllowedMonth={currentAllowedMonth}
+              nextAllowedMonth={nextAllowedMonth}
+              onClose={() => setIsMobileBookingsOpen(false)}
+              onChangeTimelineMonth={handleTimelineMonthChange}
+              isAdminMode={isAdminMode}
+            />
+          ) : null}
 
           <HomeMobileDock
             onQuickBooking={() => {
@@ -564,8 +602,15 @@ export default function HomePage({
               clearSelection();
               requestQuickBooking();
             }}
-            onOpenBookings={() => setIsMobileBookingsOpen((current) => !current)}
-            isBookingsOpen={isMobileBookingsOpen}
+            onOpenBookings={() => {
+              if (isAdminMode) {
+                setIsMobileBookingsOpen((current) => !current);
+                return;
+              }
+
+              setMobileAgendaFocusRequestId((current) => current + 1);
+            }}
+            isBookingsOpen={isAdminMode ? isMobileBookingsOpen : false}
             showQuickBooking={!isAdminMode}
           />
         </>
@@ -593,6 +638,14 @@ export default function HomePage({
       />
 
       {!isAdminMode ? <BookingStartHintModal open={isBookingGuideOpen} onClose={handleCloseBookingGuide} /> : null}
+
+      {!isAdminMode && !isDesktop ? (
+        <HomeMobileBookingDetailsModal
+          event={mobileDetailEvent}
+          open={Boolean(mobileDetailEvent)}
+          onClose={() => setMobileDetailEvent(null)}
+        />
+      ) : null}
 
       {!isAdminMode ? (
         <BookingFormModal

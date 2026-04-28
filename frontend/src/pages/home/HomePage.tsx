@@ -4,15 +4,14 @@ import '../../app/booking-sidebar.css';
 import '../../app/calendar-final-pass.css';
 import '../../app/home-mobile-dock.css';
 import '../../app/home-mobile-sheet.css';
+import '../../app/home-mobile-planner.css';
 import '../../app/calendar-mobile-compact.css';
 import '../../app/admin-selection.css';
-import '../../app/home-mobile-planner.css';
 import HomeCalendarSection from '../../features/home/components/HomeCalendarSection';
 import HomeSidebar from '../../features/home/components/HomeSidebar';
 import HomeMobileDock from '../../features/home/components/HomeMobileDock';
 import HomeMobileBookingsSheet from '../../features/home/components/HomeMobileBookingsSheet';
 import HomeMobilePlanner from '../../features/home/components/HomeMobilePlanner';
-import HomeMobileBookingDetailsModal from '../../features/home/components/HomeMobileBookingDetailsModal';
 import BookingFormModal from '../../features/booking-form/components/BookingFormModal';
 import BookingStartHintModal from '../../components/ui/BookingStartHintModal';
 import { useHomeCalendarView } from '../../features/home/hooks/useHomeCalendarView';
@@ -50,6 +49,11 @@ function shiftMonth(monthStart: string, delta: number): string {
   return `${next.getFullYear()}-${`${next.getMonth() + 1}`.padStart(2, '0')}-01`;
 }
 
+function endOfMonth(monthStart: string): string {
+  const reference = toLocalDate(monthStart);
+  return toIsoDate(new Date(reference.getFullYear(), reference.getMonth() + 1, 0));
+}
+
 function getMonthDates(monthStart: string): string[] {
   const reference = toLocalDate(monthStart);
   const daysInMonth = new Date(reference.getFullYear(), reference.getMonth() + 1, 0).getDate();
@@ -75,7 +79,21 @@ function buildUnavailableFromAvailability(monthStart: string, availableDates: st
   return getMonthDates(monthStart).filter((date) => !available.has(date));
 }
 
-const ENABLE_LAYOUT_STRESS_PREVIEW_MOCK = true;
+function findNextAvailableDate(startDate: string, unavailableDates: string[], nextAllowedMonth: string): string {
+  const blocked = new Set(unavailableDates);
+  const limit = toLocalDate(endOfMonth(nextAllowedMonth));
+  const cursor = toLocalDate(startDate);
+
+  while (cursor <= limit) {
+    const iso = toIsoDate(cursor);
+    if (!blocked.has(iso)) return iso;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return startDate;
+}
+
+const ENABLE_LAYOUT_STRESS_PREVIEW_MOCK = false;
 
 function buildStressPreviewEvents(currentAllowedMonth: string, nextAllowedMonth: string): CalendarEvent[] {
   const current = toLocalDate(currentAllowedMonth);
@@ -222,9 +240,8 @@ export default function HomePage({
   const [isBookingPickMode, setIsBookingPickMode] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => (window.innerWidth > 730 ? !isAdminMode : false));
   const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
-  const [isMobileBookingsOpen, setIsMobileBookingsOpen] = useState(false);
-  const [mobileAgendaFocusRequestId, setMobileAgendaFocusRequestId] = useState(0);
-  const [mobileDetailEvent, setMobileDetailEvent] = useState<CalendarEvent | null>(null);
+  const [isMobileBookingsOpen, setIsMobileBookingsOpen] = useState<boolean>(() => window.innerWidth <= 730 && !isAdminMode && getLocalCalendarEvents().some((event) => event.date >= todayIso));
+  const [mobileAgendaFocusId, setMobileAgendaFocusId] = useState(0);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
   );
@@ -268,6 +285,7 @@ export default function HomePage({
     [adminCalendarEvents, isAdminMode, localEvents, previewEvents],
   );
 
+
   const allUnavailableDates = useMemo(() => {
     if (isAdminMode) {
       return adminBlockedDates;
@@ -298,6 +316,11 @@ export default function HomePage({
     nextMonthAvailability.isLoading,
     todayIso,
   ]);
+
+  const quickBookingDefaultDate = useMemo(
+    () => findNextAvailableDate(todayIso, allUnavailableDates, nextAllowedMonth),
+    [allUnavailableDates, nextAllowedMonth, todayIso],
+  );
 
   const selectedPeriodBookings = useMemo(
     () => effectiveAdminBookings
@@ -372,11 +395,24 @@ export default function HomePage({
 
     clearSelection();
     closeBookingModal();
-    setIsBookingPickMode(true);
-    setIsBookingGuideOpen(true);
+    setIsBookingPickMode(false);
+    setIsBookingGuideOpen(false);
     setIsSidebarExpanded(false);
     setIsMobileBookingsOpen(false);
-  }, [quickBookingRequestId, clearSelection, closeBookingModal, isAdminMode]);
+    handleDateSelect(quickBookingDefaultDate);
+    setTimelineMonth(toMonthStart(quickBookingDefaultDate));
+    window.requestAnimationFrame(() => {
+      openBookingModal();
+    });
+  }, [
+    clearSelection,
+    closeBookingModal,
+    handleDateSelect,
+    isAdminMode,
+    openBookingModal,
+    quickBookingDefaultDate,
+    quickBookingRequestId,
+  ]);
 
   useEffect(() => {
     if (openBookingsRequestId === 0) return;
@@ -399,8 +435,8 @@ export default function HomePage({
       return;
     }
 
-    setMobileAgendaFocusRequestId((current) => current + 1);
-  }, [isAdminMode, isDesktop, openBookingsRequestId]);
+    setMobileAgendaFocusId((current) => current + 1);
+  }, [isDesktop, openBookingsRequestId]);
 
   const handleCalendarDateSelect = (date: string, options?: { unavailable?: boolean }) => {
     if (options?.unavailable) return;
@@ -424,7 +460,7 @@ export default function HomePage({
       if (isAdminMode) {
         setIsMobileBookingsOpen(true);
       } else {
-        setMobileAgendaFocusRequestId((current) => current + 1);
+        setMobileAgendaFocusId((current) => current + 1);
       }
     }
   };
@@ -468,9 +504,12 @@ export default function HomePage({
     setTimelineMonth(toMonthStart(event.date));
     handleDateSelect(event.date);
     setIsSidebarExpanded(true);
-
     if (!isDesktop) {
-      setMobileAgendaFocusRequestId((current) => current + 1);
+      if (isAdminMode) {
+        setIsMobileBookingsOpen(true);
+      } else {
+        setMobileAgendaFocusId((current) => current + 1);
+      }
     }
   };
 
@@ -506,13 +545,7 @@ export default function HomePage({
   };
 
   return (
-    <div
-      className={[
-        'home-page',
-        'home-page--sidebar-layout',
-        !isDesktop && !isAdminMode ? 'home-page--mobile-planner' : '',
-      ].filter(Boolean).join(' ')}
-    >
+    <div className="home-page home-page--sidebar-layout">
       <div
         className={[
           'home-grid',
@@ -533,8 +566,7 @@ export default function HomePage({
               unavailableDates={allUnavailableDates}
               onDateSelect={handleCalendarDateSelect}
               onMonthChange={handleCalendarMonthChange}
-              onEventSelect={setMobileDetailEvent}
-              agendaFocusRequestId={mobileAgendaFocusRequestId}
+              agendaFocusRequestId={mobileAgendaFocusId}
             />
           ) : (
             <HomeCalendarSection
@@ -607,10 +639,9 @@ export default function HomePage({
                 setIsMobileBookingsOpen((current) => !current);
                 return;
               }
-
-              setMobileAgendaFocusRequestId((current) => current + 1);
+              setMobileAgendaFocusId((current) => current + 1);
             }}
-            isBookingsOpen={isAdminMode ? isMobileBookingsOpen : false}
+            isBookingsOpen={isAdminMode ? isMobileBookingsOpen : true}
             showQuickBooking={!isAdminMode}
           />
         </>
@@ -638,14 +669,6 @@ export default function HomePage({
       />
 
       {!isAdminMode ? <BookingStartHintModal open={isBookingGuideOpen} onClose={handleCloseBookingGuide} /> : null}
-
-      {!isAdminMode && !isDesktop ? (
-        <HomeMobileBookingDetailsModal
-          event={mobileDetailEvent}
-          open={Boolean(mobileDetailEvent)}
-          onClose={() => setMobileDetailEvent(null)}
-        />
-      ) : null}
 
       {!isAdminMode ? (
         <BookingFormModal

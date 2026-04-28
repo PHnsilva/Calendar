@@ -306,7 +306,7 @@ textarea:focus-visible {
   position: relative;
   z-index: 3;
   min-width: 0;
-  padding-left: 25px;
+  padding-left: 25px !important;
   transform: translateX(0);
 }
 

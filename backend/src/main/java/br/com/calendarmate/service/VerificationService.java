@@ -5,7 +5,7 @@ import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.exception.NotFoundException;
 import br.com.calendarmate.google.CalendarClient;
-import br.com.calendarmate.integrations.WhatsAppClient;
+import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.PendingRecord;
 import br.com.calendarmate.model.Servico;
 import br.com.calendarmate.service.store.PendingStore;
@@ -29,7 +29,7 @@ public class VerificationService {
     private final CalendarClient calendarClient;
     private final TokenUtil tokenUtil;
     private final VerificationStore store;
-    private final WhatsAppClient whatsAppClient;
+    private final OtpDeliveryClient otpDeliveryClient;
     private final AppProperties props;
     private final PendingStore pendingStore;
 
@@ -38,14 +38,14 @@ public class VerificationService {
             TokenUtil tokenUtil,
             VerificationStore store,
             PendingStore pendingStore,
-            WhatsAppClient whatsAppClient,
+            OtpDeliveryClient otpDeliveryClient,
             AppProperties props
     ) {
         this.calendarClient = calendarClient;
         this.tokenUtil = tokenUtil;
         this.store = store;
         this.pendingStore = pendingStore;
-        this.whatsAppClient = whatsAppClient;
+        this.otpDeliveryClient = otpDeliveryClient;
         this.props = props;
     }
 
@@ -102,7 +102,7 @@ public class VerificationService {
                 props.getOtpResendAfter().toSeconds()
         );
 
-        whatsAppClient.sendCode(phoneDigits, sess.code);
+        otpDeliveryClient.sendCode(phoneDigits, sess.code);
 
         return new StartResult(
                 sess.verificationId,
@@ -128,7 +128,7 @@ public class VerificationService {
             throw new BadRequestException("verificationId inválido");
         }
 
-        whatsAppClient.sendCode(sess.phoneDigits, sess.code);
+        otpDeliveryClient.sendCode(sess.phoneDigits, sess.code);
 
         return new StartResult(
                 sess.verificationId,

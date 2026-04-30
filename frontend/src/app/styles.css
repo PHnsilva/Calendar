@@ -297,6 +297,18 @@ textarea:focus-visible {
     drop-shadow(0 3px 8px rgba(59, 82, 120, 0.18));
     
 }
+.brand-lockup__media--with-name {
+  width: clamp(185px, 20vw, 240px);
+  flex-basis: clamp(185px, 20vw, 240px);
+}
+
+.brand-lockup__logo--with-name {
+  width: clamp(185px, 20vw, 240px);
+  height: 92px;
+  max-width: none;
+  object-position: left top;
+}
+
 
 .brand-lockup__copy {
   display: flex;
@@ -3341,5 +3353,54 @@ textarea {
 
   .booking-detail-modal__hero-media {
     min-height: 138px;
+  }
+}
+
+@media (max-width: 730px) {
+  .public-header {
+    justify-content: space-between;
+  }
+
+  .public-header__actions:not(.public-header__actions--home) {
+    position: absolute;
+    right: var(--public-header-pad-x);
+  }
+
+  .brand-lockup {
+    margin-inline: 0;
+  }
+
+  .brand-lockup__inner {
+    justify-content: flex-start;
+    padding-inline: 0;
+  }
+
+  .brand-lockup__media--with-name {
+    width: clamp(138px, 43vw, 172px);
+    flex-basis: clamp(138px, 43vw, 172px);
+    transform: translateY(calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-y) - 2px)));
+  }
+
+  .brand-lockup__logo--with-name {
+    width: clamp(138px, 43vw, 172px);
+    height: 68px;
+    max-width: none;
+    object-position: left top;
+  }
+}
+
+/* Ajuste fino da logo com nome: evita que ela fique baixa no eixo vertical. */
+@media (min-width: 731px) {
+  .brand-lockup__media--with-name {
+    transform: translate(
+      calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-x) - 2px)),
+      calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-y) + 2px))
+    );
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-lockup__media--with-name {
+    transform: translateY(calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-y) + 2px)));
   }
 }

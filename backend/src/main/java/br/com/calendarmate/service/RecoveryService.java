@@ -4,7 +4,7 @@ import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.dto.RecoverConfirmResponse;
 import br.com.calendarmate.dto.ServicoResponse;
 import br.com.calendarmate.exception.BadRequestException;
-import br.com.calendarmate.integrations.WhatsAppClient;
+import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.HistoryRecord;
 import br.com.calendarmate.service.store.HistoryStore;
 import br.com.calendarmate.service.store.VerificationStore;
@@ -20,7 +20,7 @@ public class RecoveryService {
 
     private final VerificationStore verificationStore;
     private final HistoryStore historyStore;
-    private final WhatsAppClient whatsAppClient;
+    private final OtpDeliveryClient otpDeliveryClient;
     private final AppProperties props;
     private final ServicoService servicoService;
     private final TokenUtil tokenUtil;
@@ -28,14 +28,14 @@ public class RecoveryService {
     public RecoveryService(
             VerificationStore verificationStore,
             HistoryStore historyStore,
-            WhatsAppClient whatsAppClient,
+            OtpDeliveryClient otpDeliveryClient,
             AppProperties props,
             ServicoService servicoService,
             TokenUtil tokenUtil
     ) {
         this.verificationStore = verificationStore;
         this.historyStore = historyStore;
-        this.whatsAppClient = whatsAppClient;
+        this.otpDeliveryClient = otpDeliveryClient;
         this.props = props;
         this.servicoService = servicoService;
         this.tokenUtil = tokenUtil;
@@ -51,7 +51,7 @@ public class RecoveryService {
                 props.getOtpResendAfter().toSeconds()
         );
 
-        whatsAppClient.sendCode(phoneDigits, sess.code);
+        otpDeliveryClient.sendCode(phoneDigits, sess.code);
         historyStore.append(new HistoryRecord(
                 "h_" + UUID.randomUUID(),
                 "RECOVER_START",
@@ -81,7 +81,7 @@ public class RecoveryService {
             throw new BadRequestException("verificationId inválido");
         }
 
-        whatsAppClient.sendCode(sess.phoneDigits, sess.code);
+        otpDeliveryClient.sendCode(sess.phoneDigits, sess.code);
         return new StartResult(sess.verificationId, Math.max(0, sess.expiresAtEpochSec - Instant.now().getEpochSecond()), props.getOtpResendAfter().toSeconds());
     }
 

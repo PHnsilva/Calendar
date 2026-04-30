@@ -1,19 +1,14 @@
-import logo from "../../assets/brand/logo.png";
+import logoWithName from "../../assets/brand/logowithname.png";
 
 export default function Logo() {
   return (
     <div className="brand-lockup__inner">
-      <span className="brand-lockup__media" aria-hidden="true">
+      <span className="brand-lockup__media brand-lockup__media--with-name">
         <img
-          src={logo}
-          alt=""
-          className="brand-lockup__logo"
+          src={logoWithName}
+          alt="SG Pequenos Reparos Agendamentos"
+          className="brand-lockup__logo brand-lockup__logo--with-name"
         />
-      </span>
-
-      <span className="brand-lockup__copy">
-        <strong>SG Pequenos Reparos</strong>
-        <small>Agendamentos</small>
       </span>
     </div>
   );

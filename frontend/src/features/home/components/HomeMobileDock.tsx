@@ -57,6 +57,7 @@ function HomeIcon() {
 type HomeMobileDockProps = {
   onQuickBooking: () => void;
   onOpenBookings: () => void;
+  onOpenProfile: () => void;
   isBookingsOpen: boolean;
   showQuickBooking?: boolean;
 };
@@ -64,6 +65,7 @@ type HomeMobileDockProps = {
 export default function HomeMobileDock({
   onQuickBooking,
   onOpenBookings,
+  onOpenProfile,
   isBookingsOpen,
   showQuickBooking = true,
 }: HomeMobileDockProps) {
@@ -147,7 +149,7 @@ export default function HomeMobileDock({
         <span className="home-mobile-dock__fab home-mobile-dock__fab--placeholder" aria-hidden="true" />
       )}
 
-      <button type="button" className="home-mobile-dock__profile" aria-label="Perfil" title="Perfil">
+      <button type="button" className="home-mobile-dock__profile" onClick={onOpenProfile} aria-label="Perfil" title="Perfil">
         <ProfileIcon />
       </button>
     </nav>

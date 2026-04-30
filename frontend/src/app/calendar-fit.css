@@ -838,3 +838,20 @@
 :root[data-theme="dark"] .calendar-grid__cell--tone-royal {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 20px rgba(0, 0, 0, 0.18) !important;
 }
+
+@media (min-width: 731px) {
+  .brand-lockup__inner .brand-lockup__logo--with-name {
+    width: clamp(185px, 20vw, 240px);
+    height: 92px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 730px) {
+  .brand-lockup__inner .brand-lockup__logo--with-name {
+    width: clamp(150px, 46vw, 172px);
+    height: 70px;
+    max-width: none;
+    object-position: center top;
+  }
+}

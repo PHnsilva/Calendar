@@ -3,11 +3,15 @@ package br.com.calendarmate.config;
 import br.com.calendarmate.google.CalendarClient;
 import br.com.calendarmate.google.DummyCalendarClient;
 import br.com.calendarmate.google.GoogleCalendarClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class CalendarClientConfig {
+
+    @Value("${calendar.google.enabled:${GOOGLE_CALENDAR_ENABLED:true}}")
+    private boolean googleCalendarEnabled;
 
     @Bean
     public CalendarClient calendarClient() {
@@ -18,6 +22,7 @@ public class CalendarClientConfig {
         String appName = envOr("APP_NAME", "MeuApp");
 
         boolean hasGoogle =
+                googleCalendarEnabled &&
                 notBlank(clientId) &&
                 notBlank(clientSecret) &&
                 notBlank(refreshToken);

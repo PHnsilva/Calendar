@@ -3,7 +3,8 @@ package br.com.calendarmate.config;
 import br.com.calendarmate.google.CalendarClient;
 import br.com.calendarmate.integrations.DummyWhatsAppClient;
 import br.com.calendarmate.integrations.MetaWhatsAppClient;
-import br.com.calendarmate.integrations.WhatsAppClient;
+import br.com.calendarmate.integrations.OtpDeliveryClient;
+import br.com.calendarmate.integrations.TwilioSmsClient;
 import br.com.calendarmate.integrations.geoapify.GeoapifyRoutesClient;
 import br.com.calendarmate.integrations.google.GoogleRoutesClient;
 import br.com.calendarmate.integrations.routes.RouteClient;
@@ -32,23 +33,42 @@ public class AppConfig {
     }
 
     @Bean
-    public WhatsAppClient whatsAppClient(RestTemplate http, AppProperties props) {
-        if (!props.isWhatsappEnabled()) {
+    public OtpDeliveryClient otpDeliveryClient(RestTemplate http, AppProperties props) {
+        String channel = props.getVerificationChannel();
+
+        if ("SMS".equals(channel) || "TWILIO".equals(channel)) {
+            if (props.isSmsTwilioEnabled()
+                    && !props.getSmsTwilioAccountSid().isBlank()
+                    && !props.getSmsTwilioAuthToken().isBlank()
+                    && !props.getSmsTwilioFromNumber().isBlank()) {
+                return new TwilioSmsClient(
+                        http,
+                        props.getSmsTwilioAccountSid(),
+                        props.getSmsTwilioAuthToken(),
+                        props.getSmsTwilioFromNumber(),
+                        props.getFrontendUrl());
+            }
+
             return new DummyWhatsAppClient();
         }
 
-        if (props.getWhatsappToken().isBlank()
-                || props.getWhatsappPhoneNumberId().isBlank()
-                || props.getWhatsappTemplateName().isBlank()) {
+        if ("META".equals(channel) || "WHATSAPP".equals(channel)) {
+            if (props.isWhatsappEnabled()
+                    && !props.getWhatsappToken().isBlank()
+                    && !props.getWhatsappPhoneNumberId().isBlank()
+                    && !props.getWhatsappTemplateName().isBlank()) {
+                return new MetaWhatsAppClient(
+                        http,
+                        props.getWhatsappToken(),
+                        props.getWhatsappPhoneNumberId(),
+                        props.getWhatsappTemplateName(),
+                        props.getWhatsappLanguage());
+            }
+
             return new DummyWhatsAppClient();
         }
 
-        return new MetaWhatsAppClient(
-                http,
-                props.getWhatsappToken(),
-                props.getWhatsappPhoneNumberId(),
-                props.getWhatsappTemplateName(),
-                props.getWhatsappLanguage());
+        return new DummyWhatsAppClient();
     }
 
     @Bean
@@ -131,14 +151,14 @@ public class AppConfig {
             TokenUtil tokenUtil,
             VerificationStore verificationStore,
             PendingStore pendingStore,
-            WhatsAppClient whatsAppClient,
+            OtpDeliveryClient otpDeliveryClient,
             AppProperties props) {
         return new VerificationService(
                 calendarClient,
                 tokenUtil,
                 verificationStore,
                 pendingStore,
-                whatsAppClient,
+                otpDeliveryClient,
                 props);
     }
 
@@ -146,14 +166,14 @@ public class AppConfig {
     public RecoveryService recoveryService(
             VerificationStore verificationStore,
             HistoryStore historyStore,
-            WhatsAppClient whatsAppClient,
+            OtpDeliveryClient otpDeliveryClient,
             AppProperties props,
             ServicoService servicoService,
             TokenUtil tokenUtil) {
         return new RecoveryService(
                 verificationStore,
                 historyStore,
-                whatsAppClient,
+                otpDeliveryClient,
                 props,
                 servicoService,
                 tokenUtil);

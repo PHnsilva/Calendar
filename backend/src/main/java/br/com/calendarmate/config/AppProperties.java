@@ -67,6 +67,24 @@ public class AppProperties {
     @Value("${admin.token:${ADMIN_TOKEN:}}")
     private String adminToken;
 
+    @Value("${frontend.url:${FRONTEND_URL:}}")
+    private String frontendUrl;
+
+    @Value("${verification.channel:${VERIFICATION_CHANNEL:DUMMY}}")
+    private String verificationChannel;
+
+    @Value("${sms.twilio.enabled:${SMS_TWILIO_ENABLED:false}}")
+    private boolean smsTwilioEnabled;
+
+    @Value("${sms.twilio.accountSid:${SMS_TWILIO_ACCOUNT_SID:}}")
+    private String smsTwilioAccountSid;
+
+    @Value("${sms.twilio.authToken:${SMS_TWILIO_AUTH_TOKEN:}}")
+    private String smsTwilioAuthToken;
+
+    @Value("${sms.twilio.fromNumber:${SMS_TWILIO_FROM_NUMBER:}}")
+    private String smsTwilioFromNumber;
+
     @Value("${whatsapp.enabled:false}")
     private boolean whatsappEnabled;
 
@@ -260,6 +278,13 @@ public class AppProperties {
     public int getAdminBulkCancelMaxItems() { return Math.max(1, Math.min(adminBulkCancelMaxItems, 1000)); }
 
     public String getAdminToken() { return adminToken == null ? "" : adminToken.trim(); }
+    public String getFrontendUrl() { return frontendUrl == null ? "" : frontendUrl.trim(); }
+    public String getVerificationChannel() { return verificationChannel == null ? "DUMMY" : verificationChannel.trim().toUpperCase(Locale.ROOT); }
+    public boolean isSmsTwilioEnabled() { return smsTwilioEnabled; }
+    public String getSmsTwilioAccountSid() { return smsTwilioAccountSid == null ? "" : smsTwilioAccountSid.trim(); }
+    public String getSmsTwilioAuthToken() { return smsTwilioAuthToken == null ? "" : smsTwilioAuthToken.trim(); }
+    public String getSmsTwilioFromNumber() { return smsTwilioFromNumber == null ? "" : smsTwilioFromNumber.trim(); }
+
     public boolean isWhatsappEnabled() { return whatsappEnabled; }
     public String getWhatsappToken() { return whatsappToken == null ? "" : whatsappToken.trim(); }
     public String getWhatsappPhoneNumberId() { return whatsappPhoneNumberId == null ? "" : whatsappPhoneNumberId.trim(); }

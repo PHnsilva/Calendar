@@ -3,8 +3,10 @@ package br.com.calendarmate.config;
 import br.com.calendarmate.google.CalendarClient;
 import br.com.calendarmate.integrations.DummyWhatsAppClient;
 import br.com.calendarmate.integrations.MetaWhatsAppClient;
+import br.com.calendarmate.integrations.MisconfiguredOtpDeliveryClient;
+import br.com.calendarmate.integrations.MonthlySmsQuota;
+import br.com.calendarmate.integrations.NotificationApiSmsClient;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
-import br.com.calendarmate.integrations.TwilioSmsClient;
 import br.com.calendarmate.integrations.geoapify.GeoapifyRoutesClient;
 import br.com.calendarmate.integrations.google.GoogleRoutesClient;
 import br.com.calendarmate.integrations.routes.RouteClient;
@@ -36,20 +38,20 @@ public class AppConfig {
     public OtpDeliveryClient otpDeliveryClient(RestTemplate http, AppProperties props) {
         String channel = props.getVerificationChannel();
 
-        if ("SMS".equals(channel) || "TWILIO".equals(channel)) {
-            if (props.isSmsTwilioEnabled()
-                    && !props.getSmsTwilioAccountSid().isBlank()
-                    && !props.getSmsTwilioAuthToken().isBlank()
-                    && !props.getSmsTwilioFromNumber().isBlank()) {
-                return new TwilioSmsClient(
-                        http,
-                        props.getSmsTwilioAccountSid(),
-                        props.getSmsTwilioAuthToken(),
-                        props.getSmsTwilioFromNumber(),
-                        props.getFrontendUrl());
+        if ("SMS".equals(channel)) {
+            if (props.isSmsNotificationApiReady()) {
+                MonthlySmsQuota quota = new MonthlySmsQuota(
+                        props.getSmsNotificationApiMonthlyLimit(),
+                        props.getSmsNotificationApiUsageFile());
+                return new NotificationApiSmsClient(
+                        props.getSmsNotificationApiClientId(),
+                        props.getSmsNotificationApiClientSecret(),
+                        props.getSmsNotificationApiType(),
+                        quota);
             }
 
-            return new DummyWhatsAppClient();
+            return new MisconfiguredOtpDeliveryClient(
+                    "SMS via NotificationAPI não está configurado corretamente.");
         }
 
         if ("META".equals(channel) || "WHATSAPP".equals(channel)) {

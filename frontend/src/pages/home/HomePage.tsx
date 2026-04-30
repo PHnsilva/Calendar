@@ -11,6 +11,7 @@ import HomeCalendarSection from '../../features/home/components/HomeCalendarSect
 import HomeSidebar from '../../features/home/components/HomeSidebar';
 import HomeMobileDock from '../../features/home/components/HomeMobileDock';
 import HomeMobileBookingsSheet from '../../features/home/components/HomeMobileBookingsSheet';
+import HomeMobileBookingDetailsModal from '../../features/home/components/HomeMobileBookingDetailsModal';
 import HomeMobilePlanner from '../../features/home/components/HomeMobilePlanner';
 import HomeMobileProfileSheet from '../../features/home/components/HomeMobileProfileSheet';
 import BookingFormModal from '../../features/booking-form/components/BookingFormModal';
@@ -248,6 +249,7 @@ export default function HomePage({
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => (window.innerWidth > 730 ? !isAdminMode : false));
   const [viewportWidth, setViewportWidth] = useState<number>(() => window.innerWidth);
   const [isMobileBookingsOpen, setIsMobileBookingsOpen] = useState<boolean>(() => window.innerWidth <= 730 && !isAdminMode && getLocalCalendarEvents().some((event) => event.date >= todayIso));
+  const [selectedMobileBooking, setSelectedMobileBooking] = useState<CalendarEvent | null>(null);
   const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false);
   const [mobileAgendaFocusId, setMobileAgendaFocusId] = useState(0);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
@@ -585,6 +587,7 @@ export default function HomePage({
               unavailableDates={allUnavailableDates}
               onDateSelect={handleCalendarDateSelect}
               onMonthChange={handleCalendarMonthChange}
+              onEventSelect={setSelectedMobileBooking}
               agendaFocusRequestId={mobileAgendaFocusId}
             />
           ) : (
@@ -707,6 +710,14 @@ export default function HomePage({
           unavailableDates={allUnavailableDates}
           onClose={closeBookingModal}
           onBookingCreated={handleBookingCreated}
+        />
+      ) : null}
+
+      {!isAdminMode ? (
+        <HomeMobileBookingDetailsModal
+          open={Boolean(selectedMobileBooking)}
+          event={selectedMobileBooking}
+          onClose={() => setSelectedMobileBooking(null)}
         />
       ) : null}
     </div>

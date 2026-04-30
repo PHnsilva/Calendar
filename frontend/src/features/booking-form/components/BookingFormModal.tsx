@@ -85,10 +85,6 @@ function shiftMonth(monthStart: string, delta: number): string {
   return toIsoDate(shifted).slice(0, 10);
 }
 
-function endOfMonth(monthStart: string): string {
-  const reference = toLocalDate(monthStart);
-  return toIsoDate(new Date(reference.getFullYear(), reference.getMonth() + 1, 0));
-}
 
 function buildCalendarCells(monthStart: string, disabledDates: Set<string>, minDate: string, maxDate: string): CalendarCell[] {
   const monthDate = toLocalDate(monthStart);

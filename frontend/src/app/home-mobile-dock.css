@@ -321,3 +321,1092 @@
 
 
 }
+
+@media (max-width: 730px) {
+  .public-header {
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+
+  .brand-lockup {
+    margin-inline: 0 !important;
+    flex: 0 1 auto;
+  }
+
+  .brand-lockup__inner {
+    justify-content: flex-start !important;
+    padding-inline: 0 !important;
+  }
+
+  .brand-lockup__media--with-name {
+    width: clamp(138px, 43vw, 172px) !important;
+    flex-basis: clamp(138px, 43vw, 172px) !important;
+    transform: translateY(calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-y) - 2px))) !important;
+  }
+
+  .brand-lockup__logo--with-name {
+    width: clamp(138px, 43vw, 172px) !important;
+    height: 68px !important;
+    object-position: left top !important;
+  }
+
+  .public-header__actions--home {
+    width: auto !important;
+    display: flex !important;
+    flex: 0 0 auto;
+    grid-template-columns: none !important;
+    grid-template-areas: none !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+  }
+
+  .public-header__actions--home > .theme-icon-button,
+  .public-header__actions--home > .header-booking-action {
+    display: none !important;
+  }
+
+  .mobile-header-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    position: relative;
+    z-index: 90;
+  }
+
+  .mobile-header-actions__item {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .mobile-header-actions__button {
+    width: 38px;
+    height: 38px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid rgba(30, 72, 124, 0.12);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff, #edf2f8);
+    color: #254b74;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    cursor: pointer;
+  }
+
+  .mobile-header-actions__button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mobile-header-actions__button--notifications {
+    color: #c24a2d;
+  }
+
+  .mobile-header-actions__dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #ff4b2f;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 3px rgba(255, 75, 47, 0.14);
+  }
+
+  .mobile-header-popover {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(282px, calc(100vw - 20px));
+    padding: 10px;
+    border: 1px solid rgba(30, 72, 124, 0.1);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(14px);
+  }
+
+  .mobile-header-popover__eyebrow {
+    display: block;
+    margin-bottom: 8px;
+    color: rgba(71, 85, 105, 0.78);
+    font-size: 0.66rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .mobile-header-popover__empty {
+    margin: 0;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .mobile-header-booking-card {
+    width: 100%;
+    display: grid;
+    gap: 3px;
+    padding: 10px;
+    text-align: left;
+    border: 1px solid rgba(194, 74, 45, 0.13);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #fff7f3, #fff0e8);
+    color: #26364d;
+    cursor: pointer;
+  }
+
+  .mobile-header-booking-card strong {
+    font-size: 0.88rem;
+    line-height: 1.15;
+  }
+
+  .mobile-header-booking-card span,
+  .mobile-header-booking-card small {
+    color: #5c6778;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .mobile-header-popover--options {
+    width: min(230px, calc(100vw - 20px));
+    display: grid;
+    gap: 6px;
+  }
+
+  .mobile-header-menu-action {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px;
+    border: 1px solid rgba(30, 72, 124, 0.08);
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #1f2f46;
+    font-size: 0.82rem;
+    font-weight: 850;
+    cursor: pointer;
+  }
+
+  .mobile-header-menu-action svg {
+    width: 19px;
+    height: 19px;
+    color: #1f6fd1;
+  }
+
+  :root[data-theme="dark"] .mobile-header-actions__button,
+  :root[data-theme="dark"] .mobile-header-popover,
+  :root[data-theme="dark"] .mobile-header-menu-action {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(31, 18, 63, 0.96);
+    color: #f4eeff;
+  }
+
+  :root[data-theme="dark"] .mobile-header-booking-card {
+    border-color: rgba(255, 154, 112, 0.18);
+    background: rgba(54, 30, 82, 0.98);
+    color: #f4eeff;
+  }
+}
+
+@media (max-width: 390px) {
+  .app-shell {
+    --app-shell-pad: 6px;
+  }
+
+  .public-header--chrome {
+    --public-header-pad-x: 8px;
+    --public-header-pad-y: 8px;
+    min-height: 52px;
+  }
+
+  .brand-lockup__media--with-name {
+    width: clamp(152px, 44vw, 174px) !important;
+    flex-basis: clamp(152px, 44vw, 174px) !important;
+    transform: translateY(calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-y) + 1px))) !important;
+  }
+
+  .brand-lockup__logo--with-name {
+    width: clamp(152px, 44vw, 174px) !important;
+    height: 70px !important;
+    object-position: left top !important;
+  }
+
+  .mobile-header-actions {
+    gap: 5px;
+  }
+
+  .mobile-header-actions__button {
+    width: 35px;
+    height: 35px;
+    border-radius: 12px;
+  }
+
+  .mobile-header-actions__button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .home-page--sidebar-layout .home-calendar-stack--shell {
+    padding: 6px 6px calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .home-page--sidebar-layout .home-main-panel {
+    padding: 8px !important;
+    border-radius: 22px !important;
+  }
+
+  .mobile-planner__top {
+    padding: 6px 6px 4px !important;
+  }
+
+  .mobile-planner__weeks {
+    min-height: 0 !important;
+    padding: 6px 3px 8px !important;
+  }
+
+  .mobile-planner:not(.mobile-planner--overview) .mobile-planner__top {
+    max-height: 96px !important;
+  }
+
+  .mobile-planner__week {
+    gap: 4px !important;
+    min-height: 66px !important;
+    padding-inline: 2px !important;
+  }
+
+  .mobile-planner__day {
+    min-height: 62px !important;
+    border-radius: 15px !important;
+    padding: 6px 0 5px !important;
+  }
+
+  .mobile-planner__day span {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.92rem !important;
+  }
+
+  .mobile-planner__day small {
+    font-size: 0.56rem !important;
+  }
+
+  .mobile-planner__agenda {
+    padding: 8px 8px 14px !important;
+  }
+
+  .mobile-planner__item {
+    padding: 10px !important;
+    border-radius: 16px !important;
+  }
+
+  .home-mobile-dock {
+    width: min(calc(100% - 18px), 360px) !important;
+    min-height: 58px !important;
+    padding: 7px 10px !important;
+    border-radius: 21px !important;
+  }
+
+  .home-mobile-dock__action--bookings,
+  .home-mobile-dock__profile {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 13px !important;
+  }
+
+  .home-mobile-dock__fab {
+    width: 52px !important;
+    height: 52px !important;
+    margin-top: -22px !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .public-header {
+    gap: 5px !important;
+  }
+
+  .brand-lockup__media--with-name {
+    width: 148px !important;
+    flex-basis: 148px !important;
+    transform: translateY(calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-y)))) !important;
+  }
+
+  .brand-lockup__logo--with-name {
+    width: 148px !important;
+    height: 68px !important;
+    object-position: left top !important;
+  }
+
+  .mobile-header-actions__button {
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+  }
+
+  .mobile-header-actions__button svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .mobile-planner__weeks {
+    padding: 5px 2px 7px !important;
+  }
+
+  .mobile-planner:not(.mobile-planner--overview) .mobile-planner__top {
+    max-height: 88px !important;
+  }
+
+  .mobile-planner__week {
+    min-height: 60px !important;
+    gap: 3px !important;
+  }
+
+  .mobile-planner__day {
+    min-height: 58px !important;
+    padding: 5px 0 4px !important;
+  }
+
+  .mobile-planner__day span {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 0.86rem !important;
+  }
+
+  .mobile-header-popover {
+    width: min(248px, calc(100vw - 14px));
+    padding: 8px;
+    border-radius: 16px;
+  }
+
+  .mobile-header-menu-action,
+  .mobile-header-booking-card {
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .home-mobile-dock {
+    width: calc(100% - 12px) !important;
+    grid-template-columns: 42px 1fr 42px !important;
+  }
+}
+
+@media (min-width: 731px) {
+  .mobile-header-actions {
+    display: none !important;
+  }
+}
+
+/* Ajuste fino da logo no header da home: corrige queda visual em <=640px e >=731px. */
+@media (min-width: 731px) {
+  .brand-lockup__media--with-name {
+    transform: translate(
+      calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-x) - 2px)),
+      calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-y) + 2px))
+    ) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-lockup__media--with-name {
+    transform: translateY(calc(-1 * (var(--app-shell-pad) + var(--public-header-pad-y) + 2px))) !important;
+  }
+}
+
+/* Contatos no logo e ajustes do menu mobile sem alterar tamanho/responsividade do header. */
+@media (max-width: 730px) {
+  :root {
+    --mobile-header-brand-red: #7b1d12;
+  }
+
+  .brand-lockup-contact-anchor {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .brand-contact-mini-popover {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    z-index: 110;
+    width: max-content;
+    max-width: calc(100vw - 18px);
+    padding: 10px 11px 8px;
+    display: grid;
+    gap: 8px;
+    border: 1px solid rgba(30, 72, 124, 0.12);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(14px);
+  }
+
+  .brand-contact-mini-popover__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .brand-contact-mini-popover__action {
+    min-width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0;
+    border: 1px solid rgba(30, 72, 124, 0.08);
+    border-radius: 13px;
+    background: linear-gradient(180deg, #ffffff, #f2f5f9);
+    color: #394a60;
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.07);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .brand-contact-mini-popover__action svg {
+    width: 23px;
+    height: 23px;
+    flex: 0 0 23px;
+    display: block;
+  }
+
+  .brand-contact-mini-popover__action--phone-open {
+    padding: 0 7px 0 8px;
+    justify-content: flex-start;
+  }
+
+  .brand-contact-mini-popover__phone-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #26364d;
+    font-size: 0.72rem;
+    font-weight: 850;
+    line-height: 1;
+  }
+
+  .brand-contact-mini-popover__phone-value > button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: rgba(123, 29, 18, 0.1);
+    color: var(--mobile-header-brand-red);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .brand-contact-mini-popover__phone-value > button svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .brand-contact-mini-popover__founded {
+    color: rgba(71, 85, 105, 0.78);
+    font-size: 0.68rem;
+    font-weight: 850;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .mobile-header-actions__button:not(.mobile-header-actions__button--notifications),
+  .mobile-header-menu-action svg {
+    color: var(--mobile-header-brand-red);
+  }
+
+  .mobile-header-popover--options {
+    display: grid;
+    grid-auto-flow: row;
+    grid-auto-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .mobile-header-menu-action {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 390px) {
+  .brand-contact-mini-popover {
+    max-width: calc(100vw - 14px);
+    padding: 9px 10px 7px;
+    border-radius: 16px;
+  }
+
+  .brand-contact-mini-popover__action {
+    min-width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+
+  .brand-contact-mini-popover__action svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .brand-contact-mini-popover__phone-value {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 340px) {
+  .brand-contact-mini-popover {
+    max-width: calc(100vw - 10px);
+  }
+
+  .brand-contact-mini-popover__actions {
+    gap: 6px;
+  }
+
+  .brand-contact-mini-popover__phone-value {
+    font-size: 0.64rem;
+  }
+}
+
+/* Correção final do header: mantém layout antigo, remove o botão de tema do header e usa notificações. */
+.public-header__actions {
+  padding-right: clamp(6px, 1vw, 14px);
+}
+
+.brand-lockup-contact-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.brand-contact-mini-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 110;
+  width: max-content;
+  max-width: calc(100vw - 18px);
+  padding: 10px 11px 8px;
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(30, 72, 124, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(14px);
+}
+
+.brand-contact-mini-popover__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.brand-contact-mini-popover__action {
+  min-width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(30, 72, 124, 0.08);
+  border-radius: 13px;
+  background: linear-gradient(180deg, #ffffff, #f2f5f9);
+  color: #394a60;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.07);
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 0;
+  white-space: nowrap;
+}
+
+.brand-contact-mini-popover__action svg {
+  width: 23px;
+  height: 23px;
+  display: block;
+  flex: 0 0 23px;
+}
+
+.brand-contact-mini-popover__action--phone-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  padding: 0 7px 0 8px;
+}
+
+.brand-contact-mini-popover__phone-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #26364d;
+  font-size: 0.72rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.brand-contact-mini-popover__phone-value > button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(123, 29, 18, 0.1);
+  color: #7b1d12;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.brand-contact-mini-popover__phone-value > button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.brand-contact-mini-popover__founded {
+  color: rgba(71, 85, 105, 0.78);
+  font-size: 0.68rem;
+  font-weight: 850;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.mobile-header-popover--options {
+  display: grid !important;
+  grid-auto-flow: row !important;
+  grid-template-columns: 1fr !important;
+  gap: 6px !important;
+}
+
+.mobile-header-menu-action {
+  justify-content: flex-start !important;
+}
+
+.mobile-header-actions__button svg,
+.mobile-header-menu-action svg {
+  display: block;
+  margin: 0;
+}
+
+.mobile-header-actions__button--options,
+.mobile-header-actions__button--options svg,
+.mobile-header-menu-action svg {
+  color: #7b1d12;
+}
+
+@media (min-width: 731px) {
+  .public-header__actions--home .mobile-header-actions {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    position: relative;
+    z-index: 90;
+  }
+
+  .public-header__actions--home .mobile-header-actions__item--options {
+    display: none !important;
+  }
+
+  .public-header__actions--home .mobile-header-actions__button {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+  }
+
+  .public-header__actions--home .mobile-header-actions__button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .brand-contact-mini-popover {
+    top: calc(100% + 12px);
+  }
+}
+
+@media (max-width: 730px) {
+  .public-header__actions {
+    padding-right: 0;
+  }
+
+  .mobile-header-actions__item--options {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 390px) {
+  .brand-contact-mini-popover {
+    max-width: calc(100vw - 14px);
+    padding: 9px 10px 7px;
+    border-radius: 16px;
+  }
+
+  .brand-contact-mini-popover__action {
+    min-width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+
+  .brand-contact-mini-popover__action svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .brand-contact-mini-popover__phone-value {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 340px) {
+  .brand-contact-mini-popover {
+    max-width: calc(100vw - 10px);
+  }
+
+  .brand-contact-mini-popover__actions {
+    gap: 6px;
+  }
+
+  .brand-contact-mini-popover__phone-value {
+    font-size: 0.64rem;
+  }
+}
+
+/* Correção: contatos abaixo da logo, telefone retrátil e notificações desktop como popover. */
+.brand-contact-mini-popover {
+  top: calc(100% + 42px) !important;
+  z-index: 140 !important;
+}
+
+.brand-contact-mini-popover__action,
+.brand-contact-mini-popover__phone-value > button {
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.brand-contact-mini-popover__action svg,
+.brand-contact-mini-popover__phone-value > button svg {
+  display: block !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+.mobile-header-actions__item {
+  position: relative;
+}
+
+.mobile-header-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 130;
+  width: min(282px, calc(100vw - 20px));
+  padding: 10px;
+  border: 1px solid rgba(30, 72, 124, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(14px);
+}
+
+.mobile-header-popover__eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: rgba(71, 85, 105, 0.78);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mobile-header-popover__empty {
+  margin: 0;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.mobile-header-booking-card {
+  width: 100%;
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  text-align: left;
+  border: 1px solid rgba(194, 74, 45, 0.13);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff7f3, #fff0e8);
+  color: #26364d;
+  cursor: pointer;
+}
+
+.mobile-header-booking-card strong {
+  font-size: 0.88rem;
+  line-height: 1.15;
+}
+
+.mobile-header-booking-card span,
+.mobile-header-booking-card small {
+  color: #5c6778;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+@keyframes desktopNotificationReveal {
+  from {
+    opacity: 0;
+    transform: scaleX(0.72) translateY(-3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(1) translateY(0);
+  }
+}
+
+@media (min-width: 731px) {
+  .brand-contact-mini-popover {
+    top: calc(100% + 48px) !important;
+    left: 0 !important;
+  }
+
+  .public-header__actions--home .mobile-header-actions {
+    display: inline-flex !important;
+  }
+
+  .public-header__actions--home .mobile-header-actions__item--notifications {
+    position: relative;
+  }
+
+  .public-header__actions--home .mobile-header-popover--notifications {
+    left: 0 !important;
+    right: auto !important;
+    width: clamp(252px, 30vw, 340px);
+    max-width: calc(100vw - 32px);
+    transform-origin: left top;
+    animation: desktopNotificationReveal 170ms ease-out;
+  }
+
+  .public-header__actions--home .mobile-header-popover--notifications::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 16px;
+    width: 12px;
+    height: 12px;
+    border-left: 1px solid rgba(30, 72, 124, 0.1);
+    border-top: 1px solid rgba(30, 72, 124, 0.1);
+    background: rgba(255, 255, 255, 0.98);
+    transform: rotate(45deg);
+  }
+}
+
+@media (max-width: 730px) {
+  .brand-contact-mini-popover {
+    top: calc(100% + 36px) !important;
+    left: 0 !important;
+  }
+
+  .mobile-header-popover {
+    right: 0;
+    left: auto;
+  }
+}
+
+@media (max-width: 390px) {
+  .brand-contact-mini-popover {
+    top: calc(100% + 34px) !important;
+  }
+}
+
+
+
+/* Ajuste pontual: notificações desktop/mobile e posição do modal de contatos. */
+.mobile-header-actions__button,
+.mobile-header-actions__button--notifications,
+.public-header__actions--home .mobile-header-actions__button,
+.public-header__actions--home .mobile-header-actions__button--notifications {
+  cursor: pointer !important;
+}
+
+.mobile-header-actions__button--notifications svg,
+.public-header__actions--home .mobile-header-actions__button--notifications svg,
+.mobile-header-actions__bell-svg {
+  width: 20px !important;
+  height: 20px !important;
+  display: block !important;
+  fill: none !important;
+  stroke: currentColor !important;
+}
+
+.brand-contact-mini-popover {
+  top: calc(100% + 2px) !important;
+  margin-top: 0 !important;
+}
+
+@media (min-width: 731px) {
+  .brand-contact-mini-popover {
+    top: calc(100% + 3px) !important;
+  }
+
+  .public-header__actions--home .mobile-header-popover--notifications {
+    left: 0 !important;
+    right: auto !important;
+    transform-origin: left top;
+  }
+}
+
+@media (max-width: 730px) {
+  .brand-contact-mini-popover {
+    top: calc(100% + 2px) !important;
+  }
+}
+
+
+/* Ajuste final: modal de contatos levemente mais baixo e notificação com cor mobile. */
+.mobile-header-actions__button--notifications,
+.public-header__actions--home .mobile-header-actions__button--notifications {
+  color: #c24a2d !important;
+}
+
+.mobile-header-actions__button--notifications svg,
+.public-header__actions--home .mobile-header-actions__button--notifications svg,
+.mobile-header-actions__bell-svg {
+  color: #c24a2d !important;
+  stroke: #c24a2d !important;
+}
+
+.brand-contact-mini-popover {
+  top: calc(100% + 7px) !important;
+}
+
+@media (min-width: 731px) {
+  .brand-contact-mini-popover {
+    top: calc(100% + 8px) !important;
+  }
+}
+
+@media (max-width: 730px) {
+  .brand-contact-mini-popover {
+    top: calc(100% + 7px) !important;
+  }
+}
+
+
+/* Ajuste final solicitado: borda desktop igual ao mobile e contatos mais baixo. */
+@media (min-width: 731px) {
+  .public-header__actions--home .mobile-header-actions__button--notifications {
+    border: 1px solid rgba(30, 72, 124, 0.12) !important;
+    background: linear-gradient(180deg, #ffffff, #edf2f8) !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+    color: #c24a2d !important;
+  }
+
+  .public-header__actions--home .mobile-header-actions__button--notifications svg {
+    color: #c24a2d !important;
+    stroke: #c24a2d !important;
+  }
+
+  .brand-contact-mini-popover {
+    top: calc(100% + 13px) !important;
+  }
+}
+
+@media (max-width: 730px) {
+  .brand-contact-mini-popover {
+    top: calc(100% + 12px) !important;
+  }
+}
+
+
+/* Ajuste fino: sino desktop mais visível/alinhado e contatos + metade do último deslocamento. */
+@media (min-width: 731px) {
+  .public-header__actions--home .mobile-header-actions__button--notifications {
+    display: inline-grid !important;
+    place-items: center !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    border-color: rgba(194, 74, 45, 0.28) !important;
+    background: linear-gradient(180deg, #ffffff, #edf2f8) !important;
+    box-shadow:
+      0 8px 18px rgba(15, 23, 42, 0.08),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.78) !important;
+  }
+
+  .public-header__actions--home .mobile-header-actions__button--notifications svg {
+    width: 22px !important;
+    height: 22px !important;
+    margin: 0 !important;
+    display: block !important;
+    transform: translateY(0) !important;
+    color: #d04a2f !important;
+    stroke: #d04a2f !important;
+  }
+
+  .public-header__actions--home .mobile-header-actions__button--notifications svg path {
+    stroke-width: 2.15 !important;
+  }
+
+  .brand-contact-mini-popover {
+    top: calc(100% + 16px) !important;
+  }
+}
+
+@media (max-width: 730px) {
+  .brand-contact-mini-popover {
+    top: calc(100% + 15px) !important;
+  }
+}
+
+
+
+
+/* Correção: modal de notificações menor entre 340px e 320px. */
+@media (max-width: 340px) {
+  .mobile-header-popover--notifications {
+    width: min(222px, calc(100vw - 16px)) !important;
+    padding: 8px !important;
+    border-radius: 15px !important;
+    right: -4px !important;
+  }
+
+  .mobile-header-popover--notifications .mobile-header-popover__eyebrow {
+    margin-bottom: 6px !important;
+    font-size: 0.58rem !important;
+    letter-spacing: 0.09em !important;
+  }
+
+  .mobile-header-popover--notifications .mobile-header-popover__empty {
+    font-size: 0.68rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .mobile-header-popover--notifications .mobile-header-booking-card {
+    padding: 8px !important;
+    border-radius: 12px !important;
+    gap: 2px !important;
+  }
+
+  .mobile-header-popover--notifications .mobile-header-booking-card strong {
+    font-size: 0.76rem !important;
+  }
+
+  .mobile-header-popover--notifications .mobile-header-booking-card span,
+  .mobile-header-popover--notifications .mobile-header-booking-card small {
+    font-size: 0.64rem !important;
+  }
+}
+
+@media (max-width: 320px) {
+  .mobile-header-popover--notifications {
+    width: min(210px, calc(100vw - 12px)) !important;
+    padding: 7px !important;
+    right: -2px !important;
+  }
+}

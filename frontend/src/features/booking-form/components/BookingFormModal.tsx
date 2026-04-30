@@ -6,7 +6,7 @@ import { useCreateBooking } from '../../bookings/hooks/useCreateBooking';
 import OtpConfirmModal from '../../otp/components/OtpConfirmModal';
 import AddressAutocompleteField from './AddressAutocompleteField';
 import type { AddressSuggestion } from '../hooks/useAddressSuggestions';
-import { saveLocalCalendarEvent, saveManageToken } from '../../../lib/storage';
+import { formatPhoneForDisplay, getStoredPhoneVerification, saveLocalCalendarEvent, saveManageToken } from '../../../lib/storage';
 import type { ServicoResponse } from '../../../types/api';
 import type { BookingFormValues } from '../../../types/booking';
 import type { HomeSelectedSlot } from '../../home/types';
@@ -63,6 +63,17 @@ const INITIAL_FORM: BookingFormValues = {
   clientCity: '',
   clientState: 'MG',
 };
+
+function buildInitialForm(defaultCity = '', defaultState = 'MG'): BookingFormValues {
+  const storedPhone = getStoredPhoneVerification()?.phone ?? '';
+
+  return {
+    ...INITIAL_FORM,
+    clientPhone: storedPhone ? formatPhoneForDisplay(storedPhone) : '',
+    clientCity: defaultCity,
+    clientState: defaultState,
+  };
+}
 
 function toLocalDate(dateString: string): Date {
   return new Date(`${dateString}T12:00:00`);
@@ -283,7 +294,7 @@ export default function BookingFormModal({
   const [dateButtonState, setDateButtonState] = useState<'idle' | 'loading' | 'success'>('idle');
   const [calendarExpanded, setCalendarExpanded] = useState(false);
   const [draftSlot, setDraftSlot] = useState<HomeSelectedSlot>(selectedSlot);
-  const [formValues, setFormValues] = useState<BookingFormValues>(INITIAL_FORM);
+  const [formValues, setFormValues] = useState<BookingFormValues>(() => buildInitialForm());
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [addressInput, setAddressInput] = useState('');
   const [selectedAddress, setSelectedAddress] = useState<AddressSuggestion | null>(null);
@@ -339,7 +350,7 @@ export default function BookingFormModal({
     setConfirmedDate(null);
     setDateButtonState('idle');
     setDraftSlot(null);
-    setFormValues({ ...INITIAL_FORM, clientCity: defaultCity, clientState: defaultState });
+    setFormValues(buildInitialForm(defaultCity, defaultState));
     setSelectedCity(defaultCity);
     setAddressInput('');
     setSelectedAddress(null);

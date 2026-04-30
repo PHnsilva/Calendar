@@ -20,7 +20,7 @@ import { useHomeCalendarView } from '../../features/home/hooks/useHomeCalendarVi
 import { useHomeBookingSelection } from '../../app/home-booking-provider';
 import { ALLOWED_CITIES } from '../../data/allowed-cities';
 import type { CalendarEvent } from '../../features/calendar/types';
-import { getLocalCalendarEvents } from '../../lib/storage';
+import { getLocalCalendarEvents, saveLocalCalendarEvent } from '../../lib/storage';
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
 import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
 import type { ServicoResponse } from '../../types/api';
@@ -534,6 +534,22 @@ export default function HomePage({
     }
   };
 
+  const handleRecoveredBookings = (bookings: ServicoResponse[]) => {
+    const recoveredEvents = bookings.map(mapServicoToCalendarEvent);
+    recoveredEvents.forEach(saveLocalCalendarEvent);
+    setLocalEvents((current) => mergeEvents([...current, ...recoveredEvents]));
+
+    if (recoveredEvents[0]) {
+      setTimelineMonth(toMonthStart(recoveredEvents[0].date));
+      handleDateSelect(recoveredEvents[0].date);
+    }
+  };
+
+  const openRecoveredBookings = () => {
+    setIsMobileProfileOpen(false);
+    setMobileAgendaFocusId((current) => current + 1);
+  };
+
   const handleConfirmBlock = async ({ mode: blockMode, entries }: { mode: AdminBlockMode; entries: { date: string; times?: string[] }[] }) => {
     try {
       await createAdminBlocks({ entries, mode: blockMode });
@@ -653,6 +669,8 @@ export default function HomePage({
           <HomeMobileProfileSheet
             open={isMobileProfileOpen}
             onClose={() => setIsMobileProfileOpen(false)}
+            onRecoveredBookings={handleRecoveredBookings}
+            onOpenRecoveredBookings={openRecoveredBookings}
           />
 
           <HomeMobileDock

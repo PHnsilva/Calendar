@@ -21,9 +21,10 @@ import org.springframework.web.client.RestTemplate;
 public class AppConfig {
 
     @Bean
-    public TokenUtil tokenUtil(AppProperties props) {
+    public TokenUtil tokenUtil() {
+        String secret = System.getenv().getOrDefault("HMAC_SECRET", "dev-secret");
         long ttl = 7L * 24L * 3600L;
-        return new TokenUtil(props.getHmacSecret(), ttl);
+        return new TokenUtil(secret, ttl);
     }
 
     @Bean
@@ -35,7 +36,13 @@ public class AppConfig {
     public OtpDeliveryClient otpDeliveryClient(RestTemplate http, AppProperties props) {
         String channel = props.getVerificationChannel();
 
-        if ("SMS".equals(channel) && props.isTwilioSmsConfigured()) {
+        if ("SMS".equals(channel) && props.isSmsTwilioEnabled()) {
+            if (props.getSmsTwilioAccountSid().isBlank()
+                    || props.getSmsTwilioAuthToken().isBlank()
+                    || props.getSmsTwilioFromNumber().isBlank()) {
+                return new DummyWhatsAppClient();
+            }
+
             return new TwilioSmsClient(
                     http,
                     props.getSmsTwilioAccountSid(),
@@ -44,11 +51,13 @@ public class AppConfig {
                     props.getFrontendUrl());
         }
 
-        if ("META".equals(channel)
-                && props.isWhatsappEnabled()
-                && !props.getWhatsappToken().isBlank()
-                && !props.getWhatsappPhoneNumberId().isBlank()
-                && !props.getWhatsappTemplateName().isBlank()) {
+        if (("META".equals(channel) || "WHATSAPP".equals(channel)) && props.isWhatsappEnabled()) {
+            if (props.getWhatsappToken().isBlank()
+                    || props.getWhatsappPhoneNumberId().isBlank()
+                    || props.getWhatsappTemplateName().isBlank()) {
+                return new DummyWhatsAppClient();
+            }
+
             return new MetaWhatsAppClient(
                     http,
                     props.getWhatsappToken(),

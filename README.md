@@ -1,207 +1,262 @@
-# 🗓️ CalendarMate
+# CalendarMate
 
----
+Sistema de agendamentos para serviços locais, com frontend React/Vite, backend Spring Boot, deploy em Vercel/Render e integrações externas ativáveis por variáveis de ambiente.
 
-## 🚧 Status do Projeto
-![Java](https://img.shields.io/badge/Java-17%2B-007ec6?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-007ec6?style=for-the-badge&logo=springboot&logoColor=white)
-![Google Calendar](https://img.shields.io/badge/Google%20Calendar-API-007ec6?style=for-the-badge&logo=google&logoColor=white)
-![WhatsApp](https://img.shields.io/badge/WhatsApp-Cloud%20API-007ec6?style=for-the-badge&logo=whatsapp&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-opcional-007ec6?style=for-the-badge&logo=supabase&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-007ec6?style=for-the-badge)
+## Status
 
----
+![Java](https://img.shields.io/badge/Java-17%2B-1f6fd1?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-1f6fd1?style=for-the-badge&logo=springboot&logoColor=white)
+![React](https://img.shields.io/badge/React-19-1f6fd1?style=for-the-badge&logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7-1f6fd1?style=for-the-badge&logo=vite&logoColor=white)
+![Render](https://img.shields.io/badge/Render-backend-1f6fd1?style=for-the-badge&logo=render&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-frontend-1f6fd1?style=for-the-badge&logo=vercel&logoColor=white)
+![License](https://img.shields.io/badge/License-Source--Available-c24a2d?style=for-the-badge)
 
-## 📚 Índice
-- [Links Úteis](#-links-úteis)
-- [Sobre o Projeto](#-sobre-o-projeto)
-- [Funcionalidades](#-funcionalidades)
-- [Integrações](#-integrações)
-- [Endpoints](#-endpoints)
-- [Configuração](#-configuração)
-- [Como Rodar Localmente](#-como-rodar-localmente)
-- [Dicas Rápidas](#-dicas-rápidas)
-- [Build](#-build)
-- [Deploy](#-deploy)
-- [Estrutura de Pastas](#-estrutura-de-pastas)
-- [Testes](#-testes)
-- [Licença](#-licença)
+## Sobre
 
----
+O CalendarMate permite criar, consultar, confirmar, recuperar e administrar agendamentos. O fluxo atual prioriza confirmação por **SMS**, usa **Geoapify** como opção principal de mapas/rotas por custo e praticidade, mantém **Meta WhatsApp Cloud API** como integração opcional e permite persistência via **Supabase** para histórico e sessões recentes.
 
-## 🔗 Links Úteis
-- 🐙 **Repositório:** (adicione aqui)
-- 📄 **Documentação/Notas:** (adicione aqui)
+O backend mantém modos dummy/fallback para desenvolvimento local. Assim, o projeto pode rodar sem credenciais reais enquanto as integrações externas não estiverem configuradas.
 
----
+## Arquitetura
 
-## 📝 Sobre o Projeto
-Backend de agendamentos com integração ao **Google Calendar**, fluxo de confirmação via **OTP (WhatsApp)** e validações para reduzir erros de input (data, horário, área atendida).  
-O sistema evita login: após criar um agendamento, o usuário recebe um **token de gerenciamento** para consultar/editar/cancelar seus próprios agendamentos.
+```txt
+frontend/  React + Vite + React Query
+backend/   Spring Boot + Java 17 + Docker
+```
 
-O projeto inclui modos “dummy” para desenvolvimento local quando integrações externas não estão configuradas.
+Deploy atual previsto:
 
----
+```txt
+Vercel  -> frontend
+Render  -> backend Dockerizado
+```
 
-## ✨ Funcionalidades
-- Criar agendamento com validações:
-  - janela de datas (mês atual ou próximo)
-  - minutos válidos (00/30)
-  - área atendida (cidades/UF)
-- Consultar horários disponíveis por dia (`/available`)
-- Token de gerenciamento (sem login)
-- OTP (start/resend/confirm) para confirmar telefone
-- Recuperação por telefone (OTP + listagem)
-- Admin (via header `X-ADMIN-TOKEN`):
-  - listar todos os agendamentos
-  - excluir por `eventId`
-  - executar limpeza interna (pendências/histórico)
-- Regra de folga **4x4** configurável por `app.schedule.cycleStart`
-- Proxy de rotas via **Google Routes** (quando habilitado)
-- Extrato bancário no painel admin via provider plugável (**DUMMY/INTER**) para cálculo de totais no mês
+## Funcionalidades
 
----
+- Criação de agendamento com validações de data, cidade, horário e telefone.
+- Confirmação por OTP.
+- Canal de OTP alternável: `DUMMY`, `SMS/TWILIO` ou `META/WHATSAPP`.
+- Consulta de horários disponíveis por dia.
+- Token de gerenciamento sem login.
+- Recuperação de agendamentos por telefone.
+- Painel admin com token via header `X-ADMIN-TOKEN`.
+- Bloqueios de disponibilidade e escala 4x4.
+- Histórico com retenção configurável, por padrão 2 meses.
+- Extrato/admin financeiro via provider `DUMMY` ou Banco Inter.
+- Rotas por Geoapify ou Google Routes.
 
-## 🔌 Integrações
+## Integrações e alternância
 
-### Google Calendar
-- **Produção:** `GoogleCalendarClient` (OAuth: clientId/clientSecret/refreshToken)
-- **Dev:** `DummyCalendarClient` quando credenciais não estão definidas
-- Eventos do sistema são identificados por `extendedProperties.private.appSource=calendar-backend`
+| Integração | Padrão seguro em dev | Produção real | Obrigatória? | Variáveis principais |
+|---|---:|---:|---:|---|
+| OTP dummy | Sim | Não | Não | `VERIFICATION_CHANNEL=DUMMY` |
+| SMS/Twilio | Opcional | Recomendado no fluxo atual | Sim, se usar SMS real | `VERIFICATION_CHANNEL=SMS`, `SMS_TWILIO_ENABLED=true` |
+| Meta WhatsApp | Desativado | Opcional/futuro | Não | `VERIFICATION_CHANNEL=META`, `WHATSAPP_ENABLED=true` |
+| Google Calendar | Dummy sem credenciais | Opcional/real | Não para dev | `GOOGLE_CALENDAR_ENABLED`, `GOOGLE_*` |
+| Geoapify | Opcional | Principal no projeto real | Sim, para mapas/rotas reais | `GEOAPIFY_ENABLED=true`, `GEOAPIFY_API_KEY` |
+| Google Routes | Desativado | Alternativa ao Geoapify | Não | `GOOGLE_MAPS_ENABLED=true` |
+| Supabase | In-memory se desativado | Recomendado | Sim para histórico real | `SUPABASE_ENABLED=true` |
+| Banco Inter | `DUMMY` | Opcional | Não | `BANKING_PROVIDER=INTER`, `INTER_ENABLED=true` |
 
-### WhatsApp (OTP)
-- **Produção:** `MetaWhatsAppClient` (WhatsApp Cloud API)
-- **Dev:** `DummyWhatsAppClient` (código aparece no console)
+A prioridade de rotas no backend é: **Geoapify habilitado com chave > Google Routes habilitado com chave > rotas desabilitadas**.
 
-### Supabase (opcional)
-- **Produção (opcional):** persistência de stores (verification/pending/history)
-- **Dev:** modo in-memory quando `supabase.enabled=false`
+## Backend: variáveis principais
 
-### CEP (ViaCEP)
-- Endpoint `GET /api/cep/{cep}` consulta ViaCEP e valida cidade/UF permitidos
+Arquivo base: `backend/.env.example`.
 
-### Google Routes (proxy)
-- Quando habilitado (`google.maps.enabled=true`), o backend calcula rotas/tempo/polylines via Google Routes API
+### Segurança e deploy
 
-### Banking / Extrato (Admin)
-- Provider plugável:
-  - **DUMMY:** extrato fake para desenvolvimento/testes de UI
-  - **INTER:** extrato via Banco Inter PJ (mTLS + OAuth) quando configurado
+```env
+SERVER_PORT=8080
+FRONTEND_URL=https://seu-front.vercel.app
+ADMIN_TOKEN=troque-este-token
+HMAC_SECRET=troque-este-segredo-longo
+```
 
----
+### Confirmação por SMS
 
-## 🔌 Endpoints
+```env
+VERIFICATION_CHANNEL=SMS
+SMS_TWILIO_ENABLED=true
+SMS_TWILIO_ACCOUNT_SID=...
+SMS_TWILIO_AUTH_TOKEN=...
+SMS_TWILIO_FROM_NUMBER=...
+```
+
+### Meta WhatsApp opcional
+
+```env
+VERIFICATION_CHANNEL=META
+WHATSAPP_ENABLED=true
+WHATSAPP_TOKEN=...
+WHATSAPP_PHONE_NUMBER_ID=...
+WHATSAPP_TEMPLATE_NAME=...
+WHATSAPP_LANGUAGE=pt_BR
+```
+
+### Geoapify como padrão real
+
+```env
+GEOAPIFY_ENABLED=true
+GEOAPIFY_API_KEY=...
+GOOGLE_MAPS_ENABLED=false
+```
+
+### Supabase
+
+```env
+SUPABASE_ENABLED=true
+SUPABASE_URL=...
+SUPABASE_KEY=...
+SUPABASE_SCHEMA=public
+```
+
+### Banco Inter
+
+```env
+BANKING_ENABLED=true
+BANKING_PROVIDER=INTER
+INTER_ENABLED=true
+INTER_BASE_URL=https://cdpj.partners.bancointer.com.br
+INTER_CLIENT_ID=...
+INTER_CLIENT_SECRET=...
+INTER_CERT_P12_PATH=/etc/secrets/inter.p12
+INTER_CERT_P12_PASSWORD=...
+INTER_CONTA_CORRENTE=...
+```
+
+Para testar UI financeira sem Inter:
+
+```env
+BANKING_ENABLED=false
+BANKING_PROVIDER=DUMMY
+INTER_ENABLED=false
+```
+
+## Frontend: variáveis principais
+
+Arquivo base: `frontend/.env.example`.
+
+```env
+VITE_API_BASE_URL=https://seu-backend.onrender.com
+VITE_GEOAPIFY_PUBLIC_KEY=...
+VITE_ADMIN_ENABLED=true
+```
+
+No Vercel, configure `VITE_API_BASE_URL` com a URL pública do backend no Render.
+
+## Rodar localmente
+
+### Backend
+
+```bash
+cd backend
+./gradlew bootRun
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Build
+
+### Backend
+
+```bash
+cd backend
+./gradlew clean build
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm run build
+```
+
+Se o Vite/Rollup falhar por dependência opcional do Rollup em ambiente Linux, remova `node_modules` e reinstale:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+npm run build
+```
+
+## Deploy
+
+### Render — backend Dockerizado
+
+- Root Directory: `backend`
+- Environment: Docker
+- Dockerfile: `backend/Dockerfile`
+- Porta: `8080`
+- Variáveis: use `backend/.env.example` como base.
+
+Obrigatórias em produção:
+
+```env
+FRONTEND_URL=https://seu-front.vercel.app
+ADMIN_TOKEN=...
+HMAC_SECRET=...
+```
+
+### Vercel — frontend
+
+- Root Directory: `frontend`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Variáveis: use `frontend/.env.example` como base.
+
+Obrigatória em produção:
+
+```env
+VITE_API_BASE_URL=https://seu-backend.onrender.com
+```
+
+## Endpoints principais
 
 ### Público
-- `POST /api/servicos`  
-  Cria agendamento e retorna `manageToken` + dados do OTP.
-- `GET /api/servicos/available?date=YYYY-MM-DD&slotMinutes=60`  
-  Lista slots disponíveis no dia (considera conflitos e regra 4x4).
-- `GET /api/servicos/me?token=...`  
-  Busca um agendamento do token.
-- `GET /api/servicos/my?token=...`  
-  Lista agendamentos do token.
-- `PUT /api/servicos/me/{eventId}?token=...`  
-  Atualiza agendamento do token.
-- `DELETE /api/servicos/me/{eventId}?token=...`  
-  Cancela agendamento do token.
 
-### OTP (WhatsApp)
+- `POST /api/servicos`
+- `GET /api/servicos/available?date=YYYY-MM-DD&slotMinutes=60`
+- `GET /api/servicos/me?token=...`
+- `GET /api/servicos/my?token=...`
+- `PUT /api/servicos/me/{eventId}?token=...`
+- `DELETE /api/servicos/me/{eventId}?token=...`
+
+### OTP
+
 - `POST /api/verify/start`
 - `POST /api/verify/resend`
 - `POST /api/verify/confirm`
 
-### Recuperação (por telefone)
+### Recuperação
+
 - `POST /api/recovery/start`
 - `POST /api/recovery/confirm`
 
-### CEP
-- `GET /api/cep/{cep}`
+### Mapas/rotas
 
-### Rotas (proxy)
+- `GET /api/cep/{cep}`
 - `POST /api/routes/compute`
 
-### Admin (header `X-ADMIN-TOKEN`)
+### Admin
+
+Todos exigem `X-ADMIN-TOKEN`.
+
 - `GET /api/servicos/admin`
 - `DELETE /api/servicos/admin/{eventId}`
 - `POST /api/internal/cleanup`
 - `GET /api/admin/finance/statement?from=YYYY-MM-DD&to=YYYY-MM-DD`
 - `GET /api/admin/finance/health`
 
----
+## Licença
 
-## ⚙️ Configuração
+Este projeto usa licença **source-available personalizada**. O uso é permitido para estudo, avaliação, aprendizado, uso privado e fins educacionais. Uso comercial concorrente, revenda, oferta como SaaS, marketplace ou produto equivalente sem autorização são proibidos.
 
-### Variáveis de ambiente
-O projeto usa `.env` para configuração local. Exemplos de grupos:
-- Segurança: `ADMIN_TOKEN`, `HMAC_SECRET`
-- Google Calendar: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_CALENDAR_ID`
-- WhatsApp: `WHATSAPP_*`
-- Supabase: `SUPABASE_*`
-- Google Routes: `GOOGLE_MAPS_*`
-- Banking/Inter: `BANKING_*`, `INTER_*`
-
-### application.properties
-Centraliza valores e permite sobrescrita via env usando placeholders `${ENV_VAR:default}`.  
-Também contém `app.schedule.cycleStart` para regra de escala de trabalho 4x4.
-
----
-
-## ▶️ Como Rodar Localmente
-
-### Pré-requisitos
-- Java 17+
-- Maven Wrapper (`./mvnw`) ou Maven instalado
-
-### Passos
-1. Configure `.env` (ou exporte as variáveis no terminal)
-2. Rode a aplicação:
-```bash
-cd backend
-./gradlew bootRun
-```
-3. API disponível em:
-```bash
-http://localhost:8080
-````
-
----
-
-## Dicas rápidas
-
-Sem credenciais Google → DummyCalendarClient (funciona para desenvolvimento)
-
-Com WhatsApp desabilitado → OTP aparece no console (DummyWhatsAppClient)
-
-Banking em DUMMY → extrato fake para validar a dashboard
-
----
-
-## 🧱 Build
-```bash
-./gradlew clean build
-````
-
----
-
-## 🚀 Deploy
-
-Em preparação.
-
----
-
-## 📁 Estrutura de Pastas
-
-Em preparação.
-
----
-
-## 🧪 Testes
-
-Ainda não há testes automatizados.
-
----
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo LICENSE.
+Veja `LICENSE.md`.

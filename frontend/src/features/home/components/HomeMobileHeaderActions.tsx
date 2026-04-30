@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useHomeBookingSelection } from '../../../app/home-booking-provider';
+import { getPhoneVerificationChangedEventName, getStoredPhoneVerification } from '../../../lib/storage';
 import type { CalendarEvent } from '../../calendar/types';
 
 function BellIcon() {
@@ -43,6 +44,17 @@ function ProfileEditIcon() {
   );
 }
 
+
+function ProfileWarningIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="mobile-header-menu-action__warning-svg">
+      <circle cx="12" cy="12" r="9" fill="#fee2e2" stroke="#dc2626" strokeWidth="1.9" />
+      <path d="M12 6.8v6.4" stroke="#dc2626" strokeWidth="2.35" strokeLinecap="round" />
+      <circle cx="12" cy="16.8" r="1.25" fill="#dc2626" />
+    </svg>
+  );
+}
+
 function CalendarEditIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -80,6 +92,7 @@ type ActivePopover = 'notifications' | 'options' | null;
 export default function HomeMobileHeaderActions() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [activePopover, setActivePopover] = useState<ActivePopover>(null);
+  const [phoneVerified, setPhoneVerified] = useState(() => Boolean(getStoredPhoneVerification()));
   const {
     lastCreatedBooking,
     requestOpenBookings,
@@ -90,6 +103,20 @@ export default function HomeMobileHeaderActions() {
     if (!lastCreatedBooking) return;
     setActivePopover('notifications');
   }, [lastCreatedBooking]);
+
+
+  useEffect(() => {
+    const updatePhoneVerification = () => {
+      setPhoneVerified(Boolean(getStoredPhoneVerification()));
+    };
+
+    window.addEventListener(getPhoneVerificationChangedEventName(), updatePhoneVerification);
+    window.addEventListener('storage', updatePhoneVerification);
+    return () => {
+      window.removeEventListener(getPhoneVerificationChangedEventName(), updatePhoneVerification);
+      window.removeEventListener('storage', updatePhoneVerification);
+    };
+  }, []);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -176,8 +203,8 @@ export default function HomeMobileHeaderActions() {
         {activePopover === 'options' ? (
           <div className="mobile-header-popover mobile-header-popover--options" role="menu" aria-label="Opções gerais">
             <button type="button" className="mobile-header-menu-action" onClick={openProfile} role="menuitem">
-              <ProfileEditIcon />
-              <span>Editar perfil</span>
+              {phoneVerified ? <ProfileEditIcon /> : <ProfileWarningIcon />}
+              <span>{phoneVerified ? 'Editar perfil' : 'Confirmar telefone'}</span>
             </button>
             <button type="button" className="mobile-header-menu-action" onClick={openBookings} role="menuitem">
               <CalendarEditIcon />

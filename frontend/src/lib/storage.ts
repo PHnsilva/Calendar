@@ -9,6 +9,15 @@ const ADMIN_CALENDAR_MODE_KEY = "calendar.admin.mode";
 const LOCAL_EVENTS_CHANGED_EVENT = "calendar:local-events-changed";
 const GEOAPIFY_AUTOCOMPLETE_DISABLED_KEY = "calendar.geoapifyAutocomplete.disabled";
 
+const PHONE_VERIFICATION_KEY = "calendar.phoneVerification";
+const PHONE_VERIFICATION_CHANGED_EVENT = "calendar:phone-verification-changed";
+
+export type StoredPhoneVerification = {
+  phone: string;
+  verifiedAt: string;
+  recoveredCount?: number;
+};
+
 type AdminCalendarMode = "view" | "block";
 type ManageTokenMap = Record<string, string>;
 
@@ -48,6 +57,77 @@ function dispatchLocalEventsChanged(): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(LOCAL_EVENTS_CHANGED_EVENT));
 }
+
+function dispatchPhoneVerificationChanged(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(PHONE_VERIFICATION_CHANGED_EVENT));
+}
+
+export function normalizeBrazilianPhone(value: string): string {
+  let digits = value.replace(/\D/g, "");
+
+  if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) {
+    digits = digits.slice(2);
+  }
+
+  return digits.slice(0, 11);
+}
+
+export function isValidBrazilianPhone(value: string): boolean {
+  const digits = normalizeBrazilianPhone(value);
+  return digits.length === 10 || digits.length === 11;
+}
+
+export function formatPhoneForDisplay(value: string): string {
+  const digits = normalizeBrazilianPhone(value);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+export function getStoredPhoneVerification(): StoredPhoneVerification | null {
+  const verification = readJson<StoredPhoneVerification | null>(PHONE_VERIFICATION_KEY, null);
+  if (!verification?.phone) return null;
+
+  const phone = normalizeBrazilianPhone(verification.phone);
+  if (!isValidBrazilianPhone(phone)) return null;
+
+  return {
+    ...verification,
+    phone,
+  };
+}
+
+export function hasStoredPhoneVerification(): boolean {
+  return Boolean(getStoredPhoneVerification());
+}
+
+export function savePhoneVerification(phone: string, recoveredCount?: number): StoredPhoneVerification | null {
+  const normalizedPhone = normalizeBrazilianPhone(phone);
+  if (!isValidBrazilianPhone(normalizedPhone)) return null;
+
+  const verification: StoredPhoneVerification = {
+    phone: normalizedPhone,
+    verifiedAt: new Date().toISOString(),
+    recoveredCount,
+  };
+
+  writeJson(PHONE_VERIFICATION_KEY, verification);
+  dispatchPhoneVerificationChanged();
+  return verification;
+}
+
+export function clearPhoneVerification(): void {
+  getStorage()?.removeItem(PHONE_VERIFICATION_KEY);
+  dispatchPhoneVerificationChanged();
+}
+
+export function getPhoneVerificationChangedEventName(): string {
+  return PHONE_VERIFICATION_CHANGED_EVENT;
+}
+
 
 export function getStoredAdminToken(): string {
   return getStorage()?.getItem(ADMIN_TOKEN_STORAGE_KEY)?.trim() ?? "";

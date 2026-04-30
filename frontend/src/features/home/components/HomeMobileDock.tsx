@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getPhoneVerificationChangedEventName, getStoredPhoneVerification } from '../../../lib/storage';
 
 function ProfileIcon() {
   return (
@@ -22,6 +23,17 @@ function ProfileIcon() {
         strokeLinecap="round"
         opacity="0.55"
       />
+    </svg>
+  );
+}
+
+
+function WarningProfileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="#fee2e2" stroke="#dc2626" strokeWidth="1.9" />
+      <path d="M12 6.8v6.4" stroke="#dc2626" strokeWidth="2.35" strokeLinecap="round" />
+      <circle cx="12" cy="16.8" r="1.25" fill="#dc2626" />
     </svg>
   );
 }
@@ -70,7 +82,23 @@ export default function HomeMobileDock({
   showQuickBooking = true,
 }: HomeMobileDockProps) {
   const [isOverviewActive, setIsOverviewActive] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(() => Boolean(getStoredPhoneVerification()));
   const agendaIsActive = showQuickBooking ? isOverviewActive : isBookingsOpen;
+
+
+
+  useEffect(() => {
+    const updatePhoneVerification = () => {
+      setPhoneVerified(Boolean(getStoredPhoneVerification()));
+    };
+
+    window.addEventListener(getPhoneVerificationChangedEventName(), updatePhoneVerification);
+    window.addEventListener('storage', updatePhoneVerification);
+    return () => {
+      window.removeEventListener(getPhoneVerificationChangedEventName(), updatePhoneVerification);
+      window.removeEventListener('storage', updatePhoneVerification);
+    };
+  }, []);
 
   useEffect(() => {
     const handleOverviewState = (event: Event) => {
@@ -149,8 +177,17 @@ export default function HomeMobileDock({
         <span className="home-mobile-dock__fab home-mobile-dock__fab--placeholder" aria-hidden="true" />
       )}
 
-      <button type="button" className="home-mobile-dock__profile" onClick={onOpenProfile} aria-label="Perfil" title="Perfil">
-        <ProfileIcon />
+      <button
+        type="button"
+        className={[
+          'home-mobile-dock__profile',
+          !phoneVerified ? 'home-mobile-dock__profile--warning' : '',
+        ].filter(Boolean).join(' ')}
+        onClick={onOpenProfile}
+        aria-label={phoneVerified ? 'Perfil confirmado' : 'Confirmar telefone do perfil'}
+        title={phoneVerified ? 'Perfil confirmado' : 'Confirmar telefone'}
+      >
+        {phoneVerified ? <ProfileIcon /> : <WarningProfileIcon />}
       </button>
     </nav>
   );

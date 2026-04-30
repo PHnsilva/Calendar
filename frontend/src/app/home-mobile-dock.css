@@ -1410,3 +1410,21 @@
     right: -2px !important;
   }
 }
+
+/* Perfil: aviso vermelho enquanto o telefone não foi confirmado neste navegador. */
+.home-mobile-dock__profile--warning {
+  border-color: rgba(220, 38, 38, 0.28) !important;
+  background: linear-gradient(180deg, #fff5f5, #fee2e2) !important;
+  color: #dc2626 !important;
+  box-shadow: 0 10px 20px rgba(220, 38, 38, 0.14) !important;
+}
+
+.home-mobile-dock__profile--warning svg {
+  width: 22px !important;
+  height: 22px !important;
+  filter: none !important;
+}
+
+.mobile-header-menu-action__warning-svg {
+  color: #dc2626 !important;
+}

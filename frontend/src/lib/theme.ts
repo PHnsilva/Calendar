@@ -1,26 +1,21 @@
-export type ThemeMode = "light" | "dark";
+export type ThemeMode = "light";
 
 export const THEME_STORAGE_KEY = "calendar.theme";
 export const DEFAULT_THEME: ThemeMode = "light";
 
 export function resolveInitialTheme(): ThemeMode {
-  if (typeof window === "undefined") {
-    return DEFAULT_THEME;
-  }
-
-  const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-  if (stored === "light" || stored === "dark") {
-    return stored;
-  }
-
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  return prefersDark ? "dark" : "light";
+  return DEFAULT_THEME;
 }
 
-export function applyTheme(theme: ThemeMode): void {
+export function applyTheme(): void {
   if (typeof document === "undefined") {
     return;
   }
 
-  document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.theme = DEFAULT_THEME;
+  document.documentElement.style.colorScheme = DEFAULT_THEME;
+
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(THEME_STORAGE_KEY);
+  }
 }

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import AppShell from './AppShell';
 import Logo from '../components/branding/Logo';
-import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { clearAdminToken, getStoredAdminToken } from '../lib/storage';
 import { env } from '../lib/env';
 
@@ -44,7 +43,6 @@ export default function AdminLayout() {
           </button>
         ) : null}
 
-        <ThemeToggle />
 
         {hasToken ? (
           <button

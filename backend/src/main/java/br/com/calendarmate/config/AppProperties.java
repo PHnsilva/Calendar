@@ -73,17 +73,23 @@ public class AppProperties {
     @Value("${verification.channel:${VERIFICATION_CHANNEL:DUMMY}}")
     private String verificationChannel;
 
-    @Value("${sms.twilio.enabled:${SMS_TWILIO_ENABLED:false}}")
-    private boolean smsTwilioEnabled;
+    @Value("${sms.notificationapi.enabled:${SMS_NOTIFICATIONAPI_ENABLED:false}}")
+    private boolean smsNotificationApiEnabled;
 
-    @Value("${sms.twilio.accountSid:${SMS_TWILIO_ACCOUNT_SID:}}")
-    private String smsTwilioAccountSid;
+    @Value("${sms.notificationapi.clientId:${SMS_NOTIFICATIONAPI_CLIENT_ID:}}")
+    private String smsNotificationApiClientId;
 
-    @Value("${sms.twilio.authToken:${SMS_TWILIO_AUTH_TOKEN:}}")
-    private String smsTwilioAuthToken;
+    @Value("${sms.notificationapi.clientSecret:${SMS_NOTIFICATIONAPI_CLIENT_SECRET:}}")
+    private String smsNotificationApiClientSecret;
 
-    @Value("${sms.twilio.fromNumber:${SMS_TWILIO_FROM_NUMBER:}}")
-    private String smsTwilioFromNumber;
+    @Value("${sms.notificationapi.type:${SMS_NOTIFICATIONAPI_TYPE:calendar_mate_otp}}")
+    private String smsNotificationApiType;
+
+    @Value("${sms.notificationapi.monthlyLimit:${SMS_NOTIFICATIONAPI_MONTHLY_LIMIT:100}}")
+    private int smsNotificationApiMonthlyLimit;
+
+    @Value("${sms.notificationapi.usageFile:${SMS_NOTIFICATIONAPI_USAGE_FILE:/tmp/calendarmate-sms-usage.properties}}")
+    private String smsNotificationApiUsageFile;
 
     @Value("${whatsapp.enabled:false}")
     private boolean whatsappEnabled;
@@ -280,10 +286,19 @@ public class AppProperties {
     public String getAdminToken() { return adminToken == null ? "" : adminToken.trim(); }
     public String getFrontendUrl() { return frontendUrl == null ? "" : frontendUrl.trim(); }
     public String getVerificationChannel() { return verificationChannel == null ? "DUMMY" : verificationChannel.trim().toUpperCase(Locale.ROOT); }
-    public boolean isSmsTwilioEnabled() { return smsTwilioEnabled; }
-    public String getSmsTwilioAccountSid() { return smsTwilioAccountSid == null ? "" : smsTwilioAccountSid.trim(); }
-    public String getSmsTwilioAuthToken() { return smsTwilioAuthToken == null ? "" : smsTwilioAuthToken.trim(); }
-    public String getSmsTwilioFromNumber() { return smsTwilioFromNumber == null ? "" : smsTwilioFromNumber.trim(); }
+    public boolean isSmsNotificationApiEnabled() { return smsNotificationApiEnabled; }
+    public String getSmsNotificationApiClientId() { return clean(smsNotificationApiClientId); }
+    public String getSmsNotificationApiClientSecret() { return clean(smsNotificationApiClientSecret); }
+    public String getSmsNotificationApiType() { return cleanOrDefault(smsNotificationApiType, "calendar_mate_otp"); }
+    public int getSmsNotificationApiMonthlyLimit() { return Math.max(0, smsNotificationApiMonthlyLimit); }
+    public String getSmsNotificationApiUsageFile() { return cleanOrDefault(smsNotificationApiUsageFile, "/tmp/calendarmate-sms-usage.properties"); }
+
+    public boolean isSmsNotificationApiReady() {
+        return isSmsNotificationApiEnabled()
+                && !getSmsNotificationApiClientId().isBlank()
+                && !getSmsNotificationApiClientSecret().isBlank()
+                && !getSmsNotificationApiType().isBlank();
+    }
 
     public boolean isWhatsappEnabled() { return whatsappEnabled; }
     public String getWhatsappToken() { return whatsappToken == null ? "" : whatsappToken.trim(); }
@@ -331,5 +346,14 @@ public class AppProperties {
         } catch (Exception e) {
             return def;
         }
+    }
+
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private String cleanOrDefault(String value, String fallback) {
+        String cleaned = clean(value);
+        return cleaned.isBlank() ? fallback : cleaned;
     }
 }

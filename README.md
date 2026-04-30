@@ -36,7 +36,7 @@ Render  -> backend Dockerizado
 
 - Criação de agendamento com validações de data, cidade, horário e telefone.
 - Confirmação por OTP.
-- Canal de OTP alternável: `DUMMY`, `SMS/TWILIO` ou `META/WHATSAPP`.
+- Canal de OTP alternável: `DUMMY`, `SMS/NotificationAPI` ou `META/WHATSAPP`.
 - Consulta de horários disponíveis por dia.
 - Token de gerenciamento sem login.
 - Recuperação de agendamentos por telefone.
@@ -51,7 +51,7 @@ Render  -> backend Dockerizado
 | Integração | Padrão seguro em dev | Produção real | Obrigatória? | Variáveis principais |
 |---|---:|---:|---:|---|
 | OTP dummy | Sim | Não | Não | `VERIFICATION_CHANNEL=DUMMY` |
-| SMS/Twilio | Opcional | Recomendado no fluxo atual | Sim, se usar SMS real | `VERIFICATION_CHANNEL=SMS`, `SMS_TWILIO_ENABLED=true` |
+| SMS/NotificationAPI | Opcional | Recomendado no fluxo atual | Sim, se usar SMS real | `VERIFICATION_CHANNEL=SMS`, `SMS_NOTIFICATIONAPI_ENABLED=true` |
 | Meta WhatsApp | Desativado | Opcional/futuro | Não | `VERIFICATION_CHANNEL=META`, `WHATSAPP_ENABLED=true` |
 | Google Calendar | Dummy sem credenciais | Opcional/real | Não para dev | `GOOGLE_CALENDAR_ENABLED`, `GOOGLE_*` |
 | Geoapify | Opcional | Principal no projeto real | Sim, para mapas/rotas reais | `GEOAPIFY_ENABLED=true`, `GEOAPIFY_API_KEY` |
@@ -76,12 +76,16 @@ HMAC_SECRET=troque-este-segredo-longo
 
 ### Confirmação por SMS
 
+O SMS real usa NotificationAPI. O limite mensal padrão é de 100 SMS, e o backend bloqueia automaticamente novos envios ao atingir esse limite para evitar custos.
+
 ```env
 VERIFICATION_CHANNEL=SMS
-SMS_TWILIO_ENABLED=true
-SMS_TWILIO_ACCOUNT_SID=...
-SMS_TWILIO_AUTH_TOKEN=...
-SMS_TWILIO_FROM_NUMBER=...
+SMS_NOTIFICATIONAPI_ENABLED=true
+SMS_NOTIFICATIONAPI_CLIENT_ID=...
+SMS_NOTIFICATIONAPI_CLIENT_SECRET=...
+SMS_NOTIFICATIONAPI_TYPE=calendar_mate_otp
+SMS_NOTIFICATIONAPI_MONTHLY_LIMIT=100
+SMS_NOTIFICATIONAPI_USAGE_FILE=/tmp/calendarmate-sms-usage.properties
 ```
 
 ### Meta WhatsApp opcional

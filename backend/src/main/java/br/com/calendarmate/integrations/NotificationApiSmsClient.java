@@ -1,22 +1,28 @@
 package br.com.calendarmate.integrations;
 
-import com.notificationapi.NotificationApi;
-import com.notificationapi.model.NotificationRequest;
-import com.notificationapi.model.SmsOptions;
-import com.notificationapi.model.User;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 
 public class NotificationApiSmsClient implements OtpDeliveryClient {
 
-    private final NotificationApi api;
+    private final HttpClient httpClient;
+    private final String apiKey;
+    private final String baseUrl;
     private final String notificationType;
     private final MonthlySmsQuota quota;
 
     public NotificationApiSmsClient(
-            String clientId,
-            String clientSecret,
+            String apiKey,
+            String baseUrl,
             String notificationType,
             MonthlySmsQuota quota) {
-        this.api = new NotificationApi(clientId, clientSecret);
+        this.httpClient = HttpClient.newHttpClient();
+        this.apiKey = apiKey;
+        this.baseUrl = normalizeBaseUrl(baseUrl);
         this.notificationType = notificationType;
         this.quota = quota;
     }
@@ -25,7 +31,7 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
     public void sendCode(String phoneDigits, String code) {
         quota.acquire();
         try {
-            api.send(buildRequest(phoneDigits, code));
+            sendRequest(phoneDigits, code);
         } catch (RuntimeException ex) {
             quota.rollback();
             throw ex;
@@ -37,32 +43,80 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
         return "SMS";
     }
 
-    private NotificationRequest buildRequest(String phoneDigits, String code) {
-        User user = new User(userId(phoneDigits)).setNumber(toE164(phoneDigits));
-        return new NotificationRequest(notificationType, user)
-                .setSms(new SmsOptions().setMessage(message(code)));
+    private void sendRequest(String phoneDigits, String code) {
+        try {
+            HttpResponse<String> response = httpClient.send(
+                    buildRequest(phoneDigits, code),
+                    HttpResponse.BodyHandlers.ofString());
+
+            validateResponse(response);
+        } catch (IOException | InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Falha ao enviar SMS via NotificationAPI.", ex);
+        }
+    }
+
+    private HttpRequest buildRequest(String phoneDigits, String code) {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/send"))
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(payload(phoneDigits, code), StandardCharsets.UTF_8))
+                .build();
+    }
+
+    private String payload(String phoneDigits, String code) {
+        return """
+                {
+                  "type": "%s",
+                  "to": {
+                    "number": "%s"
+                  },
+                  "sms": {
+                    "message": "%s"
+                  }
+                }
+                """.formatted(
+                escape(notificationType),
+                escape(toE164(phoneDigits)),
+                escape(message(code)));
+    }
+
+    private void validateResponse(HttpResponse<String> response) {
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            return;
+        }
+
+        throw new IllegalStateException(
+                "NotificationAPI recusou o SMS. Status: "
+                        + response.statusCode()
+                        + ". Body: "
+                        + response.body());
     }
 
     private String message(String code) {
         return "Seu código CalendarMate é: " + code;
     }
 
-    private String userId(String phoneDigits) {
-        return "otp-" + digitsOnly(phoneDigits);
-    }
-
     private String toE164(String phoneDigits) {
         if (phoneDigits != null && phoneDigits.trim().startsWith("+")) {
             return phoneDigits.trim();
         }
+
         String digits = digitsOnly(phoneDigits);
-        if ((digits.length() == 10 || digits.length() == 11)) {
-            return "+55" + digits;
-        }
-        return digits.startsWith("55") ? "+" + digits : "+" + digits;
+        return digits.startsWith("55") ? "+" + digits : "+55" + digits;
     }
 
     private String digitsOnly(String value) {
         return value == null ? "" : value.replaceAll("\\D+", "");
+    }
+
+    private String normalizeBaseUrl(String value) {
+        String url = value == null || value.isBlank() ? "https://api.pingram.io" : value.trim();
+        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+    }
+
+    private String escape(String value) {
+        return value == null ? "" : value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useHomeBookingSelection } from "../../../app/home-booking-provider";
 import { getCityTone } from "../../../data/allowed-cities";
 import { apiClient } from "../../../lib/api-client";
 import {
   getManageTokenByEventId,
   getManageTokens,
+  getPhoneVerificationChangedEventName,
+  getStoredPhoneVerification,
   removeLocalCalendarEvent,
   saveLocalCalendarEvent,
   saveManageToken,
@@ -254,6 +257,8 @@ export default function HomeBookingsTimeline({
   const [editLoadingTimes, setEditLoadingTimes] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(() => Boolean(getStoredPhoneVerification()));
+  const { requestOpenProfile } = useHomeBookingSelection();
   const { data: bootstrap } = usePublicBootstrap(Boolean(activeEvent));
   const slotMinutes = bootstrap?.booking?.slotMinutes ?? 60;
   const { coords, error: locationError, isLoading: isLocating, requestLocation } = useUserGeolocation();
@@ -266,6 +271,22 @@ export default function HomeBookingsTimeline({
 
   const manageToken = activeEvent && !isAdminMode ? resolveManageToken(activeEvent.id) : "";
   const canManage = !isAdminMode && canManageEvent(activeEvent);
+
+  useEffect(() => {
+    if (isAdminMode) return;
+
+    const updatePhoneVerification = () => {
+      setPhoneVerified(Boolean(getStoredPhoneVerification()));
+    };
+
+    window.addEventListener(getPhoneVerificationChangedEventName(), updatePhoneVerification);
+    window.addEventListener("storage", updatePhoneVerification);
+
+    return () => {
+      window.removeEventListener(getPhoneVerificationChangedEventName(), updatePhoneVerification);
+      window.removeEventListener("storage", updatePhoneVerification);
+    };
+  }, [isAdminMode]);
 
   useEffect(() => {
     setActiveEvent(null);
@@ -415,6 +436,28 @@ export default function HomeBookingsTimeline({
   const staticMapUrl = buildStaticRouteMapUrl(primaryRoute);
   const detailDateCard = activeEvent ? getDetailDateCard(activeEvent.date, activeEvent.startTime, activeEvent.endTime) : null;
   const monthBadge = getMonthBadgeParts(activeMonth);
+
+  function requirePhoneVerification() {
+    if (isAdminMode || phoneVerified) return false;
+
+    const phone = activeEvent?.customerPhone?.trim();
+    if (phone) {
+      window.sessionStorage.setItem("calendar.recovery.prefillPhone", phone);
+    }
+
+    requestOpenProfile();
+    return true;
+  }
+
+  function handleEditRequest() {
+    if (requirePhoneVerification()) return;
+    setEditOpen(true);
+  }
+
+  function handleCancelRequest() {
+    if (requirePhoneVerification()) return;
+    setCancelOpen(true);
+  }
 
   async function handleSaveEdit() {
     if (!activeEvent || !bookingDetails || !manageToken) return;
@@ -575,8 +618,8 @@ export default function HomeBookingsTimeline({
 
           {!isAdminMode ? (
             <div className="booking-detail-modal__actions">
-              <button type="button" className="secondary-action" onClick={() => setEditOpen(true)} disabled={!canManage || !manageToken || detailLoading}>Editar</button>
-              <button type="button" className="secondary-action booking-detail-modal__danger" onClick={() => setCancelOpen(true)} disabled={!canManage || !manageToken || detailLoading}>Cancelar</button>
+              <button type="button" className="secondary-action" onClick={handleEditRequest} disabled={!canManage || !manageToken || detailLoading}>Editar</button>
+              <button type="button" className="secondary-action booking-detail-modal__danger" onClick={handleCancelRequest} disabled={!canManage || !manageToken || detailLoading}>Cancelar</button>
               <button type="button" className="primary-action" onClick={() => setActiveEvent(null)}>Fechar</button>
             </div>
           ) : null}

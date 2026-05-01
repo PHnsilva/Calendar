@@ -1,10 +1,14 @@
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useHomeBookingSelection } from '../../../app/home-booking-provider';
+import { getPhoneVerificationChangedEventName, getStoredPhoneVerification } from '../../../lib/storage';
 import type { CalendarEvent } from '../../calendar/types';
 
 type HomeMobileBookingDetailsModalProps = {
   event: CalendarEvent | null;
   open: boolean;
   onClose: () => void;
+  onOpenManage?: () => void;
 };
 
 function toLocalDate(dateString: string): Date {
@@ -20,8 +24,44 @@ function buildMapUrl(address?: string) {
   return `https://www.google.com/maps?q=${query}&output=embed`;
 }
 
-export default function HomeMobileBookingDetailsModal({ event, open, onClose }: HomeMobileBookingDetailsModalProps) {
+export default function HomeMobileBookingDetailsModal({
+  event,
+  open,
+  onClose,
+  onOpenManage,
+}: HomeMobileBookingDetailsModalProps) {
+  const { requestOpenProfile } = useHomeBookingSelection();
+  const [phoneVerified, setPhoneVerified] = useState(() => Boolean(getStoredPhoneVerification()));
+
+  useEffect(() => {
+    const updatePhoneVerification = () => {
+      setPhoneVerified(Boolean(getStoredPhoneVerification()));
+    };
+
+    window.addEventListener(getPhoneVerificationChangedEventName(), updatePhoneVerification);
+    window.addEventListener('storage', updatePhoneVerification);
+
+    return () => {
+      window.removeEventListener(getPhoneVerificationChangedEventName(), updatePhoneVerification);
+      window.removeEventListener('storage', updatePhoneVerification);
+    };
+  }, []);
+
   if (!open || !event || typeof document === 'undefined') return null;
+
+  const requestManageAction = () => {
+    if (phoneVerified) {
+      onOpenManage?.();
+      return;
+    }
+
+    const phone = event.customerPhone?.trim();
+    if (phone) {
+      window.sessionStorage.setItem('calendar.recovery.prefillPhone', phone);
+    }
+
+    requestOpenProfile();
+  };
 
   return createPortal(
     <div className="booking-detail-modal mobile-booking-detail-modal" role="dialog" aria-modal="true">
@@ -72,9 +112,26 @@ export default function HomeMobileBookingDetailsModal({ event, open, onClose }: 
           </div>
 
           <div className="mobile-booking-detail-modal__section-title">Ações</div>
+          {!phoneVerified ? (
+            <p className="mobile-booking-detail-modal__helper">
+              Confirme o telefone para editar ou cancelar este agendamento.
+            </p>
+          ) : null}
           <div className="mobile-booking-detail-modal__actions">
-            <button type="button" className="mobile-booking-detail-modal__action mobile-booking-detail-modal__action--danger">Cancelar</button>
-            <button type="button" className="mobile-booking-detail-modal__action mobile-booking-detail-modal__action--primary">Reagendar</button>
+            <button
+              type="button"
+              className="mobile-booking-detail-modal__action mobile-booking-detail-modal__action--danger"
+              onClick={requestManageAction}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="mobile-booking-detail-modal__action mobile-booking-detail-modal__action--primary"
+              onClick={requestManageAction}
+            >
+              Editar
+            </button>
           </div>
         </div>
       </div>

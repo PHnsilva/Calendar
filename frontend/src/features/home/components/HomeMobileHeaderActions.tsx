@@ -188,6 +188,18 @@ export default function HomeMobileHeaderActions() {
         ) : null}
       </div>
 
+      <div className="mobile-header-actions__item mobile-header-actions__item--desktop-profile">
+        <button
+          type="button"
+          className={`mobile-header-actions__button mobile-header-actions__button--profile${phoneVerified ? '' : ' mobile-header-actions__button--warning'}`}
+          onClick={openProfile}
+          aria-label={phoneVerified ? 'Editar perfil' : 'Confirmar telefone'}
+          title={phoneVerified ? 'Editar perfil' : 'Confirmar telefone'}
+        >
+          {phoneVerified ? <ProfileEditIcon /> : <ProfileWarningIcon />}
+        </button>
+      </div>
+
       <div className="mobile-header-actions__item mobile-header-actions__item--options">
         <button
           type="button"

@@ -33,6 +33,12 @@ function canUseWebOtp() {
   return 'OTPCredential' in otpWindow && 'credentials' in navigator;
 }
 
+function readRecoveryPrefillPhone() {
+  const phone = window.sessionStorage.getItem('calendar.recovery.prefillPhone') ?? '';
+  window.sessionStorage.removeItem('calendar.recovery.prefillPhone');
+  return phone;
+}
+
 function formatRecoveredCount(count: number) {
   if (count === 0) return 'Nenhum agendamento encontrado para esse telefone.';
   if (count === 1) return '1 agendamento recuperado para esse telefone.';
@@ -106,7 +112,8 @@ export default function HomeMobileProfileSheet({
       return;
     }
 
-    setPhone('');
+    const prefillPhone = readRecoveryPrefillPhone();
+    setPhone(prefillPhone ? formatPhoneForDisplay(prefillPhone) : '');
     setNormalizedPhone('');
     setSavedAt('');
     setStep('phone');
@@ -270,7 +277,11 @@ export default function HomeMobileProfileSheet({
 
   return (
     <div
-      className={['home-mobile-profile-sheet', open ? 'home-mobile-profile-sheet--open' : '']
+      className={[
+        'home-mobile-profile-sheet',
+        `home-mobile-profile-sheet--${step}`,
+        open ? 'home-mobile-profile-sheet--open' : '',
+      ]
         .filter(Boolean)
         .join(' ')}
       aria-hidden={!open}
@@ -292,8 +303,16 @@ export default function HomeMobileProfileSheet({
         </header>
 
         <div className="home-mobile-profile-sheet__body">
-          {step === 'phone' ? (
-            <form className="home-mobile-profile-sheet__form" onSubmit={startPhoneVerification}>
+          {step === 'phone' || step === 'code' ? (
+            <form
+              className={[
+                'home-mobile-profile-sheet__form',
+                step === 'code' ? 'home-mobile-profile-sheet__form--locked' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onSubmit={startPhoneVerification}
+            >
               <label className="home-mobile-profile-sheet__field">
                 <span>Confirme seu telefone</span>
                 <input
@@ -302,12 +321,17 @@ export default function HomeMobileProfileSheet({
                   inputMode="tel"
                   autoComplete="tel"
                   placeholder="(31) 99999-9999"
+                  readOnly={step === 'code'}
                 />
               </label>
-              <small className="home-mobile-profile-sheet__hint">Pode digitar com ou sem +55. O sistema salva a confirmação apenas neste navegador.</small>
-              {errorMessage ? <p className="home-mobile-profile-sheet__error">{errorMessage}</p> : null}
-              <button type="submit" className="home-mobile-profile-sheet__primary" disabled={isStarting}>
-                {isStarting ? 'Enviando código...' : 'Confirmar número'}
+              <small className="home-mobile-profile-sheet__hint">
+                {step === 'code'
+                  ? 'Código enviado. Confirme os 3 dígitos no painel ao lado ou troque o telefone.'
+                  : 'Pode digitar com ou sem +55. O sistema salva a confirmação apenas neste navegador.'}
+              </small>
+              {step === 'phone' && errorMessage ? <p className="home-mobile-profile-sheet__error">{errorMessage}</p> : null}
+              <button type="submit" className="home-mobile-profile-sheet__primary" disabled={isStarting || step === 'code'}>
+                {step === 'code' ? 'Código enviado' : isStarting ? 'Enviando código...' : 'Confirmar número'}
               </button>
             </form>
           ) : null}

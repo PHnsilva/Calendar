@@ -6,10 +6,11 @@ import { useCreateBooking } from '../../bookings/hooks/useCreateBooking';
 import OtpConfirmModal from '../../otp/components/OtpConfirmModal';
 import AddressAutocompleteField from './AddressAutocompleteField';
 import type { AddressSuggestion } from '../hooks/useAddressSuggestions';
-import { formatPhoneForDisplay, getStoredPhoneVerification, saveLocalCalendarEvent, saveManageToken } from '../../../lib/storage';
+import { getStoredPhoneVerification, saveLocalCalendarEvent, saveManageToken } from '../../../lib/storage';
 import type { ServicoResponse } from '../../../types/api';
 import type { BookingFormValues } from '../../../types/booking';
 import type { HomeSelectedSlot } from '../../home/types';
+import { useHomeBookingSelection } from '../../../app/home-booking-provider';
 import {
   formatDurationLabel,
   getAllowedCities,
@@ -63,16 +64,46 @@ const INITIAL_FORM: BookingFormValues = {
   clientCity: '',
   clientState: 'MG',
 };
+const BOOKING_DRAFT_STORAGE_KEY = 'calendar.booking.prefill';
+
+type StoredBookingDraft = Partial<BookingFormValues> & { addressInput?: string };
+
+function readStoredBookingDraft(): StoredBookingDraft {
+  try {
+    const raw = window.localStorage.getItem(BOOKING_DRAFT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) as StoredBookingDraft : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveStoredBookingDraft(values: BookingFormValues, addressInput: string) {
+  try {
+    window.localStorage.setItem(BOOKING_DRAFT_STORAGE_KEY, JSON.stringify({
+      ...values,
+      addressInput,
+    }));
+  } catch {
+    // O preenchimento automático é apenas uma conveniência local.
+  }
+}
 
 function buildInitialForm(defaultCity = '', defaultState = 'MG'): BookingFormValues {
-  const storedPhone = getStoredPhoneVerification()?.phone ?? '';
+  const storedDraft = readStoredBookingDraft();
+  const storedPhone = getStoredPhoneVerification()?.phone ?? storedDraft.clientPhone ?? '';
 
   return {
     ...INITIAL_FORM,
-    clientPhone: storedPhone ? formatPhoneForDisplay(storedPhone) : '',
-    clientCity: defaultCity,
-    clientState: defaultState,
+    ...storedDraft,
+    clientPhone: storedPhone ? formatPhoneInput(storedPhone) : '',
+    clientCity: storedDraft.clientCity || defaultCity,
+    clientState: storedDraft.clientState || defaultState,
   };
+}
+
+function buildInitialAddressInput() {
+  const storedDraft = readStoredBookingDraft();
+  return storedDraft.addressInput || storedDraft.clientStreet || '';
 }
 
 function toLocalDate(dateString: string): Date {
@@ -230,6 +261,12 @@ function validateForm(
   return errors;
 }
 
+function isPendingConfirmationConflict(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const status = 'status' in error ? Number((error as { status?: unknown }).status) : 0;
+  return status === 409 && error.message.toLowerCase().includes('pendente de confirmação');
+}
+
 function mapCreateError(errorMessage: string): string {
   const normalized = errorMessage.toLowerCase();
   if (
@@ -332,6 +369,7 @@ export default function BookingFormModal({
     open && Boolean(confirmedDate) && !confirmedUnavailable,
   );
   const createBookingMutation = useCreateBooking();
+  const { requestOpenProfile } = useHomeBookingSelection();
   const dayEvents = useMemo(() => events.filter((event) => event.date === effectiveDate), [effectiveDate, events]);
 
   useEffect(() => {
@@ -350,9 +388,10 @@ export default function BookingFormModal({
     setConfirmedDate(null);
     setDateButtonState('idle');
     setDraftSlot(null);
-    setFormValues(buildInitialForm(defaultCity, defaultState));
-    setSelectedCity(defaultCity);
-    setAddressInput('');
+    const initialForm = buildInitialForm(defaultCity, defaultState);
+    setFormValues(initialForm);
+    setSelectedCity(initialForm.clientCity || defaultCity);
+    setAddressInput(buildInitialAddressInput());
     setSelectedAddress(null);
     setValidationErrors({});
     setSuccessMessage(null);
@@ -361,16 +400,30 @@ export default function BookingFormModal({
   }, [defaultCity, defaultDate, defaultState, open]);
 
   useEffect(() => {
-    setFormValues((current) => ({
-      ...current,
-      clientCity: selectedCity,
-      clientState: current.clientState || defaultState,
-      clientStreet: '',
-      clientNeighborhood: '',
-      clientNumber: '',
-      clientCep: '',
-    }));
-    setAddressInput('');
+    setFormValues((current) => {
+      if (current.clientCity === selectedCity) {
+        return {
+          ...current,
+          clientState: current.clientState || defaultState,
+        };
+      }
+
+      const next = {
+        ...current,
+        clientCity: selectedCity,
+        clientState: current.clientState || defaultState,
+        clientStreet: '',
+        clientNeighborhood: '',
+        clientNumber: '',
+        clientCep: '',
+      };
+      saveStoredBookingDraft(next, '');
+      return next;
+    });
+    setAddressInput((current) => {
+      if (formValues.clientCity === selectedCity) return current;
+      return '';
+    });
     setSelectedAddress(null);
     setValidationErrors((current) => {
       const next = { ...current };
@@ -378,7 +431,7 @@ export default function BookingFormModal({
       delete next.clientNumber;
       return next;
     });
-  }, [defaultState, selectedCity]);
+  }, [defaultState, formValues.clientCity, selectedCity]);
 
   useEffect(() => {
     if (!confirmedDate) {
@@ -412,7 +465,11 @@ export default function BookingFormModal({
   if (!open) return null;
 
   const handleFieldChange = <K extends keyof BookingFormValues>(key: K, value: BookingFormValues[K]) => {
-    setFormValues((current) => ({ ...current, [key]: value }));
+    setFormValues((current) => {
+      const next = { ...current, [key]: value };
+      saveStoredBookingDraft(next, addressInput);
+      return next;
+    });
     setValidationErrors((current) => {
       if (!current[key]) return current;
       const next = { ...current };
@@ -424,16 +481,20 @@ export default function BookingFormModal({
   const handleAddressSelect = (suggestion: AddressSuggestion) => {
     setSelectedAddress(suggestion);
     setAddressInput(suggestion.formatted);
-    setFormValues((current) => ({
-      ...current,
-      clientCep: digitsOnly(suggestion.postcode ?? current.clientCep).slice(0, 8),
-      clientStreet: normalizeText(suggestion.street || suggestion.addressLine1 || suggestion.formatted),
-      clientNeighborhood: normalizeText(suggestion.neighborhood || current.clientNeighborhood),
-      clientNumber: normalizeText(suggestion.houseNumber),
-      clientComplement: '',
-      clientCity: selectedCity,
-      clientState: normalizeText((suggestion.stateCode || suggestion.state || current.clientState || defaultState)).toUpperCase(),
-    }));
+    setFormValues((current) => {
+      const next = {
+        ...current,
+        clientCep: digitsOnly(suggestion.postcode ?? current.clientCep).slice(0, 8),
+        clientStreet: normalizeText(suggestion.street || suggestion.addressLine1 || suggestion.formatted),
+        clientNeighborhood: normalizeText(suggestion.neighborhood || current.clientNeighborhood),
+        clientNumber: normalizeText(suggestion.houseNumber),
+        clientComplement: '',
+        clientCity: selectedCity,
+        clientState: normalizeText((suggestion.stateCode || suggestion.state || current.clientState || defaultState)).toUpperCase(),
+      };
+      saveStoredBookingDraft(next, suggestion.formatted);
+      return next;
+    });
     setValidationErrors((current) => {
       const next = { ...current };
       delete next.addressInput;
@@ -446,15 +507,19 @@ export default function BookingFormModal({
   const handleAddressChange = (value: string) => {
     setAddressInput(value);
     setSelectedAddress(null);
-    setFormValues((current) => ({
-      ...current,
-      clientStreet: value,
-      clientNeighborhood: '',
-      clientNumber: '',
-      clientComplement: '',
-      clientCep: '',
-      clientCity: selectedCity,
-    }));
+    setFormValues((current) => {
+      const next = {
+        ...current,
+        clientStreet: value,
+        clientNeighborhood: '',
+        clientNumber: '',
+        clientComplement: '',
+        clientCep: '',
+        clientCity: selectedCity,
+      };
+      saveStoredBookingDraft(next, value);
+      return next;
+    });
     setValidationErrors((current) => {
       const next = { ...current };
       delete next.addressInput;
@@ -490,6 +555,7 @@ export default function BookingFormModal({
     if (Object.keys(errors).length > 0 || !draftSlot) return;
 
     const normalizedComplement = normalizeText(formValues.clientComplement);
+    saveStoredBookingDraft(formValues, addressInput);
 
     try {
       const response = await createBookingMutation.mutateAsync({
@@ -522,6 +588,15 @@ export default function BookingFormModal({
       });
     } catch (error) {
       createBookingMutation.reset();
+
+      if (isPendingConfirmationConflict(error)) {
+        saveStoredBookingDraft(formValues, addressInput);
+        window.sessionStorage.setItem('calendar.recovery.prefillPhone', formValues.clientPhone);
+        setSuccessMessage('Você já tem um agendamento pendente. Confirme o telefone para continuar.');
+        requestOpenProfile();
+        return;
+      }
+
       const message = mapCreateError((error as Error).message || 'Erro ao criar agendamento.');
       setValidationErrors((current) => ({ ...current, addressInput: message === GENERIC_ADDRESS_ERROR ? message : current.addressInput }));
     }

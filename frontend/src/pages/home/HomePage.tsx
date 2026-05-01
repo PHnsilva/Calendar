@@ -348,6 +348,13 @@ export default function HomePage({
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
+
+    if (!isDesktop) {
+      html.classList.remove('home-scroll-locked');
+      body.classList.remove('home-scroll-locked');
+      return;
+    }
+
     html.classList.add('home-scroll-locked');
     body.classList.add('home-scroll-locked');
 
@@ -355,7 +362,7 @@ export default function HomePage({
       html.classList.remove('home-scroll-locked');
       body.classList.remove('home-scroll-locked');
     };
-  }, []);
+  }, [isDesktop]);
 
   useEffect(() => {
     if (!isDesktop) {
@@ -373,10 +380,10 @@ export default function HomePage({
   }, [isDesktop]);
 
   useEffect(() => {
-    if (openProfileRequestId === 0 || isDesktop) return;
+    if (openProfileRequestId === 0) return;
     setIsMobileBookingsOpen(false);
     setIsMobileProfileOpen(true);
-  }, [isDesktop, openProfileRequestId]);
+  }, [openProfileRequestId]);
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -650,27 +657,26 @@ export default function HomePage({
         ) : null}
       </div>
 
+
+      <HomeMobileProfileSheet
+        open={isMobileProfileOpen}
+        onClose={() => setIsMobileProfileOpen(false)}
+        onRecoveredBookings={handleRecoveredBookings}
+        onOpenRecoveredBookings={openRecoveredBookings}
+      />
+
       {!isDesktop ? (
         <>
-          {isAdminMode ? (
-            <HomeMobileBookingsSheet
-              open={isMobileBookingsOpen}
-              selectedDate={selectedDate}
-              events={allEvents}
-              activeMonth={timelineMonth}
-              currentAllowedMonth={currentAllowedMonth}
-              nextAllowedMonth={nextAllowedMonth}
-              onClose={() => setIsMobileBookingsOpen(false)}
-              onChangeTimelineMonth={handleTimelineMonthChange}
-              isAdminMode={isAdminMode}
-            />
-          ) : null}
-
-          <HomeMobileProfileSheet
-            open={isMobileProfileOpen}
-            onClose={() => setIsMobileProfileOpen(false)}
-            onRecoveredBookings={handleRecoveredBookings}
-            onOpenRecoveredBookings={openRecoveredBookings}
+          <HomeMobileBookingsSheet
+            open={isMobileBookingsOpen}
+            selectedDate={selectedDate}
+            events={allEvents}
+            activeMonth={timelineMonth}
+            currentAllowedMonth={currentAllowedMonth}
+            nextAllowedMonth={nextAllowedMonth}
+            onClose={() => setIsMobileBookingsOpen(false)}
+            onChangeTimelineMonth={handleTimelineMonthChange}
+            isAdminMode={isAdminMode}
           />
 
           <HomeMobileDock
@@ -685,8 +691,9 @@ export default function HomePage({
                 return;
               }
               setMobileAgendaFocusId((current) => current + 1);
+              setIsMobileBookingsOpen(true);
             }}
-            isBookingsOpen={isAdminMode ? isMobileBookingsOpen : true}
+            isBookingsOpen={isMobileBookingsOpen}
             showQuickBooking={!isAdminMode}
             onOpenProfile={() => {
               setIsMobileBookingsOpen(false);
@@ -736,6 +743,10 @@ export default function HomePage({
           open={Boolean(selectedMobileBooking)}
           event={selectedMobileBooking}
           onClose={() => setSelectedMobileBooking(null)}
+          onOpenManage={() => {
+            setSelectedMobileBooking(null);
+            setIsMobileBookingsOpen(true);
+          }}
         />
       ) : null}
     </div>

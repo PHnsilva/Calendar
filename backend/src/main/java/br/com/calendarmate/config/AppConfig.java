@@ -44,8 +44,8 @@ public class AppConfig {
                         props.getSmsNotificationApiMonthlyLimit(),
                         props.getSmsNotificationApiUsageFile());
                 return new NotificationApiSmsClient(
-                        props.getSmsNotificationApiClientId(),
-                        props.getSmsNotificationApiClientSecret(),
+                        props.getSmsNotificationApiApiKey(),
+                        props.getSmsNotificationApiBaseUrl(),
                         props.getSmsNotificationApiType(),
                         quota);
             }

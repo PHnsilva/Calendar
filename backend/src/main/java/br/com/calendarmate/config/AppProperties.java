@@ -70,6 +70,9 @@ public class AppProperties {
     @Value("${frontend.url:${FRONTEND_URL:}}")
     private String frontendUrl;
 
+    @Value("${app.publicDomain:${APP_PUBLIC_DOMAIN:calendar-mate.vercel.app}}")
+    private String publicDomain;
+
     @Value("${verification.channel:${VERIFICATION_CHANNEL:DUMMY}}")
     private String verificationChannel;
 
@@ -77,7 +80,7 @@ public class AppProperties {
     private boolean smsNotificationApiEnabled;
 
     @Value("${sms.notificationapi.apiKey:${SMS_NOTIFICATIONAPI_API_KEY:}}")
-    private String smsNotificationApiApiKey;
+    private String smsNotificationApiKey;
 
     @Value("${sms.notificationapi.baseUrl:${SMS_NOTIFICATIONAPI_BASE_URL:https://api.pingram.io}}")
     private String smsNotificationApiBaseUrl;
@@ -285,12 +288,13 @@ public class AppProperties {
 
     public String getAdminToken() { return adminToken == null ? "" : adminToken.trim(); }
     public String getFrontendUrl() { return frontendUrl == null ? "" : frontendUrl.trim(); }
+    public String getPublicDomain() { return cleanOrDefault(publicDomain, "calendar-mate.vercel.app"); }
     public String getVerificationChannel() { return verificationChannel == null ? "DUMMY" : verificationChannel.trim().toUpperCase(Locale.ROOT); }
     public boolean isSmsNotificationApiEnabled() { return smsNotificationApiEnabled; }
-    public String getSmsNotificationApiApiKey() { return clean(smsNotificationApiApiKey); }
+    public String getSmsNotificationApiApiKey() { return clean(smsNotificationApiKey); }
     public String getSmsNotificationApiBaseUrl() { return cleanOrDefault(smsNotificationApiBaseUrl, "https://api.pingram.io"); }
     public String getSmsNotificationApiType() { return cleanOrDefault(smsNotificationApiType, "calendar_mate_otp"); }
-    public int getSmsNotificationApiMonthlyLimit() { return Math.max(1, smsNotificationApiMonthlyLimit); }
+    public int getSmsNotificationApiMonthlyLimit() { return Math.max(0, smsNotificationApiMonthlyLimit); }
     public String getSmsNotificationApiUsageFile() { return cleanOrDefault(smsNotificationApiUsageFile, "/tmp/calendarmate-sms-usage.properties"); }
 
     public boolean isSmsNotificationApiReady() {

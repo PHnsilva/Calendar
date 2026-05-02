@@ -47,7 +47,8 @@ public class AppConfig {
                         props.getSmsNotificationApiApiKey(),
                         props.getSmsNotificationApiBaseUrl(),
                         props.getSmsNotificationApiType(),
-                        quota);
+                        quota,
+                        props.getPublicDomain());
             }
 
             return new MisconfiguredOtpDeliveryClient(

@@ -14,17 +14,20 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
     private final String baseUrl;
     private final String notificationType;
     private final MonthlySmsQuota quota;
+    private final String publicDomain;
 
     public NotificationApiSmsClient(
             String apiKey,
             String baseUrl,
             String notificationType,
-            MonthlySmsQuota quota) {
+            MonthlySmsQuota quota,
+            String publicDomain) {
         this.httpClient = HttpClient.newHttpClient();
         this.apiKey = apiKey;
         this.baseUrl = normalizeBaseUrl(baseUrl);
         this.notificationType = notificationType;
         this.quota = quota;
+        this.publicDomain = cleanDomain(publicDomain);
     }
 
     @Override
@@ -95,7 +98,11 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
     }
 
     private String message(String code) {
-        return "Seu código CalendarMate é: " + code;
+        return """
+                Seu código CalendarMate é: %s
+
+                @%s #%s
+                """.formatted(code, publicDomain, code);
     }
 
     private String toE164(String phoneDigits) {
@@ -114,6 +121,12 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
     private String normalizeBaseUrl(String value) {
         String url = value == null || value.isBlank() ? "https://api.pingram.io" : value.trim();
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+    }
+
+    private String cleanDomain(String value) {
+        String domain = value == null || value.isBlank() ? "calendar-mate.vercel.app" : value.trim();
+        domain = domain.replaceFirst("^https?://", "");
+        return domain.endsWith("/") ? domain.substring(0, domain.length() - 1) : domain;
     }
 
     private String escape(String value) {

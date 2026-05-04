@@ -1,15 +1,35 @@
-import { useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import AppShell from './AppShell';
 import Logo from '../components/branding/Logo';
-import { clearAdminToken, getStoredAdminToken } from '../lib/storage';
+import { getStoredAdminToken } from '../lib/storage';
 import { env } from '../lib/env';
+import { ThemeToggle } from '../components/ui/ThemeToggle';
+import '../app/admin-isolated-overrides.css';
+
+function CalendarIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /></svg>;
+}
+
+function PlusIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>;
+}
+
+function ProfileIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" /></svg>;
+}
+
+function MoreIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" /></svg>;
+}
+
+function dispatchAdminAction(name: string) {
+  window.dispatchEvent(new CustomEvent(name));
+}
 
 export default function AdminLayout() {
   const location = useLocation();
   const hasToken = Boolean(getStoredAdminToken());
   const isGatePage = location.pathname === '/admin';
-  const [blockingEnabled, setBlockingEnabled] = useState(false);
 
   if (!env.adminEnabled) {
     return <Navigate to="/403" replace />;
@@ -20,49 +40,58 @@ export default function AdminLayout() {
   }
 
   const header = (
-    <header className="public-header">
+    <header className="public-header public-header--admin">
       <div className="brand-lockup" aria-label="Painel administrativo">
         <Logo />
       </div>
 
-      <div className="public-header__actions">
-        {hasToken ? (
+      {hasToken ? (
+        <div className="public-header__actions public-header__actions--admin">
           <button
             type="button"
-            className={[
-              'booking-sidebar-rail__admin-badge',
-              'booking-sidebar-rail__admin-badge--button',
-              blockingEnabled ? 'booking-sidebar-rail__admin-badge--active' : '',
-            ].filter(Boolean).join(' ')}
-            onClick={() => {
-              setBlockingEnabled((current) => !current);
-              window.dispatchEvent(new CustomEvent('admin:blocking-toggle'));
-            }}
+            className="admin-nav-pill"
+            onClick={() => dispatchAdminAction('admin:focus-bookings')}
           >
-            {blockingEnabled ? 'Selecionando' : 'Bloqueios'}
+            <CalendarIcon />
+            Meus agendamentos
           </button>
-        ) : null}
 
-
-        {hasToken ? (
           <button
             type="button"
-            className="secondary-action"
-            onClick={() => {
-              clearAdminToken();
-              window.location.href = '/admin';
-            }}
+            className="admin-plus-action"
+            aria-label="Criar agendamento"
+            onClick={() => dispatchAdminAction('admin:open-booking')}
           >
-            Sair
+            <PlusIcon />
           </button>
-        ) : null}
-      </div>
+
+          <button
+            type="button"
+            className="admin-profile-action"
+            aria-label="Perfil admin"
+            onClick={() => dispatchAdminAction('admin:open-profile')}
+          >
+            <ProfileIcon />
+          </button>
+
+          <button
+            type="button"
+            className="admin-more-action"
+            aria-label="Mais ações administrativas"
+            onClick={() => dispatchAdminAction('admin:open-actions')}
+          >
+            <MoreIcon />
+          </button>
+
+          <ThemeToggle />
+        </div>
+      ) : null}
     </header>
   );
 
   return (
     <AppShell header={header}>
-      <main className="public-layout__content">
+      <main className="public-layout__content public-layout__content--admin">
         <Outlet />
       </main>
     </AppShell>

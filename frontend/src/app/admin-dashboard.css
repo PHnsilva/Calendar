@@ -266,3 +266,297 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Admin header actions share the public header layout but keep admin-only controls discrete. */
+.public-header--admin .public-header__actions--admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-header-action {
+  min-height: 42px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-solid) 94%, transparent);
+  color: #26364d;
+  box-shadow: var(--shadow-xs);
+  font-weight: 850;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-header-action__icon,
+.admin-header-action__svg {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.admin-header-action__icon svg,
+.admin-header-action__svg svg {
+  width: 19px;
+  height: 19px;
+  display: block;
+}
+
+.admin-header-action--bookings {
+  padding: 0 14px 0 12px;
+}
+
+.admin-header-action--bookings .admin-header-action__svg {
+  color: #1f6fd1;
+}
+
+.admin-header-action--text,
+.admin-header-action__text {
+  color: #26364d;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.admin-header-action--create {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.admin-header-action--create .admin-header-action__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #ff9824, #f26b0f);
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(242, 107, 15, 0.25);
+}
+
+.admin-header-action--blocking {
+  color: #26364d;
+}
+
+.admin-header-action--blocking .admin-header-action__svg {
+  color: #7c3aed;
+}
+
+.admin-header-action--blocking.booking-sidebar-rail__admin-badge--active .admin-header-action__svg {
+  color: #ffffff;
+}
+
+.admin-dashboard__dock {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 75;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-solid) 94%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-dashboard__dock-button {
+  min-height: 44px;
+  padding: 0 16px 0 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-surface-solid) 94%, transparent);
+  color: #26364d;
+  box-shadow: var(--shadow-xs);
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.admin-dashboard__dock-button:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-soft));
+}
+
+.admin-dashboard__dock-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.admin-dashboard__dock-icon svg {
+  width: 21px;
+  height: 21px;
+  display: block;
+}
+
+.admin-dashboard__dock-button--history .admin-dashboard__dock-icon {
+  color: #7c3aed;
+}
+
+.admin-dashboard__dock-button--blocking .admin-dashboard__dock-icon {
+  color: #f97316;
+}
+
+.admin-dashboard__dock-button--statement .admin-dashboard__dock-icon {
+  color: #16a34a;
+}
+
+.admin-dashboard__dock-button--active {
+  background: linear-gradient(135deg, #26364d, #1d2a3e);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
+}
+
+.admin-dashboard__dock-button--active .admin-dashboard__dock-icon {
+  color: #ffd166;
+}
+
+@media (max-width: 730px) {
+  .public-header--admin .public-header__actions--admin {
+    position: absolute;
+    right: var(--public-header-pad-x);
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .admin-header-action--blocking {
+    display: none !important;
+  }
+
+  .admin-header-action--bookings {
+    min-height: 40px;
+    padding: 0 10px;
+    gap: 6px;
+  }
+
+  .admin-header-action--bookings .admin-header-action__text {
+    display: none;
+  }
+
+  .admin-header-action--create {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    min-height: 42px;
+    padding: 0;
+    flex: 0 0 42px;
+  }
+
+  .admin-header-action--create .admin-header-action__icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .admin-dashboard__dock {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    width: min(calc(100% - 28px), 390px);
+    min-height: 64px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(30, 72, 124, 0.08);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+  }
+
+  .admin-dashboard__dock-button {
+    min-width: 0;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 6px;
+    border-radius: 16px;
+    display: grid;
+    grid-template-rows: 22px auto;
+    gap: 2px;
+    background: linear-gradient(180deg, #ffffff, #e8edf4);
+    color: #334155;
+    font-size: 0.62rem;
+    line-height: 1;
+    letter-spacing: 0.01em;
+  }
+
+  .admin-dashboard__dock-button--history {
+    grid-column: 1;
+  }
+
+  .admin-dashboard__dock-button--blocking {
+    grid-column: 2;
+    width: 66px;
+    height: 66px;
+    min-height: 66px;
+    justify-self: center;
+    margin-top: -28px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ff8a3d, #f35b15);
+    color: #ffffff;
+    border: 3px solid rgba(242, 244, 247, 0.98);
+    box-shadow: 0 16px 30px rgba(242, 91, 21, 0.28);
+  }
+
+  .admin-dashboard__dock-button--statement {
+    grid-column: 3;
+  }
+
+  .admin-dashboard__dock-icon {
+    width: 22px;
+    height: 22px;
+    justify-self: center;
+  }
+
+  .admin-dashboard__dock-button--history .admin-dashboard__dock-icon {
+    color: #7c3aed;
+  }
+
+  .admin-dashboard__dock-button--statement .admin-dashboard__dock-icon {
+    color: #16a34a;
+  }
+
+  .admin-dashboard__dock-button--blocking .admin-dashboard__dock-icon,
+  .admin-dashboard__dock-button--blocking.admin-dashboard__dock-button--active .admin-dashboard__dock-icon {
+    color: #ffffff;
+  }
+
+  .admin-dashboard__dock-button--active:not(.admin-dashboard__dock-button--blocking) {
+    background: linear-gradient(180deg, #eef2ff, #e0e7ff);
+    color: #26364d;
+    border-color: rgba(124, 58, 237, 0.18);
+  }
+
+  .admin-bottom-sheet {
+    bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .admin-selection-dock {
+    bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+@media (max-width: 730px) {
+  .admin-dashboard__dock {
+    display: none !important;
+  }
+}

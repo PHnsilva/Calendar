@@ -470,24 +470,7 @@
     font-weight: 800;
   }
 
-  .mobile-header-actions__item--desktop-profile {
-  display: none;
-}
-
-.mobile-header-actions__button--profile {
-  position: relative;
-}
-
-.mobile-header-actions__button--warning {
-  border-color: rgba(220, 38, 38, 0.28) !important;
-  background: rgba(254, 242, 242, 0.96) !important;
-}
-
-.mobile-header-actions__dot--profile {
-  background: #dc2626 !important;
-}
-
-.mobile-header-popover--options {
+  .mobile-header-popover--options {
     width: min(230px, calc(100vw - 20px));
     display: grid;
     gap: 6px;
@@ -1030,10 +1013,6 @@
     display: none !important;
   }
 
-  .public-header__actions--home .mobile-header-actions__item--desktop-profile {
-    display: inline-flex !important;
-  }
-
   .public-header__actions--home .mobile-header-actions__button {
     width: 42px;
     height: 42px;
@@ -1057,10 +1036,6 @@
 
   .mobile-header-actions__item--options {
     display: inline-flex;
-  }
-
-  .mobile-header-actions__item--desktop-profile {
-    display: none !important;
   }
 }
 
@@ -1454,142 +1429,90 @@
   color: #dc2626 !important;
 }
 
-/* Perfil no desktop: mesmo fluxo local de confirmação usado no mobile. */
-.mobile-header-actions__item--desktop-profile {
-  display: none;
-}
-
-.mobile-header-actions__button--profile {
-  position: relative;
-}
-
-.mobile-header-actions__button--warning {
-  border-color: rgba(220, 38, 38, 0.28) !important;
-  background: rgba(254, 242, 242, 0.96) !important;
-}
-
-.mobile-header-actions__dot--profile {
-  background: #dc2626 !important;
-}
-
-@media (min-width: 731px) {
-  .public-header__actions--home .mobile-header-actions__item--desktop-profile {
-    display: inline-flex !important;
-  }
-}
-
-@media (max-width: 730px) {
-  .mobile-header-actions__item--desktop-profile {
-    display: none !important;
-  }
-}
-
-
-@media (max-width: 730px) {
-  html:not(.force-scroll-lock),
-  body:not(.force-scroll-lock) {
-    overflow-y: auto !important;
-    overscroll-behavior-y: auto !important;
-  }
-
-  body {
-    min-height: calc(100dvh + 1px);
-  }
-}
-
-
-
-
-/* Perfil desktop alinhado ao header: popover retrátil igual às notificações. */
-.mobile-header-actions__item--desktop-profile {
-  position: relative;
-  display: none;
-}
-
-.mobile-header-actions__button--profile {
-  position: relative;
-  display: inline-grid !important;
-  place-items: center !important;
-  padding: 0 !important;
-  line-height: 0 !important;
-}
-
-.mobile-header-actions__button--profile svg {
-  display: block !important;
-  width: 22px !important;
-  height: 22px !important;
-  margin: 0 !important;
-}
-
-.mobile-header-actions__button--warning {
-  border-color: rgba(220, 38, 38, 0.30) !important;
-  background: linear-gradient(180deg, #fffafa, #fee2e2) !important;
-  color: #dc2626 !important;
-}
-
-.mobile-header-actions__dot--profile {
-  top: 4px !important;
-  right: 4px !important;
-  background: #dc2626 !important;
-  border-color: #ffffff !important;
-}
-
-.mobile-booking-detail-modal__helper {
-  margin: -4px 0 0;
-  color: #b45309;
-  font-size: 0.75rem;
-  font-weight: 800;
-  line-height: 1.35;
-}
-
+/* Correção pontual cliente desktop: alinhar o botão de perfil/opções no header sem afetar o admin. */
 @media (min-width: 731px) {
   .public-header__actions--home .mobile-header-actions {
     display: inline-flex !important;
     align-items: center !important;
-    justify-content: flex-end !important;
-    gap: 8px !important;
+    gap: 10px !important;
+    height: 44px;
   }
 
-  .public-header__actions--home .mobile-header-actions__item--desktop-profile {
+  .public-header__actions--home .mobile-header-actions__item {
+    height: 44px;
     display: inline-flex !important;
     align-items: center !important;
+    justify-content: center !important;
   }
 
-  .public-header__actions--home .mobile-header-actions__item--options {
-    display: none !important;
-  }
-}
-
-@media (max-width: 730px) {
-  .mobile-header-actions__item--desktop-profile {
-    display: none !important;
-  }
-}
-
-/* Ajuste final do botão de perfil desktop: ícone de aviso centralizado, sem badge extra. */
-@media (min-width: 731px) {
-  .public-header__actions--home .mobile-header-actions__button--profile {
+  .public-header__actions--home .mobile-header-actions__button,
+  .public-header__actions--home .mobile-header-actions__button--options,
+  .public-header__actions--home .mobile-header-actions__button--notifications {
     width: 42px !important;
     height: 42px !important;
     min-width: 42px !important;
     min-height: 42px !important;
+    padding: 0 !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 0 !important;
+    vertical-align: middle !important;
+    transform: none !important;
+  }
+
+  .public-header__actions--home .mobile-header-actions__button svg,
+  .public-header__actions--home .mobile-header-actions__button--options svg,
+  .public-header__actions--home .mobile-header-actions__button--notifications svg {
+    display: block !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+}
+
+/* Cliente desktop: correção final de alinhamento dos botões de opções/perfil no header. */
+@media (min-width: 731px) {
+  .public-header__actions--home {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+  }
+
+  .public-header__actions--home .mobile-header-actions,
+  .public-header__actions--home .mobile-header-actions__item {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    line-height: 1 !important;
+  }
+
+  .public-header__actions--home .mobile-header-actions__button,
+  .public-header__actions--home .mobile-header-actions__button--options,
+  .public-header__actions--home .mobile-header-actions__button--notifications {
+    flex: 0 0 42px !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
     padding: 0 !important;
-    line-height: 0 !important;
-  }
-
-  .public-header__actions--home .mobile-header-actions__button--profile svg {
-    width: 22px !important;
-    height: 22px !important;
-    display: block !important;
     margin: 0 !important;
-    flex: 0 0 auto !important;
+    display: grid !important;
+    place-items: center !important;
+    line-height: 0 !important;
+    transform: none !important;
   }
 
-  .public-header__actions--home .mobile-header-actions__button--profile .mobile-header-menu-action__warning-svg {
-    width: 23px !important;
-    height: 23px !important;
+  .public-header__actions--home .mobile-header-actions__button svg,
+  .public-header__actions--home .mobile-header-actions__button--options svg,
+  .public-header__actions--home .mobile-header-actions__button--notifications svg {
+    width: 20px !important;
+    height: 20px !important;
+    display: block !important;
+    margin: 0 auto !important;
+    transform: none !important;
   }
 }

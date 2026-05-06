@@ -7,19 +7,37 @@ import { ThemeToggle } from '../components/ui/ThemeToggle';
 import '../app/admin-isolated-overrides.css';
 
 function CalendarIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /></svg>;
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 3.7v2.6M17 3.7v2.6M4.8 9h14.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <rect x="4.6" y="5.4" width="14.8" height="14.2" rx="3" stroke="currentColor" strokeWidth="1.8" />
+      <path d="m9 15.9 2.1 2.1 4.2-4.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 function PlusIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>;
+  return <span className="admin-plus-action__icon" aria-hidden="true">+</span>;
 }
 
 function ProfileIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" /></svg>;
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4.8 19.2c.8-2.8 3.3-4.5 6.2-4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="10.8" cy="8.2" r="3.4" stroke="currentColor" strokeWidth="1.8" />
+      <path d="m15.4 17.9 4.2-4.2 1.6 1.6-4.2 4.2h-1.6v-1.6Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 function MoreIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" /></svg>;
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="5.5" r="1.8" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+      <circle cx="12" cy="18.5" r="1.8" fill="currentColor" />
+    </svg>
+  );
 }
 
 function dispatchAdminAction(name: string) {

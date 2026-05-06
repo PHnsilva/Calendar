@@ -19,18 +19,26 @@ import "../../app/home-mobile-sheet.css";
 import "../../app/home-mobile-planner.css";
 import "../../app/calendar-mobile-compact.css";
 import "../../app/admin-dashboard.css";
-import { getLocalCalendarEvents } from "../../lib/storage";
+import "../../app/admin-final-fixes.css";
+import { getLocalCalendarEvents, getStoredAdminToken } from "../../lib/storage";
+import { useAdminBookings } from "../../features/admin/hooks/useAdminBookings";
 
-const ADMIN_TOKEN_KEY = "calendar.adminToken";
 const ADMIN_BLOCKED_DAYS_KEY = "calendar.adminBlockedDays.v1";
 const ADMIN_BLOCKED_SLOTS_KEY = "calendar.adminBlockedSlots.v1";
 const ADMIN_SCALE_UNLOCKS_KEY = "calendar.adminScaleUnlocks.v1";
 const ADMIN_CANCELLED_DAYS_KEY = "calendar.adminCancelledDays.v1";
 const AVAILABLE_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
+const ADMIN_DESKTOP_MIN_WIDTH = 731;
+const ADMIN_COMPACT_HEIGHT = 560;
 
-function getSavedAdminToken() {
-  if (typeof window === "undefined") return "";
-  return window.localStorage.getItem(ADMIN_TOKEN_KEY) ?? "";
+type ViewportSize = {
+  width: number;
+  height: number;
+};
+
+function getViewportSize(): ViewportSize {
+  if (typeof window === "undefined") return { width: 1024, height: 768 };
+  return { width: window.innerWidth, height: window.innerHeight };
 }
 
 function toLocalDate(dateString: string): Date {
@@ -54,10 +62,6 @@ function shiftMonth(monthStart: string, delta: number): string {
   return `${next.getFullYear()}-${`${next.getMonth() + 1}`.padStart(2, "0")}-01`;
 }
 
-function buildMonthDate(monthStart: string, day: number): string {
-  const reference = toLocalDate(monthStart);
-  return toIsoDate(new Date(reference.getFullYear(), reference.getMonth(), day));
-}
 
 function readStringArray(key: string): string[] {
   if (typeof window === "undefined") return [];
@@ -72,37 +76,6 @@ function readStringArray(key: string): string[] {
 function saveStringArray(key: string, values: string[]) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(key, JSON.stringify(Array.from(new Set(values)).sort()));
-}
-
-function buildMonthMockEvents(monthStart: string): CalendarEvent[] {
-  const reference = toLocalDate(monthStart);
-  const daysInMonth = new Date(reference.getFullYear(), reference.getMonth() + 1, 0).getDate();
-  const entries = [
-    { day: 2, name: "Carlos Souza", address: "Rua dos Inconfidentes, 120 - Itabirito", startTime: "08:00", endTime: "09:00", city: "Itabirito" },
-    { day: 2, name: "Marina Alves", address: "Av. Queiroz Júnior, 88 - Itabirito", startTime: "11:00", endTime: "12:00", city: "Itabirito" },
-    { day: 7, name: "Rafael Lima", address: "Rua Conselheiro Quintiliano, 41 - Ouro Preto", startTime: "09:00", endTime: "10:00", city: "Ouro Preto" },
-    { day: 12, name: "Bianca Rocha", address: "Rua do Rosário, 210 - Moeda", startTime: "13:00", endTime: "14:00", city: "Moeda" },
-    { day: 18, name: "Lucas Pereira", address: "Rua João Pinheiro, 320 - Itabirito", startTime: "15:00", endTime: "16:00", city: "Itabirito" },
-    { day: 21, name: "Patrícia Gomes", address: "Rua das Flores, 77 - Ouro Preto", startTime: "10:00", endTime: "11:00", city: "Ouro Preto" },
-    { day: 28, name: "Thiago Costa", address: "Rua José Farid Rahme, 64 - Itabirito", startTime: "17:00", endTime: "18:00", city: "Itabirito" },
-  ];
-
-  return entries
-    .filter((entry) => entry.day <= daysInMonth)
-    .map((entry, index) => ({
-      id: `admin-demo-${monthStart}-${index}`,
-      title: entry.name,
-      date: buildMonthDate(monthStart, entry.day),
-      startTime: entry.startTime,
-      endTime: entry.endTime,
-      city: entry.city,
-      customerName: entry.name,
-      customerAddress: entry.address,
-      customerEmail: `${entry.name.toLowerCase().replace(/\s+/g, ".")}@email.com`,
-      customerPhone: "31999999999",
-      serviceLabel: "Visita técnica",
-      status: "booked" as const,
-    }));
 }
 
 function build4x4UnavailableDates(monthStart: string, anchorMonth: string): string[] {
@@ -596,13 +569,16 @@ function calendarEventToServicoResponse(event: CalendarEvent): ServicoResponse {
 }
 
 export default function AdminDashboardPage() {
-  const token = getSavedAdminToken();
+  const token = getStoredAdminToken();
   const todayIso = toIsoDate(new Date());
   const currentAllowedMonth = `${todayIso.slice(0, 7)}-01`;
   const nextAllowedMonth = shiftMonth(currentAllowedMonth, 1);
+  const bookingsFrom = currentAllowedMonth;
+  const bookingsTo = shiftMonth(nextAllowedMonth, 1);
+  const historyFrom = shiftMonth(currentAllowedMonth, -2);
   const [selectedDate, setSelectedDate] = useState(todayIso);
   const [selectedSlot, setSelectedSlot] = useState<HomeSelectedSlot>(null);
-  const [viewportWidth, setViewportWidth] = useState(() => typeof window === "undefined" ? 1024 : window.innerWidth);
+  const [viewportSize, setViewportSize] = useState<ViewportSize>(() => getViewportSize());
   const [currentMonth, setCurrentMonth] = useState(currentAllowedMonth);
   const [timelineMonth, setTimelineMonth] = useState(currentAllowedMonth);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -614,6 +590,7 @@ export default function AdminDashboardPage() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isMobileBookingsOpen, setIsMobileBookingsOpen] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [selectedMobileBooking, setSelectedMobileBooking] = useState<CalendarEvent | null>(null);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() => getLocalCalendarEvents().filter((event) => event.date >= todayIso));
   const [manualBlockedDates, setManualBlockedDates] = useState<string[]>(() => readStringArray(ADMIN_BLOCKED_DAYS_KEY));
@@ -621,7 +598,15 @@ export default function AdminDashboardPage() {
   const [unlockedScaleDates, setUnlockedScaleDates] = useState<string[]>(() => readStringArray(ADMIN_SCALE_UNLOCKS_KEY));
   const [cancelledDays, setCancelledDays] = useState<string[]>(() => readStringArray(ADMIN_CANCELLED_DAYS_KEY));
 
-  const isDesktop = viewportWidth > 730;
+  const adminBookingsQuery = useAdminBookings({ from: bookingsFrom, to: bookingsTo }, Boolean(token));
+  const adminHistoryQuery = useAdminBookings({ from: historyFrom, to: todayIso }, Boolean(token));
+
+  const viewportWidth = viewportSize.width;
+  const viewportHeight = viewportSize.height;
+  const isCompactHeight = viewportHeight <= ADMIN_COMPACT_HEIGHT;
+  const isDesktop = viewportWidth >= ADMIN_DESKTOP_MIN_WIDTH;
+  const isMobileLandscape = isDesktop && viewportWidth > viewportHeight && isCompactHeight;
+  const shouldUseMobileActions = !isDesktop;
 
   const scaleBlockedDates = useMemo(
     () => [...build4x4UnavailableDates(currentAllowedMonth, currentAllowedMonth), ...build4x4UnavailableDates(nextAllowedMonth, currentAllowedMonth)],
@@ -634,16 +619,17 @@ export default function AdminDashboardPage() {
   }, [manualBlockedDates, scaleBlockedDates, unlockedScaleDates]);
 
   const allEvents = useMemo(() => {
-    const locals = localEvents.filter((event) => event.date >= todayIso && !cancelledDays.includes(event.date));
-    const demo = [...buildMonthMockEvents(currentAllowedMonth), ...buildMonthMockEvents(nextAllowedMonth)]
-      .filter((event) => event.date >= todayIso && !cancelledDays.includes(event.date));
-    return mergeEvents(demo, locals);
-  }, [cancelledDays, currentAllowedMonth, nextAllowedMonth, todayIso, localEvents]);
+    const localFutureEvents = localEvents.filter((event) => event.date >= todayIso);
+    const mergedEvents = mergeEvents(adminBookingsQuery.calendarEvents, localFutureEvents);
+    return mergedEvents.filter((event) => !cancelledDays.includes(event.date));
+  }, [adminBookingsQuery.calendarEvents, cancelledDays, todayIso, localEvents]);
 
-  const historyEvents = useMemo(
-    () => getLocalCalendarEvents().filter((event) => event.date < todayIso).sort((a, b) => b.date.localeCompare(a.date)),
-    [todayIso],
-  );
+  const historyEvents = useMemo(() => {
+    const localPastEvents = getLocalCalendarEvents().filter((event) => event.date < todayIso);
+    return mergeEvents(adminHistoryQuery.calendarEvents, localPastEvents)
+      .filter((event) => event.date < todayIso)
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [adminHistoryQuery.calendarEvents, todayIso]);
 
   const sheetBookings = useMemo(() => allEvents.map(calendarEventToServicoResponse), [allEvents]);
 
@@ -653,9 +639,13 @@ export default function AdminDashboardPage() {
   );
 
   useEffect(() => {
-    const handleResize = () => setViewportWidth(window.innerWidth);
+    const handleResize = () => setViewportSize(getViewportSize());
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
   }, []);
 
   useEffect(() => {
@@ -671,14 +661,49 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
-    const openBooking = () => setIsBookingOpen(true);
-    const openProfile = () => { setIsActionsOpen(false); setIsProfileOpen(true); };
-    const openActions = () => { setIsProfileOpen(false); setIsActionsOpen(true); };
+    if (!isDesktop) return;
+    setIsMobileBookingsOpen(false);
+    setSelectedMobileBooking(null);
+  }, [isDesktop]);
+
+  useEffect(() => {
+    const closeHeaderSurfaces = () => {
+      setIsMobileBookingsOpen(false);
+      setHistoryOpen(false);
+      setStatementOpen(false);
+      setIsBlocksOpen(false);
+      setIsBlockedDetailsOpen(false);
+      setIsFinanceHistoryOpen(false);
+    };
+
+    const openBooking = () => {
+      closeHeaderSurfaces();
+      setIsActionsOpen(false);
+      setIsProfileOpen(false);
+      setIsBookingOpen(true);
+    };
+
+    const openProfile = () => {
+      closeHeaderSurfaces();
+      setIsActionsOpen(false);
+      setIsProfileOpen((current) => !current);
+    };
+
+    const openActions = () => {
+      closeHeaderSurfaces();
+      setIsProfileOpen(false);
+      setIsActionsOpen((current) => !current);
+    };
+
     const focusBookings = () => {
-      if (window.innerWidth <= 730) {
+      setIsActionsOpen(false);
+      setIsProfileOpen(false);
+      const { width } = getViewportSize();
+      if (width < ADMIN_DESKTOP_MIN_WIDTH) {
         setIsMobileBookingsOpen((current) => !current);
         return;
       }
+      setIsSidebarExpanded(true);
       document.querySelector<HTMLElement>(".home-sidebar")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "end" });
     };
 
@@ -709,6 +734,7 @@ export default function AdminDashboardPage() {
     setSelectedDate(date);
     setSelectedSlot(null);
     setTimelineMonth(toMonthStart(date));
+    setIsSidebarExpanded(true);
   };
 
   const handleApplyBlock = (dates: string[], slots: string[], shouldCancel: boolean) => {
@@ -735,10 +761,66 @@ export default function AdminDashboardPage() {
     setSelectedDate(event.date);
   };
 
+  const closeMobileAdminSurfaces = () => {
+    setIsActionsOpen(false);
+    setIsMobileBookingsOpen(false);
+    setHistoryOpen(false);
+    setStatementOpen(false);
+    setIsBlocksOpen(false);
+    setIsBlockedDetailsOpen(false);
+    setIsFinanceHistoryOpen(false);
+    setIsProfileOpen(false);
+  };
+
+  const toggleMobileBookings = () => {
+    const shouldOpen = !isMobileBookingsOpen;
+    closeMobileAdminSurfaces();
+    setIsMobileBookingsOpen(shouldOpen);
+  };
+
+  const toggleMobileHistory = () => {
+    const shouldOpen = !historyOpen;
+    closeMobileAdminSurfaces();
+    setHistoryOpen(shouldOpen);
+  };
+
+  const toggleMobileBlocks = () => {
+    const shouldOpen = !isBlocksOpen;
+    closeMobileAdminSurfaces();
+    setIsBlocksOpen(shouldOpen);
+  };
+
+  const toggleMobileStatement = () => {
+    const shouldOpen = !statementOpen;
+    closeMobileAdminSurfaces();
+    setStatementOpen(shouldOpen);
+  };
+
+  const toggleMobileProfile = () => {
+    const shouldOpen = !isProfileOpen;
+    closeMobileAdminSurfaces();
+    setIsProfileOpen(shouldOpen);
+  };
+
   return (
-    <div className="admin-dashboard-root">
-      <div className="home-page home-page--admin home-page--sidebar-layout">
-        <div className={["home-grid", isDesktop ? "home-grid--desktop home-grid--sidebar-open" : "home-grid--mobile"].join(" ")}>
+    <div
+      className={[
+        "admin-dashboard-root",
+        isCompactHeight ? "admin-dashboard-root--compact-height" : "",
+        isMobileLandscape ? "admin-dashboard-root--landscape" : "",
+        shouldUseMobileActions ? "admin-dashboard-root--mobile-actions" : "",
+      ].filter(Boolean).join(" ")}
+    >
+      <div className={["home-page", "home-page--admin", "home-page--sidebar-layout", isMobileLandscape ? "home-page--admin-landscape" : ""].filter(Boolean).join(" ")}>
+        <div
+          className={[
+            "home-grid",
+            isDesktop ? "home-grid--desktop" : "home-grid--mobile",
+            isDesktop && isSidebarExpanded ? "home-grid--sidebar-open" : "",
+            isDesktop && !isSidebarExpanded ? "home-grid--sidebar-collapsed" : "",
+            isMobileLandscape ? "home-grid--admin-landscape" : "",
+          ].filter(Boolean).join(" ")}
+        >
           <div className="home-calendar-stack home-calendar-stack--shell">
             {isDesktop ? (
               <HomeCalendarSection
@@ -778,9 +860,9 @@ export default function AdminDashboardPage() {
                 nextAllowedMonth={nextAllowedMonth}
                 onChangeTimelineMonth={(month) => { setSelectedDate(""); setTimelineMonth(month); setCurrentMonth(month); }}
                 onQuickBooking={() => undefined}
-                onToggleExpanded={() => undefined}
+                onToggleExpanded={() => setIsSidebarExpanded((current) => !current)}
                 onSelectRailDate={(date) => handleDateSelect(date)}
-                isExpanded
+                isExpanded={isSidebarExpanded}
                 isDesktop
                 isAdminMode
               />
@@ -795,12 +877,14 @@ export default function AdminDashboardPage() {
         <button type="button" className={["admin-dashboard-actions__button", "admin-dashboard-actions__button--statement", statementOpen ? "is-active" : ""].filter(Boolean).join(" ")} onClick={() => { setIsBlocksOpen(false); setIsBlockedDetailsOpen(false); setIsFinanceHistoryOpen(false); setHistoryOpen(false); setStatementOpen((current) => !current); }}><StatementIcon /><span>Extrato</span></button>
       </div>
 
+        {!isDesktop ? (
+          <>
         <nav className="admin-mobile-bottom-bar" aria-label="Ações do admin">
-          <button type="button" className={["admin-mobile-bottom-bar__item", "admin-mobile-bottom-bar__item--agenda", isMobileBookingsOpen && !isBlocksOpen && !isBlockedDetailsOpen && !isFinanceHistoryOpen ? "admin-mobile-bottom-bar__item--active" : ""].filter(Boolean).join(" ")} onClick={() => { setIsActionsOpen(false); setIsBlocksOpen(false); setIsBlockedDetailsOpen(false); setIsFinanceHistoryOpen(false); setHistoryOpen(false); setStatementOpen(false); setIsMobileBookingsOpen((current) => !current); }}><CalendarIcon /><span>Agenda</span></button>
-          <button type="button" className={["admin-mobile-bottom-bar__item", "admin-mobile-bottom-bar__item--history", historyOpen ? "admin-mobile-bottom-bar__item--active" : ""].filter(Boolean).join(" ")} onClick={() => { setIsActionsOpen(false); setIsMobileBookingsOpen(false); setIsBlocksOpen(false); setIsBlockedDetailsOpen(false); setIsFinanceHistoryOpen(false); setStatementOpen(false); setHistoryOpen((current) => !current); }}><HistoryIcon /><span>Histórico</span></button>
-          <button type="button" className={["admin-mobile-bottom-bar__item", "admin-mobile-bottom-bar__center", "admin-mobile-bottom-bar__item--blocks", isBlocksOpen ? "admin-mobile-bottom-bar__item--active" : ""].filter(Boolean).join(" ")} onClick={() => { setIsActionsOpen(false); setIsMobileBookingsOpen(false); setHistoryOpen(false); setStatementOpen(false); setIsFinanceHistoryOpen(false); setIsBlockedDetailsOpen(false); setIsBlocksOpen(true); }}><LockIcon /><span>Bloqueios</span></button>
-          <button type="button" className={["admin-mobile-bottom-bar__item", "admin-mobile-bottom-bar__item--statement", statementOpen ? "admin-mobile-bottom-bar__item--active" : ""].filter(Boolean).join(" ")} onClick={() => { setIsActionsOpen(false); setIsMobileBookingsOpen(false); setIsBlocksOpen(false); setIsBlockedDetailsOpen(false); setIsFinanceHistoryOpen(false); setHistoryOpen(false); setStatementOpen((current) => !current); }}><StatementIcon /><span>Extrato</span></button>
-          <button type="button" className={["admin-mobile-bottom-bar__item", "admin-mobile-bottom-bar__item--profile", isProfileOpen ? "admin-mobile-bottom-bar__item--active" : ""].filter(Boolean).join(" ")} onClick={() => { setIsActionsOpen(false); setIsMobileBookingsOpen(false); setIsProfileOpen(true); }}><ProfileIcon /><span>Perfil</span></button>
+          <button type="button" className={["admin-mobile-bottom-bar__item", "admin-mobile-bottom-bar__item--agenda", isMobileBookingsOpen ? "admin-mobile-bottom-bar__item--active" : ""].filter(Boolean).join(" ")} onClick={toggleMobileBookings}><CalendarIcon /><span>Agenda</span></button>
+          <button type="button" className={["admin-mobile-bottom-bar__item", "admin-mobile-bottom-bar__item--history", historyOpen ? "admin-mobile-bottom-bar__item--active" : ""].filter(Boolean).join(" ")} onClick={toggleMobileHistory}><HistoryIcon /><span>Histórico</span></button>
+          <button type="button" className={["admin-mobile-bottom-bar__item", "admin-mobile-bottom-bar__center", "admin-mobile-bottom-bar__item--blocks", isBlocksOpen ? "admin-mobile-bottom-bar__item--active" : ""].filter(Boolean).join(" ")} onClick={toggleMobileBlocks}><LockIcon /><span>Bloqueios</span></button>
+          <button type="button" className={["admin-mobile-bottom-bar__item", "admin-mobile-bottom-bar__item--statement", statementOpen ? "admin-mobile-bottom-bar__item--active" : ""].filter(Boolean).join(" ")} onClick={toggleMobileStatement}><StatementIcon /><span>Extrato</span></button>
+          <button type="button" className={["admin-mobile-bottom-bar__item", "admin-mobile-bottom-bar__item--profile", isProfileOpen ? "admin-mobile-bottom-bar__item--active" : ""].filter(Boolean).join(" ")} onClick={toggleMobileProfile}><ProfileIcon /><span>Perfil</span></button>
         </nav>
 
         <HomeMobileBookingsSheet
@@ -820,6 +904,8 @@ export default function AdminDashboardPage() {
           event={selectedMobileBooking}
           onClose={() => setSelectedMobileBooking(null)}
         />
+          </>
+        ) : null}
 
         <BookingFormModal
           open={isBookingOpen}

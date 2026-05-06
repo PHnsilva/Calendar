@@ -1,0 +1,441 @@
+/* Correções finais do admin: a UI do cliente continua como base, e estes ajustes só valem dentro do dashboard admin. */
+
+.admin-dashboard-root .admin-dashboard-actions__button svg,
+.admin-dashboard-root .admin-mobile-bottom-bar__item svg,
+.admin-actions-menu__item svg,
+.admin-profile-modal__actions svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.admin-dashboard-root .admin-dashboard-actions__button--history svg,
+.admin-dashboard-root .admin-mobile-bottom-bar__item--history svg,
+.admin-actions-menu__item--history svg {
+  color: #7c3aed !important;
+}
+
+.admin-dashboard-root .admin-dashboard-actions__button--blocks svg,
+.admin-dashboard-root .admin-mobile-bottom-bar__item--blocks svg,
+.admin-actions-menu__item--blocks svg,
+.admin-actions-menu__item--details svg,
+.admin-profile-modal__actions button:first-child svg {
+  color: #b91c1c !important;
+}
+
+.admin-dashboard-root .admin-dashboard-actions__button--statement svg,
+.admin-dashboard-root .admin-mobile-bottom-bar__item--statement svg,
+.admin-actions-menu__item--statement svg {
+  color: #047857 !important;
+}
+
+.admin-dashboard-root .admin-mobile-bottom-bar__item--agenda svg {
+  color: #2563eb !important;
+}
+
+.admin-dashboard-root .admin-mobile-bottom-bar__item--profile svg,
+.admin-profile-modal__actions button:last-child svg {
+  color: #0f766e !important;
+}
+
+.admin-dashboard-root .admin-dashboard-actions__button.is-active,
+.admin-dashboard-root .admin-mobile-bottom-bar__item--active {
+  color: #0f172a !important;
+  border-color: rgba(30, 41, 59, 0.16) !important;
+  background: linear-gradient(180deg, #ffffff, #eef2f7) !important;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12) !important;
+}
+
+.admin-dashboard-root .admin-mobile-bottom-bar__item--agenda.admin-mobile-bottom-bar__item--active {
+  border-color: rgba(37, 99, 235, 0.28) !important;
+  background: linear-gradient(180deg, #eff6ff, #dbeafe) !important;
+}
+
+.admin-dashboard-root .admin-mobile-bottom-bar__item--history.admin-mobile-bottom-bar__item--active {
+  border-color: rgba(124, 58, 237, 0.26) !important;
+  background: linear-gradient(180deg, #f5f3ff, #ede9fe) !important;
+}
+
+.admin-dashboard-root .admin-mobile-bottom-bar__item--blocks.admin-mobile-bottom-bar__item--active {
+  border-color: rgba(185, 28, 28, 0.24) !important;
+  background: linear-gradient(180deg, #fff1f2, #ffe4e6) !important;
+}
+
+.admin-dashboard-root .admin-mobile-bottom-bar__item--statement.admin-mobile-bottom-bar__item--active {
+  border-color: rgba(4, 120, 87, 0.24) !important;
+  background: linear-gradient(180deg, #ecfdf5, #d1fae5) !important;
+}
+
+.admin-dashboard-root .admin-mobile-bottom-bar__item--profile.admin-mobile-bottom-bar__item--active {
+  border-color: rgba(15, 118, 110, 0.24) !important;
+  background: linear-gradient(180deg, #f0fdfa, #ccfbf1) !important;
+}
+
+@media (max-width: 730px) {
+  .admin-dashboard-root .home-mobile-bookings-sheet {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 260 !important;
+    pointer-events: none !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet--open {
+    pointer-events: auto !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet__backdrop {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    border: 0 !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet__panel {
+    position: absolute !important;
+    left: max(8px, env(safe-area-inset-left)) !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+    bottom: calc(86px + env(safe-area-inset-bottom, 0px)) !important;
+    height: min(48dvh, 410px) !important;
+    min-height: min(330px, calc(100dvh - 132px)) !important;
+    z-index: 2 !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    border-radius: 24px !important;
+    background: #ffffff !important;
+    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.2) !important;
+    opacity: 0 !important;
+    transform: translateY(calc(100% + 28px)) !important;
+    transition: transform 220ms ease, opacity 180ms ease !important;
+    overflow: hidden !important;
+    pointer-events: auto !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet--open .home-mobile-bookings-sheet__panel {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet__header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    min-height: 52px !important;
+    padding: 10px 14px 8px !important;
+    border-bottom: 1px solid rgba(145, 162, 196, 0.16) !important;
+    background: #ffffff !important;
+    pointer-events: auto !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet__header-main,
+  .admin-dashboard-root .home-mobile-bookings-sheet__title-block {
+    min-width: 0 !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet__close {
+    position: relative !important;
+    z-index: 20 !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    display: grid !important;
+    place-items: center !important;
+    border: 1px solid rgba(71, 85, 105, 0.16) !important;
+    border-radius: 999px !important;
+    background: linear-gradient(180deg, #ffffff, #eef2f7) !important;
+    color: #334155 !important;
+    font-size: 1.45rem !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1) !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet__close::before {
+    content: none !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet__body {
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    padding: 0 10px 10px !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet__body .timeline-panel {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 8px 0 10px !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .admin-dashboard-root .home-mobile-bookings-sheet__body .timeline-panel__body {
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
+  }
+
+  .admin-mobile-bottom-bar {
+    z-index: 340 !important;
+  }
+
+  .admin-dashboard-root .admin-bottom-sheet,
+  .admin-dashboard-root .admin-block-modal,
+  .admin-dashboard-root .admin-profile-modal,
+  .admin-dashboard-root .admin-actions-menu {
+    z-index: 240 !important;
+  }
+}
+
+@media (max-width: 730px) and (orientation: landscape), (max-width: 430px) {
+  .admin-dashboard-root .home-mobile-bookings-sheet__panel {
+    top: 8px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* Mobile admin interaction fixes: keep the sticky week selector tappable and make "Mais opções" a compact popover near the header icon. */
+@media (max-width: 860px) {
+  .admin-dashboard-root .mobile-planner__top {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 32 !important;
+    pointer-events: auto !important;
+  }
+
+  .admin-dashboard-root .mobile-planner__weeks,
+  .admin-dashboard-root .mobile-planner__week,
+  .admin-dashboard-root .mobile-planner__day {
+    pointer-events: auto !important;
+  }
+
+  .admin-dashboard-root .mobile-planner__weeks {
+    touch-action: pan-x !important;
+  }
+
+  .admin-dashboard-root .mobile-planner__day {
+    position: relative !important;
+    z-index: 1 !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .admin-dashboard-root .mobile-planner--overview .mobile-planner__top {
+    pointer-events: none !important;
+  }
+
+  .admin-dashboard-root .admin-actions-menu {
+    z-index: 360 !important;
+    pointer-events: none !important;
+  }
+
+  .admin-dashboard-root .admin-actions-menu__backdrop {
+    top: calc(58px + env(safe-area-inset-top, 0px)) !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+  }
+
+  .admin-dashboard-root .admin-actions-menu__card {
+    top: calc(62px + env(safe-area-inset-top, 0px)) !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: min(268px, calc(100vw - 16px)) !important;
+    max-width: min(268px, calc(100vw - 16px)) !important;
+    max-height: calc(100dvh - 86px - env(safe-area-inset-top, 0px)) !important;
+    display: grid !important;
+    gap: 7px !important;
+    padding: 8px !important;
+    border-radius: 20px !important;
+    overflow-y: auto !important;
+    transform-origin: top right !important;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.22) !important;
+    pointer-events: auto !important;
+  }
+
+  .admin-dashboard-root .admin-actions-menu__item {
+    min-height: 42px !important;
+    border-radius: 14px !important;
+    padding: 0 10px !important;
+    font-size: 0.82rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .admin-dashboard-root .admin-actions-menu__item svg {
+    width: 18px !important;
+    height: 18px !important;
+    flex: 0 0 18px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .admin-dashboard-root .admin-actions-menu__card {
+    top: calc(58px + env(safe-area-inset-top, 0px)) !important;
+    width: min(246px, calc(100vw - 12px)) !important;
+    max-width: min(246px, calc(100vw - 12px)) !important;
+  }
+
+  .admin-dashboard-root .admin-actions-menu__item {
+    min-height: 40px !important;
+    font-size: 0.76rem !important;
+  }
+}
+
+
+/* Desktop admin full-height fix:
+   the shared client layout applies zoom: 0.85 to .home-page--sidebar-layout.
+   In the admin dashboard that visually shrinks the calendar/sidebar and leaves empty space below.
+   Keep this scoped to admin desktop/tablet only. */
+@media (min-width: 731px) {
+  .admin-dashboard-root .home-page--admin.home-page--sidebar-layout {
+    --home-site-zoom: 1 !important;
+    zoom: 1 !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .admin-dashboard-root .home-page--admin .home-grid--desktop {
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    align-items: stretch !important;
+  }
+
+  .admin-dashboard-root .home-page--admin .home-calendar-stack--shell,
+  .admin-dashboard-root .home-page--admin .home-main-panel--calendar,
+  .admin-dashboard-root .home-page--admin .calendar-fade-wrap,
+  .admin-dashboard-root .home-page--admin .calendar-grid,
+  .admin-dashboard-root .home-page--admin .calendar-grid--slim,
+  .admin-dashboard-root .home-page--admin .home-sidebar-anchor,
+  .admin-dashboard-root .home-page--admin .home-sidebar,
+  .admin-dashboard-root .home-page--admin .home-sidebar--desktop,
+  .admin-dashboard-root .home-page--admin .timeline-panel {
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+}
+
+
+
+/* Admin desktop fill correction v2: override the shared client zoom and make the admin grid use the full available area. */
+@media (min-width: 731px) {
+  .public-layout__content--admin,
+  .admin-dashboard-root,
+  .admin-dashboard-root .home-page--admin.home-page--sidebar-layout {
+    width: 100% !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .admin-dashboard-root .home-page--admin.home-page--sidebar-layout {
+    --home-site-zoom: 1 !important;
+    zoom: 1 !important;
+  }
+
+  .admin-dashboard-root .home-page--admin .home-grid--desktop {
+    display: grid !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    align-items: stretch !important;
+    grid-template-columns: minmax(0, 1fr) clamp(344px, 31vw, 432px) !important;
+    overflow: hidden !important;
+  }
+
+  .admin-dashboard-root .home-page--admin .home-calendar-stack--shell,
+  .admin-dashboard-root .home-page--admin .home-calendar-stack,
+  .admin-dashboard-root .home-page--admin .home-main-panel--calendar,
+  .admin-dashboard-root .home-page--admin .calendar-fade-wrap,
+  .admin-dashboard-root .home-page--admin .calendar-grid,
+  .admin-dashboard-root .home-page--admin .calendar-grid--slim,
+  .admin-dashboard-root .home-page--admin .home-sidebar-anchor,
+  .admin-dashboard-root .home-page--admin .home-sidebar,
+  .admin-dashboard-root .home-page--admin .home-sidebar--desktop,
+  .admin-dashboard-root .home-page--admin .timeline-panel {
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+
+  .admin-dashboard-root .home-page--admin .home-main-panel--calendar {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+  }
+
+  .admin-dashboard-root .home-page--admin .calendar-grid__body--slim {
+    min-height: 0 !important;
+    height: 100% !important;
+    grid-template-rows: repeat(5, minmax(0, 1fr)) !important;
+  }
+}
+
+
+/* Admin mobile compact more-menu correction v2: the top "mais" action must open as a compact popover near the icon, not as a full-width sheet. */
+@media (max-width: 730px) {
+  .admin-dashboard-root .admin-actions-menu {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 420 !important;
+    pointer-events: none !important;
+  }
+
+  .admin-dashboard-root .admin-actions-menu__backdrop {
+    position: absolute !important;
+    inset: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+  }
+
+  .admin-dashboard-root .admin-actions-menu__card {
+    position: fixed !important;
+    top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: min(282px, calc(100vw - 18px)) !important;
+    max-width: min(282px, calc(100vw - 18px)) !important;
+    max-height: min(360px, calc(100dvh - 88px - env(safe-area-inset-top, 0px))) !important;
+    display: grid !important;
+    gap: 7px !important;
+    padding: 8px !important;
+    border-radius: 20px !important;
+    overflow-y: auto !important;
+    transform-origin: top right !important;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.22) !important;
+    pointer-events: auto !important;
+  }
+
+  .admin-dashboard-root .admin-actions-menu__item {
+    min-height: 42px !important;
+    border-radius: 14px !important;
+    padding: 0 10px !important;
+    font-size: 0.82rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .admin-dashboard-root .admin-actions-menu__item svg {
+    width: 18px !important;
+    height: 18px !important;
+    flex: 0 0 18px !important;
+  }
+}

@@ -295,9 +295,7 @@ export default function HomeMobilePlanner({
       agendaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    if (isBlockedDay) {
-      onDateSelect(date, { unavailable: true });
-    }
+    onDateSelect(date, { unavailable: isBlockedDay });
   }, [currentMonth, notifyOverviewState, onDateSelect, onMonthChange]);
 
   const handleAgendaScroll = useCallback((event: UIEvent<HTMLElement>) => {

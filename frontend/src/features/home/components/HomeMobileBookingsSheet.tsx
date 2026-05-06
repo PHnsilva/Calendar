@@ -1,3 +1,5 @@
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
+
 import HomeBookingsTimeline from "../../bookings/components/HomeBookingsTimeline";
 import type { CalendarEvent } from "../../calendar/types";
 
@@ -28,9 +30,20 @@ export default function HomeMobileBookingsSheet({
   onChangeTimelineMonth,
   isAdminMode = false,
 }: HomeMobileBookingsSheetProps) {
+  if (!open) return null;
+
   const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(
     toLocalDate(activeMonth),
   );
+  const stopClosePropagation = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+  };
+
+  const handleCloseClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onClose();
+  };
 
   return (
     <div
@@ -45,7 +58,7 @@ export default function HomeMobileBookingsSheet({
       <button
         type="button"
         className="home-mobile-bookings-sheet__backdrop"
-        onClick={onClose}
+        onClick={handleCloseClick}
         aria-label="Fechar agendamentos"
       />
 
@@ -58,7 +71,15 @@ export default function HomeMobileBookingsSheet({
               <strong>{monthLabel}</strong>
             </div>
           </div>
-          <button type="button" className="home-mobile-bookings-sheet__close" onClick={onClose} aria-label="Fechar agendamentos">×</button>
+          <button
+            type="button"
+            className="home-mobile-bookings-sheet__close"
+            onPointerDown={stopClosePropagation}
+            onClick={handleCloseClick}
+            aria-label="Fechar agendamentos"
+          >
+            ×
+          </button>
         </header>
 
         <div className="home-mobile-bookings-sheet__body">

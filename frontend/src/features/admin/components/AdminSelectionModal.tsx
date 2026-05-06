@@ -57,9 +57,9 @@ function blockDate(block: AvailabilityBlockResponse) {
 export default function AdminSelectionModal({
   open,
   mode,
-  selectedDates = [],
-  bookings = [],
-  blocks = [],
+  selectedDates,
+  bookings,
+  blocks,
   onClose,
   onConfirmBlock,
   onConfirmCancel,
@@ -70,9 +70,9 @@ export default function AdminSelectionModal({
   const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>([]);
   const [deletingBlockId, setDeletingBlockId] = useState('');
 
-  const safeSelectedDates = Array.isArray(selectedDates) ? selectedDates : [];
-  const safeBookings = Array.isArray(bookings) ? bookings : [];
-  const safeBlocks = Array.isArray(blocks) ? blocks : [];
+  const safeSelectedDates = useMemo(() => Array.isArray(selectedDates) ? selectedDates : [], [selectedDates]);
+  const safeBookings = useMemo(() => Array.isArray(bookings) ? bookings : [], [bookings]);
+  const safeBlocks = useMemo(() => Array.isArray(blocks) ? blocks : [], [blocks]);
 
   useEffect(() => {
     if (!open || !mode) return;
@@ -353,7 +353,7 @@ export default function AdminSelectionModal({
             <section className="admin-selection-overview__section">
               <header className="admin-selection-overview__header">
                 <strong>Bloqueios existentes</strong>
-                <span>{blocks.length} encontrado(s)</span>
+                <span>{safeBlocks.length} encontrado(s)</span>
               </header>
 
               {groupedBlocks.length === 0 ? (
@@ -399,7 +399,7 @@ export default function AdminSelectionModal({
             <section className="admin-selection-overview__section">
               <header className="admin-selection-overview__header">
                 <strong>Agendamentos no período</strong>
-                <span>{bookings.length} encontrado(s)</span>
+                <span>{safeBookings.length} encontrado(s)</span>
               </header>
 
               {groupedBookings.length === 0 ? (

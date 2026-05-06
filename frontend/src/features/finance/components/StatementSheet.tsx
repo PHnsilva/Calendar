@@ -31,16 +31,6 @@ function bookingName(booking: ServicoResponse) {
   return `${booking.clientFirstName ?? ''} ${booking.clientLastName ?? ''}`.trim() || booking.serviceType || 'Atendimento';
 }
 
-function fallbackEntriesFromBookings(bookings: ServicoResponse[]): DisplayEntry[] {
-  return bookings.slice(0, 8).map((booking, index) => ({
-    id: `fallback-${booking.eventId}`,
-    date: booking.start.slice(0, 10),
-    description: booking.clientAddressLine ?? booking.serviceType ?? booking.clientCity ?? 'Serviço vinculado',
-    amount: `R$ ${(25 + index * 8).toFixed(2).replace('.', ',')}`,
-    booking,
-  }));
-}
-
 function associateStatementToBookings(items: AdminStatementItem[], bookings: ServicoResponse[]): DisplayEntry[] {
   return items.map((item) => {
     const exactDate = bookings.find((booking) => booking.start.slice(0, 10) === item.date) ?? null;
@@ -82,10 +72,7 @@ export default function StatementSheet({ open, onClose, bookings = [] }: Stateme
 
   const entries = useMemo(() => {
     const apiItems = statementQuery.data?.items ?? [];
-    if (apiItems.length > 0) {
-      return associateStatementToBookings(apiItems, bookings);
-    }
-    return fallbackEntriesFromBookings(bookings);
+    return associateStatementToBookings(apiItems, bookings);
   }, [statementQuery.data?.items, bookings]);
 
   const groupedEntries = useMemo(() => {
@@ -102,6 +89,12 @@ export default function StatementSheet({ open, onClose, bookings = [] }: Stateme
 
   return (
     <div className="admin-bottom-sheet admin-bottom-sheet--statement" role="dialog" aria-modal="false">
+      <button
+        type="button"
+        className="admin-bottom-sheet__backdrop"
+        aria-label="Fechar extrato"
+        onClick={onClose}
+      />
       <section className="admin-bottom-sheet__card statement-sheet">
         <header className="admin-bottom-sheet__header">
           <div>
@@ -112,9 +105,9 @@ export default function StatementSheet({ open, onClose, bookings = [] }: Stateme
         </header>
 
         <div className="statement-sheet__health">
-          <strong>{healthQuery.data?.ok ? 'Financeiro online' : 'Modo demonstração'}</strong>
-          <span>{healthQuery.data?.provider ?? 'mock-admin-finance'}</span>
-          <small>{healthQuery.data?.message ?? 'Extrato simulado para validação visual'}</small>
+          <strong>{healthQuery.data?.ok ? 'Financeiro online' : 'Financeiro indisponível'}</strong>
+          <span>{healthQuery.data?.provider ?? 'Backend financeiro não retornou status'}</span>
+          <small>{healthQuery.data?.message ?? 'Nenhum lançamento financeiro foi carregado.'}</small>
         </div>
 
         <div className="admin-bottom-sheet__body statement-sheet__list">

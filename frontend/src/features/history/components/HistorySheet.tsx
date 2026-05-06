@@ -49,6 +49,12 @@ export default function HistorySheet({ open, onClose, bookings }: HistorySheetPr
 
   return (
     <div className="admin-bottom-sheet admin-bottom-sheet--history" role="dialog" aria-modal="false">
+      <button
+        type="button"
+        className="admin-bottom-sheet__backdrop"
+        aria-label="Fechar historico"
+        onClick={onClose}
+      />
       <section className="admin-bottom-sheet__card history-sheet">
         <header className="admin-bottom-sheet__header">
           <div>

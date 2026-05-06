@@ -1,34 +1,26 @@
-export const ALLOWED_CITIES = ["Itabirito", "Ouro Preto", "Moeda"] as const;
+export const PRIMARY_CITY = "Belo Horizonte";
+
+export const OTHER_ALLOWED_CITIES = [
+  "Itabirito",
+  "Ouro Preto",
+  "Moeda",
+  "Congonhas",
+  "Nova Lima",
+] as const;
+
+export const OTHER_CITIES = OTHER_ALLOWED_CITIES;
+export const ALLOWED_CITIES = [PRIMARY_CITY, ...OTHER_ALLOWED_CITIES] as const;
 
 export type AllowedCity = (typeof ALLOWED_CITIES)[number];
-export type CityTone =
-  | "violet"
-  | "cyan"
-  | "indigo"
-  | "orange"
-  | "teal"
-  | "amber"
-  | "royal";
 
-const CITY_TONE_BY_CITY: Record<string, CityTone> = {
-  Itabirito: "cyan",
-  "Ouro Preto": "indigo",
-  Moeda: "orange",
-  "Nova Lima": "teal",
-  Congonhas: "amber",
-  "Rio Acima": "royal",
-  "Belo Horizonte": "violet",
-};
+export function getCityTone(city?: string): string {
+  const normalized = (city ?? "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
-export function getCityTone(city?: string | null): CityTone {
-  if (!city) return "violet";
-  return CITY_TONE_BY_CITY[city] ?? "violet";
-}
-
-export function isAllowedCity(value?: string | null): value is AllowedCity {
-  return Boolean(value && ALLOWED_CITIES.includes(value as AllowedCity));
-}
-
-export function normalizeCityTone(city?: string | null): CityTone {
-  return getCityTone(city);
+  if (normalized.includes("belo horizonte")) return "violet";
+  if (normalized.includes("itabirito")) return "cyan";
+  if (normalized.includes("ouro preto")) return "indigo";
+  if (normalized.includes("moeda")) return "orange";
+  if (normalized.includes("congonhas")) return "teal";
+  if (normalized.includes("nova lima")) return "amber";
+  return "royal";
 }

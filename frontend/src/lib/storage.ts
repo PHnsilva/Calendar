@@ -2,6 +2,7 @@ import type { CalendarEvent } from "../features/calendar/types";
 import type { ServicoResponse } from "../types/api";
 
 const ADMIN_TOKEN_STORAGE_KEY = "calendar.admin.token";
+const LEGACY_ADMIN_TOKEN_STORAGE_KEY = "calendar.adminToken";
 const MANAGE_TOKENS_KEY = "calendar.manageTokens";
 const MANAGE_TOKEN_MAP_KEY = "calendar.manageTokenByEvent";
 const LOCAL_EVENTS_KEY = "calendar.localEvents";
@@ -130,7 +131,10 @@ export function getPhoneVerificationChangedEventName(): string {
 
 
 export function getStoredAdminToken(): string {
-  return getStorage()?.getItem(ADMIN_TOKEN_STORAGE_KEY)?.trim() ?? "";
+  const storage = getStorage();
+  return storage?.getItem(ADMIN_TOKEN_STORAGE_KEY)?.trim()
+    || storage?.getItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY)?.trim()
+    || "";
 }
 
 export function setStoredAdminToken(token: string): void {
@@ -140,14 +144,18 @@ export function setStoredAdminToken(token: string): void {
   if (!storage) return;
   if (!normalized) {
     storage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    storage.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
     return;
   }
 
   storage.setItem(ADMIN_TOKEN_STORAGE_KEY, normalized);
+  storage.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
 }
 
 export function clearStoredAdminToken(): void {
-  getStorage()?.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+  const storage = getStorage();
+  storage?.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+  storage?.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
 }
 
 export function getManageTokens(): string[] {

@@ -13,6 +13,10 @@ export type CalendarEvent = {
   customerAddress?: string;
   customerEmail?: string;
   customerPhone?: string;
+  addressLine?: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
   serviceLabel?: string;
   status?: CalendarEventStatus;
 };

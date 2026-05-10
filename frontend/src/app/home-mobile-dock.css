@@ -1516,3 +1516,700 @@
     transform: none !important;
   }
 }
+
+/* v18 cliente: opções alinhadas, contato sob o botão e modal maior de edição. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+.mobile-header-actions__button,
+.mobile-header-menu-action,
+.mobile-header-contact-action,
+.client-edit-bookings-modal button:not(:disabled) {
+  cursor: pointer !important;
+}
+
+button:disabled {
+  cursor: not-allowed !important;
+}
+
+.mobile-header-actions,
+.public-header__actions--home .mobile-header-actions {
+  z-index: 180 !important;
+}
+
+.mobile-header-actions__item {
+  position: relative !important;
+}
+
+.mobile-header-actions__button,
+.public-header__actions--home .mobile-header-actions__button,
+.public-header__actions--home .mobile-header-actions__button--options,
+.public-header__actions--home .mobile-header-actions__button--profile,
+.public-header__actions--home .mobile-header-actions__button--notifications {
+  border: 1px solid rgba(30, 72, 124, 0.18) !important;
+  background: linear-gradient(180deg, #ffffff, #eef4fb) !important;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10) !important;
+}
+
+.mobile-header-actions__button--warning,
+.public-header__actions--home .mobile-header-actions__button--warning {
+  border-color: rgba(220, 38, 38, 0.28) !important;
+  background: linear-gradient(180deg, #fffafa, #fff1f2) !important;
+  color: #dc2626 !important;
+}
+
+.mobile-header-actions__button svg,
+.public-header__actions--home .mobile-header-actions__button svg {
+  display: block !important;
+  margin: 0 auto !important;
+  flex: 0 0 auto !important;
+}
+
+.mobile-header-actions__button--options svg,
+.public-header__actions--home .mobile-header-actions__button--options svg {
+  color: #9a3412 !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.mobile-header-popover,
+.mobile-header-popover--options,
+.mobile-header-popover--contact {
+  z-index: 220 !important;
+  border: 1px solid rgba(30, 72, 124, 0.18) !important;
+  box-shadow: 0 22px 46px rgba(15, 23, 42, 0.18) !important;
+}
+
+.mobile-header-popover--options {
+  width: min(258px, calc(100vw - 20px)) !important;
+  display: grid !important;
+  gap: 8px !important;
+  padding: 10px !important;
+}
+
+.mobile-header-menu-action {
+  min-height: 44px !important;
+  display: grid !important;
+  grid-template-columns: 24px minmax(0, 1fr) !important;
+  align-items: center !important;
+  justify-items: start !important;
+  gap: 10px !important;
+  width: 100% !important;
+  padding: 9px 11px !important;
+  border: 1px solid rgba(30, 72, 124, 0.16) !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, #ffffff, #f6f9fd) !important;
+  color: #25364d !important;
+  text-align: left !important;
+  line-height: 1.1 !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06) !important;
+}
+
+.mobile-header-menu-action svg {
+  width: 20px !important;
+  height: 20px !important;
+  display: block !important;
+  align-self: center !important;
+  justify-self: center !important;
+  margin: 0 !important;
+  color: #c24a2d !important;
+}
+
+.mobile-header-menu-action span {
+  display: block !important;
+  min-width: 0 !important;
+  color: #25364d !important;
+  font-weight: 850 !important;
+}
+
+.mobile-header-popover--contact {
+  right: 0 !important;
+  left: auto !important;
+  top: calc(100% + 10px) !important;
+  width: min(282px, calc(100vw - 20px)) !important;
+  padding: 11px !important;
+}
+
+.mobile-header-contact-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.mobile-header-contact-action,
+.mobile-header-contact-action__toggle {
+  width: 100%;
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(30, 72, 124, 0.14);
+  border-radius: 14px;
+  background: #ffffff;
+  color: #25364d;
+  text-decoration: none;
+  padding: 8px 10px;
+  font-weight: 850;
+  text-align: left;
+}
+
+.mobile-header-contact-action svg,
+.mobile-header-contact-action__toggle svg {
+  width: 21px;
+  height: 21px;
+  display: block;
+  justify-self: center;
+}
+
+.mobile-header-contact-action--phone {
+  grid-template-columns: 1fr auto;
+  padding: 0;
+  overflow: hidden;
+}
+
+.mobile-header-contact-action--phone .mobile-header-contact-action__toggle {
+  min-height: 42px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.mobile-header-contact-action__copy {
+  width: 36px;
+  height: 36px;
+  margin-right: 4px;
+  border: 1px solid rgba(30, 72, 124, 0.14);
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #1f6fd1;
+  display: grid;
+  place-items: center;
+}
+
+.mobile-header-contact-action__copy svg {
+  width: 18px;
+  height: 18px;
+}
+
+.mobile-header-contact-founded {
+  display: block;
+  margin-top: 8px;
+  color: rgba(71, 85, 105, 0.78);
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+@media (min-width: 731px) {
+  .public-header__actions--home .mobile-header-actions__item--options {
+    display: inline-flex !important;
+  }
+
+  .public-header__actions--home .mobile-header-popover--options,
+  .public-header__actions--home .mobile-header-popover--contact {
+    right: 0 !important;
+    left: auto !important;
+    transform-origin: right top !important;
+  }
+}
+
+.client-edit-bookings-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 3vw, 28px);
+}
+
+.client-edit-bookings-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(15, 23, 42, 0.34);
+  backdrop-filter: blur(6px);
+}
+
+.client-edit-bookings-modal__card {
+  position: relative;
+  z-index: 1;
+  width: min(860px, calc(100vw - 24px));
+  max-height: min(78vh, 720px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid rgba(30, 72, 124, 0.16);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.24);
+  overflow: hidden;
+}
+
+.client-edit-bookings-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid rgba(30, 72, 124, 0.10);
+}
+
+.client-edit-bookings-modal__header span {
+  display: block;
+  margin-bottom: 3px;
+  color: #5b6b80;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.client-edit-bookings-modal__header h3 {
+  margin: 0;
+  color: #25364d;
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+}
+
+.client-edit-bookings-modal__close {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border: 1px solid rgba(220, 38, 38, 0.20);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fffafa, #fff1f2);
+  color: #dc2626;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.client-edit-bookings-modal__list {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 14px 18px 18px;
+}
+
+.client-edit-bookings-modal__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 13px;
+  border: 1px solid rgba(30, 72, 124, 0.12);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.client-edit-bookings-modal__row div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.client-edit-bookings-modal__row strong {
+  color: #25364d;
+  font-size: 0.98rem;
+}
+
+.client-edit-bookings-modal__row span,
+.client-edit-bookings-modal__row small {
+  color: #5b6b80;
+  font-size: 0.78rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.client-edit-bookings-modal__row button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2f7dcb, #1f5e9d);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  font-weight: 900;
+  box-shadow: 0 10px 20px rgba(47, 125, 203, 0.22);
+}
+
+.client-edit-bookings-modal__row button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.client-edit-bookings-modal__empty {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed rgba(30, 72, 124, 0.18);
+  border-radius: 18px;
+  color: #5b6b80;
+  font-weight: 800;
+  text-align: center;
+}
+
+@media (max-width: 620px) {
+  .client-edit-bookings-modal {
+    align-items: end;
+    padding: 8px;
+  }
+
+  .client-edit-bookings-modal__card {
+    width: calc(100vw - 16px);
+    max-height: min(84vh, 680px);
+    border-radius: 24px 24px 18px 18px;
+  }
+
+  .client-edit-bookings-modal__header {
+    padding: 14px 14px 10px;
+  }
+
+  .client-edit-bookings-modal__close {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    font-size: 1.55rem;
+  }
+
+  .client-edit-bookings-modal__list {
+    padding: 11px 12px 14px;
+  }
+
+  .client-edit-bookings-modal__row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .client-edit-bookings-modal__row button {
+    width: 100%;
+  }
+}
+
+/* v20: ampliar botões de novo agendamento e CTA de agendamentos no cliente. */
+.public-header__actions--home .header-booking-action,
+.public-header__actions--home .mobile-header-actions__item,
+.timeline-panel__cta,
+.booking-sidebar-rail__quick-add,
+.home-mobile-dock__fab,
+.home-mobile-dock__action,
+.home-mobile-dock__profile,
+.client-edit-bookings-modal button {
+  cursor: pointer !important;
+}
+
+.public-header__actions--home .header-booking-action--compact-plus {
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px !important;
+  min-height: 50px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+}
+
+.public-header__actions--home .header-booking-action--compact-plus .header-booking-action__icon {
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px !important;
+  min-height: 50px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  font-size: 1.75rem !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  transform: translateY(-1px);
+}
+
+.booking-sidebar-rail__quick-add {
+  width: 54px !important;
+  height: 54px !important;
+  min-width: 54px !important;
+  min-height: 54px !important;
+  font-size: 1.75rem !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-rail__quick-add {
+  width: 54px !important;
+  height: 54px !important;
+  min-width: 54px !important;
+  min-height: 54px !important;
+}
+
+.timeline-panel__footer {
+  display: grid !important;
+  place-items: center !important;
+  padding-top: 14px !important;
+}
+
+.timeline-panel__cta {
+  min-height: 58px !important;
+  min-width: min(260px, 100%) !important;
+  padding: 0 26px !important;
+  border-radius: 999px !important;
+  gap: 12px !important;
+  font-size: 1rem !important;
+  font-weight: 950 !important;
+  box-shadow: 0 18px 34px rgba(225, 29, 72, 0.28) !important;
+}
+
+.timeline-panel__cta-icon {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border-radius: 999px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  font-size: 1.55rem !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  transform: translateY(-1px);
+}
+
+.timeline-panel__cta-label {
+  font-size: 1rem !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+}
+
+@media (max-width: 730px) {
+  .home-mobile-dock__fab {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    min-height: 64px !important;
+    margin-top: -30px !important;
+  }
+
+  .home-mobile-dock__fab span {
+    font-size: 2.15rem !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
+    transform: translateY(-2px) !important;
+  }
+
+  .timeline-panel__cta {
+    min-height: 56px !important;
+    min-width: min(250px, 100%) !important;
+  }
+}
+
+/* v21: corrigir tamanho dos botões de + sem ampliar o círculo laranja; ampliar apenas largura do CTA fixado. */
+.public-header__actions--home .header-booking-action--compact-plus {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+}
+
+.public-header__actions--home .header-booking-action--compact-plus .header-booking-action__icon {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  font-size: 1.62rem !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  display: grid !important;
+  place-items: center !important;
+  transform: translateY(-1px) !important;
+}
+
+.booking-sidebar-rail__quick-add,
+.home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-rail__quick-add {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  border-radius: 999px !important;
+  font-size: 1.62rem !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+}
+
+.timeline-panel__footer {
+  display: grid !important;
+  place-items: center !important;
+}
+
+.timeline-panel__cta {
+  width: min(320px, calc(100% - 36px)) !important;
+  min-width: min(300px, calc(100% - 36px)) !important;
+  min-height: 56px !important;
+  padding: 0 30px !important;
+  justify-content: center !important;
+  gap: 12px !important;
+}
+
+.timeline-panel__cta-icon {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  font-size: 1.55rem !important;
+  line-height: 1 !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  transform: translateY(-1px) !important;
+}
+
+@media (max-width: 730px) {
+  .public-header__actions--home .header-booking-action--compact-plus,
+  .public-header__actions--home .header-booking-action--compact-plus .header-booking-action__icon,
+  .booking-sidebar-rail__quick-add,
+  .home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-rail__quick-add {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .timeline-panel__cta {
+    width: min(300px, calc(100% - 28px)) !important;
+    min-width: min(280px, calc(100% - 28px)) !important;
+    min-height: 54px !important;
+  }
+}
+
+/* v22: largura maior do CTA fixado e centralização exata do + laranja. */
+.timeline-panel__cta {
+  width: min(380px, calc(100% - 28px)) !important;
+  min-width: min(340px, calc(100% - 28px)) !important;
+  max-width: calc(100% - 28px) !important;
+  min-height: 54px !important;
+  padding: 0 34px !important;
+  justify-content: center !important;
+}
+
+.timeline-panel__cta-icon {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+.timeline-panel__cta-icon svg,
+.timeline-panel__cta-icon span {
+  display: block !important;
+  line-height: 1 !important;
+}
+
+.public-header__actions--home .header-booking-action--compact-plus,
+.booking-sidebar-rail__quick-add,
+.home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-rail__quick-add {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.public-header__actions--home .header-booking-action--compact-plus .header-booking-action__icon,
+.booking-sidebar-rail__quick-add,
+.home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-rail__quick-add {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  transform: none !important;
+}
+
+.public-header__actions--home .header-booking-action--compact-plus .header-booking-action__icon svg,
+.booking-sidebar-rail__quick-add svg,
+.home-sidebar--desktop.home-sidebar--expanded .booking-sidebar-rail__quick-add svg {
+  display: block !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+@media (max-width: 730px) {
+  .timeline-panel__cta {
+    width: min(360px, calc(100% - 24px)) !important;
+    min-width: min(320px, calc(100% - 24px)) !important;
+    min-height: 54px !important;
+  }
+}
+
+/* v24: estado indisponível do botão Meus agendamentos enquanto a aba está aberta. */
+body.home-client-bookings-surface-open .public-header__actions--home .header-booking-action--bookings {
+  opacity: 0.58 !important;
+  filter: saturate(0.82) brightness(0.96) !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+}
+
+body.home-client-bookings-surface-open .public-header__actions--home .header-booking-action--bookings span {
+  opacity: 0.82 !important;
+}
+
+/* v24: alinhamento consistente dos badges de dia nos cards de agendamento. */
+.home-sidebar--desktop.home-sidebar--expanded .timeline-group {
+  grid-template-columns: 60px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  align-items: start !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-group__date,
+.home-mobile-bookings-sheet__body .timeline-group__date {
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+  min-height: 62px !important;
+  padding: 8px 6px !important;
+  display: grid !important;
+  place-items: center !important;
+  align-content: center !important;
+  justify-items: center !important;
+  text-align: center !important;
+  overflow: visible !important;
+  line-height: 1.05 !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-group__date strong,
+.home-sidebar--desktop.home-sidebar--expanded .timeline-group__date span,
+.home-mobile-bookings-sheet__body .timeline-group__date strong,
+.home-mobile-bookings-sheet__body .timeline-group__date span {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-group__date strong,
+.home-mobile-bookings-sheet__body .timeline-group__date strong {
+  font-size: 1rem !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-group__date span,
+.home-mobile-bookings-sheet__body .timeline-group__date span {
+  font-size: 0.72rem !important;
+}

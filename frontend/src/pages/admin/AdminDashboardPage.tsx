@@ -603,9 +603,9 @@ function AdminProfileModal({ open, blockedDates, blockedSlots, historyEvents, bo
   if (!open) return null;
 
   return (
-    <div className="admin-profile-modal admin-profile-modal--dashboard" role="dialog" aria-modal="true">
+    <div className="admin-profile-modal admin-profile-modal--dashboard" role="dialog" aria-modal="true" onClick={onClose}>
       <button type="button" className="admin-profile-modal__backdrop" aria-label="Fechar" onClick={onClose} />
-      <section className="admin-profile-modal__card">
+      <section className="admin-profile-modal__card" onClick={(event) => event.stopPropagation()}>
         <header className="admin-profile-modal__header admin-profile-modal__header--dashboard">
           <div className="admin-profile-modal__avatar admin-profile-modal__avatar--dashboard">
             <ProfileIcon />

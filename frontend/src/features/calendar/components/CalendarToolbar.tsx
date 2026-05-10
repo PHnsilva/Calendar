@@ -52,7 +52,7 @@ export default function CalendarToolbar({
         ?
       </button>
 
-      <strong className="calendar-toolbar__title"><span className="calendar-toolbar__title-month">{currentMonthLabel}</span><span className="calendar-toolbar__title-year">{currentYear}</span></strong>
+      <strong className="calendar-toolbar__title"><span className="calendar-toolbar__title-month">{currentMonthLabel}</span><span className="calendar-toolbar__title-separator" aria-hidden="true"> </span><span className="calendar-toolbar__title-year">{currentYear}</span></strong>
 
       <div className="calendar-toolbar__nav-group">
         {canGoPrev ? (

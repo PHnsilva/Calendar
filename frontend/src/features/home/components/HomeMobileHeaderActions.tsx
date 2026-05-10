@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useHomeBookingSelection } from '../../../app/home-booking-provider';
 import { getPhoneVerificationChangedEventName, getStoredPhoneVerification } from '../../../lib/storage';
 import type { CalendarEvent } from '../../calendar/types';
+
+const PHONE_NUMBER = '+55 31 9541-5323';
 
 function BellIcon() {
   return (
@@ -74,6 +76,54 @@ function ContactIcon() {
   );
 }
 
+function WhatsAppIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12.05 3.2a8.72 8.72 0 0 0-7.47 13.22L3.5 20.5l4.18-1.1A8.72 8.72 0 1 0 12.05 3.2Z" fill="#25D366" />
+      <path d="M9.12 7.72c-.2-.46-.42-.47-.61-.48h-.53c-.18 0-.49.07-.75.35-.26.28-.98.96-.98 2.35 0 1.38 1.01 2.72 1.15 2.91.14.18 1.96 3.16 4.87 4.32 2.42.96 2.91.77 3.43.72.53-.05 1.68-.69 1.91-1.35.23-.66.23-1.23.16-1.35-.06-.11-.25-.18-.52-.32-.26-.14-1.58-.78-1.82-.87-.24-.09-.41-.14-.59.14-.17.26-.66.87-.81 1.05-.15.18-.3.2-.56.06-.26-.14-1.1-.41-2.11-1.3-.78-.7-1.31-1.56-1.46-1.83-.15-.26-.02-.41.12-.54.12-.12.26-.32.4-.49.14-.16.18-.27.27-.46.09-.18.05-.35-.02-.49-.07-.14-.61-1.59-.85-2.1Z" fill="#fff" />
+    </svg>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <defs>
+        <linearGradient id="sg-header-instagram-gradient" x1="0" x2="1" y1="1" y2="0">
+          <stop offset="0" stopColor="#FEDA75" />
+          <stop offset="0.45" stopColor="#D62976" />
+          <stop offset="0.75" stopColor="#962FBF" />
+          <stop offset="1" stopColor="#4F5BD5" />
+        </linearGradient>
+      </defs>
+      <rect x="3" y="3" width="18" height="18" rx="5.2" fill="url(#sg-header-instagram-gradient)" />
+      <circle cx="12" cy="12" r="4" fill="none" stroke="#fff" strokeWidth="1.75" />
+      <circle cx="17.1" cy="6.9" r="1.15" fill="#fff" />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9.2" fill="#f4f6fa" />
+      <path
+        d="M7.45 6.2c.28-.26 2.16-.28 2.54.14.38.4 1.03 1.97.97 2.34-.05.37-.49.67-.89.95-.15.1-.31.2-.34.33-.07.31.52 1.31 1.45 2.24.93.93 1.93 1.52 2.24 1.45.12-.03.23-.19.33-.34.28-.4.58-.84.95-.89.37-.06 1.94.59 2.34.97.42.38.4 2.26.14 2.54-.66.7-2 1.12-3.04 1-1.1-.13-3.14-.88-5.06-2.8-1.92-1.92-2.67-3.96-2.8-5.06-.12-1.04.3-2.38 1-3.04Z"
+        fill="#394a60"
+      />
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="8" y="8" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M6 15.5H5.8A1.8 1.8 0 0 1 4 13.7V5.8A1.8 1.8 0 0 1 5.8 4h7.9A1.8 1.8 0 0 1 15.5 5.8V6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function formatBookingDate(booking: CalendarEvent) {
   const date = new Date(`${booking.date}T12:00:00`);
   return new Intl.DateTimeFormat('pt-BR', {
@@ -87,15 +137,15 @@ function getBookingTitle(booking: CalendarEvent) {
   return booking.serviceLabel || booking.title || 'Agendamento criado';
 }
 
-type ActivePopover = 'notifications' | 'options' | null;
+type ActivePopover = 'notifications' | 'options' | 'contact' | null;
 
 export default function HomeMobileHeaderActions() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [activePopover, setActivePopover] = useState<ActivePopover>(null);
   const [phoneVerified, setPhoneVerified] = useState(() => Boolean(getStoredPhoneVerification()));
+  const [isPhoneVisible, setIsPhoneVisible] = useState(false);
   const {
     lastCreatedBooking,
-    requestOpenBookings,
     requestOpenProfile,
   } = useHomeBookingSelection();
 
@@ -140,10 +190,11 @@ export default function HomeMobileHeaderActions() {
 
   const togglePopover = (popover: ActivePopover) => {
     setActivePopover((current) => current === popover ? null : popover);
+    setIsPhoneVisible(false);
   };
 
   const openBookings = () => {
-    requestOpenBookings();
+    window.dispatchEvent(new CustomEvent('home-client:open-edit-bookings-modal'));
     setActivePopover(null);
   };
 
@@ -153,8 +204,18 @@ export default function HomeMobileHeaderActions() {
   };
 
   const openContact = () => {
-    window.dispatchEvent(new Event('home-mobile-header:open-contact'));
-    setActivePopover(null);
+    setActivePopover('contact');
+    setIsPhoneVisible(false);
+  };
+
+  const copyPhoneNumber = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    try {
+      await navigator.clipboard.writeText(PHONE_NUMBER);
+    } catch {
+      // Mantém o número visível mesmo se o navegador bloquear o clipboard.
+    }
   };
 
   return (
@@ -226,6 +287,53 @@ export default function HomeMobileHeaderActions() {
               <ContactIcon />
               <span>Contate-nos</span>
             </button>
+          </div>
+        ) : null}
+
+        {activePopover === 'contact' ? (
+          <div className="mobile-header-popover mobile-header-popover--contact" role="dialog" aria-label="Contate-nos">
+            <span className="mobile-header-popover__eyebrow">Contate-nos</span>
+            <div className="mobile-header-contact-actions">
+              <a
+                className="mobile-header-contact-action"
+                href="https://wa.me/553195415323"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Abrir WhatsApp"
+              >
+                <WhatsAppIcon />
+                <span>WhatsApp</span>
+              </a>
+
+              <a
+                className="mobile-header-contact-action"
+                href="https://www.instagram.com/sg_pequenos_reparos/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Abrir Instagram"
+              >
+                <InstagramIcon />
+                <span>Instagram</span>
+              </a>
+
+              <div className={['mobile-header-contact-action', 'mobile-header-contact-action--phone', isPhoneVisible ? 'mobile-header-contact-action--phone-open' : ''].join(' ')}>
+                <button
+                  type="button"
+                  className="mobile-header-contact-action__toggle"
+                  onClick={() => setIsPhoneVisible((current) => !current)}
+                  aria-label={isPhoneVisible ? 'Ocultar telefone' : 'Mostrar telefone'}
+                >
+                  <PhoneIcon />
+                  <span>{isPhoneVisible ? PHONE_NUMBER : 'Telefone'}</span>
+                </button>
+                {isPhoneVisible ? (
+                  <button type="button" className="mobile-header-contact-action__copy" onClick={copyPhoneNumber} aria-label="Copiar telefone">
+                    <CopyIcon />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <small className="mobile-header-contact-founded">Empresa fundada em 15/09/2021</small>
           </div>
         ) : null}
       </div>

@@ -209,6 +209,83 @@ type HomePageProps = {
   adminUsesMockData?: boolean;
 };
 
+
+function EditBookingIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 20h4.2L19.4 8.8a2.3 2.3 0 0 0-3.2-3.2L5 16.8 4 20Z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="m14.8 7 3.2 3.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+type EditBookingsModalProps = {
+  open: boolean;
+  events: CalendarEvent[];
+  onClose: () => void;
+  onEditBooking: (event: CalendarEvent) => void;
+};
+
+function EditBookingsModal({ open, events, onClose, onEditBooking }: EditBookingsModalProps) {
+  if (!open) return null;
+
+  const sortedEvents = [...events].sort((left, right) => {
+    const byDate = left.date.localeCompare(right.date);
+    return byDate !== 0 ? byDate : left.startTime.localeCompare(right.startTime);
+  });
+
+  const formatDay = (dateString: string) => {
+    const date = toLocalDate(dateString);
+    return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(date).replace('.', '');
+  };
+
+  const formatWeekday = (dateString: string) => {
+    const date = toLocalDate(dateString);
+    return new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date);
+  };
+
+  return (
+    <div className="client-bookings-manage-modal" role="dialog" aria-modal="true" aria-label="Editar agendamentos">
+      <button type="button" className="client-bookings-manage-modal__backdrop" onClick={onClose} aria-label="Fechar edição de agendamentos" />
+      <section className="client-bookings-manage-modal__card">
+        <header className="client-bookings-manage-modal__header">
+          <div>
+            <span>Meus agendamentos</span>
+            <h3>Editar agendamentos</h3>
+            <p>Selecione um atendimento para abrir os detalhes e continuar a edição.</p>
+          </div>
+          <button type="button" className="client-bookings-manage-modal__close" onClick={onClose} aria-label="Fechar">×</button>
+        </header>
+
+        <div className="client-bookings-manage-modal__list" aria-label="Lista de agendamentos">
+          {sortedEvents.length ? sortedEvents.map((event) => (
+            <article key={event.id} className="client-bookings-manage-modal__row">
+              <div className="client-bookings-manage-modal__date">
+                <strong>{event.date.slice(8, 10)}</strong>
+                <span>{formatDay(event.date).replace(event.date.slice(8, 10), '').trim() || event.date.slice(5, 7)}</span>
+              </div>
+              <div className="client-bookings-manage-modal__info">
+                <strong>{event.customerName || event.title || 'Agendamento'}</strong>
+                <span>{formatWeekday(event.date)} · {event.startTime} às {event.endTime}</span>
+                <small>{event.serviceLabel || 'Atendimento'} · {event.city || 'Cidade não informada'}</small>
+              </div>
+              <button type="button" className="client-bookings-manage-modal__edit" onClick={() => onEditBooking(event)}>
+                <EditBookingIcon />
+                <span>Editar</span>
+              </button>
+            </article>
+          )) : (
+            <div className="client-bookings-manage-modal__empty">
+              <strong>Nenhum agendamento encontrado</strong>
+              <p>Confirme seu telefone no perfil para recuperar agendamentos já salvos.</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function HomePage({
   mode = 'public',
   adminBookings,
@@ -251,6 +328,7 @@ export default function HomePage({
   const [isMobileBookingsOpen, setIsMobileBookingsOpen] = useState<boolean>(() => window.innerWidth <= 730 && !isAdminMode && getLocalCalendarEvents().some((event) => event.date >= todayIso));
   const [selectedMobileBooking, setSelectedMobileBooking] = useState<CalendarEvent | null>(null);
   const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false);
+  const [isEditBookingsOpen, setIsEditBookingsOpen] = useState(false);
   const [mobileAgendaFocusId, setMobileAgendaFocusId] = useState(0);
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() =>
     getLocalCalendarEvents().filter((event) => event.date >= todayIso),
@@ -368,15 +446,31 @@ export default function HomePage({
   useEffect(() => {
     if (isDesktop) {
       setIsMobileBookingsOpen(false);
-      setIsMobileProfileOpen(false);
     }
   }, [isDesktop]);
 
   useEffect(() => {
-    if (openProfileRequestId === 0 || isDesktop) return;
+    const bookingsPanelOpen = !isAdminMode && ((isDesktop && isSidebarExpanded) || (!isDesktop && isMobileBookingsOpen));
+    document.body.classList.toggle('home-client-bookings-surface-open', bookingsPanelOpen);
+    return () => document.body.classList.remove('home-client-bookings-surface-open');
+  }, [isAdminMode, isDesktop, isMobileBookingsOpen, isSidebarExpanded]);
+
+  useEffect(() => {
+    if (openProfileRequestId === 0) return;
     setIsMobileBookingsOpen(false);
+    setIsEditBookingsOpen(false);
     setIsMobileProfileOpen(true);
-  }, [isDesktop, openProfileRequestId]);
+  }, [openProfileRequestId]);
+
+  useEffect(() => {
+    const handleOpenEditBookings = () => {
+      setIsMobileProfileOpen(false);
+      setIsEditBookingsOpen(true);
+    };
+
+    window.addEventListener('home-client:open-edit-bookings-modal', handleOpenEditBookings);
+    return () => window.removeEventListener('home-client:open-edit-bookings-modal', handleOpenEditBookings);
+  }, []);
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -666,13 +760,6 @@ export default function HomePage({
             />
           ) : null}
 
-          <HomeMobileProfileSheet
-            open={isMobileProfileOpen}
-            onClose={() => setIsMobileProfileOpen(false)}
-            onRecoveredBookings={handleRecoveredBookings}
-            onOpenRecoveredBookings={openRecoveredBookings}
-          />
-
           <HomeMobileDock
             onQuickBooking={() => {
               if (isAdminMode) return;
@@ -694,6 +781,27 @@ export default function HomePage({
             }}
           />
         </>
+      ) : null}
+
+      {!isAdminMode ? (
+        <HomeMobileProfileSheet
+          open={isMobileProfileOpen}
+          onClose={() => setIsMobileProfileOpen(false)}
+          onRecoveredBookings={handleRecoveredBookings}
+          onOpenRecoveredBookings={openRecoveredBookings}
+        />
+      ) : null}
+
+      {!isAdminMode ? (
+        <EditBookingsModal
+          open={isEditBookingsOpen}
+          events={allEvents}
+          onClose={() => setIsEditBookingsOpen(false)}
+          onEditBooking={(event) => {
+            setIsEditBookingsOpen(false);
+            setSelectedMobileBooking(event);
+          }}
+        />
       ) : null}
 
       {isAdminMode && adminBlockingEnabled ? (

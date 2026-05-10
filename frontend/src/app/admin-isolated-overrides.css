@@ -6894,3 +6894,129 @@ body.admin-bookings-surface-open .admin-nav-pill {
   border-color: transparent !important;
   filter: brightness(1.03);
 }
+
+/* v23: espelhamento das correções de UI/UX compartilhadas dentro do painel admin. */
+.admin-dashboard-root .calendar-toolbar__title {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  justify-content: center !important;
+  gap: 0.18em !important;
+  white-space: nowrap !important;
+  letter-spacing: -0.02em !important;
+}
+
+.admin-dashboard-root .calendar-toolbar__title-separator {
+  display: inline-block !important;
+  width: 0.14em !important;
+  min-width: 0.14em !important;
+  flex: 0 0 0.14em !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-panel__body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-content: start !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-group {
+  display: grid !important;
+  grid-template-columns: 50px minmax(0, 1fr) !important;
+  gap: 8px !important;
+  align-items: start !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-group__date {
+  width: 50px !important;
+  min-height: 52px !important;
+  height: auto !important;
+  align-self: start !important;
+  padding: 8px 5px !important;
+  border-radius: 15px !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-group__content {
+  display: grid !important;
+  gap: 10px !important;
+  min-height: 0 !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-card {
+  min-height: auto !important;
+  padding: 12px 14px !important;
+  border-radius: 16px !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-card--empty,
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-card--today-empty {
+  min-height: auto !important;
+  padding: 14px 16px !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-card__main {
+  gap: 8px !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-card__time {
+  min-width: 58px !important;
+  min-height: 30px !important;
+  padding: 0 10px !important;
+}
+
+/* v24: corrigir perfil fora do card, z-index e alinhamento de datas no painel admin. */
+.admin-profile-modal {
+  pointer-events: auto !important;
+}
+
+.admin-profile-modal__backdrop {
+  cursor: default !important;
+}
+
+.admin-profile-modal__card {
+  pointer-events: auto !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-group {
+  grid-template-columns: 60px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  align-items: start !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-group__date {
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+  min-height: 62px !important;
+  height: auto !important;
+  padding: 8px 6px !important;
+  border-radius: 16px !important;
+  display: grid !important;
+  place-items: center !important;
+  align-content: center !important;
+  justify-items: center !important;
+  text-align: center !important;
+  overflow: visible !important;
+  line-height: 1.05 !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-group__date strong,
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-group__date span {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-group__date strong {
+  font-size: 1rem !important;
+}
+
+.admin-dashboard-root .home-sidebar--desktop.home-sidebar--expanded .timeline-group__date span {
+  font-size: 0.72rem !important;
+}

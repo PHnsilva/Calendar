@@ -486,3 +486,74 @@
     font-size: 0.8rem;
   }
 }
+
+/* v23: correções de espaçamento comuns ao cliente e admin. */
+.calendar-toolbar__title {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  justify-content: center !important;
+  gap: 0.18em !important;
+  white-space: nowrap !important;
+  letter-spacing: -0.02em;
+}
+
+.calendar-toolbar__title-separator {
+  display: inline-block !important;
+  width: 0.14em !important;
+  min-width: 0.14em !important;
+  flex: 0 0 0.14em !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-panel__body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-content: start !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-group {
+  display: grid !important;
+  grid-template-columns: 50px minmax(0, 1fr) !important;
+  gap: 8px !important;
+  align-items: start !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-group__date {
+  width: 50px !important;
+  min-height: 52px !important;
+  height: auto !important;
+  align-self: start !important;
+  padding: 8px 5px !important;
+  border-radius: 15px !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-group__content {
+  display: grid !important;
+  gap: 10px !important;
+  min-height: 0 !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-card {
+  min-height: auto !important;
+  padding: 12px 14px !important;
+  border-radius: 16px !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-card--empty,
+.home-sidebar--desktop.home-sidebar--expanded .timeline-card--today-empty {
+  min-height: auto !important;
+  padding: 14px 16px !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-card__main {
+  gap: 8px !important;
+}
+
+.home-sidebar--desktop.home-sidebar--expanded .timeline-card__time {
+  min-width: 58px !important;
+  min-height: 30px !important;
+  padding: 0 10px !important;
+}

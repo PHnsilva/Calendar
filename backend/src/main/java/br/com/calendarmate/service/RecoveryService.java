@@ -97,7 +97,7 @@ public class RecoveryService {
             throw new BadRequestException("Código inválido");
         }
 
-        List<ServicoResponse> servicos = servicoService.listByPhone(sess.phoneDigits);
+        List<ServicoResponse> servicos = servicoService.confirmPendingByPhone(sess.phoneDigits);
         for (ServicoResponse servico : servicos) {
             String email = servico.getClientEmail();
             if (email != null && !email.isBlank()) {

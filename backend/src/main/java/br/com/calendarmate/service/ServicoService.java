@@ -189,6 +189,44 @@ public class ServicoService {
 
         cleanupExpiredPendings();
 
+        return listEventsByPhone(phone).stream()
+                .map(this::mapEventToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<ServicoResponse> confirmPendingByPhone(String phoneDigits) throws IOException {
+        String phone = normalizePhone(phoneDigits);
+
+        cleanupExpiredPendings();
+
+        List<Event> events = listEventsByPhone(phone);
+        List<ServicoResponse> out = new ArrayList<>();
+
+        for (Event event : events) {
+            Event current = event;
+            Map<String, String> ext = privateExt(current);
+
+            if ("PENDING_PHONE".equalsIgnoreCase(ext.getOrDefault("status", "")) && !isExpiredPending(ext)) {
+                Servico s = servicoFromEvent(current);
+                s.setClientPhone(phone);
+                s.setStatus("CONFIRMED");
+                s.setPhoneVerifiedAt(Instant.now());
+                s.setPendingExpiresAt(null);
+
+                Event updated = calendar.updateEvent(s);
+                if (updated != null) {
+                    current = updated;
+                }
+                pendingStore.deleteByEventId(current.getId());
+            }
+
+            out.add(mapEventToResponse(current));
+        }
+
+        return out;
+    }
+
+    private List<Event> listEventsByPhone(String phone) throws IOException {
         ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
         ZonedDateTime from = base.minusMonths(props.getHistoryRetentionMonths());
         ZonedDateTime to = base.plusMonths(2);
@@ -201,9 +239,7 @@ public class ServicoService {
             return Collections.emptyList();
         }
 
-        return events.stream()
-                .map(this::mapEventToResponse)
-                .collect(Collectors.toList());
+        return events;
     }
 
     public ServicoResponse updateByToken(String eventId, String token, ServicoRequest req) throws IOException {
@@ -733,5 +769,43 @@ public class ServicoService {
                 + " - " + s.getClientCity() + "/" + s.getClientState()
                 + " CEP: " + s.getClientCep();
         return base.trim();
+    }
+
+    private Servico servicoFromEvent(Event e) {
+        Map<String, String> ext = privateExt(e);
+
+        Servico s = new Servico();
+        s.setEventId(e.getId());
+        s.setTitle(ext.getOrDefault("serviceType", e.getSummary() == null ? "" : e.getSummary()));
+        s.setDescription(e.getDescription() == null ? "" : e.getDescription());
+        s.setStart(instantFrom(e.getStart()));
+        s.setEnd(instantFrom(e.getEnd()));
+
+        s.setClientFirstName(ext.getOrDefault("clientFirstName", ""));
+        s.setClientLastName(ext.getOrDefault("clientLastName", ""));
+        s.setClientEmail(ext.getOrDefault("clientEmail", ""));
+        s.setClientPhone(ext.getOrDefault("clientPhone", ""));
+
+        s.setClientCep(ext.getOrDefault("clientCep", ""));
+        s.setClientStreet(ext.getOrDefault("clientStreet", ""));
+        s.setClientNeighborhood(ext.getOrDefault("clientNeighborhood", ""));
+        s.setClientNumber(ext.getOrDefault("clientNumber", ""));
+        s.setClientComplement(ext.getOrDefault("clientComplement", ""));
+        s.setClientCity(ext.getOrDefault("clientCity", ""));
+        s.setClientState(ext.getOrDefault("clientState", ""));
+
+        s.setStatus(ext.getOrDefault("status", "PENDING_PHONE"));
+
+        String pe = ext.get("pendingExpiresAt");
+        if (pe != null && pe.matches("\\d+")) {
+            s.setPendingExpiresAt(Instant.ofEpochSecond(Long.parseLong(pe)));
+        }
+
+        String pv = ext.get("phoneVerifiedAt");
+        if (pv != null && pv.matches("\\d+")) {
+            s.setPhoneVerifiedAt(Instant.ofEpochSecond(Long.parseLong(pv)));
+        }
+
+        return s;
     }
 }

@@ -6,7 +6,7 @@ import { useCreateBooking } from '../../bookings/hooks/useCreateBooking';
 import OtpConfirmModal from '../../otp/components/OtpConfirmModal';
 import AddressAutocompleteField from './AddressAutocompleteField';
 import type { AddressSuggestion } from '../hooks/useAddressSuggestions';
-import { getStoredPhoneVerification, saveLocalCalendarEvent, saveManageToken } from '../../../lib/storage';
+import { getStoredPhoneVerification, saveLocalCalendarEvent, saveManageToken, savePhoneVerification } from '../../../lib/storage';
 import type { ServicoResponse } from '../../../types/api';
 import type { BookingFormValues } from '../../../types/booking';
 import type { HomeSelectedSlot } from '../../home/types';
@@ -575,7 +575,7 @@ export default function BookingFormModal({
         clientState: normalizeText(formValues.clientState || defaultState).slice(0, 2).toUpperCase(),
       });
 
-      saveManageToken(response.manageToken);
+      saveManageToken(response.manageToken, response.servico.eventId);
       const newEvent = mapServicoToCalendarEvent(response.servico);
       saveLocalCalendarEvent(newEvent);
       onBookingCreated?.(newEvent);
@@ -603,6 +603,7 @@ export default function BookingFormModal({
   };
 
   const handleVerified = () => {
+    savePhoneVerification(verificationState?.phone ?? formValues.clientPhone);
     setVerificationState(null);
     setSuccessMessage('Agendamento confirmado com sucesso.');
     window.setTimeout(() => onClose(), 700);

@@ -1305,7 +1305,7 @@ function AdminFinanceHistoryPage({ historyEvents, bookings, onBack }: AdminFinan
     });
   }, []);
   const [selectedMonth, setSelectedMonth] = useState(monthOptions[0]?.value ?? "");
-  const [period, setPeriod] = useState<PeriodKey>("month");
+  const [period] = useState<PeriodKey>("month");
   const [chartMode, setChartMode] = useState<"money" | "time">("money");
 
   const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", {
@@ -1475,7 +1475,6 @@ function AdminFinanceHistoryPage({ historyEvents, bookings, onBack }: AdminFinan
 function TotalMoneyIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M10 7h7v7M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" /></svg>; }
 function TotalBookingsIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v3M16 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Zm5 9 2 2 4-5" /></svg>; }
 function MoneyIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v10H4V7Zm3 3h.01M17 14h.01M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /></svg>; }
-function BookingIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v3M16 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Zm3 8h2M13 13h2M9 16h2M13 16h2" /></svg>; }
 function TrendIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 10 11l4 4 6-8M15 7h5v5" /></svg>; }
 
 function BackIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>; }
@@ -1484,8 +1483,6 @@ function HistoryIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><pat
 function StatementIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 0 1 2-2Zm2 6h6M9 13h6" /></svg>; }
 function LockIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6V10Zm6 4v3" /></svg>; }
 function ProfileIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" /></svg>; }
-function EditIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Zm11-13 3 3" /></svg>; }
-
 function splitCustomerName(value?: string) {
   const parts = (value ?? "").trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return { firstName: "Cliente", lastName: "" };

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useHomeBookingSelection } from '../../../app/home-booking-provider';
+import { buildMailtoUrl } from '../../../lib/mailto';
 import { getPhoneVerificationChangedEventName, getStoredPhoneVerification } from '../../../lib/storage';
 import type { CalendarEvent } from '../../calendar/types';
 
 const PHONE_NUMBER = '+55 31 9541-5323';
+const COMPANY_EMAIL = 'SGpequenosReparos@gmail.com';
 
 function BellIcon() {
   return (
@@ -111,6 +113,15 @@ function PhoneIcon() {
         d="M7.45 6.2c.28-.26 2.16-.28 2.54.14.38.4 1.03 1.97.97 2.34-.05.37-.49.67-.89.95-.15.1-.31.2-.34.33-.07.31.52 1.31 1.45 2.24.93.93 1.93 1.52 2.24 1.45.12-.03.23-.19.33-.34.28-.4.58-.84.95-.89.37-.06 1.94.59 2.34.97.42.38.4 2.26.14 2.54-.66.7-2 1.12-3.04 1-1.1-.13-3.14-.88-5.06-2.8-1.92-1.92-2.67-3.96-2.8-5.06-.12-1.04.3-2.38 1-3.04Z"
         fill="#394a60"
       />
+    </svg>
+  );
+}
+
+function EmailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="4" y="6.5" width="16" height="11" rx="2.2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="m5.5 8 6.5 5 6.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -332,6 +343,15 @@ export default function HomeMobileHeaderActions() {
                   </button>
                 ) : null}
               </div>
+
+              <a
+                className="mobile-header-contact-action mobile-header-contact-action--email"
+                href={buildMailtoUrl({ to: COMPANY_EMAIL, subject: '', body: '' })}
+                aria-label="Enviar e-mail"
+              >
+                <EmailIcon />
+                <span>E-mail</span>
+              </a>
             </div>
             <small className="mobile-header-contact-founded">Empresa fundada em 15/09/2021</small>
           </div>

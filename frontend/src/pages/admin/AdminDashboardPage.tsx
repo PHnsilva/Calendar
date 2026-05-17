@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type WheelEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type WheelEvent } from "react";
 import { Navigate } from "react-router-dom";
 import HomeSidebar from "../../features/home/components/HomeSidebar";
 import HomeCalendarSection from "../../features/home/components/HomeCalendarSection";
@@ -19,7 +19,28 @@ import "../../app/calendar-mobile-compact.css";
 import "../../app/admin-dashboard.css";
 import "../../app/admin-final-fixes.css";
 import { getLocalCalendarEvents, getStoredAdminToken } from "../../lib/storage";
+import { buildMailtoUrl } from "../../lib/mailto";
 import { useAdminBookings } from "../../features/admin/hooks/useAdminBookings";
+import { usePublicBootstrap } from "../../features/public-config/hooks/usePublicBootstrap";
+import { build4x4UnavailableDates, DEFAULT_4X4_CYCLE_START } from "../../features/calendar/utils/schedule-rules";
+import { getFinanceConfig } from "../../features/finance/api/get-finance-config";
+import { getFinanceHealth } from "../../features/finance/api/get-finance-health";
+import { getStatement } from "../../features/finance/api/get-statement";
+import { parseFinanceAmount, parseOfxFile } from "../../features/finance/services/ofx-parser";
+import { buildPixPayload } from "../../features/finance/services/pix-br-code";
+import {
+  budgetTotal,
+  exportBudgetPdf,
+  exportBudgetXls,
+  formatBudgetCurrency,
+  formatServiceDate,
+  serviceClientName,
+  type BudgetItem,
+  type BudgetProvider,
+} from "../../features/admin/services/budget-export";
+import { createBudgetItem, loadBudgetTemplate, saveBudgetTemplate } from "../../features/admin/services/budget-template";
+import type { AdminFinanceConfigResponse, AdminFinanceHealthResponse, AdminStatementItem } from "../../types/finance";
+import type { AdminStatementEntry, OfxParseResult } from "../../features/finance/types";
 
 const ADMIN_BLOCKED_DAYS_KEY = "calendar.adminBlockedDays.v1";
 const ADMIN_BLOCKED_SLOTS_KEY = "calendar.adminBlockedSlots.v1";
@@ -74,23 +95,6 @@ function readStringArray(key: string): string[] {
 function saveStringArray(key: string, values: string[]) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(key, JSON.stringify(Array.from(new Set(values)).sort()));
-}
-
-function build4x4UnavailableDates(monthStart: string, anchorMonth: string): string[] {
-  const reference = toLocalDate(monthStart);
-  const daysInMonth = new Date(reference.getFullYear(), reference.getMonth() + 1, 0).getDate();
-  const anchorDate = toLocalDate(anchorMonth);
-  const values = new Set<string>();
-
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    const date = new Date(reference.getFullYear(), reference.getMonth(), day);
-    const iso = toIsoDate(date);
-    const diffInDays = Math.floor((date.getTime() - anchorDate.getTime()) / (1000 * 60 * 60 * 24));
-    const normalized = ((diffInDays % 8) + 8) % 8;
-    if (normalized >= 4) values.add(iso);
-  }
-
-  return Array.from(values);
 }
 
 function mergeEvents(baseEvents: CalendarEvent[], localEvents: CalendarEvent[]) {
@@ -532,6 +536,8 @@ type AdminActionsMenuProps = {
   onOpenBlocks: () => void;
   onOpenBlockedDetails: () => void;
   onOpenFinancePage: () => void;
+  onOpenBudget: () => void;
+  onOpenEmail: () => void;
 };
 
 function AdminActionsMenu({
@@ -542,6 +548,8 @@ function AdminActionsMenu({
   onOpenBlocks,
   onOpenBlockedDetails,
   onOpenFinancePage,
+  onOpenBudget,
+  onOpenEmail,
 }: AdminActionsMenuProps) {
   if (!open) return null;
 
@@ -554,6 +562,8 @@ function AdminActionsMenu({
         <button type="button" className="admin-actions-menu__item admin-actions-menu__item--blocks" onClick={onOpenBlocks}><LockIcon /><span>Bloqueios</span></button>
         <button type="button" className="admin-actions-menu__item admin-actions-menu__item--details" onClick={onOpenBlockedDetails}><LockIcon /><span>Gerenciar bloqueios</span></button>
         <button type="button" className="admin-actions-menu__item admin-actions-menu__item--finance" onClick={onOpenFinancePage}><HistoryIcon /><span>Histórico / Extrato</span></button>
+        <button type="button" className="admin-actions-menu__item admin-actions-menu__item--budget" onClick={onOpenBudget}><BudgetIcon /><span>Orçamento</span></button>
+        <button type="button" className="admin-actions-menu__item admin-actions-menu__item--email" onClick={onOpenEmail}><EmailIcon /><span>E-mail</span></button>
       </section>
     </div>
   );
@@ -657,6 +667,247 @@ function AdminProfileModal({ open, blockedDates, blockedSlots, historyEvents, bo
             <small>movimentações e valores</small>
           </button>
         </div>
+      </section>
+    </div>
+  );
+}
+
+const BUDGET_PROVIDER: BudgetProvider = {
+  name: "SG Pequenos Reparos",
+  phone: "+55 31 9541-5323",
+  email: "SGpequenosReparos@gmail.com",
+  city: "Minas Gerais",
+};
+
+type AdminBudgetPickerModalProps = {
+  open: boolean;
+  bookings: ServicoResponse[];
+  onClose: () => void;
+  onSelect: (booking: ServicoResponse) => void;
+};
+
+function AdminBudgetPickerModal({ open, bookings, onClose, onSelect }: AdminBudgetPickerModalProps) {
+  const sortedBookings = useMemo(
+    () => [...bookings].sort((left, right) => right.start.localeCompare(left.start)),
+    [bookings],
+  );
+
+  if (!open) return null;
+
+  return (
+    <div className="admin-budget-modal" role="dialog" aria-modal="true" aria-label="Selecionar serviço para orçamento">
+      <button type="button" className="admin-budget-modal__backdrop" aria-label="Fechar orçamento" onClick={onClose} />
+      <section className="admin-budget-modal__card admin-budget-modal__card--picker">
+        <header className="admin-budget-modal__header">
+          <div>
+            <span>Admin</span>
+            <h3>Orçamento</h3>
+            <p>Escolha um serviço para montar o orçamento.</p>
+          </div>
+          <button type="button" className="admin-budget-modal__close" onClick={onClose} aria-label="Fechar">×</button>
+        </header>
+
+        <div className="admin-budget-picker">
+          {sortedBookings.length ? sortedBookings.map((booking) => (
+            <button key={booking.eventId || booking.start} type="button" className="admin-budget-service-card" onClick={() => onSelect(booking)}>
+              <strong>{serviceClientName(booking)}</strong>
+              <span>{booking.serviceType || "Serviço"}</span>
+              <small>{formatServiceDate(booking.start)} · {booking.clientCity || "Região não informada"}</small>
+              <em>{booking.status || "sem status"}</em>
+            </button>
+          )) : (
+            <div className="admin-budget-empty">
+              <strong>Nenhum serviço disponível</strong>
+              <span>Os agendamentos carregados aparecerão aqui para gerar orçamento.</span>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+type AdminBudgetModalProps = {
+  service: ServicoResponse | null;
+  onBack: () => void;
+  onClose: () => void;
+};
+
+function AdminBudgetModal({ service, onBack, onClose }: AdminBudgetModalProps) {
+  const [items, setItems] = useState<BudgetItem[]>(() => loadBudgetTemplate());
+  const [savedMessage, setSavedMessage] = useState("");
+  const [exportMessage, setExportMessage] = useState("");
+
+  useEffect(() => {
+    if (!service) return;
+    setItems(loadBudgetTemplate());
+    setSavedMessage("");
+    setExportMessage("");
+  }, [service]);
+
+  if (!service) return null;
+
+  const total = budgetTotal(items);
+  const issuedAt = new Date();
+  const validUntil = new Date(issuedAt);
+  validUntil.setDate(validUntil.getDate() + 15);
+
+  const updateItem = (id: string, patch: Partial<BudgetItem>) => {
+    setItems((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
+    setSavedMessage("");
+  };
+
+  const addItem = () => {
+    setItems((current) => [...current, createBudgetItem()]);
+    setSavedMessage("");
+  };
+
+  const removeItem = (id: string) => {
+    setItems((current) => current.filter((item) => item.id !== id));
+    setSavedMessage("");
+  };
+
+  const buildExportInput = () => ({
+    provider: BUDGET_PROVIDER,
+    service,
+    items,
+    issuedAt,
+    validUntil,
+  });
+
+  const handleExportPdf = () => {
+    const ok = exportBudgetPdf(buildExportInput());
+    setExportMessage(ok ? "PDF aberto em janela de impressão." : "Não foi possível abrir a janela de PDF.");
+  };
+
+  const handleExportXls = () => {
+    exportBudgetXls(buildExportInput());
+    setExportMessage("Planilha XLS gerada.");
+  };
+
+  const handleSaveTemplate = () => {
+    saveBudgetTemplate(items);
+    setSavedMessage("Padrão de orçamento salvo.");
+  };
+
+  return (
+    <div className="admin-budget-modal" role="dialog" aria-modal="true" aria-label="Montar orçamento">
+      <button type="button" className="admin-budget-modal__backdrop" aria-label="Fechar orçamento" onClick={onClose} />
+      <section className="admin-budget-modal__card admin-budget-modal__card--editor">
+        <header className="admin-budget-modal__header">
+          <div>
+            <span>Orçamento</span>
+            <h3>{serviceClientName(service)}</h3>
+            <p>{service.serviceType || "Serviço"} · {formatServiceDate(service.start)}</p>
+          </div>
+          <div className="admin-budget-modal__header-actions">
+            <button type="button" className="admin-budget-modal__secondary" onClick={onBack}>Serviços</button>
+            <button type="button" className="admin-budget-modal__close" onClick={onClose} aria-label="Fechar">×</button>
+          </div>
+        </header>
+
+        <div className="admin-budget-items">
+          {items.map((item) => (
+            <article key={item.id} className="admin-budget-item">
+              <label>
+                <span>Item</span>
+                <input value={item.description} onChange={(event) => updateItem(item.id, { description: event.target.value })} />
+              </label>
+              <label className="admin-budget-item__quantity">
+                <span>Qtd.</span>
+                <input type="number" min="1" step="1" value={item.quantity} onChange={(event) => updateItem(item.id, { quantity: Number(event.target.value) })} />
+              </label>
+              <label className="admin-budget-item__price">
+                <span>Preço</span>
+                <input type="number" min="0" step="0.01" value={item.unitPrice} onChange={(event) => updateItem(item.id, { unitPrice: Number(event.target.value) })} />
+              </label>
+              <button type="button" className="admin-budget-item__icon" aria-label="Editar item" title="Editar item">
+                <EditIcon />
+              </button>
+              <button type="button" className="admin-budget-item__icon admin-budget-item__icon--danger" onClick={() => removeItem(item.id)} aria-label="Remover item" title="Remover item">
+                <TrashIcon />
+              </button>
+            </article>
+          ))}
+        </div>
+
+        <button type="button" className="admin-budget-add" onClick={addItem}>Adicionar item</button>
+
+        <div className="admin-budget-total">
+          <span>Total do orçamento</span>
+          <strong>{formatBudgetCurrency(total)}</strong>
+        </div>
+
+        {(savedMessage || exportMessage) ? (
+          <div className="admin-budget-feedback">{savedMessage || exportMessage}</div>
+        ) : null}
+
+        <footer className="admin-budget-actions">
+          <button type="button" onClick={handleExportPdf}>Exportar PDF</button>
+          <button type="button" onClick={handleExportXls}>Exportar XLS</button>
+          <button type="button" onClick={handleSaveTemplate}>Salvar padrão de orçamento</button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+type AdminEmailModalProps = {
+  open: boolean;
+  onClose: () => void;
+};
+
+function AdminEmailModal({ open, onClose }: AdminEmailModalProps) {
+  const [to, setTo] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setTo("");
+    setSubject("");
+    setBody("");
+  }, [open]);
+
+  if (!open) return null;
+
+  const canSend = to.trim().length > 0;
+
+  const handleSend = () => {
+    if (!canSend) return;
+    window.location.href = buildMailtoUrl({ to, subject, body });
+  };
+
+  return (
+    <div className="admin-email-modal" role="dialog" aria-modal="true" aria-label="Enviar e-mail">
+      <button type="button" className="admin-email-modal__backdrop" aria-label="Fechar e-mail" onClick={onClose} />
+      <section className="admin-email-modal__card">
+        <header className="admin-email-modal__header">
+          <div>
+            <span>Admin</span>
+            <h3>E-mail</h3>
+            <p>Abra o cliente de e-mail com destinatário, assunto e mensagem preenchidos.</p>
+          </div>
+          <button type="button" className="admin-email-modal__close" onClick={onClose} aria-label="Fechar">×</button>
+        </header>
+
+        <label className="admin-email-modal__field">
+          <span>Destinatário</span>
+          <input value={to} type="email" onChange={(event) => setTo(event.target.value)} placeholder="cliente@email.com" />
+        </label>
+        <label className="admin-email-modal__field">
+          <span>Assunto</span>
+          <input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Assunto do contato" />
+        </label>
+        <label className="admin-email-modal__field">
+          <span>Mensagem</span>
+          <textarea value={body} onChange={(event) => setBody(event.target.value)} rows={6} placeholder="Escreva a mensagem para o cliente" />
+        </label>
+
+        <footer className="admin-email-modal__actions">
+          <button type="button" className="admin-email-modal__secondary" onClick={onClose}>Cancelar</button>
+          <button type="button" className="admin-email-modal__primary" onClick={handleSend} disabled={!canSend}>Enviar</button>
+        </footer>
       </section>
     </div>
   );
@@ -942,15 +1193,7 @@ type AdminMonthOption = {
   label: string;
 };
 
-type AdminStatementEntry = {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  category: string;
-  amount: number;
-  city?: string;
-};
+type FinanceSource = "agenda" | "inter" | "ofx";
 
 type AdminHistoryEntry = {
   id: string;
@@ -980,6 +1223,18 @@ function buildMockStatementEntries(month: string): AdminStatementEntry[] {
     { id: `${month}-mock-rent`, title: "Instalação", date: `${month}-15`, time: "14:00", category: "Agendamento", amount: 320, city: "Congonhas" },
     { id: `${month}-mock-transport`, title: "Visita técnica", date: `${month}-22`, time: "16:00", category: "Deslocamento", amount: 95, city: "Conselheiro Lafaiete" },
   ];
+}
+
+function statementItemToEntry(item: AdminStatementItem): AdminStatementEntry {
+  return {
+    id: item.id,
+    title: item.title || item.description || "Lancamento",
+    date: item.date,
+    time: "",
+    category: item.kind || (item.amountCents >= 0 ? "credit" : "debit"),
+    amount: item.amountCents ? item.amountCents / 100 : parseFinanceAmount(item.amount),
+    city: item.subtitle,
+  };
 }
 
 function buildMockHistoryEntries(month: string): AdminHistoryEntry[] {
@@ -1012,6 +1267,16 @@ function AdminStatementHalfModal({ open, bookings, onClose }: AdminStatementHalf
   };
 
   const [chartMode, setChartMode] = useState<"money" | "appointments">("money");
+  const [financeSource, setFinanceSource] = useState<FinanceSource>("ofx");
+  const [financeHealth, setFinanceHealth] = useState<AdminFinanceHealthResponse | null>(null);
+  const [financeConfig, setFinanceConfig] = useState<AdminFinanceConfigResponse | null>(null);
+  const [interItems, setInterItems] = useState<AdminStatementItem[]>([]);
+  const [financeLoading, setFinanceLoading] = useState(false);
+  const [financeError, setFinanceError] = useState("");
+  const [ofxResult, setOfxResult] = useState<OfxParseResult | null>(null);
+  const [ofxError, setOfxError] = useState("");
+  const [pixVisible, setPixVisible] = useState(false);
+  const [pixCopied, setPixCopied] = useState(false);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -1032,7 +1297,6 @@ function AdminStatementHalfModal({ open, bookings, onClose }: AdminStatementHalf
 
   const monthOptions = useMemo(() => getAdminCurrentPreviousMonthOptions(), []);
   const allowedMonths = useMemo(() => new Set(monthOptions.map((month) => month.value)), [monthOptions]);
-  const periodLabel = monthOptions.map((month) => month.label).join(" • ");
 
   const realEntries = useMemo<AdminStatementEntry[]>(() => bookings
     .map((booking) => ({
@@ -1047,16 +1311,59 @@ function AdminStatementHalfModal({ open, bookings, onClose }: AdminStatementHalf
     .filter((entry) => allowedMonths.has(entry.date.slice(0, 7)))
     .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time)), [bookings, allowedMonths]);
 
-  const useMock = realEntries.length === 0 || realEntries.every((entry) => entry.amount <= 0);
-  const entries = useMock
+  const agendaUseMock = realEntries.length === 0 || realEntries.every((entry) => entry.amount <= 0);
+  const agendaEntries = agendaUseMock
     ? monthOptions.flatMap((month) => buildMockStatementEntries(month.value))
     : realEntries;
-  const entriesByMonth = useMemo(() => monthOptions.map((month) => ({
+  const interAvailable = Boolean(financeConfig?.features?.interPjEnabled);
+  const interEntries = useMemo(() => interItems.map(statementItemToEntry), [interItems]);
+  const entries = financeSource === "inter"
+    ? interEntries
+    : financeSource === "ofx"
+      ? ofxResult?.entries ?? []
+      : agendaEntries;
+  const useMock = financeSource === "agenda" && agendaUseMock;
+  const statementMonths = useMemo(() => {
+    if (financeSource === "agenda") return monthOptions;
+    const byMonth = new Map<string, AdminMonthOption>();
+    entries.forEach((entry) => {
+      const value = entry.date.slice(0, 7);
+      if (!value || byMonth.has(value)) return;
+      const label = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" })
+        .format(toLocalDate(`${value}-01`))
+        .replace(/^./, (letter) => letter.toUpperCase());
+      byMonth.set(value, { value, label });
+    });
+    return Array.from(byMonth.values()).sort((a, b) => b.value.localeCompare(a.value));
+  }, [entries, financeSource, monthOptions]);
+  const periodLabel = statementMonths.length
+    ? statementMonths.map((month) => month.label).join(" • ")
+    : financeSource === "ofx"
+      ? "Arquivo OFX"
+      : "Nenhum periodo carregado";
+  const entriesByMonth = useMemo(() => statementMonths.map((month) => ({
     ...month,
     entries: entries.filter((entry) => entry.date.slice(0, 7) === month.value),
-  })).filter((month) => month.entries.length > 0), [entries, monthOptions]);
+  })).filter((month) => month.entries.length > 0), [entries, statementMonths]);
   const totalMoney = entries.reduce((sum, entry) => sum + entry.amount, 0);
   const totalAppointments = entries.length;
+  const commissionBase = Math.max(0, totalMoney);
+  const partnerCommission = Math.round(commissionBase * 12) / 100;
+  const pixPayload = useMemo(
+    () => buildPixPayload({
+      key: financeConfig?.pix?.key ?? "",
+      recipientName: financeConfig?.pix?.recipientName ?? "SG Pequenos Reparos",
+      recipientCity: financeConfig?.pix?.recipientCity ?? "Belo Horizonte",
+      description: financeConfig?.pix?.description ?? "Comissao socio",
+    }, partnerCommission),
+    [
+      financeConfig?.pix?.description,
+      financeConfig?.pix?.key,
+      financeConfig?.pix?.recipientCity,
+      financeConfig?.pix?.recipientName,
+      partnerCommission,
+    ],
+  );
 
   const chartData = useMemo(() => {
     const groups = new Map<string, { label: string; money: number; appointments: number; order: string }>();
@@ -1095,6 +1402,87 @@ function AdminStatementHalfModal({ open, bookings, onClose }: AdminStatementHalf
   const ringRatio = Math.max(0.08, Math.min(ringValue / ringReference, 0.92));
   const ringDash = `${Math.round(ringRatio * 100)} ${100 - Math.round(ringRatio * 100)}`;
 
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setFinanceError("");
+    getFinanceConfig()
+      .then((config) => {
+        if (!cancelled) setFinanceConfig(config);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setFinanceConfig(null);
+        setFinanceError(error instanceof Error ? error.message : "Nao foi possivel carregar a configuracao financeira.");
+      });
+    getFinanceHealth()
+      .then((health) => {
+        if (!cancelled) setFinanceHealth(health);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setFinanceHealth(null);
+        setFinanceError(error instanceof Error ? error.message : "Nao foi possivel verificar o Inter.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (financeSource !== "inter" || interAvailable) return;
+    setFinanceSource("ofx");
+  }, [financeSource, interAvailable]);
+
+  useEffect(() => {
+    if (!open || financeSource !== "inter" || !interAvailable) return;
+    let cancelled = false;
+    setFinanceLoading(true);
+    setFinanceError("");
+    getStatement()
+      .then((statement) => {
+        if (!cancelled) setInterItems(statement.items ?? []);
+      })
+      .catch((error) => {
+        if (!cancelled) setFinanceError(error instanceof Error ? error.message : "Nao foi possivel carregar o extrato Inter.");
+      })
+      .finally(() => {
+        if (!cancelled) setFinanceLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [financeSource, interAvailable, open]);
+
+  async function handleOfxChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setOfxError("");
+      const text = await file.text();
+      const parsed = parseOfxFile(text, file.name);
+      if (!parsed.entries.length) {
+        setOfxResult(null);
+        setOfxError("Nenhum lancamento OFX encontrado.");
+        return;
+      }
+      setOfxResult(parsed);
+      setFinanceSource("ofx");
+      setPixVisible(false);
+    } catch {
+      setOfxResult(null);
+      setOfxError("Nao foi possivel ler o arquivo OFX.");
+    }
+  }
+
+  function copyPixPayload() {
+    if (!pixPayload) return;
+    void navigator.clipboard?.writeText(pixPayload);
+    setPixCopied(true);
+    window.setTimeout(() => setPixCopied(false), 1600);
+  }
+
   if (!open) return null;
 
   return (
@@ -1107,20 +1495,77 @@ function AdminStatementHalfModal({ open, bookings, onClose }: AdminStatementHalf
         <button type="button" className="admin-tool-page__back" onClick={onClose} aria-label="Fechar extrato"><span>Fechar</span></button>
       </header>
 
-      <div className="admin-half-modal__body admin-statement-wireframe admin-statement-wireframe--full-period">
+      <div className={["admin-half-modal__body admin-statement-wireframe admin-statement-wireframe--full-period", totalAppointments === 0 ? "admin-statement-wireframe--empty" : ""].join(" ")}>
         <div className="admin-statement-period-summary" aria-label="Período do extrato">
-          <span>Período salvo no Supabase</span>
+          <span>{financeSource === "inter" ? "Extrato Banco Inter" : financeSource === "ofx" ? "Extrato OFX importado" : "Período salvo no Supabase"}</span>
           <strong>{periodLabel}</strong>
-          <small>Separado por mês · mês atual e mês anterior</small>
+          <small>{financeHealth ? `${financeHealth.provider}: ${financeHealth.message}` : "Verificando integracao financeira"}</small>
         </div>
 
+        <div className="admin-finance-source-panel">
+          <div className="admin-finance-source-switch" aria-label="Fonte do extrato">
+            <button type="button" className={financeSource === "agenda" ? "is-active" : ""} onClick={() => setFinanceSource("agenda")}>Agenda</button>
+            <button
+              type="button"
+              className={financeSource === "inter" ? "is-active" : ""}
+              disabled={!interAvailable}
+              onClick={() => setFinanceSource("inter")}
+              title={interAvailable ? "Usar extrato integrado do Inter" : "Inter nao integrado no backend"}
+            >
+              Inter
+            </button>
+            <button type="button" className={financeSource === "ofx" ? "is-active" : ""} onClick={() => setFinanceSource("ofx")}>OFX</button>
+          </div>
+          <small>{interAvailable ? "Banco Inter integrado e disponivel." : "Banco Inter opcional: indisponivel ate configurar a integracao."}</small>
+        </div>
+
+        {financeSource === "ofx" ? (
+          <div className="admin-finance-ofx-panel admin-finance-ofx-panel--primary">
+            <label className="admin-finance-upload-button">
+              <span>{ofxResult ? "Trocar OFX" : "Upload extrato"}</span>
+              <input type="file" accept=".ofx,.qfx,text/*" onChange={handleOfxChange} />
+            </label>
+            {ofxResult ? (
+              <button type="button" className="admin-finance-pix-button" onClick={() => setPixVisible(true)}>Gerar Pix</button>
+            ) : null}
+            {ofxResult ? (
+              <small>{ofxResult.fileName} · {ofxResult.entries.length} lancamento(s) · creditos {formatCurrency(ofxResult.creditTotal)} · debitos {formatCurrency(ofxResult.debitTotal)}</small>
+            ) : <small>Importe um OFX para calcular 12% sobre o total mensal.</small>}
+            {ofxError ? <em>{ofxError}</em> : null}
+          </div>
+        ) : null}
+
+        {financeError ? <span className="admin-mock-notice">{financeError}</span> : null}
+        {financeLoading ? <span className="admin-mock-notice">Carregando extrato Inter...</span> : null}
         {useMock ? <AdminMockNotice label="extrato financeiro para pré-visualização" /> : null}
+        {totalAppointments === 0 ? (
+          <div className="timeline-card timeline-card--empty admin-finance-empty-state">
+            <strong>{financeSource === "inter" ? "Sem lançamentos Inter PJ" : "Nenhum OFX carregado"}</strong>
+            <span>{financeSource === "inter" ? "A integração opcional não retornou lançamentos." : "Use Upload extrato para carregar o arquivo .ofx."}</span>
+          </div>
+        ) : null}
+
+        {ofxResult && financeSource === "ofx" && pixVisible ? (
+        <section className="admin-finance-commission-panel" aria-label="Comissao do socio">
+          <div>
+            <span>Comissao do socio</span>
+            <strong>{formatCurrency(partnerCommission)}</strong>
+            <small>12% sobre {formatCurrency(commissionBase)} no mês carregado.</small>
+          </div>
+          <div className="admin-finance-pix-config">
+            <span>Recebedor: {financeConfig?.pix?.recipientName || "SG Pequenos Reparos"}</span>
+            <span>Cidade: {financeConfig?.pix?.recipientCity || "Belo Horizonte"}</span>
+          </div>
+          <textarea value={pixPayload} readOnly placeholder="Configure PIX_KEY no backend para gerar o Pix copia e cola." rows={3} />
+          <button type="button" disabled={!pixPayload} onClick={copyPixPayload}>{pixCopied ? "Copiado" : "Copiar Pix"}</button>
+        </section>
+        ) : null}
 
         <article className="admin-finance-chart-card admin-finance-chart-card--half admin-finance-chart-card--radial">
           <header>
             <div>
-              <span>{chartMode === "money" ? "Dinheiro acumulado no período" : "Agendamentos acumulados"}</span>
-              <strong>{chartMode === "money" ? formatCurrency(totalMoney) : `${totalAppointments} agendamento(s)`}</strong>
+              <span>{chartMode === "money" ? "Dinheiro acumulado no período" : "Transações acumuladas"}</span>
+              <strong>{chartMode === "money" ? formatCurrency(totalMoney) : `${totalAppointments} transação(ões)`}</strong>
             </div>
             <div className="admin-finance-chart-switch admin-finance-chart-switch--arrows">
               <button type="button" aria-label="Ver dinheiro" className={chartMode === "money" ? "is-active" : ""} onClick={() => setChartMode("money")}>‹</button>
@@ -1131,7 +1576,7 @@ function AdminStatementHalfModal({ open, bookings, onClose }: AdminStatementHalf
             <svg className="admin-finance-radial-chart" viewBox="0 0 42 42" role="img" aria-label="Resumo circular do extrato">
               <circle className="admin-finance-radial-chart__track" cx="21" cy="21" r="15.915" />
               <circle className="admin-finance-radial-chart__value" cx="21" cy="21" r="15.915" pathLength="100" strokeDasharray={ringDash} />
-              <text x="21" y="19" textAnchor="middle">{chartMode === "money" ? "R$" : "AG"}</text>
+              <text x="21" y="19" textAnchor="middle">{chartMode === "money" ? "R$" : "TX"}</text>
               <text x="21" y="25" textAnchor="middle">{chartMode === "money" ? Math.round(totalMoney) : totalAppointments}</text>
             </svg>
             <div className="admin-finance-sparkline-wrap">
@@ -1141,7 +1586,7 @@ function AdminStatementHalfModal({ open, bookings, onClose }: AdminStatementHalf
                 {chartPointList.map((point, index) => (
                   <g key={`${point.label}-${index}`}>
                     <circle cx={point.x} cy={point.y} r="2.4" />
-                    <title>{chartMode === "money" ? formatCurrency(point.money) : `${point.appointments} agendamento(s)`}</title>
+                    <title>{chartMode === "money" ? formatCurrency(point.money) : `${point.appointments} transação(ões)`}</title>
                   </g>
                 ))}
               </svg>
@@ -1157,7 +1602,7 @@ function AdminStatementHalfModal({ open, bookings, onClose }: AdminStatementHalf
         <div className="admin-finance-metrics admin-finance-metrics--wireframe-icons">
           <article>
             <span className="admin-finance-metric-icon admin-finance-metric-icon--money"><TotalMoneyIcon /></span>
-            <small>Dinheiro total</small>
+            <small>Soma total do mês</small>
             <strong>{formatCurrency(totalMoney)}</strong>
           </article>
           <article>
@@ -1181,7 +1626,7 @@ function AdminStatementHalfModal({ open, bookings, onClose }: AdminStatementHalf
                     <span className="admin-finance-row-icon"><StatementIcon /></span>
                     <div>
                       <strong>{entry.title}</strong>
-                      <small>{formatShortDate(entry.date)} · {entry.time} · {entry.city ?? "Cidade"}</small>
+                      <small>{[formatShortDate(entry.date), entry.time, entry.city].filter(Boolean).join(" · ")}</small>
                     </div>
                     <em>{entry.category}</em>
                     <b>{formatCurrency(entry.amount)}</b>
@@ -1190,6 +1635,11 @@ function AdminStatementHalfModal({ open, bookings, onClose }: AdminStatementHalf
               </section>
             ))}
           </div>
+        </div>
+
+        <div className="admin-finance-inter-pj">
+          <button type="button" disabled={!interAvailable || financeLoading} onClick={() => setFinanceSource("inter")}>Inter PJ?</button>
+          <small>{interAvailable ? "Integração opcional habilitada por configuração." : "Integração opcional desabilitada."}</small>
         </div>
       </div>
     </section>
@@ -1476,6 +1926,10 @@ function TotalMoneyIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><
 function TotalBookingsIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v3M16 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Zm5 9 2 2 4-5" /></svg>; }
 function MoneyIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v10H4V7Zm3 3h.01M17 14h.01M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /></svg>; }
 function TrendIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 10 11l4 4 6-8M15 7h5v5" /></svg>; }
+function BudgetIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 0 1 2-2Zm2 5h6M9 12h6M9 16h3" /></svg>; }
+function EmailIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4V6Zm1.5 1.5 6.5 5 6.5-5" /></svg>; }
+function EditIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Zm10.5-12.5 3 3" /></svg>; }
+function TrashIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M8 7l1-3h6l1 3M7 7l1 14h8l1-14" /></svg>; }
 
 function BackIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>; }
 function CalendarIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /></svg>; }
@@ -1545,6 +1999,9 @@ export default function AdminDashboardPage() {
   const [isFinanceHistoryOpen, setIsFinanceHistoryOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isActionsOpen, setIsActionsOpen] = useState(false);
+  const [isBudgetPickerOpen, setIsBudgetPickerOpen] = useState(false);
+  const [budgetService, setBudgetService] = useState<ServicoResponse | null>(null);
+  const [isEmailOpen, setIsEmailOpen] = useState(false);
   const [isMobileBookingsOpen, setIsMobileBookingsOpen] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [selectedMobileBooking, setSelectedMobileBooking] = useState<CalendarEvent | null>(null);
@@ -1556,6 +2013,8 @@ export default function AdminDashboardPage() {
 
   const adminBookingsQuery = useAdminBookings({ from: bookingsFrom, to: bookingsTo }, Boolean(token));
   const adminHistoryQuery = useAdminBookings({ from: historyFrom, to: todayIso }, Boolean(token));
+  const publicBootstrapQuery = usePublicBootstrap(Boolean(token));
+  const scheduleCycleStart = publicBootstrapQuery.data?.schedule?.cycleStart ?? DEFAULT_4X4_CYCLE_START;
 
   const viewportWidth = viewportSize.width;
   const viewportHeight = viewportSize.height;
@@ -1563,7 +2022,7 @@ export default function AdminDashboardPage() {
   const isDesktop = viewportWidth >= ADMIN_DESKTOP_MIN_WIDTH;
   const isMobileLandscape = isDesktop && viewportWidth > viewportHeight && isCompactHeight;
   const shouldUseMobileActions = !isDesktop;
-  const hasAdminCriticalSurfaceOpen = isBlocksOpen || isBlockedDetailsOpen || isFinanceHistoryOpen;
+  const hasAdminCriticalSurfaceOpen = isBlocksOpen || isBlockedDetailsOpen || isFinanceHistoryOpen || isBudgetPickerOpen || Boolean(budgetService) || isEmailOpen;
   const hasHalfToolOpen = historyOpen || statementOpen;
 
   useEffect(() => {
@@ -1583,8 +2042,8 @@ export default function AdminDashboardPage() {
   }, [isMobileBookingsOpen, isDesktop, isSidebarExpanded]);
 
   const scaleBlockedDates = useMemo(
-    () => [...build4x4UnavailableDates(currentAllowedMonth, currentAllowedMonth), ...build4x4UnavailableDates(nextAllowedMonth, currentAllowedMonth)],
-    [currentAllowedMonth, nextAllowedMonth],
+    () => [...build4x4UnavailableDates(currentAllowedMonth, scheduleCycleStart), ...build4x4UnavailableDates(nextAllowedMonth, scheduleCycleStart)],
+    [currentAllowedMonth, nextAllowedMonth, scheduleCycleStart],
   );
 
   const unavailableDates = useMemo(() => {
@@ -1648,6 +2107,9 @@ export default function AdminDashboardPage() {
       setIsBlocksOpen(false);
       setIsBlockedDetailsOpen(false);
       setIsFinanceHistoryOpen(false);
+      setIsBudgetPickerOpen(false);
+      setBudgetService(null);
+      setIsEmailOpen(false);
     };
 
     const openBooking = () => {
@@ -1763,6 +2225,9 @@ export default function AdminDashboardPage() {
     setIsBlocksOpen(false);
     setIsBlockedDetailsOpen(false);
     setIsFinanceHistoryOpen(false);
+    setIsBudgetPickerOpen(false);
+    setBudgetService(null);
+    setIsEmailOpen(false);
     setIsProfileOpen(false);
   };
 
@@ -1772,6 +2237,9 @@ export default function AdminDashboardPage() {
     setIsBlocksOpen(false);
     setIsBlockedDetailsOpen(false);
     setIsFinanceHistoryOpen(false);
+    setIsBudgetPickerOpen(false);
+    setBudgetService(null);
+    setIsEmailOpen(false);
     setIsProfileOpen(false);
   };
 
@@ -1963,6 +2431,26 @@ export default function AdminDashboardPage() {
           onOpenBlocks={() => { setIsActionsOpen(false); setHistoryOpen(false); setStatementOpen(false); setIsFinanceHistoryOpen(false); setIsBlockedDetailsOpen(false); setIsBlocksOpen(true); }}
           onOpenBlockedDetails={() => { setIsActionsOpen(false); setIsBlocksOpen(false); setHistoryOpen(false); setStatementOpen(false); setIsFinanceHistoryOpen(false); setIsBlockedDetailsOpen(true); }}
           onOpenFinancePage={() => { closeCriticalAdminSurfaces(); setIsActionsOpen(false); setHistoryOpen(true); setStatementOpen(true); }}
+          onOpenBudget={() => { closeCriticalAdminSurfaces(); setIsActionsOpen(false); setIsBudgetPickerOpen(true); }}
+          onOpenEmail={() => { closeCriticalAdminSurfaces(); setIsActionsOpen(false); setIsEmailOpen(true); }}
+        />
+
+        <AdminBudgetPickerModal
+          open={isBudgetPickerOpen}
+          bookings={statementBookings}
+          onClose={() => setIsBudgetPickerOpen(false)}
+          onSelect={(booking) => { setIsBudgetPickerOpen(false); setBudgetService(booking); }}
+        />
+
+        <AdminBudgetModal
+          service={budgetService}
+          onBack={() => { setBudgetService(null); setIsBudgetPickerOpen(true); }}
+          onClose={() => { setBudgetService(null); setIsBudgetPickerOpen(false); }}
+        />
+
+        <AdminEmailModal
+          open={isEmailOpen}
+          onClose={() => setIsEmailOpen(false)}
         />
 
         <AdminProfileModal

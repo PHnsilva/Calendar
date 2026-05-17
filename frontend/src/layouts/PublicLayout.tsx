@@ -4,8 +4,10 @@ import AppShell from "./AppShell";
 import Logo from "../components/branding/Logo";
 import { useHomeBookingSelection } from "../app/home-booking-provider";
 import HomeMobileHeaderActions from "../features/home/components/HomeMobileHeaderActions";
+import { buildMailtoUrl } from "../lib/mailto";
 
 const PHONE_NUMBER = "+55 31 9541-5323";
+const COMPANY_EMAIL = "SGpequenosReparos@gmail.com";
 
 function WhatsAppIcon() {
   return (
@@ -46,6 +48,15 @@ function PhoneIcon() {
   );
 }
 
+function EmailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="4" y="6.5" width="16" height="11" rx="2.2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="m5.5 8 6.5 5 6.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function CopyIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -61,6 +72,7 @@ export default function PublicLayout() {
   const contactRef = useRef<HTMLDivElement | null>(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isPhoneVisible, setIsPhoneVisible] = useState(false);
+  const [isEmailVisible, setIsEmailVisible] = useState(false);
 
   const isHomePage = location.pathname === "/";
 
@@ -68,6 +80,7 @@ export default function PublicLayout() {
     const handleOpenContact = () => {
       setIsContactOpen(true);
       setIsPhoneVisible(false);
+      setIsEmailVisible(false);
     };
 
     window.addEventListener("home-mobile-header:open-contact", handleOpenContact);
@@ -80,6 +93,7 @@ export default function PublicLayout() {
       if (target && contactRef.current?.contains(target)) return;
       setIsContactOpen(false);
       setIsPhoneVisible(false);
+      setIsEmailVisible(false);
     };
 
     document.addEventListener("pointerdown", handlePointerDown);
@@ -91,6 +105,7 @@ export default function PublicLayout() {
       if (event.key !== "Escape") return;
       setIsContactOpen(false);
       setIsPhoneVisible(false);
+      setIsEmailVisible(false);
     };
 
     document.addEventListener("keydown", handleKeyDown);
@@ -101,6 +116,7 @@ export default function PublicLayout() {
     event.preventDefault();
     setIsContactOpen((current) => !current);
     setIsPhoneVisible(false);
+    setIsEmailVisible(false);
   };
 
   const copyPhoneNumber = async (event: MouseEvent<HTMLButtonElement>) => {
@@ -110,6 +126,25 @@ export default function PublicLayout() {
       await navigator.clipboard.writeText(PHONE_NUMBER);
     } catch {
       // Mantém o número visível mesmo se o navegador bloquear o clipboard.
+    }
+  };
+
+  const handleEmailClick = () => {
+    if (window.matchMedia("(max-width: 730px)").matches) {
+      window.location.href = buildMailtoUrl({ to: COMPANY_EMAIL, subject: "", body: "" });
+      return;
+    }
+    setIsEmailVisible((current) => !current);
+    setIsPhoneVisible(false);
+  };
+
+  const copyEmail = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    try {
+      await navigator.clipboard.writeText(COMPANY_EMAIL);
+    } catch {
+      setIsEmailVisible(true);
     }
   };
 
@@ -154,6 +189,23 @@ export default function PublicLayout() {
                   <span className="brand-contact-mini-popover__phone-value">
                     {PHONE_NUMBER}
                     <button type="button" onClick={copyPhoneNumber} aria-label="Copiar telefone">
+                      <CopyIcon />
+                    </button>
+                  </span>
+                ) : null}
+              </button>
+
+              <button
+                type="button"
+                className={["brand-contact-mini-popover__action", "brand-contact-mini-popover__action--email", isEmailVisible ? "brand-contact-mini-popover__action--email-open" : ""].join(" ")}
+                onClick={handleEmailClick}
+                aria-label={isEmailVisible ? "Ocultar e-mail" : "Mostrar e-mail"}
+              >
+                <EmailIcon />
+                {isEmailVisible ? (
+                  <span className="brand-contact-mini-popover__email-value">
+                    {COMPANY_EMAIL}
+                    <button type="button" onClick={copyEmail} aria-label="Copiar e-mail">
                       <CopyIcon />
                     </button>
                   </span>

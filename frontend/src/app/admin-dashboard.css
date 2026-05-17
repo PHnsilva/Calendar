@@ -209,6 +209,417 @@
 .statement-sheet__entry-meta span { text-transform: uppercase; font-size: 0.72rem; font-weight: 800; color: var(--text-muted); }
 .statement-sheet__amount { color: #22a447; font-size: 1.05rem; }
 
+.admin-finance-source-panel,
+.admin-finance-ofx-panel,
+.admin-finance-commission-panel {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
+}
+
+.admin-finance-source-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.admin-finance-source-switch button,
+.admin-finance-commission-panel button {
+  min-height: 38px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--app-surface-solid);
+  color: var(--text-primary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-finance-source-switch button.is-active {
+  border-color: var(--accent-strong);
+  color: var(--accent-strong);
+}
+
+.admin-finance-source-switch button:disabled,
+.admin-finance-commission-panel button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.admin-finance-source-panel small,
+.admin-finance-ofx-panel small,
+.admin-finance-commission-panel small {
+  color: var(--text-secondary);
+}
+
+.admin-finance-ofx-panel label,
+.admin-finance-pix-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-finance-ofx-panel input,
+.admin-finance-pix-grid input,
+.admin-finance-commission-panel textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--app-surface-solid);
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.admin-finance-ofx-panel em {
+  color: #c24a2d;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.admin-finance-commission-panel > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-finance-commission-panel > div:first-child span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-finance-commission-panel > div:first-child strong {
+  color: #22a447;
+  font-size: 1.35rem;
+}
+
+.admin-finance-pix-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 0.8fr;
+  gap: 10px;
+}
+
+.admin-statement-wireframe--empty .admin-finance-chart-card,
+.admin-statement-wireframe--empty .admin-finance-metrics,
+.admin-statement-wireframe--empty .admin-finance-statement-list {
+  display: none;
+}
+
+.admin-finance-source-panel {
+  display: none !important;
+}
+
+.admin-finance-ofx-panel--primary {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.admin-finance-upload-button {
+  min-height: 42px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-transform: none !important;
+}
+
+.admin-finance-upload-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.admin-finance-pix-button,
+.admin-finance-inter-pj button,
+.admin-budget-actions button,
+.admin-budget-add,
+.admin-email-modal__primary {
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #26364d;
+  color: #fff;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.admin-finance-pix-config,
+.admin-finance-inter-pj {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-finance-pix-config {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+
+.admin-finance-empty-state {
+  padding: 16px;
+}
+
+.admin-finance-inter-pj {
+  padding-top: 8px;
+  justify-items: start;
+}
+
+.admin-finance-inter-pj button {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-surface-solid) 94%, transparent);
+  color: var(--text-secondary);
+  border-color: var(--border-soft);
+  font-size: 0.78rem;
+}
+
+.admin-finance-inter-pj button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-budget-modal,
+.admin-email-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 92;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.admin-budget-modal__backdrop,
+.admin-email-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.admin-budget-modal__card,
+.admin-email-modal__card {
+  position: relative;
+  z-index: 1;
+  width: min(760px, calc(100vw - 28px));
+  max-height: min(86vh, 760px);
+  overflow: auto;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--app-surface-solid) 98%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-budget-modal__card--picker {
+  width: min(860px, calc(100vw - 28px));
+}
+
+.admin-budget-modal__header,
+.admin-email-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.admin-budget-modal__header span,
+.admin-email-modal__header span {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-budget-modal__header h3,
+.admin-email-modal__header h3 {
+  margin: 4px 0;
+  color: var(--text-primary);
+}
+
+.admin-budget-modal__header p,
+.admin-email-modal__header p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.admin-budget-modal__close,
+.admin-email-modal__close,
+.admin-budget-modal__secondary,
+.admin-email-modal__secondary {
+  min-height: 38px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--app-surface-solid);
+  color: var(--text-primary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-budget-modal__close,
+.admin-email-modal__close {
+  width: 40px;
+  font-size: 1.15rem;
+}
+
+.admin-budget-modal__header-actions,
+.admin-budget-actions,
+.admin-email-modal__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-budget-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-budget-service-card {
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
+  cursor: pointer;
+}
+
+.admin-budget-service-card strong,
+.admin-budget-total strong {
+  color: var(--text-primary);
+}
+
+.admin-budget-service-card span,
+.admin-budget-service-card small,
+.admin-budget-service-card em,
+.admin-budget-empty,
+.admin-budget-feedback {
+  color: var(--text-secondary);
+}
+
+.admin-budget-items {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-budget-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 120px 38px 38px;
+  gap: 8px;
+  align-items: end;
+}
+
+.admin-budget-item label,
+.admin-email-modal__field {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.admin-budget-item input,
+.admin-email-modal__field input,
+.admin-email-modal__field textarea {
+  width: 100%;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--app-surface-solid);
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.admin-budget-item__icon {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--app-surface-solid);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.admin-budget-item__icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.admin-budget-item__icon--danger {
+  color: #b42318;
+}
+
+.admin-budget-add {
+  justify-self: start;
+  padding: 0 14px;
+}
+
+.admin-budget-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%);
+}
+
+.admin-budget-actions button,
+.admin-email-modal__primary,
+.admin-email-modal__secondary,
+.admin-budget-modal__secondary {
+  padding: 0 14px;
+}
+
+.admin-email-modal__card {
+  width: min(620px, calc(100vw - 28px));
+}
+
+.admin-email-modal__primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .admin-finance-pix-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-finance-ofx-panel--primary,
+  .admin-finance-pix-config,
+  .admin-budget-picker,
+  .admin-budget-item {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-budget-item__icon {
+    width: 100%;
+  }
+}
+
 @media (max-width: 1180px) {
   .admin-bottom-sheet--history {
     left: 16px;

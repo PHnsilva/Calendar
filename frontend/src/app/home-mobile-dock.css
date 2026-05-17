@@ -2213,3 +2213,37 @@ body.home-client-bookings-surface-open .public-header__actions--home .header-boo
 .home-mobile-bookings-sheet__body .timeline-group__date span {
   font-size: 0.72rem !important;
 }
+
+.brand-contact-mini-popover__action--email-open {
+  width: min(280px, calc(100vw - 48px));
+  justify-content: flex-start;
+  padding-inline: 10px;
+}
+
+.brand-contact-mini-popover__email-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #26364d;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.brand-contact-mini-popover__email-value > button {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(38, 54, 77, 0.08);
+  color: #26364d;
+  cursor: pointer;
+}
+
+.brand-contact-mini-popover__email-value > button svg {
+  width: 14px;
+  height: 14px;
+}

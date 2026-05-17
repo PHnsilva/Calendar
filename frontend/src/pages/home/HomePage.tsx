@@ -22,7 +22,9 @@ import { ALLOWED_CITIES } from '../../data/allowed-cities';
 import type { CalendarEvent } from '../../features/calendar/types';
 import { getLocalCalendarEvents, saveLocalCalendarEvent } from '../../lib/storage';
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
+import { build4x4UnavailableDates, DEFAULT_4X4_CYCLE_START } from '../../features/calendar/utils/schedule-rules';
 import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
+import { usePublicBootstrap } from '../../features/public-config/hooks/usePublicBootstrap';
 import type { ServicoResponse } from '../../types/api';
 import type { AdminBlockMode } from '../../features/admin/api/manage-admin-blocks';
 import { createAdminBlocks } from '../../features/admin/api/manage-admin-blocks';
@@ -63,17 +65,6 @@ function getMonthDates(monthStart: string): string[] {
   return Array.from({ length: daysInMonth }, (_, index) =>
     toIsoDate(new Date(reference.getFullYear(), reference.getMonth(), index + 1)),
   );
-}
-
-function build4x4UnavailableDates(monthStart: string, anchorDateString: string): string[] {
-  const anchorDate = toLocalDate(anchorDateString);
-
-  return getMonthDates(monthStart).filter((dateString) => {
-    const currentDate = toLocalDate(dateString);
-    const diffInDays = Math.floor((currentDate.getTime() - anchorDate.getTime()) / (1000 * 60 * 60 * 24));
-    const normalized = ((diffInDays % 8) + 8) % 8;
-    return normalized >= 4;
-  });
 }
 
 function buildUnavailableFromAvailability(monthStart: string, availableDates: string[]): string[] {
@@ -342,6 +333,8 @@ export default function HomePage({
   const adminBookingsQuery = useAdminBookings({}, isAdminMode && !adminBookings);
   const currentMonthAvailability = useAvailableMonthDates(currentAllowedMonth, !isAdminMode);
   const nextMonthAvailability = useAvailableMonthDates(nextAllowedMonth, !isAdminMode);
+  const publicBootstrapQuery = usePublicBootstrap(!isAdminMode);
+  const scheduleCycleStart = publicBootstrapQuery.data?.schedule?.cycleStart ?? DEFAULT_4X4_CYCLE_START;
 
   const previewEvents = useMemo(
     () =>
@@ -379,8 +372,8 @@ export default function HomePage({
       return adminBlockedDates;
     }
 
-    const currentFallback = build4x4UnavailableDates(currentAllowedMonth, todayIso);
-    const nextFallback = build4x4UnavailableDates(nextAllowedMonth, todayIso);
+    const currentFallback = build4x4UnavailableDates(currentAllowedMonth, scheduleCycleStart);
+    const nextFallback = build4x4UnavailableDates(nextAllowedMonth, scheduleCycleStart);
 
     const currentUnavailable = currentMonthAvailability.hasError || currentMonthAvailability.isLoading
       ? currentFallback
@@ -402,6 +395,7 @@ export default function HomePage({
     nextMonthAvailability.availableDates,
     nextMonthAvailability.hasError,
     nextMonthAvailability.isLoading,
+    scheduleCycleStart,
     todayIso,
   ]);
 

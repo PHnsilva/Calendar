@@ -19,6 +19,18 @@ export interface AdminFinanceHealthResponse {
   message: string
 }
 
+export interface AdminFinanceConfigResponse {
+  features: {
+    interPjEnabled: boolean
+  }
+  pix: {
+    key: string
+    recipientName: string
+    recipientCity: string
+    description: string
+  }
+}
+
 export interface AdminHistoryItem {
   id: string
   occurredAt: string

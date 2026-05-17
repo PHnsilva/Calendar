@@ -2,6 +2,7 @@ package br.com.calendarmate.service;
 
 import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.config.BankingProperties;
+import br.com.calendarmate.dto.AdminFinanceConfigResponse;
 import br.com.calendarmate.dto.AdminHealthResponse;
 import br.com.calendarmate.dto.AdminStatementItem;
 import br.com.calendarmate.dto.AdminStatementResponse;
@@ -69,6 +70,23 @@ public class AdminFinanceService {
 
         StatementProvider.Health h = provider.health();
         return new AdminHealthResponse(h.ok(), h.provider(), h.message());
+    }
+
+    public AdminFinanceConfigResponse config() {
+        AdminFinanceConfigResponse response = new AdminFinanceConfigResponse();
+
+        AdminFinanceConfigResponse.Features features = new AdminFinanceConfigResponse.Features();
+        features.setInterPjEnabled(props.isInterPjFeatureEnabled());
+        response.setFeatures(features);
+
+        AdminFinanceConfigResponse.PixConfig pix = new AdminFinanceConfigResponse.PixConfig();
+        pix.setKey(props.getPixKey());
+        pix.setRecipientName(props.getPixRecipientName());
+        pix.setRecipientCity(props.getPixRecipientCity());
+        pix.setDescription(props.getPixDescription());
+        response.setPix(pix);
+
+        return response;
     }
 
     private void requireEnabled() {

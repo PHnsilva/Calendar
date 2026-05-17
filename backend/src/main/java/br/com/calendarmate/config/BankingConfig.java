@@ -16,7 +16,7 @@ public class BankingConfig {
         if (!p.isEnabled()) return new DummyStatementProvider();
 
         if ("INTER".equals(p.getProvider())) {
-            if (!p.isInterEnabled()) return new DummyStatementProvider();
+            if (!p.isInterPjFeatureEnabled() || !p.isInterEnabled()) return new DummyStatementProvider();
 
             InterMtlsHttp http = new InterMtlsHttp(p.getInterCertP12Path(), p.getInterCertP12Password());
             InterOAuthClient oauth = new InterOAuthClient(

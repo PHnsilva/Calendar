@@ -15,6 +15,9 @@ public class BankingProperties {
     @Value("${inter.enabled:false}")
     private boolean interEnabled;
 
+    @Value("${features.inter-pj.enabled:false}")
+    private boolean interPjFeatureEnabled;
+
     @Value("${inter.baseUrl:}")
     private String interBaseUrl;
 
@@ -48,6 +51,18 @@ public class BankingProperties {
     @Value("${inter.banking.toParam:dataFim}")
     private String interToParam;
 
+    @Value("${pix.key:}")
+    private String pixKey;
+
+    @Value("${pix.recipientName:SG Pequenos Reparos}")
+    private String pixRecipientName;
+
+    @Value("${pix.recipientCity:Belo Horizonte}")
+    private String pixRecipientCity;
+
+    @Value("${pix.description:Comissao socio}")
+    private String pixDescription;
+
     public boolean isEnabled() { return enabled; }
 
     public String getProvider() {
@@ -55,6 +70,7 @@ public class BankingProperties {
     }
 
     public boolean isInterEnabled() { return interEnabled; }
+    public boolean isInterPjFeatureEnabled() { return interPjFeatureEnabled; }
     public String getInterBaseUrl() { return safe(interBaseUrl); }
     public String getInterOAuthTokenPath() { return safe(interOAuthTokenPath); }
     public String getInterOAuthScope() { return safe(interOAuthScope); }
@@ -66,6 +82,10 @@ public class BankingProperties {
     public String getInterStatementPath() { return safe(interStatementPath); }
     public String getInterFromParam() { return safe(interFromParam); }
     public String getInterToParam() { return safe(interToParam); }
+    public String getPixKey() { return safe(pixKey); }
+    public String getPixRecipientName() { return safe(pixRecipientName); }
+    public String getPixRecipientCity() { return safe(pixRecipientCity); }
+    public String getPixDescription() { return safe(pixDescription); }
 
     private static String safe(String s) { return s == null ? "" : s.trim(); }
 }

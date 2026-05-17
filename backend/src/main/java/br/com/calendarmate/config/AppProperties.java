@@ -16,7 +16,7 @@ public class AppProperties {
     @Value("${app.zone:America/Sao_Paulo}")
     private String zone;
 
-    @Value("${app.schedule.cycleStart:}")
+    @Value("${app.schedule.cycleStart:2026-05-16}")
     private String scheduleCycleStart;
 
     @Value("${app.schedule.workStart:08:00}")

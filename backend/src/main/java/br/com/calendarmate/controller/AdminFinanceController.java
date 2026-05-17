@@ -1,5 +1,6 @@
 package br.com.calendarmate.controller;
 
+import br.com.calendarmate.dto.AdminFinanceConfigResponse;
 import br.com.calendarmate.dto.AdminHealthResponse;
 import br.com.calendarmate.dto.AdminStatementResponse;
 import br.com.calendarmate.service.AdminFinanceService;
@@ -32,5 +33,13 @@ public class AdminFinanceController {
     ) {
         AdminTokenGuard.require(header);
         return service.health();
+    }
+
+    @GetMapping("/config")
+    public AdminFinanceConfigResponse config(
+            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String header
+    ) {
+        AdminTokenGuard.require(header);
+        return service.config();
     }
 }

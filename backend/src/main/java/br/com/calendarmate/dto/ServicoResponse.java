@@ -26,6 +26,9 @@ public class ServicoResponse {
     private String clientAddressLine;
     private String status;
     private String manageToken;
+    private String assignedProviderId;
+    private String assignedProviderName;
+    private String assignedProviderPhone;
 
     public String getEventId() { return eventId; }
     public void setEventId(String eventId) { this.eventId = eventId; }
@@ -83,4 +86,13 @@ public class ServicoResponse {
 
     public String getManageToken() { return manageToken; }
     public void setManageToken(String manageToken) { this.manageToken = manageToken; }
+
+    public String getAssignedProviderId() { return assignedProviderId; }
+    public void setAssignedProviderId(String assignedProviderId) { this.assignedProviderId = assignedProviderId; }
+
+    public String getAssignedProviderName() { return assignedProviderName; }
+    public void setAssignedProviderName(String assignedProviderName) { this.assignedProviderName = assignedProviderName; }
+
+    public String getAssignedProviderPhone() { return assignedProviderPhone; }
+    public void setAssignedProviderPhone(String assignedProviderPhone) { this.assignedProviderPhone = assignedProviderPhone; }
 }

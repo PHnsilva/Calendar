@@ -1,7 +1,7 @@
 package br.com.calendarmate.controller;
 
+import br.com.calendarmate.service.AdminAuthService;
 import br.com.calendarmate.service.InternalCleanupService;
-import br.com.calendarmate.util.AdminTokenGuard;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -11,17 +11,19 @@ import java.io.IOException;
 public class InternalCleanupController {
 
     private final InternalCleanupService cleanupService;
+    private final AdminAuthService adminAuthService;
 
-    public InternalCleanupController(InternalCleanupService cleanupService) {
+    public InternalCleanupController(InternalCleanupService cleanupService, AdminAuthService adminAuthService) {
         this.cleanupService = cleanupService;
+        this.adminAuthService = adminAuthService;
     }
 
     @PostMapping("/cleanup")
     public InternalCleanupService.CleanupResult cleanup(
-            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String header,
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
             @RequestParam(required = false) Integer historyRetentionMonths) throws IOException {
 
-        AdminTokenGuard.require(header);
+        adminAuthService.requireOwner(session);
         return cleanupService.runDefault(historyRetentionMonths);
     }
 }

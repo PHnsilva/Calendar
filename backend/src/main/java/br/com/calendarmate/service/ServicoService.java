@@ -13,6 +13,9 @@ import br.com.calendarmate.google.CalendarClient;
 import br.com.calendarmate.model.PendingRecord;
 import br.com.calendarmate.model.Servico;
 import br.com.calendarmate.model.TimeWindow;
+import br.com.calendarmate.model.AdminPrincipal;
+import br.com.calendarmate.model.AdminUser;
+import br.com.calendarmate.service.store.BookingHistoryStore;
 import br.com.calendarmate.service.store.PendingStore;
 import br.com.calendarmate.util.LocationNormalizer;
 import com.google.api.client.util.DateTime;
@@ -33,6 +36,8 @@ public class ServicoService {
     private final AppProperties props;
     private final AvailabilityPolicyService availabilityPolicyService;
     private final PendingStore pendingStore;
+    private final AdminAuthService adminAuthService;
+    private final BookingHistoryStore bookingHistoryStore;
 
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
     private static final Set<Integer> ALLOWED_MINUTES = Set.of(0);
@@ -43,13 +48,17 @@ public class ServicoService {
             VerificationService verificationService,
             PendingStore pendingStore,
             AppProperties props,
-            AvailabilityPolicyService availabilityPolicyService) {
+            AvailabilityPolicyService availabilityPolicyService,
+            AdminAuthService adminAuthService,
+            BookingHistoryStore bookingHistoryStore) {
         this.calendar = calendar;
         this.tokenUtil = tokenUtil;
         this.verificationService = verificationService;
         this.pendingStore = pendingStore;
         this.props = props;
         this.availabilityPolicyService = availabilityPolicyService;
+        this.adminAuthService = adminAuthService;
+        this.bookingHistoryStore = bookingHistoryStore;
     }
 
     public ServicoCreateResponse create(ServicoRequest req) throws IOException {
@@ -58,6 +67,9 @@ public class ServicoService {
         validateServiceArea(req);
 
         String phoneDigits = normalizePhone(req.getClientPhone());
+        if (adminAuthService.isAdminPhone(phoneDigits)) {
+            throw new ForbiddenException("Telefone reservado para acesso administrativo");
+        }
 
         cleanupExpiredPendings();
         if (props.isBlockOtherBookingsWhenPending() && hasActivePendingForPhone(phoneDigits)) {
@@ -383,22 +395,30 @@ public class ServicoService {
     }
 
     public List<ServicoResponse> listAllAdmin() throws IOException {
-        return listAllAdmin(null, null, null, null);
+        return listAllAdmin(null, null, null, null, null);
     }
 
     public List<ServicoResponse> listAllAdmin(LocalDate fromDate, LocalDate toDate) throws IOException {
-        return listAllAdmin(fromDate, toDate, null, null);
+        return listAllAdmin(null, fromDate, toDate, null, null);
     }
 
     public List<ServicoResponse> listAllAdmin(LocalDate fromDate, LocalDate toDate, String status, String city)
             throws IOException {
+        return listAllAdmin(null, fromDate, toDate, status, city);
+    }
+
+    public List<ServicoResponse> listAllAdmin(AdminPrincipal principal, LocalDate fromDate, LocalDate toDate, String status, String city)
+            throws IOException {
+        syncBookingHistory();
+
         ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
+        LocalDate activeFrom = LocalDate.now(ZONE).minusDays(props.getAdminBookingActivePastDays());
 
         LocalDate resolvedFrom;
         LocalDate resolvedTo;
 
         if (fromDate == null && toDate == null) {
-            resolvedFrom = base.minusMonths(props.getHistoryRetentionMonths()).toLocalDate();
+            resolvedFrom = activeFrom;
             resolvedTo = base.plusMonths(2).toLocalDate().minusDays(1);
         } else {
             resolvedFrom = (fromDate != null) ? fromDate : toDate;
@@ -423,9 +443,40 @@ public class ServicoService {
         String normalizedCity = normalizeAdminCity(city);
 
         return events.stream()
+                .filter(this::isActiveAdminBooking)
+                .filter(e -> canPrincipalAccessEvent(principal, e))
                 .filter(e -> matchesAdminStatus(e, normalizedStatus))
                 .filter(e -> matchesAdminCity(e, normalizedCity))
                 .map(this::mapEventToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<ServicoResponse> listHistoryAdmin(AdminPrincipal principal, LocalDate fromDate, LocalDate toDate, String status, String city)
+            throws IOException {
+        syncBookingHistory();
+
+        Instant retentionStart = historyRetentionStartInstant();
+        Instant historyEnd = historyCutoffInstant();
+
+        Instant from = fromDate == null ? retentionStart : fromDate.atStartOfDay(ZONE).toInstant();
+        Instant to = toDate == null ? historyEnd : toDate.plusDays(1).atStartOfDay(ZONE).toInstant();
+        if (from.isBefore(retentionStart)) {
+            from = retentionStart;
+        }
+        if (to.isAfter(historyEnd)) {
+            to = historyEnd;
+        }
+        if (!from.isBefore(to)) {
+            return List.of();
+        }
+
+        String assignedProviderId = principal != null && principal.isProvider() ? principal.getId() : null;
+        String normalizedStatus = normalizeAdminStatus(status);
+        String normalizedCity = normalizeAdminCity(city);
+
+        return bookingHistoryStore.list(from, to, assignedProviderId).stream()
+                .filter(item -> normalizedStatus.isBlank() || normalizedStatus.equalsIgnoreCase(item.getStatus()))
+                .filter(item -> normalizedCity.isBlank() || normalizedCity.equals(LocationNormalizer.normalizeCity(item.getClientCity())))
                 .collect(Collectors.toList());
     }
 
@@ -434,6 +485,49 @@ public class ServicoService {
                 new DateTime(Date.from(from.toInstant())),
                 new DateTime(Date.from(to.toInstant())));
         return events == null ? Collections.emptyList() : events;
+    }
+
+    private boolean isActiveAdminBooking(Event event) {
+        Instant start = instantFrom(event.getStart());
+        return start != null && !start.isBefore(historyCutoffInstant());
+    }
+
+    private boolean canPrincipalAccessEvent(AdminPrincipal principal, Event event) {
+        if (principal == null || principal.isOwner()) {
+            return true;
+        }
+        Map<String, String> ext = privateExt(event);
+        return principal.getId().equals(ext.getOrDefault("assignedProviderId", ""));
+    }
+
+    private void syncBookingHistory() throws IOException {
+        Instant retentionStart = historyRetentionStartInstant();
+        Instant historyEnd = historyCutoffInstant();
+        if (!retentionStart.isBefore(historyEnd)) {
+            return;
+        }
+
+        ZonedDateTime from = ZonedDateTime.ofInstant(retentionStart, ZONE);
+        ZonedDateTime to = ZonedDateTime.ofInstant(historyEnd, ZONE);
+        List<Event> events = listBookingEventsBetween(from, to);
+        long archivedAt = Instant.now().getEpochSecond();
+
+        for (Event event : events) {
+            Map<String, String> ext = privateExt(event);
+            if (isExpiredPending(ext)) {
+                continue;
+            }
+            bookingHistoryStore.upsert(mapEventToResponse(event), archivedAt);
+        }
+        bookingHistoryStore.deleteOlderThan(retentionStart);
+    }
+
+    private Instant historyCutoffInstant() {
+        return Instant.now().minus(Duration.ofDays(props.getAdminBookingActivePastDays()));
+    }
+
+    private Instant historyRetentionStartInstant() {
+        return Instant.now().minus(Duration.ofDays(props.getHistoryRetentionDays()));
     }
 
     private boolean matchesAdminStatus(Event e, String normalizedStatus) {
@@ -472,6 +566,106 @@ public class ServicoService {
 
         pendingStore.deleteByEventId(eventId);
         calendar.deleteEvent(eventId);
+    }
+
+    public ServicoResponse assignProviderAdmin(String eventId, AdminUser provider) throws IOException {
+        Event existing = calendar.getEvent(eventId);
+        if (existing == null) {
+            throw new NotFoundException("Agendamento nao encontrado");
+        }
+        if (!isActiveAdminBooking(existing)) {
+            throw new BadRequestException("Agendamento ja esta no historico");
+        }
+
+        Servico s = servicoFromEvent(existing);
+        s.setAssignedProviderId(provider.getId());
+        s.setAssignedProviderName(provider.getName());
+        s.setAssignedProviderPhone(provider.getPhoneDigits());
+        Event updated = calendar.updateEvent(s);
+        return mapEventToResponse(updated == null ? existing : updated);
+    }
+
+    public void requireActiveAdminAccess(String eventId, AdminPrincipal principal) throws IOException {
+        Event existing = calendar.getEvent(eventId);
+        if (existing == null) {
+            throw new NotFoundException("Agendamento nao encontrado");
+        }
+        if (!canPrincipalAccessEvent(principal, existing)) {
+            throw new ForbiddenException("Agendamento nao designado para este prestador");
+        }
+        if (!isActiveAdminBooking(existing)) {
+            throw new BadRequestException("Agendamento ja esta no historico");
+        }
+    }
+
+    public ServicoResponse updateByIdAdmin(String eventId, AdminPrincipal principal, ServicoRequest req) throws IOException {
+        Event existing = calendar.getEvent(eventId);
+        if (existing == null) {
+            throw new NotFoundException("Agendamento nao encontrado");
+        }
+        if (!canPrincipalAccessEvent(principal, existing)) {
+            throw new ForbiddenException("Agendamento nao designado para este prestador");
+        }
+        if (!isActiveAdminBooking(existing)) {
+            throw new BadRequestException("Agendamento ja esta no historico");
+        }
+
+        validateAdminDateWindow(req.getDate());
+        validateTime(req.getTime());
+        validateServiceArea(req);
+
+        int durationMinutes = props.getBookingDurationMinutesForCity(req.getClientCity());
+        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
+        ZonedDateTime endZ = startZ.plusMinutes(durationMinutes);
+        Instant start = startZ.toInstant();
+        Instant end = endZ.toInstant();
+        if (!end.isAfter(start)) {
+            throw new BadRequestException("Horario invalido");
+        }
+
+        validateRequestedWindowAvailable(start, end);
+        validateAdminBusyWindow(existing, start, end);
+
+        String phoneDigits = normalizePhone(req.getClientPhone());
+        if (adminAuthService.isAdminPhone(phoneDigits)) {
+            throw new ForbiddenException("Telefone reservado para acesso administrativo");
+        }
+
+        Map<String, String> ext0 = privateExt(existing);
+        Servico s = new Servico();
+        s.setEventId(eventId);
+        s.setTitle(req.getServiceType());
+        s.setDescription(req.getServiceType());
+        s.setStart(start);
+        s.setEnd(end);
+        s.setClientFirstName(req.getClientFirstName());
+        s.setClientLastName(req.getClientLastName());
+        s.setClientEmail(req.getClientEmail());
+        s.setClientPhone(phoneDigits);
+        s.setClientCep(req.getClientCep());
+        s.setClientStreet(req.getClientStreet());
+        s.setClientNeighborhood(req.getClientNeighborhood());
+        s.setClientNumber(req.getClientNumber());
+        s.setClientComplement(req.getClientComplement());
+        s.setClientCity(req.getClientCity());
+        s.setClientState(req.getClientState());
+        s.setStatus(ext0.getOrDefault("status", "CONFIRMED"));
+        s.setAssignedProviderId(ext0.getOrDefault("assignedProviderId", ""));
+        s.setAssignedProviderName(ext0.getOrDefault("assignedProviderName", ""));
+        s.setAssignedProviderPhone(ext0.getOrDefault("assignedProviderPhone", ""));
+
+        String pe = ext0.get("pendingExpiresAt");
+        if (pe != null && pe.matches("\\d+")) {
+            s.setPendingExpiresAt(Instant.ofEpochSecond(Long.parseLong(pe)));
+        }
+
+        String pv = ext0.get("phoneVerifiedAt");
+        if (pv != null && pv.matches("\\d+")) {
+            s.setPhoneVerifiedAt(Instant.ofEpochSecond(Long.parseLong(pv)));
+        }
+
+        Event updated = calendar.updateEvent(s);
+        return mapEventToResponse(updated == null ? existing : updated);
     }
 
     public List<AvailableSlotResponse> getAvailableSlots(LocalDate date, String city, int slotMinutes) throws IOException {
@@ -579,6 +773,43 @@ public class ServicoService {
 
         if (!ymReq.equals(ymNow) && !ymReq.equals(ymNext)) {
             throw new BadRequestException("Data inválida: apenas mês atual ou próximo");
+        }
+    }
+
+    private void validateAdminDateWindow(LocalDate requestedDate) {
+        LocalDate today = LocalDate.now(ZONE);
+        if (requestedDate == null) {
+            throw new BadRequestException("date e obrigatorio");
+        }
+        LocalDate min = today.minusDays(props.getAdminBookingActivePastDays());
+        LocalDate max = today.plusMonths(props.getAdminBookingMaxFutureMonthsAhead());
+        if (requestedDate.isBefore(min) || requestedDate.isAfter(max)) {
+            throw new BadRequestException("Data fora da janela administrativa permitida");
+        }
+    }
+
+    private void validateAdminBusyWindow(Event existing, Instant start, Instant end) throws IOException {
+        DateTime timeMin = new DateTime(Date.from(start));
+        DateTime timeMax = new DateTime(Date.from(end));
+        List<TimePeriod> busy = calendar.freeBusy(timeMin, timeMax);
+        if (busy == null || busy.isEmpty()) {
+            return;
+        }
+
+        Instant oldStart = instantFrom(existing.getStart());
+        Instant oldEnd = instantFrom(existing.getEnd());
+        for (TimePeriod tp : busy) {
+            if (tp.getStart() == null || tp.getEnd() == null) {
+                throw new ConflictException("Horario indisponivel");
+            }
+            Instant bs = Instant.ofEpochMilli(tp.getStart().getValue());
+            Instant be = Instant.ofEpochMilli(tp.getEnd().getValue());
+            boolean isSelf = oldStart != null && oldEnd != null
+                    && !bs.isBefore(oldStart)
+                    && !be.isAfter(oldEnd);
+            if (!isSelf) {
+                throw new ConflictException("Horario indisponivel");
+            }
         }
     }
 
@@ -756,6 +987,9 @@ public class ServicoService {
 
         s.setClientAddressLine(buildAddressLine(s));
         s.setStatus(ext.getOrDefault("status", "PENDING_PHONE"));
+        s.setAssignedProviderId(ext.getOrDefault("assignedProviderId", ""));
+        s.setAssignedProviderName(ext.getOrDefault("assignedProviderName", ""));
+        s.setAssignedProviderPhone(ext.getOrDefault("assignedProviderPhone", ""));
 
         return s;
     }
@@ -795,6 +1029,9 @@ public class ServicoService {
         s.setClientState(ext.getOrDefault("clientState", ""));
 
         s.setStatus(ext.getOrDefault("status", "PENDING_PHONE"));
+        s.setAssignedProviderId(ext.getOrDefault("assignedProviderId", ""));
+        s.setAssignedProviderName(ext.getOrDefault("assignedProviderName", ""));
+        s.setAssignedProviderPhone(ext.getOrDefault("assignedProviderPhone", ""));
 
         String pe = ext.get("pendingExpiresAt");
         if (pe != null && pe.matches("\\d+")) {

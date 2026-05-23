@@ -241,6 +241,9 @@ public class DummyCalendarClient implements CalendarClient {
         ext.put("clientComplement", safe(s.getClientComplement()));
         ext.put("clientCity", safe(s.getClientCity()));
         ext.put("clientState", safe(s.getClientState()));
+        putIfNotBlank(ext, "assignedProviderId", s.getAssignedProviderId());
+        putIfNotBlank(ext, "assignedProviderName", s.getAssignedProviderName());
+        putIfNotBlank(ext, "assignedProviderPhone", s.getAssignedProviderPhone());
 
         ev.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
     }
@@ -315,5 +318,12 @@ public class DummyCalendarClient implements CalendarClient {
 
     private static String safe(String s) {
         return s == null ? "" : s;
+    }
+
+    private static void putIfNotBlank(Map<String, String> ext, String key, String value) {
+        String safeValue = safe(value).trim();
+        if (!safeValue.isBlank()) {
+            ext.put(key, safeValue);
+        }
     }
 }

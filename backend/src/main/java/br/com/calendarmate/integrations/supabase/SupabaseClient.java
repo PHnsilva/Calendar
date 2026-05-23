@@ -49,6 +49,19 @@ public class SupabaseClient {
         http.exchange(url, HttpMethod.POST, req, String.class);
     }
 
+    public void upsert(String table, Object jsonBody, String onConflict) {
+        String url = baseUrl + "/rest/v1/" + table;
+        UriComponentsBuilder b = UriComponentsBuilder.fromHttpUrl(url);
+        if (onConflict != null && !onConflict.isBlank()) {
+            b.queryParam("on_conflict", onConflict.trim());
+        }
+
+        HttpHeaders h = headers(true);
+        h.set("Prefer", "resolution=merge-duplicates,return=representation");
+        HttpEntity<Object> req = new HttpEntity<>(jsonBody, h);
+        http.exchange(b.toUriString(), HttpMethod.POST, req, String.class);
+    }
+
     public void delete(String table, Map<String, String> filters) {
         String url = baseUrl + "/rest/v1/" + table;
         UriComponentsBuilder b = UriComponentsBuilder.fromHttpUrl(url);

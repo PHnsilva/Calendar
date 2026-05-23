@@ -32,6 +32,7 @@ public class VerificationService {
     private final OtpDeliveryClient otpDeliveryClient;
     private final AppProperties props;
     private final PendingStore pendingStore;
+    private final AdminAuthService adminAuthService;
 
     public VerificationService(
             CalendarClient calendarClient,
@@ -39,7 +40,8 @@ public class VerificationService {
             VerificationStore store,
             PendingStore pendingStore,
             OtpDeliveryClient otpDeliveryClient,
-            AppProperties props
+            AppProperties props,
+            AdminAuthService adminAuthService
     ) {
         this.calendarClient = calendarClient;
         this.tokenUtil = tokenUtil;
@@ -47,6 +49,7 @@ public class VerificationService {
         this.pendingStore = pendingStore;
         this.otpDeliveryClient = otpDeliveryClient;
         this.props = props;
+        this.adminAuthService = adminAuthService;
     }
 
     public StartResult start(String token, String phoneRaw) throws IOException {
@@ -72,6 +75,9 @@ public class VerificationService {
         }
 
         String phoneDigits = normalizePhone(phoneRaw);
+        if (adminAuthService.isAdminPhone(phoneDigits)) {
+            throw new ForbiddenException("Telefone reservado para acesso administrativo");
+        }
 
         Servico s = fromEvent(ev);
         s.setClientPhone(phoneDigits);

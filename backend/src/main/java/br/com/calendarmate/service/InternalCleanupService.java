@@ -3,6 +3,7 @@ package br.com.calendarmate.service;
 import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.google.CalendarClient;
 import br.com.calendarmate.service.store.HistoryStore;
+import br.com.calendarmate.service.store.BookingHistoryStore;
 import br.com.calendarmate.service.store.PendingStore;
 import br.com.calendarmate.service.store.VerificationStore;
 import com.google.api.client.util.DateTime;
@@ -25,6 +26,7 @@ public class InternalCleanupService {
     private final PendingStore pendingStore;
     private final VerificationStore verificationStore;
     private final HistoryStore historyStore;
+    private final BookingHistoryStore bookingHistoryStore;
     private final AppProperties props;
 
     public record CleanupResult(
@@ -39,12 +41,14 @@ public class InternalCleanupService {
             PendingStore pendingStore,
             VerificationStore verificationStore,
             HistoryStore historyStore,
+            BookingHistoryStore bookingHistoryStore,
             AppProperties props
     ) {
         this.calendarClient = calendarClient;
         this.pendingStore = pendingStore;
         this.verificationStore = verificationStore;
         this.historyStore = historyStore;
+        this.bookingHistoryStore = bookingHistoryStore;
         this.props = props;
     }
 
@@ -64,6 +68,7 @@ public class InternalCleanupService {
         verificationStore.cleanupExpired();
 
         int historyDeleted = historyStore.deleteOlderThan(keepFromInclusive.getEpochSecond());
+        historyDeleted += bookingHistoryStore.deleteOlderThan(keepFromInclusive);
 
         return new CleanupResult(calendarDeleted, pendingDeleted, historyDeleted);
     }

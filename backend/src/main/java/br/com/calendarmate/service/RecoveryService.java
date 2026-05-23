@@ -24,6 +24,7 @@ public class RecoveryService {
     private final AppProperties props;
     private final ServicoService servicoService;
     private final TokenUtil tokenUtil;
+    private final AdminAuthService adminAuthService;
 
     public RecoveryService(
             VerificationStore verificationStore,
@@ -31,7 +32,8 @@ public class RecoveryService {
             OtpDeliveryClient otpDeliveryClient,
             AppProperties props,
             ServicoService servicoService,
-            TokenUtil tokenUtil
+            TokenUtil tokenUtil,
+            AdminAuthService adminAuthService
     ) {
         this.verificationStore = verificationStore;
         this.historyStore = historyStore;
@@ -39,10 +41,14 @@ public class RecoveryService {
         this.props = props;
         this.servicoService = servicoService;
         this.tokenUtil = tokenUtil;
+        this.adminAuthService = adminAuthService;
     }
 
     public StartResult start(String phoneRaw) {
         String phoneDigits = normalizePhone(phoneRaw);
+        if (adminAuthService.isAdminPhone(phoneDigits)) {
+            throw new BadRequestException("Use o acesso administrativo para este telefone");
+        }
 
         VerificationStore.Session sess = verificationStore.create(
                 "recovery:" + phoneDigits,

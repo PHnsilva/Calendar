@@ -40,7 +40,7 @@ Render  -> backend Dockerizado
 - Consulta de horários disponíveis por dia.
 - Token de gerenciamento sem login.
 - Recuperação de agendamentos por telefone.
-- Painel admin com token via header `X-ADMIN-TOKEN`.
+- Painel admin por telefone/SMS, sessao temporaria e papeis `OWNER`/`PROVIDER`.
 - Bloqueios de disponibilidade e escala 4x4.
 - Histórico com retenção configurável, por padrão 2 meses.
 - Extrato/admin financeiro via provider `DUMMY` ou Banco Inter.
@@ -70,8 +70,10 @@ Arquivo base: `backend/.env.example`.
 ```env
 SERVER_PORT=8080
 FRONTEND_URL=https://seu-front.vercel.app
-ADMIN_TOKEN=troque-este-token
 HMAC_SECRET=troque-este-segredo-longo
+ADMIN_SESSION_TTL_DAYS=7
+ADMIN_BOOKING_ACTIVE_PAST_DAYS=10
+APP_HISTORY_RETENTION_MONTHS=2.0
 ```
 
 ### Confirmação por SMS
@@ -205,8 +207,8 @@ Obrigatórias em produção:
 
 ```env
 FRONTEND_URL=https://seu-front.vercel.app
-ADMIN_TOKEN=...
 HMAC_SECRET=...
+ADMIN_SESSION_TTL_DAYS=7
 ```
 
 ### Vercel — frontend
@@ -251,13 +253,16 @@ VITE_API_BASE_URL=https://seu-backend.onrender.com
 
 ### Admin
 
-Todos exigem `X-ADMIN-TOKEN`.
+O admin usa `/api/admin/auth/start` e `/api/admin/auth/confirm` para login por SMS. As demais rotas exigem `X-ADMIN-SESSION`.
 
 - `GET /api/servicos/admin`
-- `DELETE /api/servicos/admin/{eventId}`
-- `POST /api/internal/cleanup`
-- `GET /api/admin/finance/statement?from=YYYY-MM-DD&to=YYYY-MM-DD`
-- `GET /api/admin/finance/health`
+- `GET /api/servicos/admin/history`
+- `PUT /api/servicos/admin/{eventId}`
+- `PUT /api/servicos/admin/{eventId}/assignee` (`OWNER`)
+- `DELETE /api/servicos/admin/{eventId}` (`OWNER`)
+- `POST /api/internal/cleanup` (`OWNER`)
+- `GET /api/admin/finance/statement?from=YYYY-MM-DD&to=YYYY-MM-DD` (`OWNER`)
+- `GET /api/admin/finance/health` (`OWNER`)
 
 ## Licença
 

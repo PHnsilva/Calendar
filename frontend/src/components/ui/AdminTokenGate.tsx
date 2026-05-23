@@ -25,7 +25,7 @@ export default function AdminTokenGate({ initialToken = "" }: AdminTokenGateProp
             className="booking-form__input"
             value={token}
             onChange={(event) => setToken(event.target.value)}
-            placeholder="Cole aqui o ADMIN_TOKEN"
+            placeholder="Sessao administrativa"
           />
         </label>
 

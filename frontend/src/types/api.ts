@@ -35,6 +35,9 @@ export type ServicoResponse = {
   clientAddressLine: string;
   status: string;
   manageToken?: string;
+  assignedProviderId?: string;
+  assignedProviderName?: string;
+  assignedProviderPhone?: string;
 };
 
 export type ServicoCreateResponse = {
@@ -163,4 +166,33 @@ export type AvailabilityBlockPreviewResponse = {
   reason?: string;
   conflictCount: number;
   conflicts: AvailabilityConflictItem[];
+};
+
+export type AdminRole = "OWNER" | "PROVIDER";
+
+export type AdminMeResponse = {
+  id: string;
+  name: string;
+  phone: string;
+  role: AdminRole;
+  permissions: string[];
+  sessionExpiresAt: number;
+};
+
+export type AdminAuthStartResponse = {
+  verificationId: string;
+  expiresInSeconds: number;
+  resendAfterSeconds: number;
+};
+
+export type AdminAuthConfirmResponse = {
+  sessionToken: string;
+  admin: AdminMeResponse;
+};
+
+export type AdminProviderResponse = {
+  id: string;
+  name: string;
+  phone: string;
+  role: AdminRole;
 };

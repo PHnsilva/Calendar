@@ -15,20 +15,26 @@ import contactWhatsAppIcon from '../../assets/wireframes/icons/contact-whatsapp.
 import contactInstagramIcon from '../../assets/wireframes/icons/contact-instagram.png';
 import contactPhoneIcon from '../../assets/wireframes/icons/contact-phone.png';
 import contactEmailIcon from '../../assets/wireframes/icons/contact-email.png';
+import benefitPracticalityIcon from '../../assets/wireframes/icons/benefit-practicality-clock.png';
+import benefitSecurityIcon from '../../assets/wireframes/icons/benefit-security-shield.png';
+import benefitSpeedIcon from '../../assets/wireframes/icons/benefit-speed-flash.png';
+import benefitFollowIcon from '../../assets/wireframes/icons/benefit-follow-calendar.png';
+import footerSecurityIcon from '../../assets/wireframes/icons/footer-security-shield.png';
 import adminAppointmentsIcon from '../../assets/wireframes/icons/admin-appointments-clipboard.png';
 import adminBlocksIcon from '../../assets/wireframes/icons/admin-blocks-lock.png';
 import adminHistoryIcon from '../../assets/wireframes/icons/admin-history-clock.png';
 import adminFinanceIcon from '../../assets/wireframes/icons/admin-finance-chart.png';
 import confirmPhoneSecurityIllustration from '../../assets/wireframes/modals/confirm-phone-security.png';
 import emailIllustrationAsset from '../../assets/wireframes/modals/email-illustration.png';
+import { FinancialStatementPanel } from '../admin/FinancialStatementPanel';
+import { HistoryPanel } from '../admin/HistoryPanel';
 import { ALLOWED_CITIES } from '../../data/allowed-cities';
 import { listAdminBlocks } from '../../features/admin/api/manage-admin-blocks';
 import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
 import { useMyBookings } from '../../features/bookings/hooks/useMyBookings';
 import type { CalendarEvent } from '../../features/calendar/types';
-import { FinancialChart } from '../../features/finance/components/FinancialChart';
-import { buildFinancialDashboardFromEntries, parseOfxToFinancialDashboard } from '../../features/finance/services/ofx-parser';
-import type { FinancialDashboardDTO, FinancialTransaction } from '../../features/finance/types';
+import { parseOfxToFinancialDashboard } from '../../features/finance/services/ofx-parser';
+import type { FinancialDashboardDTO } from '../../features/finance/types';
 import {
   formatPhoneForDisplay,
   getLocalCalendarEvents,
@@ -43,9 +49,9 @@ import {
 import type { AdminProviderResponse, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
 import { confirmAdminLogin, listAdminProviders, startAdminLogin } from '../../features/admin/api/admin-auth';
-import { getAdminHistory } from '../../features/admin/api/get-admin-history';
 import { updateAdminBooking } from '../../features/admin/api/update-admin-booking';
 import { exportBudgetPdf, exportBudgetXls } from '../../features/admin/services/budget-export';
+import { ApiError } from '../../lib/api-client';
 import '../../app/wireframes.css';
 
 type ModalKind =
@@ -96,15 +102,6 @@ type BudgetDraftItem = {
   quantity: string;
   unitPrice: string;
 };
-
-const fallbackFinanceDashboard = buildFinancialDashboardFromEntries([
-  { id: 'fallback-1', title: 'Pagamento recebido AGD-2025-0126', date: '2025-05-03', time: '', category: 'credit', amount: 420 },
-  { id: 'fallback-2', title: 'Compra de material', date: '2025-05-04', time: '', category: 'material', amount: -89.5 },
-  { id: 'fallback-3', title: 'Pagamento recebido AGD-2025-0127', date: '2025-05-09', time: '', category: 'credit', amount: 280 },
-  { id: 'fallback-4', title: 'Taxa da plataforma', date: '2025-05-13', time: '', category: 'taxa', amount: -32.9 },
-  { id: 'fallback-5', title: 'Pagamento recebido AGD-2025-0128', date: '2025-05-18', time: '', category: 'credit', amount: 350 },
-  { id: 'fallback-6', title: 'Pagamento recebido AGD-2025-0129', date: '2025-05-24', time: '', category: 'credit', amount: 520 },
-]);
 
 const accentCycle: Accent[] = ['blue', 'orange', 'green', 'purple', 'cyan'];
 const ptDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -254,19 +251,6 @@ function useAdminBookingsData() {
   return { bookings: sortBookings(bookings), isLoading: query.isFetching, isError: query.isError, hasAdminToken };
 }
 
-function useAdminHistoryData() {
-  const hasAdminToken = Boolean(getStoredAdminToken());
-  const query = useQuery({
-    queryKey: ['wireframe-admin-history'],
-    queryFn: () => getAdminHistory(),
-    enabled: hasAdminToken,
-    staleTime: 15_000,
-    retry: 0,
-  });
-  const bookings = useMemo(() => (query.data ?? []).map(bookingFromServico), [query.data]);
-  return { bookings: sortBookings(bookings), isLoading: query.isFetching, isError: query.isError, hasAdminToken };
-}
-
 function useAdminBlocksData() {
   const hasAdminToken = Boolean(getStoredAdminToken());
   const query = useQuery({
@@ -304,6 +288,11 @@ function Icon({ name }: { name: string }) {
     'contact-instagram': contactInstagramIcon,
     'contact-phone': contactPhoneIcon,
     'contact-email': contactEmailIcon,
+    'benefit-practicality': benefitPracticalityIcon,
+    'benefit-security': benefitSecurityIcon,
+    'benefit-speed': benefitSpeedIcon,
+    'benefit-follow': benefitFollowIcon,
+    'footer-security': footerSecurityIcon,
     'admin-appointments': adminAppointmentsIcon,
     'admin-blocks': adminBlocksIcon,
     'admin-history': adminHistoryIcon,
@@ -553,10 +542,9 @@ function AdminHeader({ active, onView, onCreate, onBudget }: { active: AdminView
         <HeaderButton variant="blue" onClick={() => { clearAdminToken(); navigate('/admin', { replace: true }); }}><Icon name="user" /> <span>{session?.name || 'Admin'}</span> <Icon name="chevron" /></HeaderButton>
         <HeaderButton variant="orange" onClick={onCreate}><span>Novo agendamento</span> <Icon name="plus" /></HeaderButton>
       </nav>
-      <nav className="wf-mobile-actions" aria-label="Ações administrativas rápidas">
-        <HeaderButton compact onClick={() => selectView('agendamentos')}><Icon name="calendar" /></HeaderButton>
-        <HeaderButton compact onClick={() => notifyUnavailable('Menu do administrador')}><Icon name="user" /></HeaderButton>
-        <HeaderButton variant="orange" compact onClick={onCreate}><Icon name="plus" /></HeaderButton>
+      <nav className="wf-mobile-actions wf-mobile-actions--admin" aria-label="Ações administrativas rápidas">
+        <HeaderButton variant="blue" onClick={() => notifyUnavailable('Menu do administrador')}><Icon name="user" /> <span>{session?.name || 'Admin'}</span> <Icon name="chevron" /></HeaderButton>
+        <HeaderButton variant="ghost" compact onClick={() => notifyUnavailable('Menu do administrador')}><Icon name="menu" /></HeaderButton>
       </nav>
     </header>
   );
@@ -595,7 +583,7 @@ function HeroVisual({ type }: { type: 'client' | 'admin' }) {
   return (
     <div className={cx('wf-hero-visual', `wf-hero-visual--${type}`)}>
       <picture>
-        <source media="(max-width: 720px)" srcSet={mobile} />
+        <source media="(max-width: 799px)" srcSet={mobile} />
         <img src={desktop} alt="Prestador de pequenos reparos" />
       </picture>
     </div>
@@ -610,7 +598,7 @@ function LandingFooter({ admin = false }: { admin?: boolean }) {
       <button type="button" onClick={() => notifyUnavailable('Sobre o serviço')}>Sobre o serviço</button>
       <button type="button" onClick={() => notifyUnavailable('Perguntas frequentes')}>Perguntas frequentes</button>
       <button type="button" onClick={() => notifyUnavailable('Contato')}>Contato</button>
-      <strong><Icon name="shield" /> Seus dados protegidos com privacidade.</strong>
+      <strong><Icon name="footer-security" /> Seus dados protegidos com privacidade.</strong>
     </footer>
   );
 }
@@ -660,10 +648,10 @@ export function ClientLanding() {
           <article className="wf-why-card">
             <h2>Por que usar o SG Agendamentos?</h2>
             <div className="wf-mini-features">
-              <span><Icon name="clock" /><strong>Mais praticidade</strong><small>Tudo online, sem burocracia.</small></span>
-              <span><Icon name="shield" /><strong>Mais segurança</strong><small>Confirmação por telefone no dia.</small></span>
-              <span><Icon name="flash" /><strong>Mais rapidez</strong><small>Agende em poucos cliques.</small></span>
-              <span><Icon name="calendar" /><strong>Acompanhamento</strong><small>Acompanhe o status do seu pedido.</small></span>
+              <span><Icon name="benefit-practicality" /><strong>Mais praticidade</strong><small>Tudo online, sem burocracia.</small></span>
+              <span><Icon name="benefit-security" /><strong>Mais segurança</strong><small>Confirmação por telefone no dia.</small></span>
+              <span><Icon name="benefit-speed" /><strong>Mais rapidez</strong><small>Agende em poucos cliques.</small></span>
+              <span><Icon name="benefit-follow" /><strong>Acompanhamento</strong><small>Acompanhe o status do seu pedido.</small></span>
             </div>
           </article>
         </section>
@@ -829,6 +817,21 @@ function AdminLandingCard({ icon, title, text, color, view, onOpen }: { icon: st
   );
 }
 
+function getAdminAuthErrorMessage(error: unknown, step: 'start' | 'confirm'): string {
+  if (error instanceof ApiError) {
+    if (step === 'start') {
+      if (error.status === 400) return 'Informe um telefone válido.';
+      if (error.status === 401 || error.status === 403) return 'Número não autorizado para acesso administrativo.';
+      return 'Não foi possível validar o acesso agora. Tente novamente.';
+    }
+    if (error.status === 400 || error.status === 401 || error.status === 403) {
+      return 'Código inválido ou expirado.';
+    }
+    return 'Não foi possível validar o acesso agora. Tente novamente.';
+  }
+  return 'Não foi possível validar o acesso agora. Tente novamente.';
+}
+
 export function AdminLanding() {
   const [modal, setModal] = useState<ModalKind>(null);
   const navigate = useNavigate();
@@ -884,7 +887,7 @@ function AdminLoginScreen({ onDone }: { onDone: () => void }) {
       const response = await startAdminLogin(phone);
       setVerificationId(response.verificationId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nao foi possivel enviar o codigo.');
+      setError(getAdminAuthErrorMessage(err, 'start'));
     } finally {
       setLoading(false);
     }
@@ -898,7 +901,7 @@ function AdminLoginScreen({ onDone }: { onDone: () => void }) {
       await confirmAdminLogin(verificationId, code.trim());
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Codigo invalido.');
+      setError(getAdminAuthErrorMessage(err, 'confirm'));
     } finally {
       setLoading(false);
     }
@@ -937,7 +940,6 @@ export function AdminDashboardReplica() {
   const [view, setView] = useState<AdminView>(getInitialAdminView);
   const [modal, setModal] = useState<ModalKind>(null);
   const [context, setContext] = useState<ModalContext>({});
-  const [financialDashboard, setFinancialDashboard] = useState<FinancialDashboardDTO | null>(null);
   const openCreate = () => { setContext({}); setModal('create-client'); };
   const openBudget = () => { setContext({}); setModal('budget-admin'); };
   const session = getStoredAdminSession();
@@ -954,10 +956,10 @@ export function AdminDashboardReplica() {
       <main className="wf-admin-main">
         {effectiveView === 'agenda' || effectiveView === 'agendamentos' ? <AdminAppointmentsView setModal={setModal} setContext={setContext} /> : null}
         {effectiveView === 'bloqueios' ? <AdminBlocksView setModal={setModal} /> : null}
-        {effectiveView === 'historico' ? <AdminHistoryView setModal={setModal} setContext={setContext} /> : null}
-        {effectiveView === 'extrato' ? <AdminFinanceView dashboard={financialDashboard ?? fallbackFinanceDashboard} hasImportedOfx={Boolean(financialDashboard)} setModal={setModal} /> : null}
+        {effectiveView === 'historico' ? <AdminHistoryView /> : null}
+        {effectiveView === 'extrato' ? <AdminFinanceView /> : null}
       </main>
-      <WireframeModal modal={modal} context={context} onClose={() => setModal(null)} onOfxImported={setFinancialDashboard} />
+      <WireframeModal modal={modal} context={context} onClose={() => setModal(null)} />
     </div>
   );
 }
@@ -1077,157 +1079,22 @@ function MiniMonth({ blocks = [] }: { blocks?: AvailabilityBlockResponse[] }) {
   );
 }
 
-function AdminHistoryView({ setModal, setContext }: { setModal: (modal: ModalKind) => void; setContext: (context: ModalContext) => void }) {
-  const { bookings: historyBookings, isLoading, isError, hasAdminToken } = useAdminHistoryData();
-  const [selected, setSelected] = useState<BookingItem | undefined>(historyBookings[0]);
-  useEffect(() => {
-    if (!selected && historyBookings[0]) setSelected(historyBookings[0]);
-  }, [historyBookings, selected]);
-  const openBudget = (booking: BookingItem) => { setContext({ booking }); setModal('budget-admin'); };
-
-  return (
-    <section className="wf-admin-section wf-history-view">
-      <div className="wf-admin-title-row">
-        <span className="wf-large-icon wf-large-icon--orange"><Icon name="calendar" /></span>
-        <div><h1>Histórico</h1><p>Consulte os agendamentos já concluídos e as informações registradas pelos clientes.</p></div>
-      </div>
-      <div className="wf-filters-card wf-filters-card--history">
-        <label>Período<input type="date" /></label>
-        <label>Cliente<input placeholder="Buscar cliente" /></label>
-        <label>Prestador<input placeholder="Buscar prestador" /></label>
-        <label>Busca<input placeholder="Buscar por cliente, prestador ou código" /></label>
-      </div>
-      <div className="wf-history-grid">
-        <div className="wf-table-card wf-history-list">
-          <h2>Agendamentos concluídos</h2>
-          {isLoading ? <EmptyState title="Carregando histórico" text="Buscando dados reais do backend." /> : null}
-          {isError || !hasAdminToken ? <EmptyState title="Histórico não disponível" text="Faça login administrativo para carregar o histórico real." /> : null}
-          {!isLoading && !isError && historyBookings.length === 0 ? <EmptyState title="Nenhum concluído encontrado" text="Não há agendamentos concluídos retornados pela API." /> : null}
-          {historyBookings.map((booking) => (
-            <article className="wf-history-item" key={booking.id}>
-              <span className="wf-ok-dot">✓</span>
-              <div><strong>{ptDate.format(toLocalDate(booking.date))}</strong><small>{booking.time}</small></div>
-              <div><strong>{booking.provider || 'A definir'}</strong><small>{booking.service}</small></div>
-              <Avatar name={booking.name} large />
-              <div><strong>{booking.name}</strong><small>{booking.id}</small></div>
-              <button type="button" onClick={() => { setSelected(booking); setContext({ booking }); setModal('client-details'); }}>Ver detalhes ›</button>
-              <button type="button" onClick={() => openBudget(booking)}>Orcamento</button>
-            </article>
-          ))}
-        </div>
-        <aside className="wf-history-detail">
-          {selected ? (
-            <>
-              <Avatar name={selected.name} huge />
-              <h2>{selected.name}</h2>
-              <p>{selected.service}</p>
-              <Badge color="green"><Icon name="check" /> Atendimento concluído</Badge>
-              <dl>
-                <dt><Icon name="calendar" /> Agendamento</dt><dd>{selected.id}</dd>
-                <dt><Icon name="user" /> Cliente</dt><dd>{selected.name}</dd>
-                <dt><Icon name="phone" /> Telefone</dt><dd>{formatPhoneForDisplay(selected.phone) || 'Não informado'}</dd>
-                <dt><Icon name="mail" /> Ações</dt><dd><button type="button" onClick={() => { setContext({ booking: selected }); setModal('email-admin'); }}>Enviar e-mail</button> <button type="button" onClick={() => openBudget(selected)}>Orcamento</button></dd>
-                <dt><Icon name="map" /> Endereço</dt><dd>{selected.address}</dd>
-                <dt><Icon name="chat" /> Serviço</dt><dd>{selected.service}</dd>
-              </dl>
-            </>
-          ) : <EmptyState title="Selecione um atendimento" text="Os detalhes aparecerão aqui quando houver histórico real." />}
-        </aside>
-      </div>
-    </section>
-  );
+function AdminHistoryView() {
+  return <HistoryPanel />;
 }
 
-function formatFinanceMonth(month: string): string {
-  const [year, monthNumber] = month.split('-').map(Number);
-  if (!year || !monthNumber) return month;
-  return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(year, monthNumber - 1, 1));
-}
-
-function formatFinanceDate(date: string): string {
-  return ptDate.format(toLocalDate(date));
-}
-
-function formatTransactionAmount(transaction: FinancialTransaction): string {
-  const prefix = transaction.type === 'EXIT' ? '-' : '';
-  return `${prefix}${formatCurrency(transaction.amount)}`;
-}
-
-function AdminFinanceView({
-  dashboard,
-  hasImportedOfx,
-  setModal,
-}: {
-  dashboard: FinancialDashboardDTO;
-  hasImportedOfx: boolean;
-  setModal: (modal: ModalKind) => void;
-}) {
-  const monthLabel = formatFinanceMonth(dashboard.month);
-  const transactionRows = dashboard.transactions.slice(0, 8);
-  const dataHint = hasImportedOfx ? `Importado de OFX - ${monthLabel}` : 'Mock inicial ate o upload de OFX';
-
-  return (
-    <section className="wf-admin-section wf-finance-view">
-      <div className="wf-finance-title-row">
-        <div><h1>Extrato / Financeiro</h1><p>Acompanhe entradas, saídas e o desempenho financeiro do seu negócio. <strong>{monthLabel}</strong></p></div>
-        <div><button type="button" onClick={() => setModal('ofx-admin')}><Icon name="upload" /> Upload de arquivo OFX</button><button type="button" onClick={() => notifyUnavailable('Exportação financeira')}><Icon name="download" /> Exportar</button><button type="button" className="wf-orange-btn" onClick={() => notifyUnavailable('Solicitação PIX')}><Icon name="money" /> Solicitar pagamento (PIX)</button></div>
-      </div>
-      <div className="wf-metric-grid">
-        <Metric icon="money" title="Total do mês" value={formatCurrency(dashboard.totalEntries)} hint={dataHint} color="blue" />
-        <Metric icon="money" title="Saldo disponível" value={formatCurrency(dashboard.availableBalance)} hint={dashboard.availableBalance >= 0 ? 'Saldo acumulado positivo' : 'Saldo acumulado negativo'} color={dashboard.availableBalance >= 0 ? 'green' : 'red'} />
-        <Metric icon="upload" title="Entradas" value={formatCurrency(dashboard.totalEntries)} hint="Valores positivos do OFX" color="green" />
-        <Metric icon="download" title="Saídas" value={formatCurrency(dashboard.totalExits)} hint="Valores negativos do OFX" color="red" />
-        <Metric icon="calendar" title="Total de agendamentos" value={`${dashboard.totalAppointments}`} hint="Códigos AGD/SG encontrados" color="purple" />
-      </div>
-      <div className="wf-finance-grid">
-        <div className="wf-chart-card">
-          <h2>Resumo financeiro</h2>
-          <FinancialChart data={dashboard.chart} />
-        </div>
-        <aside className="wf-finance-side">
-          <div className="wf-side-card"><h2>Ações financeiras</h2><div className="wf-finance-actions"><button type="button" onClick={() => notifyUnavailable('Registrar entrada')}>Registrar entrada</button><button type="button" onClick={() => notifyUnavailable('Registrar saída')}>Registrar saída</button><button type="button" onClick={() => notifyUnavailable('Transferência')}>Transferência</button><button type="button" onClick={() => notifyUnavailable('Categorias')}>Categorias</button></div></div>
-          <button type="button" className="wf-side-card wf-ofx-drop" onClick={() => setModal('ofx-admin')}><h2>Importar extrato (OFX)</h2><p><Icon name="upload" /> Arraste e solte o arquivo OFX aqui ou clique para selecionar</p><small>Máx. 10MB • Arquivos OFX</small></button>
-          <div className="wf-side-card wf-disabled"><h2>InterPJ (opcional)</h2><p>Integração contábil via InterPJ.</p><Badge color="purple">Em breve</Badge></div>
-        </aside>
-        <div className="wf-table-card wf-finance-table">
-          <h2>Últimas movimentações <button type="button" onClick={() => notifyUnavailable('Listagem completa de movimentações')}>Ver todas as movimentações →</button></h2>
-          <div className="wf-money-table">
-            {transactionRows.length === 0 ? <EmptyState title="Nenhuma movimentação" text="Importe um arquivo OFX para preencher a tabela." /> : null}
-            {transactionRows.map((transaction) => (
-              <p key={`${transaction.date}-${transaction.description}-${transaction.amount}`}>
-                <span>{formatFinanceDate(transaction.date)}</span>
-                <span>{transaction.description}</span>
-                <b className={transaction.type === 'ENTRY' ? 'positive' : 'negative'}>{transaction.type === 'ENTRY' ? 'Entrada' : 'Saída'}</b>
-                <span>{transaction.category ?? 'Sem categoria'}</span>
-                <a>{transaction.appointmentCode ?? '—'}</a>
-                <strong className={transaction.type === 'ENTRY' ? 'positive' : 'negative'}>{formatTransactionAmount(transaction)}</strong>
-              </p>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Metric({ icon, title, value, hint, color }: { icon: string; title: string; value: string; hint: string; color: Accent }) {
-  return <article className={cx('wf-metric', `wf-metric--${color}`)}><Icon name={icon} /><span><small>{title}</small><strong>{value}</strong><em>{hint}</em></span></article>;
+function AdminFinanceView() {
+  return <FinancialStatementPanel />;
 }
 
 export function AdminBookingDetails() {
   const [modal, setModal] = useState<ModalKind>(null);
-  const [context, setContext] = useState<ModalContext>({});
   const { eventId } = useParams();
   const { bookings, isLoading, hasAdminToken } = useAdminBookingsData();
   const booking = useMemo(() => bookings.find((item) => item.id === eventId) ?? bookings[0], [bookings, eventId]);
   const owner = isStoredAdminOwner();
 
-  useEffect(() => {
-    if (booking) setContext({ booking });
-  }, [booking]);
-
   const openBudget = () => {
-    setContext(booking ? { booking } : {});
     setModal('budget-admin');
   };
 
@@ -1263,7 +1130,7 @@ export function AdminBookingDetails() {
           </div>
         ) : null}
       </main>
-      <WireframeModal modal={modal} context={context} onClose={() => setModal(null)} />
+      <WireframeModal modal={modal} context={booking ? { booking } : {}} onClose={() => setModal(null)} />
     </div>
   );
 }
@@ -1392,7 +1259,7 @@ function buildNextDateOptions() {
 const modalTimeOptions = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
 function CreateBookingModal({ onClose }: { onClose: () => void }) {
-  const dateOptions = useMemo(buildNextDateOptions, []);
+  const dateOptions = useMemo(() => buildNextDateOptions(), []);
   const [selectedDate, setSelectedDate] = useState(dateOptions[0]?.value ?? '');
   const [selectedTime, setSelectedTime] = useState('');
   return (

@@ -1,0 +1,111 @@
+/* Chart responsive styles. */
+
+@media (max-width: 900px) {
+  .wf-chart-bars { gap: 7px; }
+}
+
+@media (max-width: 680px) {
+  .wf-financial-chart__legend {
+      gap: 12px;
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+
+  .wf-financial-chart__tooltip {
+      min-width: 180px;
+    }
+}
+
+@media (max-width: 680px) {
+  .admin-financial-chart {
+      margin-inline: -8px;
+    }
+}
+
+@media (max-width: 799px) {
+  .admin-financial-chart-card .wf-financial-chart {
+      min-height: 270px;
+    }
+
+  .admin-financial-chart,
+    .wf-financial-chart,
+    .wf-financial-chart svg {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+  .wf-financial-chart__legend {
+      justify-content: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+
+  .wf-financial-chart__grid text,
+    .wf-financial-chart__balance-axis text,
+    .wf-financial-chart__x-axis text {
+      font-size: 11px;
+    }
+
+  .wf-financial-chart__tooltip {
+      max-width: calc(100% - 16px);
+      min-width: min(210px, calc(100% - 16px));
+      overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 430px) {
+  .admin-financial-chart-card .wf-financial-chart,
+    .admin-history-mini-chart .wf-financial-chart {
+      min-height: 238px;
+    }
+
+  .wf-financial-chart__legend {
+      gap: 8px;
+      font-size: 11px;
+    }
+
+  .wf-financial-chart__legend span::before {
+      width: 18px;
+      height: 8px;
+    }
+
+  .wf-financial-chart__grid text,
+    .wf-financial-chart__balance-axis text,
+    .wf-financial-chart__x-axis text {
+      font-size: 10px;
+    }
+}
+
+@media (max-width: 340px) {
+  .admin-financial-chart-card .wf-financial-chart,
+    .admin-history-mini-chart .wf-financial-chart {
+      min-height: 218px;
+    }
+
+  .wf-financial-chart__tooltip {
+      left: 50% !important;
+      max-width: calc(100% - 10px);
+      min-width: 0;
+      transform: translate(-50%, -100%);
+      font-size: 11px;
+    }
+}
+
+@media (max-width: 320px) {
+  .admin-financial-chart-card .wf-financial-chart,
+    .admin-history-mini-chart .wf-financial-chart {
+      min-height: 208px;
+    }
+
+  .wf-financial-chart__legend {
+      font-size: 10px;
+    }
+
+  .wf-financial-chart__grid text,
+    .wf-financial-chart__balance-axis text,
+    .wf-financial-chart__x-axis text {
+      font-size: 9px;
+    }
+}

@@ -6,6 +6,7 @@ import br.com.calendarmate.dto.AdminAuthStartResponse;
 import br.com.calendarmate.dto.AdminMeResponse;
 import br.com.calendarmate.dto.AdminProviderResponse;
 import br.com.calendarmate.exception.BadRequestException;
+import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.AdminPrincipal;
@@ -14,6 +15,7 @@ import br.com.calendarmate.model.AdminUser;
 import br.com.calendarmate.service.store.AdminSessionStore;
 import br.com.calendarmate.service.store.AdminUserStore;
 import br.com.calendarmate.service.store.VerificationStore;
+import br.com.calendarmate.util.PhoneNumberNormalizer;
 
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -47,7 +49,7 @@ public class AdminAuthService {
     }
 
     public AdminAuthStartResponse start(String phoneRaw) {
-        String phone = normalizePhone(phoneRaw);
+        String phone = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneRaw);
         AdminUser user = adminUserStore.findActiveByPhone(phone);
         if (user == null) {
             throw new ForbiddenException("Telefone administrativo nao autorizado");
@@ -59,7 +61,7 @@ public class AdminAuthService {
                 props.getOtpTtl().toSeconds(),
                 props.getOtpResendAfter().toSeconds()
         );
-        otpDeliveryClient.sendCode(phone, session.code);
+        sendOtp(phone, session.code);
         return new AdminAuthStartResponse(
                 session.verificationId,
                 props.getOtpTtl().toSeconds(),
@@ -84,7 +86,7 @@ public class AdminAuthService {
             throw new BadRequestException("verificationId invalido");
         }
 
-        otpDeliveryClient.sendCode(session.phoneDigits, session.code);
+        sendOtp(session.phoneDigits, session.code);
         return new AdminAuthStartResponse(
                 session.verificationId,
                 Math.max(0, session.expiresAtEpochSec - Instant.now().getEpochSecond()),
@@ -106,7 +108,7 @@ public class AdminAuthService {
 
         String adminId = otp.scopeId.substring(SCOPE_PREFIX.length());
         AdminUser user = adminUserStore.findActiveById(adminId);
-        if (user == null || !normalizePhone(user.getPhoneDigits()).equals(normalizePhone(otp.phoneDigits))) {
+        if (user == null || !PhoneNumberNormalizer.normalizeBrazilianPhone(user.getPhoneDigits()).equals(PhoneNumberNormalizer.normalizeBrazilianPhone(otp.phoneDigits))) {
             throw new ForbiddenException("Administrador nao autorizado");
         }
 
@@ -165,7 +167,7 @@ public class AdminAuthService {
     }
 
     public boolean isAdminPhone(String phoneRaw) {
-        String phone = normalizePhone(phoneRaw);
+        String phone = PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(phoneRaw);
         return !phone.isBlank() && adminUserStore.findActiveByPhone(phone) != null;
     }
 
@@ -229,17 +231,13 @@ public class AdminAuthService {
         }
     }
 
-    private static String normalizePhone(String value) {
-        String digits = value == null ? "" : value.replaceAll("\\D", "");
-        if (digits.length() < 10 || digits.length() > 13) {
-            throw new BadRequestException("Telefone invalido");
+    private void sendOtp(String phone, String code) {
+        try {
+            otpDeliveryClient.sendCode(phone, code);
+        } catch (BadRequestException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            throw new ExternalServiceException("Nao foi possivel enviar o codigo agora", ex);
         }
-        if ((digits.length() == 12 || digits.length() == 13) && digits.startsWith("55")) {
-            digits = digits.substring(2);
-        }
-        if (digits.length() < 10 || digits.length() > 11) {
-            throw new BadRequestException("Telefone invalido");
-        }
-        return digits;
     }
 }

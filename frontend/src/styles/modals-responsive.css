@@ -1,0 +1,1228 @@
+/* Modal responsive styles. */
+
+@media (max-width: 1180px) {
+  .booking-preview-modal__slots-grid,
+    .booking-preview-modal__slots-grid--compact {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+  .booking-form-grid,
+    .booking-city-picker {
+      grid-template-columns: 1fr;
+    }
+
+  .booking-preview-modal__summary--slots {
+      grid-template-columns: 1fr;
+    }
+
+  .booking-preview-modal__footer,
+    .otp-modal__footer {
+      flex-direction: column-reverse;
+    }
+
+  .booking-preview-modal__footer > button,
+    .otp-modal__footer > button,
+    .booking-start-banner__action {
+      width: 100%;
+    }
+}
+
+@media (max-width: 420px) {
+  .booking-preview-modal__slots-grid,
+    .booking-preview-modal__slots-grid--compact {
+      grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+  .booking-form__lookup-row {
+      grid-template-columns: 1fr;
+    }
+
+  .booking-form__lookup-action {
+      width: 100%;
+    }
+}
+
+@media (max-width: 760px) {
+  .booking-detail-modal__grid {
+      grid-template-columns: 1fr;
+    }
+
+  .booking-detail-modal__map-header,
+    .booking-detail-modal__route-header,
+    .booking-detail-modal__actions {
+      align-items: stretch;
+    }
+
+  .booking-detail-modal__map-link,
+    .booking-detail-modal__actions .primary-action,
+    .booking-detail-modal__actions .secondary-action,
+    .booking-detail-modal__route .secondary-action {
+      width: 100%;
+      justify-content: center;
+    }
+}
+
+@media (max-width: 640px) {
+  .route-summary-card {
+      grid-template-columns: 1fr;
+    }
+
+  .booking-detail-modal__route-header,
+    .admin-gate-card__actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+}
+
+@media (max-width: 900px) {
+  .my-bookings__workspace,
+    .booking-detail__form-grid {
+      grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 730px) {
+  .booking-preview-modal {
+      align-items: end;
+      padding: 8px;
+    }
+
+  .booking-preview-modal__card {
+      width: 100%;
+      max-height: min(90dvh, 860px);
+      border-radius: 28px;
+      padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+  .booking-preview-modal__header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding-bottom: 8px;
+      background: var(--app-surface-solid);
+    }
+
+  .booking-preview-modal__body {
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+  .booking-preview-modal__footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      padding-top: 10px;
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px));
+      background: var(--app-surface-solid);
+    }
+
+  .booking-preview-modal__slots-grid,
+    .booking-preview-modal__slots-grid--compact {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+  .booking-slot {
+      min-height: 64px;
+    }
+}
+
+@media (max-width: 760px) {
+  .booking-detail-modal {
+      padding: 0;
+      align-items: stretch;
+    }
+
+  .booking-detail-modal__card--route {
+      width: 100%;
+      max-height: 100dvh;
+      height: 100dvh;
+      border-radius: 0;
+    }
+
+  .booking-detail-modal__hero-card {
+      grid-template-columns: minmax(0, 1fr) 92px;
+    }
+
+  .booking-detail-modal__hero-media {
+      min-height: 138px;
+    }
+}
+
+@media (max-width: 900px) {
+  .wf-modal { width: calc(100vw - 34px); max-height: 88vh; padding: 24px 20px; }
+
+  .wf-form-grid, .wf-client-detail-modal-grid, .wf-admin-block-modal { grid-template-columns: 1fr; }
+
+  .wf-span-2 { grid-column: auto; }
+
+  .wf-date-options { grid-template-columns: repeat(3, 1fr); }
+
+  .wf-time-options { grid-template-columns: repeat(3, 1fr); }
+
+  .wf-input-action { grid-template-columns: 1fr; }
+
+  .wf-input-action button { min-height: 46px; border-left: 0; border-top: 1px solid var(--wf-line); }
+
+  .wf-modal-actions { flex-direction: column-reverse; }
+
+  .wf-primary-cta--modal, .wf-ghost-btn { width: 100%; }
+}
+
+@media (max-width: 980px) {
+  .wf-modal--assign,
+    .wf-modal--admin-block,
+    .wf-modal--email { width: calc(100vw - 28px); }
+
+  .wf-confirm-layout,
+    .wf-email-modal-layout,
+    .wf-admin-block-modal--wireframe { grid-template-columns: 1fr; }
+
+  .wf-confirm-visual-panel { border-right: 0; border-bottom: 1px solid #e7f2e8; min-height: 250px; }
+
+  .wf-confirm-layout { min-height: auto; }
+
+  .wf-email-security { display: none; }
+
+  .wf-assign-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .wf-assign-summary span:last-child { grid-column: 1 / -1; }
+
+  .wf-provider-list--wireframe button { grid-template-columns: 24px 44px 1fr; }
+
+  .wf-provider-list--wireframe button > span:nth-last-child(-n+2) { grid-column: 3; }
+}
+
+@media (max-width: 720px) {
+  .wf-modal-backdrop { align-items: flex-end; padding: 0; background: rgba(6, 10, 35, .72); }
+
+  .wf-modal {
+      width: 100vw !important;
+      max-height: min(92vh, 820px);
+      border-radius: 26px 26px 0 0;
+      padding: 28px 18px calc(20px + env(safe-area-inset-bottom));
+      border-left: 0;
+      border-right: 0;
+      border-bottom: 0;
+    }
+
+  .wf-modal--confirm { border-radius: 0; max-height: 100vh; min-height: 100vh; overflow-y: auto; }
+
+  .wf-modal-mobile-handle { display: block; width: 54px; height: 5px; border-radius: 999px; background: #cfd7e8; margin: -12px auto 18px; }
+
+  .wf-modal--confirm .wf-modal-mobile-handle { display: none; }
+
+  .wf-modal-close { top: 18px; right: 18px; width: 40px; height: 40px; }
+
+  .wf-modal-title { gap: 12px; margin-bottom: 18px; padding-right: 48px; }
+
+  .wf-modal-title > span { width: 48px; height: 48px; font-size: 28px; }
+
+  .wf-modal-title h2 { font-size: 24px; }
+
+  .wf-modal-title p { font-size: 13px; }
+
+  .wf-create-booking-form,
+    .wf-form-grid { grid-template-columns: 1fr; gap: 12px; }
+
+  .wf-span-2 { grid-column: auto; }
+
+  .wf-input-action { grid-template-columns: 1fr; }
+
+  .wf-input-action button { border-left: 0; border-top: 1px solid #dfe6f4; min-height: 38px; }
+
+  .wf-date-options--scroll,
+    .wf-time-options--scroll { margin-right: -18px; padding-right: 18px; }
+
+  .wf-confirm-visual-panel { padding: 20px 16px; min-height: 300px; }
+
+  .wf-confirm-visual-panel .wf-logo img { height: 66px; }
+
+  .wf-confirm-illustration { width: 190px; height: 190px; font-size: 82px; }
+
+  .wf-confirm-form-panel { padding: 24px 18px 22px; }
+
+  .wf-code-row { grid-template-columns: repeat(3, 1fr); }
+
+  .wf-code-row button { grid-column: 1 / -1; }
+
+  .wf-modal-section-card dl { grid-template-columns: 1fr; gap: 4px; }
+
+  .wf-modal-section-card dt { margin-top: 8px; }
+
+  .wf-provider-detail-card { grid-template-columns: 54px 1fr; }
+
+  .wf-provider-detail-card .wf-badge { grid-column: 2; justify-self: start; }
+
+  .wf-contact-option { min-height: 82px !important; }
+
+  .wf-notification-tabs { overflow-x: auto; white-space: nowrap; padding-bottom: 4px; }
+
+  .wf-notification-tabs a { margin-left: 0; }
+
+  .wf-notification-list--wireframe article { grid-template-columns: 44px 1fr; align-items: start; }
+
+  .wf-notification-list--wireframe small { grid-column: 2; }
+
+  .wf-admin-block-modal--wireframe .wf-mini-month { padding: 14px; }
+
+  .wf-admin-block-modal--wireframe .wf-mini-grid { gap: 6px; }
+
+  .wf-admin-block-modal--wireframe .wf-mini-grid span { min-height: 36px; }
+
+  .wf-assign-summary { grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .wf-assign-summary span { padding: 10px; }
+
+  .wf-provider-list--wireframe { max-height: 44vh; }
+
+  .wf-provider-list--wireframe button { grid-template-columns: 22px 42px 1fr; padding: 12px; }
+
+  .wf-provider-list--wireframe button > span:nth-last-child(-n+2) { display: none; }
+
+  .wf-editor-toolbar { overflow-x: auto; }
+
+  .wf-attachment-drop { padding: 14px 10px; }
+
+  .wf-ofx-file,
+    .wf-ofx-period,
+    .wf-check-line { align-items: flex-start; }
+
+  .wf-modal-actions { position: sticky; bottom: calc(-20px - env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(255,255,255,0), #fff 20%); padding-top: 18px; margin-top: 18px; display: grid; grid-template-columns: 1fr; gap: 10px; }
+
+  .wf-modal-actions .wf-ghost-btn { order: 2; min-height: 48px; }
+
+  .wf-modal-actions .wf-primary-cta--modal { order: 1; min-height: 50px; min-width: 0; }
+}
+
+@media (max-width: 420px) {
+  .wf-modal { padding-inline: 14px; }
+
+  .wf-modal-title h2 { font-size: 22px; }
+
+  .wf-create-booking-form input,
+    .wf-form-grid input,
+    .wf-full-label input { min-height: 40px; }
+
+  .wf-contact-option { grid-template-columns: 46px 1fr 14px; }
+
+  .wf-contact-option .wf-icon { width: 38px; height: 38px; font-size: 24px; }
+
+  .wf-assign-summary { grid-template-columns: 1fr; }
+
+  .wf-provider-list--wireframe button { grid-template-columns: 20px 38px 1fr; }
+
+  .wf-provider-list--wireframe .wf-avatar { width: 38px; height: 38px; }
+
+  .wf-ofx-modal-drop--wireframe { min-height: 130px; }
+}
+
+@media (max-width: 680px) {
+  .wf-modal-title > span .wf-icon { width: 28px; height: 28px; }
+}
+
+@media (max-width: 720px) {
+  .wf-contact-option .wf-icon--whatsapp,
+    .wf-contact-option .wf-icon--instagram,
+    .wf-contact-option .wf-icon--phone-call,
+    .wf-contact-option .wf-icon--mail-orange {
+      width: 42px;
+      height: 42px;
+    }
+
+  .wf-confirm-illustration > .wf-icon--shield-check {
+      width: 104px;
+      height: 104px;
+    }
+
+  .wf-email-security .wf-icon--email-illustration {
+      width: 96px;
+      height: 96px;
+    }
+}
+
+@media (max-width: 900px) {
+  .wf-modal--create,
+    .wf-modal--confirm,
+    .wf-modal--details,
+    .wf-modal--contact,
+    .wf-modal--notifications,
+    .wf-modal--admin-block,
+    .wf-modal--assign,
+    .wf-modal--email,
+    .wf-modal--ofx { width: calc(100vw - 28px); }
+
+  .wf-modal { padding: 24px 22px; }
+
+  .wf-create-booking-form { grid-template-columns: 1fr; }
+
+  .wf-span-2 { grid-column: 1; }
+
+  .wf-input-action--with-icon { grid-template-columns: 38px 1fr; }
+
+  .wf-input-action--with-icon button { grid-column: 1 / -1; border-left: 0; border-top: 1px solid #dfe6f4; }
+
+  .wf-confirm-layout,
+    .wf-email-modal-layout,
+    .wf-admin-block-modal--wireframe { grid-template-columns: 1fr; }
+
+  .wf-confirm-visual-panel { border-right: 0; border-bottom: 1px solid #dff2e4; min-height: 300px; }
+
+  .wf-confirm-illustration { width: 220px; height: 220px; }
+
+  .wf-confirm-illustration > .wf-icon--security-phone { width: 198px; height: 198px; }
+
+  .wf-confirm-form-panel { padding: 28px 24px 24px; }
+
+  .wf-email-security { display: none; }
+
+  .wf-assign-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .wf-assign-summary span:last-child { grid-column: 1 / -1; }
+}
+
+@media (max-width: 680px) {
+  .wf-modal-backdrop { align-items: flex-end; padding: 0; background: rgba(3, 7, 24, .68); }
+
+  .wf-modal {
+      width: 100vw !important;
+      max-height: 92vh;
+      border-radius: 28px 28px 0 0;
+      border-inline: 0;
+      border-bottom: 0;
+      padding: 22px 18px calc(20px + env(safe-area-inset-bottom));
+    }
+
+  .wf-modal--confirm {
+      border-radius: 0;
+      max-height: 100vh;
+      min-height: 100vh;
+    }
+
+  .wf-modal-mobile-handle {
+      display: block;
+      width: 52px;
+      height: 5px;
+      border-radius: 999px;
+      background: #c9d2e6;
+      margin: -6px auto 18px;
+    }
+
+  .wf-modal--confirm .wf-modal-mobile-handle { display: none; }
+
+  .wf-modal-close { top: 18px; right: 18px; width: 42px; height: 42px; border: 1px solid #edf1f8; background: #fff; box-shadow: 0 8px 20px rgba(8,20,95,.08); }
+
+  .wf-modal-title { gap: 12px; padding-right: 48px; margin-bottom: 18px; min-height: 50px; }
+
+  .wf-modal-title > span { width: 50px; height: 50px; flex-basis: 50px; }
+
+  .wf-modal-title > span .wf-icon--calendar-create,
+    .wf-modal-title > span .wf-icon--calendar-blue,
+    .wf-modal-title > span .wf-icon--shield-check,
+    .wf-modal-title > span .wf-icon--chat-bubbles,
+    .wf-modal-title > span .wf-icon--bell-purple,
+    .wf-modal-title > span .wf-icon--lock-green,
+    .wf-modal-title > span .wf-icon--mail-blue,
+    .wf-modal-title > span .wf-icon--file-upload { width: 34px; height: 34px; }
+
+  .wf-modal-title h2 { font-size: 22px; }
+
+  .wf-modal-title p { font-size: 12.5px; }
+
+  .wf-create-booking-form { gap: 12px; }
+
+  .wf-date-options--scroll button { min-width: 66px; min-height: 62px; font-size: 12px; }
+
+  .wf-time-options--scroll { gap: 8px; }
+
+  .wf-time-options--scroll button { min-width: 54px; min-height: 32px; font-size: 12px; }
+
+  .wf-confirm-visual-panel { min-height: 315px; padding: 24px 18px; }
+
+  .wf-confirm-visual-panel .wf-logo img { height: 62px; }
+
+  .wf-confirm-illustration { width: 214px; height: 214px; }
+
+  .wf-confirm-illustration > .wf-icon--security-phone { width: 196px; height: 196px; }
+
+  .wf-confirm-benefits { display: none; }
+
+  .wf-confirm-form-panel { padding: 26px 18px 22px; }
+
+  .wf-code-row { grid-template-columns: repeat(3, 1fr); }
+
+  .wf-code-row button { grid-column: 1 / -1; min-height: 42px; }
+
+  .wf-provider-detail-card { grid-template-columns: 54px 1fr; }
+
+  .wf-provider-detail-card .wf-badge { grid-column: 1 / -1; justify-self: start; }
+
+  .wf-contact-option { grid-template-columns: 48px 1fr 20px !important; min-height: 76px !important; }
+
+  .wf-contact-option .wf-icon--whatsapp,
+    .wf-contact-option .wf-icon--instagram,
+    .wf-contact-option .wf-icon--phone-call,
+    .wf-contact-option .wf-icon--mail-orange { width: 44px; height: 44px; }
+
+  .wf-admin-block-modal--wireframe > section:first-child,
+    .wf-admin-block-controls { padding: 14px; }
+
+  .wf-assign-summary { grid-template-columns: 1fr; }
+
+  .wf-attachment-drop { min-height: 94px; }
+
+  .wf-ofx-modal-drop--wireframe { min-height: 150px; }
+
+  .wf-modal-actions {
+      position: sticky;
+      bottom: calc(-20px - env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(255,255,255,0), #fff 22%);
+      display: grid;
+      grid-template-columns: 1fr;
+      padding-top: 18px;
+    }
+
+  .wf-modal-actions .wf-ghost-btn,
+    .wf-modal-actions .wf-primary-cta--modal { width: 100%; min-width: 0; }
+
+  .wf-modal-actions .wf-ghost-btn { order: 2; }
+
+  .wf-modal-actions .wf-primary-cta--modal { order: 1; }
+}
+
+@media (max-width: 420px) {
+  .wf-modal { padding-inline: 14px; }
+
+  .wf-modal-title h2 { font-size: 21px; }
+
+  .wf-input-shell { grid-template-columns: 34px 1fr; }
+
+  .wf-input-shell .wf-icon,
+    .wf-input-action--with-icon > .wf-icon { margin-left: 10px; width: 19px; height: 19px; }
+
+  .wf-date-options--scroll button { min-width: 62px; }
+
+  .wf-time-options--scroll button { min-width: 50px; }
+}
+
+@media (max-width: 900px) {
+  .wf-modal--budget { width: calc(100vw - 28px); }
+
+  .wf-budget-modal-layout { grid-template-columns: 1fr; }
+
+  .wf-budget-context-card { display: none; }
+
+  .wf-budget-item-row { grid-template-columns: 38px minmax(0, 1fr) 70px 102px 32px; }
+
+  .wf-budget-item-row strong { grid-column: 2 / 5; text-align: left; }
+
+  .wf-budget-attachments { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+  .wf-admin-budget-toolbar { flex-direction: column; align-items: stretch; padding: 14px; }
+
+  .wf-admin-budget-toolbar .wf-primary-cta--small { width: 100%; }
+
+  .wf-modal-title > span .wf-icon--calendar-modal-blue,
+    .wf-modal-title > span .wf-icon--calendar-block,
+    .wf-modal-title > span .wf-icon--budget-orange { width: 34px; height: 34px; }
+
+  .wf-modal--budget { max-height: 92vh; }
+
+  .wf-budget-editor { padding: 12px; }
+
+  .wf-budget-editor-head { align-items: stretch; flex-direction: column; }
+
+  .wf-budget-editor-head button { justify-content: center; }
+
+  .wf-budget-item-row {
+      grid-template-columns: 34px minmax(0, 1fr) 34px;
+      align-items: start;
+      padding: 10px;
+    }
+
+  .wf-budget-row-icon { width: 34px; height: 34px; border-radius: 10px; }
+
+  .wf-budget-row-icon .wf-icon--service-item { width: 26px; height: 26px; }
+
+  .wf-budget-item-row label { grid-column: 1 / -1; }
+
+  .wf-budget-item-row strong { grid-column: 1 / 3; text-align: left; }
+
+  .wf-budget-item-row > button { grid-column: 3; grid-row: 1; }
+
+  .wf-budget-total-card { min-height: 54px; padding: 0 14px; }
+
+  .wf-budget-total-card strong { font-size: 20px; }
+
+  .wf-budget-export-row { flex-direction: column; }
+}
+
+@media (max-width: 900px) {
+  .wf-modal--admin-block,
+    .wf-modal--assign,
+    .wf-modal--email,
+    .wf-modal--ofx,
+    .wf-modal--budget { width: calc(100vw - 28px); }
+
+  .wf-admin-block-modal--wireframe,
+    .wf-email-modal-layout,
+    .wf-budget-modal-layout--wireframe { grid-template-columns: 1fr; }
+
+  .wf-email-security { display: none; }
+
+  .wf-budget-context-card { display: none; }
+}
+
+@media (max-width: 680px) {
+  .wf-modal--contact .wf-modal-footnote {
+      margin-inline: -18px;
+      min-height: 54px;
+    }
+
+  .wf-modal--create .wf-modal-title > span,
+    .wf-modal--email .wf-modal-title > span,
+    .wf-modal--ofx .wf-modal-title > span,
+    .wf-modal--admin-block .wf-modal-title > span,
+    .wf-modal--budget .wf-modal-title > span {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+    }
+
+  .wf-modal--create .wf-modal-title > span .wf-icon,
+    .wf-modal--email .wf-modal-title > span .wf-icon,
+    .wf-modal--ofx .wf-modal-title > span .wf-icon,
+    .wf-modal--admin-block .wf-modal-title > span .wf-icon,
+    .wf-modal--budget .wf-modal-title > span .wf-icon,
+    .wf-modal-title > span .wf-icon--budget-blue {
+      width: 34px;
+      height: 34px;
+    }
+
+  .wf-notification-tabs {
+      justify-content: flex-start;
+    }
+
+  .wf-notification-tabs button:nth-child(3) {
+      margin-left: 0;
+      min-width: max-content;
+    }
+
+  .wf-modal--admin-block .wf-time-options {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+  .wf-modal--email .wf-modal-title,
+    .wf-modal--ofx .wf-modal-title,
+    .wf-modal--budget .wf-modal-title {
+      align-items: flex-start;
+    }
+}
+
+@media (max-width: 680px) {
+  .wf-modal--ofx {
+      max-height: calc(100vh - 22px);
+    }
+}
+
+@media (max-width: 680px) {
+  .wf-modal {
+      max-height: 92svh;
+    }
+
+  .wf-modal--confirm {
+      max-height: 100svh;
+      min-height: 100svh;
+    }
+
+  .wf-modal-title {
+      align-items: flex-start;
+    }
+
+  .wf-code-row input {
+      min-width: 0;
+    }
+}
+
+@media (max-width: 799px) {
+  .wf-modal-backdrop {
+      align-items: flex-end;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+  .wf-modal {
+      width: min(calc(100vw - 24px), 760px) !important;
+      max-width: calc(100vw - 24px);
+      max-height: calc(100dvh - 24px);
+      border-radius: 28px 28px 0 0;
+      padding: 22px 18px calc(18px + env(safe-area-inset-bottom));
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+  .wf-modal--details,
+    .wf-modal--contact,
+    .wf-modal--notifications {
+      width: 100vw !important;
+      max-width: 100vw;
+      max-height: 88dvh;
+    }
+
+  .wf-modal--confirm {
+      width: 100vw !important;
+      max-width: 100vw;
+      min-height: 100dvh;
+      max-height: 100dvh;
+      border-radius: 0;
+      padding: 0;
+    }
+
+  .wf-modal-close {
+      top: 18px;
+      right: 18px;
+      z-index: 5;
+    }
+
+  .wf-modal-actions {
+      position: sticky;
+      bottom: calc(-18px - env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0), #fff 24%);
+      padding-top: 18px;
+    }
+}
+
+@media (max-width: 640px) {
+  .wf-modal-backdrop {
+      align-items: flex-end;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+  .wf-modal-backdrop[data-modal='create-client'],
+    .wf-modal-backdrop[data-modal='ofx-admin'],
+    .wf-modal-backdrop[data-modal='block-admin'],
+    .wf-modal-backdrop[data-modal='assign-provider'],
+    .wf-modal-backdrop[data-modal='email-admin'],
+    .wf-modal-backdrop[data-modal='budget-admin'] {
+      align-items: center;
+      padding: 12px 0;
+    }
+
+  .wf-modal {
+      width: calc(100vw - 24px) !important;
+      max-width: calc(100vw - 24px);
+      max-height: calc(100dvh - 24px);
+      border-radius: 28px;
+      padding: 22px 18px calc(18px + env(safe-area-inset-bottom));
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+  .wf-modal--details,
+    .wf-modal--contact,
+    .wf-modal--notifications {
+      width: 100vw !important;
+      max-width: 100vw;
+      max-height: 86dvh;
+      border-radius: 28px 28px 0 0;
+    }
+
+  .wf-modal--confirm {
+      width: 100vw !important;
+      max-width: 100vw;
+      min-height: 100dvh;
+      max-height: 100dvh;
+      border-radius: 0;
+      padding: 0;
+    }
+
+  .wf-modal-close {
+      top: 18px;
+      right: 18px;
+      z-index: 5;
+      width: 42px;
+      height: 42px;
+      border: 1px solid #edf1f8;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(8, 20, 95, .08);
+    }
+
+  .wf-modal-mobile-handle {
+      display: block;
+      width: 52px;
+      height: 5px;
+      border-radius: 999px;
+      background: #c9d2e6;
+      margin: -6px auto 18px;
+    }
+
+  .wf-modal--confirm .wf-modal-mobile-handle {
+      display: none;
+    }
+
+  .wf-modal-title {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      min-height: 52px;
+      margin-bottom: 18px;
+      padding-right: 50px;
+    }
+
+  .wf-modal-title > span {
+      width: 54px;
+      height: 54px;
+      flex: 0 0 54px;
+      border-radius: 18px;
+    }
+
+  .wf-modal-title h2 {
+      font-size: clamp(24px, 7vw, 34px);
+      line-height: 1.08;
+    }
+
+  .wf-modal-title p {
+      font-size: clamp(13px, 3.6vw, 17px);
+      line-height: 1.35;
+    }
+
+  .wf-create-booking-form,
+    .wf-form-grid,
+    .wf-form-grid--email {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+  .wf-create-booking-form > .wf-modal-field:nth-child(-n+3),
+    .wf-create-booking-form > .wf-span-2,
+    .wf-create-booking-form > .wf-choice-block,
+    .wf-create-booking-form > .wf-modal-field:nth-last-child(-n+2),
+    .wf-form-grid--email > *,
+    .wf-span-2 {
+      grid-column: 1 / -1;
+    }
+
+  .wf-input-shell,
+    .wf-input-action--with-icon {
+      min-height: 58px;
+      border-radius: 11px;
+    }
+
+  .wf-input-action--with-icon {
+      grid-template-columns: 40px 1fr;
+    }
+
+  .wf-input-action--with-icon button {
+      grid-column: 1 / -1;
+      min-height: 42px;
+      border-left: 0;
+      border-top: 1px solid var(--wf-line);
+    }
+
+  .wf-date-options--scroll,
+    .wf-time-options--scroll {
+      display: flex;
+      max-width: 100%;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+
+  .wf-date-options--scroll button {
+      flex: 0 0 clamp(78px, 20vw, 104px);
+      min-height: 72px;
+    }
+
+  .wf-time-options--scroll button,
+    .wf-modal--admin-block .wf-time-options button {
+      flex: 0 0 clamp(64px, 18vw, 92px);
+      min-height: 40px;
+    }
+
+  .wf-modal-actions {
+      position: sticky;
+      bottom: calc(-18px - env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0), #fff 24%);
+    }
+
+  .wf-modal-backdrop[data-modal='create-client'] .wf-modal-actions,
+    .wf-modal-backdrop[data-modal='ofx-admin'] .wf-modal-actions,
+    .wf-modal-backdrop[data-modal='block-admin'] .wf-modal-actions,
+    .wf-modal-backdrop[data-modal='budget-admin'] .wf-modal-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+  .wf-modal-actions .wf-ghost-btn,
+    .wf-modal-actions .wf-primary-cta--modal {
+      width: 100%;
+      min-width: 0;
+      min-height: 54px;
+      padding-inline: 12px;
+    }
+
+  .wf-modal-actions .wf-ghost-btn {
+      order: 1;
+    }
+
+  .wf-modal-actions .wf-primary-cta--modal {
+      order: 2;
+    }
+
+  .wf-modal-backdrop:not([data-modal='create-client']):not([data-modal='ofx-admin']):not([data-modal='block-admin']):not([data-modal='budget-admin']) .wf-modal-actions {
+      grid-template-columns: 1fr;
+    }
+
+  .wf-confirm-layout {
+      min-height: 100dvh;
+      grid-template-columns: 1fr;
+      background: linear-gradient(180deg, #f2fff5 0%, #fff 45%);
+    }
+
+  .wf-confirm-visual-panel {
+      min-height: clamp(310px, 43dvh, 420px);
+      border: 0;
+      padding: 20px 18px 0;
+    }
+
+  .wf-confirm-visual-panel .wf-logo img {
+      height: clamp(58px, 15vw, 80px);
+    }
+
+  .wf-confirm-illustration {
+      width: min(78vw, 330px);
+      height: min(78vw, 330px);
+      margin: 12px auto 0;
+    }
+
+  .wf-confirm-illustration > .wf-icon--security-phone,
+    .wf-confirm-illustration > .wf-icon--confirm-phone-security {
+      width: 100%;
+      height: 100%;
+    }
+
+  .wf-confirm-form-panel {
+      margin: -18px 14px 14px;
+      border-radius: 26px;
+      background: #fff;
+      padding: 42px 18px 20px;
+      box-shadow: 0 -8px 32px rgba(8, 20, 95, .08);
+    }
+
+  .wf-confirm-form-panel .wf-modal-title {
+      display: block;
+      padding-right: 0;
+      text-align: center;
+    }
+
+  .wf-confirm-form-panel .wf-modal-title > span {
+      margin: -78px auto 14px;
+    }
+
+  .wf-code-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+  .wf-code-row input {
+      min-height: clamp(58px, 16vw, 86px);
+    }
+
+  .wf-code-row button {
+      grid-column: 1 / -1;
+    }
+
+  .wf-provider-detail-card,
+    .wf-modal-section-card > div:first-child {
+      align-items: flex-start;
+    }
+
+  .wf-modal-section-card dl {
+      grid-template-columns: 1fr;
+    }
+
+  .wf-provider-detail-card {
+      grid-template-columns: 56px minmax(0, 1fr);
+    }
+
+  .wf-provider-detail-card .wf-badge {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+
+  .wf-ofx-modal-drop--wireframe {
+      min-height: clamp(150px, 38vw, 220px);
+    }
+
+  .wf-ofx-file,
+    .wf-ofx-period,
+    .wf-check-line {
+      align-items: flex-start;
+    }
+
+  .wf-admin-block-modal--wireframe,
+    .wf-email-modal-layout,
+    .wf-budget-modal-layout--wireframe {
+      grid-template-columns: 1fr;
+    }
+
+  .wf-modal--admin-block .wf-time-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+  .wf-budget-context-card,
+    .wf-email-security {
+      display: none;
+    }
+
+  .wf-budget-item-row {
+      grid-template-columns: 1fr;
+    }
+
+  .wf-budget-item-row strong,
+    .wf-budget-item-row button {
+      justify-self: stretch;
+    }
+}
+
+@media (max-width: 430px) {
+  .wf-modal {
+      width: min(calc(100% - 16px), calc(100vw - 16px)) !important;
+      max-width: calc(100vw - 16px);
+      padding: 18px 14px calc(16px + env(safe-area-inset-bottom));
+    }
+
+  .wf-modal--details,
+    .wf-modal--contact,
+    .wf-modal--notifications,
+    .wf-modal--confirm {
+      width: 100vw !important;
+      max-width: 100vw;
+    }
+
+  .wf-modal-title {
+      gap: 10px;
+      padding-right: 44px;
+    }
+
+  .wf-modal-title > span {
+      width: 48px;
+      height: 48px;
+      flex-basis: 48px;
+    }
+
+  .wf-modal-title h2 {
+      font-size: 23px;
+    }
+
+  .wf-create-booking-form,
+    .wf-form-grid,
+    .wf-form-grid--email {
+      grid-template-columns: 1fr;
+    }
+
+  .wf-modal-backdrop[data-modal='create-client'] .wf-modal-actions,
+    .wf-modal-backdrop[data-modal='ofx-admin'] .wf-modal-actions,
+    .wf-modal-backdrop[data-modal='block-admin'] .wf-modal-actions,
+    .wf-modal-backdrop[data-modal='budget-admin'] .wf-modal-actions {
+      grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 390px) {
+  .wf-modal-backdrop[data-modal='create-client'] .wf-modal-actions,
+    .wf-modal-backdrop[data-modal='ofx-admin'] .wf-modal-actions,
+    .wf-modal-backdrop[data-modal='block-admin'] .wf-modal-actions,
+    .wf-modal-backdrop[data-modal='budget-admin'] .wf-modal-actions {
+      grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 340px) {
+  .wf-modal {
+      width: min(calc(100% - 12px), calc(100vw - 12px)) !important;
+      max-width: calc(100vw - 12px);
+      max-height: calc(100dvh - 12px);
+      padding: 16px 12px calc(14px + env(safe-area-inset-bottom));
+      border-radius: 24px;
+    }
+
+  .wf-modal--details,
+    .wf-modal--contact,
+    .wf-modal--notifications {
+      width: 100vw !important;
+      max-width: 100vw;
+      border-radius: 24px 24px 0 0;
+    }
+
+  .wf-modal-close {
+      top: 14px;
+      right: 12px;
+      width: 38px;
+      height: 38px;
+    }
+
+  .wf-modal-title {
+      padding-right: 38px;
+    }
+
+  .wf-modal-title > span {
+      width: 42px;
+      height: 42px;
+      flex-basis: 42px;
+      border-radius: 14px;
+    }
+
+  .wf-modal-title h2 {
+      font-size: 21px;
+    }
+
+  .wf-modal-title p,
+    .wf-field-label,
+    .wf-full-label,
+    .wf-admin-block-modal label {
+      font-size: 12px;
+    }
+
+  .wf-input-shell,
+    .wf-input-action--with-icon {
+      min-height: 52px;
+    }
+
+  .wf-date-options--scroll button {
+      flex-basis: 70px;
+    }
+
+  .wf-time-options--scroll button,
+    .wf-modal--admin-block .wf-time-options button {
+      flex-basis: 58px;
+    }
+
+  .wf-confirm-form-panel {
+      margin-inline: 8px;
+      padding-inline: 12px;
+    }
+}
+
+@media (max-width: 320px) {
+  .wf-modal {
+      width: 100vw !important;
+      max-width: 100vw;
+      max-height: 100dvh;
+      border-radius: 20px 20px 0 0;
+      padding-inline: 10px;
+    }
+
+  .wf-modal-backdrop[data-modal='create-client'],
+    .wf-modal-backdrop[data-modal='ofx-admin'],
+    .wf-modal-backdrop[data-modal='block-admin'],
+    .wf-modal-backdrop[data-modal='assign-provider'],
+    .wf-modal-backdrop[data-modal='email-admin'],
+    .wf-modal-backdrop[data-modal='budget-admin'] {
+      align-items: flex-end;
+      padding: 0;
+    }
+
+  .wf-modal-actions .wf-ghost-btn,
+    .wf-modal-actions .wf-primary-cta--modal {
+      min-height: 48px;
+      font-size: 14px;
+    }
+}
+
+@media (min-width: 800px) {
+  .wf-modal-backdrop {
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+  .wf-modal {
+      width: min(900px, calc(100vw - 48px)) !important;
+      max-width: calc(100vw - 48px);
+      max-height: min(92dvh, 980px);
+      border-radius: 20px;
+      padding: 30px 34px;
+    }
+
+  .wf-modal--create { width: min(910px, calc(100vw - 48px)) !important; }
+
+  .wf-modal--confirm {
+      width: min(770px, calc(100vw - 48px)) !important;
+      padding: 0;
+      overflow: hidden;
+    }
+
+  .wf-modal--details { width: min(650px, calc(100vw - 48px)) !important; }
+
+  .wf-modal--contact { width: min(430px, calc(100vw - 48px)) !important; }
+
+  .wf-modal--notifications { width: min(570px, calc(100vw - 48px)) !important; }
+
+  .wf-modal--admin-block { width: min(990px, calc(100vw - 48px)) !important; }
+
+  .wf-modal--assign { width: min(920px, calc(100vw - 48px)) !important; }
+
+  .wf-modal--email { width: min(940px, calc(100vw - 48px)) !important; }
+
+  .wf-modal--ofx { width: min(800px, calc(100vw - 48px)) !important; }
+
+  .wf-modal--budget { width: min(1000px, calc(100vw - 48px)) !important; }
+
+  .wf-modal-actions {
+      position: static;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+      background: none;
+      padding-top: 0;
+    }
+
+  .wf-form-grid,
+    .wf-create-booking-form,
+    .wf-client-detail-modal-grid,
+    .wf-admin-block-modal {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+  .wf-span-2 {
+      grid-column: span 2;
+    }
+}
+
+@media (min-width: 800px) and (max-width: 1023px) and (max-height: 520px) {
+  .wf-modal-backdrop {
+      padding: 8px;
+    }
+
+  .wf-modal {
+      max-height: calc(100dvh - 16px);
+    }
+}
+
+@media (max-width: 860px) {
+  .booking-preview-modal__card--calendar-picker {
+      width: min(100vw - 20px, 720px);
+    }
+
+  .booking-preview-modal__body--calendar-picker {
+      grid-template-columns: 1fr;
+    }
+}

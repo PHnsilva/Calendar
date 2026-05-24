@@ -3,6 +3,9 @@ package br.com.calendarmate.service.store;
 import br.com.calendarmate.integrations.supabase.SupabaseClient;
 import br.com.calendarmate.model.AdminRole;
 import br.com.calendarmate.model.AdminUser;
+import br.com.calendarmate.util.PhoneNumberNormalizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -10,24 +13,46 @@ import java.util.List;
 import java.util.Map;
 
 public class SupabaseAdminUserStore implements AdminUserStore {
+    private static final Logger log = LoggerFactory.getLogger(SupabaseAdminUserStore.class);
+
     private final SupabaseClient sb;
     private final String table;
+    private final List<AdminUser> seedUsers;
 
-    public SupabaseAdminUserStore(SupabaseClient sb, String table) {
+    public SupabaseAdminUserStore(SupabaseClient sb, String table, String seedConfig) {
         this.sb = sb;
         this.table = (table == null || table.isBlank()) ? "admin_users" : table.trim();
+        this.seedUsers = AdminUserSeedParser.parse(seedConfig);
     }
 
     @Override
     public AdminUser findActiveByPhone(String phoneDigits) {
-        String normalized = normalizePhone(phoneDigits);
+        String normalized = PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(phoneDigits);
+        if (normalized.isBlank()) {
+            return null;
+        }
+
         List<Map> rows = sb.select(table, Map.of("phone_digits", normalized, "active", "true"), 1, null);
         AdminUser exact = first(rows);
         if (exact != null) {
             return exact;
         }
+
+        AdminUser seeded = seedUsers.stream()
+                .filter(user -> normalized.equals(user.getPhoneDigits()))
+                .findFirst()
+                .orElse(null);
+        if (seeded != null) {
+            upsertSeed(seeded);
+            rows = sb.select(table, Map.of("phone_digits", normalized, "active", "true"), 1, null);
+            exact = first(rows);
+            if (exact != null) {
+                return exact;
+            }
+        }
+
         return listActive().stream()
-                .filter(user -> normalized.equals(normalizePhone(user.getPhoneDigits())))
+                .filter(user -> normalized.equals(PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(user.getPhoneDigits())))
                 .findFirst()
                 .orElse(null);
     }
@@ -75,7 +100,7 @@ public class SupabaseAdminUserStore implements AdminUserStore {
         }
         AdminUser user = new AdminUser();
         user.setId(str(row.get("id")));
-        user.setPhoneDigits(normalizePhone(str(row.get("phone_digits"))));
+        user.setPhoneDigits(PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(str(row.get("phone_digits"))));
         user.setName(str(row.get("name")));
         user.setRole(AdminRole.from(str(row.get("role"))));
         user.setActive(bool(row.get("active")));
@@ -84,12 +109,18 @@ public class SupabaseAdminUserStore implements AdminUserStore {
         return user;
     }
 
-    private static String normalizePhone(String value) {
-        String digits = value == null ? "" : value.replaceAll("\\D", "");
-        if ((digits.length() == 12 || digits.length() == 13) && digits.startsWith("55")) {
-            digits = digits.substring(2);
+    private void upsertSeed(AdminUser user) {
+        try {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", user.getId());
+            row.put("phone_digits", user.getPhoneDigits());
+            row.put("name", user.getName());
+            row.put("role", user.getRole() == null ? "PROVIDER" : user.getRole().name());
+            row.put("active", user.isActive());
+            sb.upsert(table, List.of(row), "id");
+        } catch (Exception ex) {
+            log.warn("Could not seed configured admin user {}", user.getPhoneDigits(), ex);
         }
-        return digits;
     }
 
     private static String str(Object value) {

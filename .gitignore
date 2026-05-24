@@ -1,6 +1,11 @@
 # ===== Geral =====
 *.log
 .DS_Store
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
 
 # Editor/IDE
 .vscode/*

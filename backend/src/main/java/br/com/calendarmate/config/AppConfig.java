@@ -153,7 +153,7 @@ public class AppConfig {
             InMemoryAdminUserStore mem) {
         SupabaseClient sb = supabaseClientProvider.getIfAvailable();
         if (props.isSupabaseEnabled() && sb != null) {
-            return new SupabaseAdminUserStore(sb, props.getTableAdminUsers());
+            return new SupabaseAdminUserStore(sb, props.getTableAdminUsers(), props.getAdminUsersCsv());
         }
         return mem;
     }

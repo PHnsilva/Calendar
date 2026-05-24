@@ -1,15 +1,11 @@
 package br.com.calendarmate.service.store;
 
-import br.com.calendarmate.model.AdminRole;
 import br.com.calendarmate.model.AdminUser;
+import br.com.calendarmate.util.PhoneNumberNormalizer;
 
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InMemoryAdminUserStore implements AdminUserStore {
@@ -22,7 +18,7 @@ public class InMemoryAdminUserStore implements AdminUserStore {
 
     @Override
     public AdminUser findActiveByPhone(String phoneDigits) {
-        String id = idByPhone.get(normalizePhone(phoneDigits));
+        String id = idByPhone.get(PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(phoneDigits));
         AdminUser user = id == null ? null : byId.get(id);
         return user != null && user.isActive() ? user : null;
     }
@@ -50,35 +46,9 @@ public class InMemoryAdminUserStore implements AdminUserStore {
     }
 
     private void load(String config) {
-        String raw = config == null ? "" : config.trim();
-        if (raw.isBlank()) {
-            return;
+        for (AdminUser user : AdminUserSeedParser.parse(config)) {
+            byId.put(user.getId(), user);
+            idByPhone.put(user.getPhoneDigits(), user.getId());
         }
-        long now = Instant.now().getEpochSecond();
-        for (String entry : raw.split(";")) {
-            String item = entry == null ? "" : entry.trim();
-            if (item.isBlank()) {
-                continue;
-            }
-            String[] parts = item.split("\\|");
-            String phone = parts.length > 0 ? normalizePhone(parts[0]) : "";
-            if (phone.isBlank()) {
-                continue;
-            }
-            String name = parts.length > 1 && !parts[1].isBlank() ? parts[1].trim() : "Prestador";
-            AdminRole role = parts.length > 2 ? AdminRole.from(parts[2]) : AdminRole.PROVIDER;
-            String id = "adm_" + UUID.nameUUIDFromBytes((phone + ":" + name.toLowerCase(Locale.ROOT)).getBytes());
-            AdminUser user = new AdminUser(id, phone, name, role, true, now, 0L);
-            byId.put(id, user);
-            idByPhone.put(phone, id);
-        }
-    }
-
-    private static String normalizePhone(String value) {
-        String digits = value == null ? "" : value.replaceAll("\\D", "");
-        if ((digits.length() == 12 || digits.length() == 13) && digits.startsWith("55")) {
-            digits = digits.substring(2);
-        }
-        return digits;
     }
 }

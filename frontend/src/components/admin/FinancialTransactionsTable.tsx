@@ -1,14 +1,8 @@
-import type { FinancialTransaction } from '../../data/mockFinancialData';
+import type { FinancialTransaction } from '../../features/finance/types';
 
 type FinancialTransactionsTableProps = {
   transactions: FinancialTransaction[];
   compact?: boolean;
-};
-
-const statusLabel: Record<FinancialTransaction['status'], string> = {
-  CONFIRMED: 'Confirmada',
-  PENDING: 'Pendente',
-  CANCELED: 'Cancelada',
 };
 
 function formatCurrency(value: number): string {
@@ -37,16 +31,16 @@ export function FinancialTransactionsTable({ transactions, compact = false }: Fi
         <span>Valor</span>
       </div>
       {transactions.length === 0 ? (
-        <p className="admin-transaction-empty">Nenhuma movimentação mockada para este período.</p>
+        <p className="admin-transaction-empty">Nenhuma movimentação retornada pelo financeiro.</p>
       ) : null}
-      {transactions.map((transaction) => (
-        <article key={transaction.id} className="admin-transaction-row" role="row">
+      {transactions.map((transaction, index) => (
+        <article key={`${transaction.date}-${transaction.description}-${transaction.amount}-${index}`} className="admin-transaction-row" role="row">
           <span data-label="Data">{formatDate(transaction.date)}</span>
           <strong data-label="Descrição">{transaction.description}</strong>
           <span data-label="Tipo" className={transaction.type === 'ENTRY' ? 'is-entry' : 'is-exit'}>{transaction.type === 'ENTRY' ? 'Entrada' : 'Saída'}</span>
-          <span data-label="Categoria">{transaction.category}</span>
+          <span data-label="Categoria">{transaction.category ?? '-'}</span>
           <span data-label="Agendamento">{transaction.appointmentCode ?? '-'}</span>
-          <span data-label="Status" className={`admin-status-pill admin-status-pill--${transaction.status.toLowerCase()}`}>{statusLabel[transaction.status]}</span>
+          <span data-label="Status" className="admin-status-pill admin-status-pill--confirmed">Confirmada</span>
           <b data-label="Valor" className={transaction.type === 'ENTRY' ? 'is-entry' : 'is-exit'}>{formatTransactionAmount(transaction)}</b>
           {compact ? <small>{transaction.category}</small> : null}
         </article>

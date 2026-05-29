@@ -17,10 +17,12 @@ import {
   getBookingDurationMinutesByCity,
   getDefaultCity,
   getDefaultState,
+  getMaxFutureMonthsAhead,
   getSlotMinutes,
 } from '../../../lib/bootstrap-config';
 import { usePublicBootstrap } from '../../public-config/hooks/usePublicBootstrap';
 import AlertNotice from '../../../components/ui/AlertNotice';
+import { build4x4UnavailableDates } from '../../calendar/utils/schedule-rules';
 
 type BookingFormModalProps = {
   open: boolean;
@@ -127,6 +129,10 @@ function shiftMonth(monthStart: string, delta: number): string {
   return toIsoDate(shifted).slice(0, 10);
 }
 
+function endOfMonth(monthStart: string): string {
+  const base = toLocalDate(monthStart);
+  return toIsoDate(new Date(base.getFullYear(), base.getMonth() + 1, 0));
+}
 
 function buildCalendarCells(monthStart: string, disabledDates: Set<string>, minDate: string, maxDate: string): CalendarCell[] {
   const monthDate = toLocalDate(monthStart);
@@ -134,12 +140,12 @@ function buildCalendarCells(monthStart: string, disabledDates: Set<string>, minD
   const gridStart = new Date(firstDay);
   gridStart.setDate(firstDay.getDate() - firstDay.getDay());
 
-  return Array.from({ length: 35 }, (_, index) => {
+  return Array.from({ length: 42 }, (_, index) => {
     const cellDate = new Date(gridStart);
     cellDate.setDate(gridStart.getDate() + index);
     const iso = toIsoDate(cellDate);
     const isCurrentMonth = cellDate.getMonth() === monthDate.getMonth();
-    const isDisabled = iso < minDate || iso > maxDate || disabledDates.has(iso);
+    const isDisabled = !isCurrentMonth || iso < minDate || iso > maxDate || disabledDates.has(iso);
 
     return {
       date: iso,
@@ -154,12 +160,13 @@ function getTodayIso() {
   return toIsoDate(new Date());
 }
 
-function findNextAvailableDate(startDate: string, unavailableDates: string[]): string {
+function findNextAvailableDate(startDate: string, unavailableDates: string[], maxDate: string): string {
   const blocked = new Set(unavailableDates);
   const cursor = toLocalDate(startDate);
 
   for (let index = 0; index < 62; index += 1) {
     const iso = toIsoDate(cursor);
+    if (iso > maxDate) return startDate;
     if (!blocked.has(iso)) return iso;
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -320,9 +327,21 @@ export default function BookingFormModal({
   onBookingCreated,
 }: BookingFormModalProps) {
   const todayIso = getTodayIso();
+  const currentAllowedMonth = toMonthStart(todayIso);
+  const { data: bootstrap } = usePublicBootstrap(open);
+  const maxFutureMonthsAhead = getMaxFutureMonthsAhead(bootstrap);
+  const maxAllowedMonth = shiftMonth(currentAllowedMonth, maxFutureMonthsAhead);
+  const maxDate = useMemo(() => endOfMonth(maxAllowedMonth), [maxAllowedMonth]);
+  const disabledDateSet = useMemo(() => {
+    const dates = new Set(unavailableDates);
+    for (let month = currentAllowedMonth; month <= maxAllowedMonth; month = shiftMonth(month, 1)) {
+      build4x4UnavailableDates(month, bootstrap?.schedule?.cycleStart).forEach((date) => dates.add(date));
+    }
+    return dates;
+  }, [bootstrap?.schedule?.cycleStart, currentAllowedMonth, maxAllowedMonth, unavailableDates]);
   const defaultDate = useMemo(
-    () => findNextAvailableDate(selectedDate >= todayIso ? selectedDate : todayIso, unavailableDates),
-    [selectedDate, todayIso, unavailableDates],
+    () => findNextAvailableDate(selectedDate >= todayIso && selectedDate <= maxDate ? selectedDate : todayIso, Array.from(disabledDateSet), maxDate),
+    [disabledDateSet, maxDate, selectedDate, todayIso],
   );
 
   const [calendarDate, setCalendarDate] = useState(defaultDate);
@@ -339,7 +358,6 @@ export default function BookingFormModal({
   const [verificationState, setVerificationState] = useState<VerificationState | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { data: bootstrap } = usePublicBootstrap(open);
   const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
   const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
   const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);
@@ -348,19 +366,13 @@ export default function BookingFormModal({
   const primaryCities = allowedCities.slice(0, 2);
   const extraCities = allowedCities.slice(2);
   const effectiveDate = confirmedDate ?? calendarDate;
-  const disabledDateSet = useMemo(() => new Set(unavailableDates), [unavailableDates]);
-  const maxDate = useMemo(() => {
-    const date = toLocalDate(todayIso);
-    date.setDate(date.getDate() + 61);
-    return toIsoDate(date);
-  }, [todayIso]);
 
   const monthGrid = useMemo(
     () => buildCalendarCells(calendarMonth, disabledDateSet, todayIso, maxDate),
     [calendarMonth, disabledDateSet, maxDate, todayIso],
   );
 
-  const confirmedUnavailable = Boolean(confirmedDate && disabledDateSet.has(confirmedDate));
+  const confirmedUnavailable = Boolean(confirmedDate && (confirmedDate < todayIso || confirmedDate > maxDate || disabledDateSet.has(confirmedDate)));
   const { data: availableSlots = [], isLoading: isLoadingSlots, error: slotsError } = useAvailableSlots(
     effectiveDate,
     selectedCity || defaultCity,
@@ -530,7 +542,7 @@ export default function BookingFormModal({
   };
 
   const handleConfirmDay = async () => {
-    if (disabledDateSet.has(calendarDate)) return;
+    if (calendarDate < todayIso || calendarDate > maxDate || disabledDateSet.has(calendarDate)) return;
     setDateButtonState('loading');
     setDraftSlot(null);
     await new Promise((resolve) => window.setTimeout(resolve, 650));
@@ -615,7 +627,9 @@ export default function BookingFormModal({
   const shouldShowNumberField = Boolean(selectedAddress && !normalizeText(selectedAddress.houseNumber));
   const durationLabel = formatDurationLabel(bookingDurationMinutes);
   const monthTitle = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(toLocalDate(calendarMonth));
-  const selectedDayDisabled = disabledDateSet.has(calendarDate);
+  const canGoPrevMonth = calendarMonth > currentAllowedMonth;
+  const canGoNextMonth = calendarMonth < maxAllowedMonth;
+  const selectedDayDisabled = calendarDate < todayIso || calendarDate > maxDate || disabledDateSet.has(calendarDate);
   const sectionTitle = confirmedDate ? formatDate(confirmedDate) : 'Selecione um dia no calendário';
 
   return (
@@ -651,8 +665,8 @@ export default function BookingFormModal({
                     <span>{new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(toLocalDate(calendarDate))}</span>
                   </div>
                   <div className="booking-day-picker__nav">
-                    <button type="button" onClick={() => setCalendarMonth(shiftMonth(calendarMonth, -1))} aria-label="Mês anterior">‹</button>
-                    <button type="button" onClick={() => setCalendarMonth(shiftMonth(calendarMonth, 1))} aria-label="Próximo mês">›</button>
+                    <button type="button" onClick={() => { if (canGoPrevMonth) setCalendarMonth(shiftMonth(calendarMonth, -1)); }} disabled={!canGoPrevMonth} aria-label="Mês anterior">‹</button>
+                    <button type="button" onClick={() => { if (canGoNextMonth) setCalendarMonth(shiftMonth(calendarMonth, 1)); }} disabled={!canGoNextMonth} aria-label="Próximo mês">›</button>
                   </div>
                 </div>
 

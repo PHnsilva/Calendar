@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, type PointerEvent } from 'react';
-import type { FinancialChartPoint } from '../../data/mockFinancialData';
+import type { FinancialChartPoint } from '../../features/finance/types';
 
 type FinancialChartProps = {
   data: FinancialChartPoint[];

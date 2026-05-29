@@ -1,165 +1,204 @@
 import { useMemo, useState } from 'react';
 import historyIcon from '../../assets/wireframes/icons/admin-history-clock.png';
-import {
-  mockFinancialHistoryPeriods,
-  type FinancialHistoryPeriod,
-  type FinancialPeriodStatus,
-} from '../../data/mockFinancialData';
-import { FinancialChart } from './FinancialChart';
-import { FinancialSummaryCards } from './FinancialSummaryCards';
-import { FinancialTransactionsTable } from './FinancialTransactionsTable';
+import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
+import { getStoredAdminToken } from '../../lib/storage';
+import type { ServicoResponse } from '../../types/api';
 
-const statusLabel: Record<FinancialPeriodStatus, string> = {
-  PAID: 'Pago',
-  PENDING: 'Pendente',
-  OVERDUE: 'Vencido',
-  CANCELED: 'Ignorado',
+type PeriodFilter = '30' | '90' | 'ALL';
+
+type HistoryBooking = {
+  id: string;
+  address: string;
+  client: string;
+  date: string;
+  email: string;
+  notes: string;
+  phone: string;
+  provider: string;
+  service: string;
+  status: string;
+  time: string;
 };
 
-const statusOptions: Array<{ value: 'ALL' | FinancialPeriodStatus; label: string }> = [
-  { value: 'ALL', label: 'Todos' },
-  { value: 'PAID', label: 'Pagos' },
-  { value: 'PENDING', label: 'Pendentes' },
-  { value: 'OVERDUE', label: 'Vencidos' },
-  { value: 'CANCELED', label: 'Ignorados' },
-];
+const ptDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+function toLocalDate(date: string): Date {
+  return new Date(`${date}T12:00:00`);
 }
 
-function formatMonth(month: string): string {
-  const [year, monthNumber] = month.split('-').map(Number);
-  if (!year || !monthNumber) return month;
-  return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(year, monthNumber - 1, 1));
+function normalize(value: string): string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
-function formatDate(date?: string): string {
-  if (!date) return 'Ainda não pago';
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(`${date}T12:00:00`));
+function fullClientName(booking: ServicoResponse): string {
+  return `${booking.clientFirstName ?? ''} ${booking.clientLastName ?? ''}`.trim() || 'Cliente não informado';
 }
 
-function periodMatchesSearch(period: FinancialHistoryPeriod, search: string): boolean {
-  const normalized = search.trim().toLowerCase();
-  if (!normalized) return true;
-  const transactionText = period.transactions
-    .map((transaction) => `${transaction.description} ${transaction.appointmentCode ?? ''} ${transaction.category}`)
-    .join(' ');
-  return `${formatMonth(period.month)} ${statusLabel[period.pixStatus]} ${period.notes} ${transactionText}`.toLowerCase().includes(normalized);
+function addressFromBooking(booking: ServicoResponse): string {
+  return booking.clientAddressLine || [booking.clientStreet, booking.clientNumber, booking.clientNeighborhood, booking.clientCity, booking.clientState].filter(Boolean).join(' - ') || 'Endereço não informado';
+}
+
+function formatStatus(status?: string): string {
+  const value = normalize(status ?? '');
+  if (value.includes('concl') || value.includes('done') || value.includes('complete')) return 'Concluído';
+  if (value.includes('cancel')) return 'Cancelado';
+  if (value.includes('pend')) return 'Pendente';
+  return 'Confirmado';
+}
+
+function isCompleted(status: string): boolean {
+  return normalize(status).includes('concl') || normalize(status).includes('complete') || normalize(status).includes('done');
+}
+
+function mapBooking(booking: ServicoResponse): HistoryBooking {
+  const date = booking.start?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+  return {
+    id: booking.eventId,
+    address: addressFromBooking(booking),
+    client: fullClientName(booking),
+    date,
+    email: booking.clientEmail || 'Não informado',
+    notes: booking.serviceType || 'Sem observações registradas.',
+    phone: booking.clientPhone || 'Não informado',
+    provider: booking.assignedProviderName || 'A definir',
+    service: booking.serviceType || 'Serviço não informado',
+    status: formatStatus(booking.status),
+    time: booking.start?.slice(11, 16) || '--:--',
+  };
+}
+
+function inPeriod(booking: HistoryBooking, period: PeriodFilter): boolean {
+  if (period === 'ALL') return true;
+  const days = Number(period);
+  const floor = new Date();
+  floor.setDate(floor.getDate() - days);
+  return toLocalDate(booking.date).getTime() >= new Date(floor.getFullYear(), floor.getMonth(), floor.getDate()).getTime();
+}
+
+function Avatar({ name }: { name: string }) {
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'SG';
+  return <span className="admin-history-avatar" aria-hidden="true">{initials}</span>;
 }
 
 export function HistoryPanel() {
-  const [selectedId, setSelectedId] = useState(mockFinancialHistoryPeriods[0]?.id ?? '');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | FinancialPeriodStatus>('ALL');
+  const hasAdminToken = Boolean(getStoredAdminToken());
+  const query = useAdminBookings({}, hasAdminToken);
+  const [selectedId, setSelectedId] = useState('');
+  const [period, setPeriod] = useState<PeriodFilter>('30');
+  const [client, setClient] = useState('ALL');
+  const [provider, setProvider] = useState('ALL');
   const [search, setSearch] = useState('');
 
-  const periods = useMemo(() => mockFinancialHistoryPeriods, []);
-  const filteredPeriods = useMemo(() => periods.filter((period) => {
-    const statusMatches = statusFilter === 'ALL' || period.pixStatus === statusFilter;
-    return statusMatches && periodMatchesSearch(period, search);
-  }), [periods, search, statusFilter]);
-  const selected = filteredPeriods.find((period) => period.id === selectedId) ?? filteredPeriods[0] ?? periods[0];
+  const allBookings = useMemo(() => (query.data ?? []).map(mapBooking).sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`)), [query.data]);
+  const completedBookings = useMemo(() => allBookings.filter((booking) => isCompleted(booking.status)), [allBookings]);
+  const sourceBookings = completedBookings.length ? completedBookings : allBookings;
+  const clientOptions = useMemo(() => Array.from(new Set(sourceBookings.map((booking) => booking.client))).sort(), [sourceBookings]);
+  const providerOptions = useMemo(() => Array.from(new Set(sourceBookings.map((booking) => booking.provider))).sort(), [sourceBookings]);
+
+  const filteredBookings = useMemo(() => {
+    const term = normalize(search.trim());
+    return sourceBookings.filter((booking) => {
+      const byPeriod = inPeriod(booking, period);
+      const byClient = client === 'ALL' || booking.client === client;
+      const byProvider = provider === 'ALL' || booking.provider === provider;
+      const bySearch = !term || normalize(`${booking.id} ${booking.client} ${booking.provider} ${booking.phone} ${booking.email} ${booking.address} ${booking.service} ${booking.notes}`).includes(term);
+      return byPeriod && byClient && byProvider && bySearch;
+    });
+  }, [client, period, provider, search, sourceBookings]);
+
+  const selected = filteredBookings.find((booking) => booking.id === selectedId) ?? filteredBookings[0] ?? sourceBookings[0];
 
   return (
-    <section className="wf-admin-section admin-history-panel" aria-label="Histórico financeiro">
-      <header className="admin-panel-header">
+    <section className="wf-admin-section admin-history-panel admin-history-panel--wireframe" aria-label="Histórico de agendamentos">
+      <header className="admin-panel-header admin-panel-header--plain">
         <span className="admin-panel-header__icon"><img src={historyIcon} alt="" /></span>
         <div>
-          <small>Admin histórico</small>
           <h1>Histórico</h1>
-          <p>Fechamentos mensais mockados com Pix, totais, agendamentos e transações do período.</p>
-        </div>
-        <div className="admin-panel-actions">
-          <label className="admin-inline-field">
-            <span>Status</span>
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as 'ALL' | FinancialPeriodStatus)}>
-              {statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-          </label>
-          <label className="admin-inline-field admin-inline-field--search">
-            <span>Busca</span>
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar período, Pix ou transação" />
-          </label>
+          <p>Consulte os agendamentos já concluídos e as informações registradas pelos clientes.</p>
         </div>
       </header>
 
-      <div className="admin-history-layout">
-        <aside className="admin-history-periods">
+      <section className="admin-history-filters" aria-label="Filtros do histórico">
+        <label>
+          <span>Período</span>
+          <select value={period} onChange={(event) => setPeriod(event.target.value as PeriodFilter)}>
+            <option value="30">Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+            <option value="ALL">Todo o histórico</option>
+          </select>
+        </label>
+        <label>
+          <span>Cliente</span>
+          <select value={client} onChange={(event) => setClient(event.target.value)}>
+            <option value="ALL">Todos</option>
+            {clientOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+        </label>
+        <label>
+          <span>Prestador</span>
+          <select value={provider} onChange={(event) => setProvider(event.target.value)}>
+            <option value="ALL">Todos</option>
+            {providerOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+        </label>
+        <label>
+          <span>Busca</span>
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por cliente, agendamento ou observação..." />
+        </label>
+      </section>
+
+      <div className="admin-history-wireframe-layout">
+        <section className="admin-history-results" aria-label="Agendamentos concluídos">
           <div className="admin-section-heading">
             <div>
-              <h2>Períodos anteriores</h2>
-              <p>{filteredPeriods.length} fechamento(s) mockado(s)</p>
+              <h2>{completedBookings.length ? 'Agendamentos concluídos' : 'Agendamentos carregados'}</h2>
+              <p>{filteredBookings.length} registro(s) reais do sistema</p>
             </div>
+            <strong>Mais recentes</strong>
           </div>
-          <div className="admin-period-list">
-            {filteredPeriods.length === 0 ? <p className="admin-transaction-empty">Nenhum período encontrado.</p> : null}
-            {filteredPeriods.map((period) => (
+
+          {query.isFetching ? <p className="admin-transaction-empty">Carregando histórico do backend.</p> : null}
+          {!hasAdminToken ? <p className="admin-transaction-empty">Faça login administrativo para carregar o histórico.</p> : null}
+          {!query.isFetching && filteredBookings.length === 0 ? <p className="admin-transaction-empty">Nenhum agendamento encontrado para os filtros selecionados.</p> : null}
+
+          <div className="admin-history-card-list">
+            {filteredBookings.map((booking) => (
               <button
-                key={period.id}
+                key={booking.id}
                 type="button"
-                className={period.id === selected.id ? 'is-active' : ''}
-                onClick={() => setSelectedId(period.id)}
+                className={booking.id === selected?.id ? 'is-active' : ''}
+                onClick={() => setSelectedId(booking.id)}
               >
-                <span className={`admin-period-status admin-period-status--${period.pixStatus.toLowerCase()}`}>{statusLabel[period.pixStatus]}</span>
-                <strong>{formatMonth(period.month)}</strong>
-                <small>Total: {formatCurrency(period.totalEntries)}</small>
-                <small>Agendamentos: {period.totalAppointments}</small>
-                <b>Pix: {formatCurrency(period.pixCommissionAmount)}</b>
+                <span className="admin-history-date"><strong>{ptDate.format(toLocalDate(booking.date))}</strong><em>{booking.time}</em><i>{booking.status}</i></span>
+                <span className="admin-history-client"><strong>{booking.client}</strong><small>{booking.phone}</small><em>{booking.notes}</em><b>Código: {booking.id}</b></span>
+                <span className="admin-history-provider"><Avatar name={booking.provider} /><strong>{booking.provider}</strong></span>
+                <span className="admin-history-details">Ver detalhes</span>
               </button>
             ))}
           </div>
-        </aside>
+        </section>
 
         {selected ? (
-          <section className="admin-history-detail">
-            <div className="admin-history-detail__top">
+          <aside className="admin-history-selected" aria-label="Detalhes do atendimento">
+            <div className="admin-history-selected__person">
+              <Avatar name={selected.provider} />
               <div>
-                <small>Detalhes do período</small>
-                <h2>{formatMonth(selected.month)}</h2>
-                <p>{selected.notes}</p>
+                <h2>{selected.provider}</h2>
+                <p>Prestador de Serviços</p>
+                <span>{selected.status}</span>
               </div>
-              <span className={`admin-period-status admin-period-status--${selected.pixStatus.toLowerCase()}`}>{statusLabel[selected.pixStatus]}</span>
             </div>
-
-            <FinancialSummaryCards data={selected} imported />
-
-            <div className="admin-history-detail-grid">
-              <article className="admin-financial-card admin-history-pix-card">
-                <h3>Pix do fechamento</h3>
-                <dl>
-                  <dt>Valor gerado</dt>
-                  <dd>{formatCurrency(selected.pixCommissionAmount)}</dd>
-                  <dt>Status</dt>
-                  <dd>{statusLabel[selected.pixStatus]}</dd>
-                  <dt>Pago em</dt>
-                  <dd>{formatDate(selected.pixPaidAt)}</dd>
-                  <dt>Base mensal</dt>
-                  <dd>{formatCurrency(selected.totalEntries)}</dd>
-                </dl>
-              </article>
-
-              <article className="admin-financial-card admin-history-mini-chart">
-                <div className="admin-section-heading">
-                  <div>
-                    <h3>Movimento do período</h3>
-                    <p>Gráfico interativo mockado.</p>
-                  </div>
-                </div>
-                <FinancialChart data={selected.chart} />
-              </article>
-            </div>
-
-            <article className="admin-financial-card admin-transactions-card">
-              <div className="admin-section-heading">
-                <div>
-                  <h2>Histórico de transações</h2>
-                  <p>Movimentações vinculadas ao fechamento selecionado.</p>
-                </div>
-                <strong>{selected.transactions.length} registros</strong>
-              </div>
-              <FinancialTransactionsTable transactions={selected.transactions} />
-            </article>
-          </section>
+            <dl>
+              <dt>Agendamento</dt><dd>{selected.id}</dd>
+              <dt>Cliente</dt><dd>{selected.client}</dd>
+              <dt>Telefone</dt><dd>{selected.phone}</dd>
+              <dt>E-mail</dt><dd>{selected.email}</dd>
+              <dt>Prestador que atendeu</dt><dd>{selected.provider}</dd>
+              <dt>Data / Hora do atendimento</dt><dd>{ptDate.format(toLocalDate(selected.date))} às {selected.time}</dd>
+              <dt>Endereço</dt><dd>{selected.address}</dd>
+              <dt>Observações do cliente</dt><dd>{selected.notes}</dd>
+            </dl>
+          </aside>
         ) : null}
       </div>
     </section>

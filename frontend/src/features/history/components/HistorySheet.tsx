@@ -11,7 +11,7 @@ const CITY_TONES: Record<string, string> = {
   Itabirito: 'cyan',
   'Ouro Preto': 'violet',
   Moeda: 'orange',
-  Congonhas: 'teal',
+  'Belo Horizonte': 'indigo',
   'Nova Lima': 'royal',
 };
 

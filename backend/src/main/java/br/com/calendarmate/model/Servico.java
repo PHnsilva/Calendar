@@ -10,6 +10,8 @@ public class Servico {
 
     private Instant start;
     private Instant end;
+    private Instant appointmentStart;
+    private Instant appointmentEnd;
 
     private Instant phoneVerifiedAt;
 
@@ -49,6 +51,12 @@ public class Servico {
 
     public Instant getEnd() { return end; }
     public void setEnd(Instant end) { this.end = end; }
+
+    public Instant getAppointmentStart() { return appointmentStart; }
+    public void setAppointmentStart(Instant appointmentStart) { this.appointmentStart = appointmentStart; }
+
+    public Instant getAppointmentEnd() { return appointmentEnd; }
+    public void setAppointmentEnd(Instant appointmentEnd) { this.appointmentEnd = appointmentEnd; }
 
     public Instant getPhoneVerifiedAt() { return phoneVerifiedAt; }
     public void setPhoneVerifiedAt(Instant phoneVerifiedAt) { this.phoneVerifiedAt = phoneVerifiedAt; }

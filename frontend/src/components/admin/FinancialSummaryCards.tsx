@@ -1,7 +1,12 @@
-import type { FinancialMockData } from '../../data/mockFinancialData';
+import totalIcon from '../../assets/wireframes/icons/admin-finance-total.svg';
+import walletIcon from '../../assets/wireframes/icons/admin-finance-wallet.svg';
+import entryIcon from '../../assets/wireframes/icons/admin-finance-entry.svg';
+import exitIcon from '../../assets/wireframes/icons/admin-finance-exit.svg';
+import calendarIcon from '../../assets/wireframes/icons/admin-finance-calendar.svg';
+import type { FinancialDashboardDTO } from '../../features/finance/types';
 
 type FinancialSummaryCardsProps = {
-  data: FinancialMockData;
+  data: FinancialDashboardDTO;
   imported?: boolean;
 };
 
@@ -10,40 +15,48 @@ function formatCurrency(value: number): string {
 }
 
 export function FinancialSummaryCards({ data, imported = false }: FinancialSummaryCardsProps) {
-  const baseHint = imported ? 'Mock OFX processado' : 'Dados mockados do mês';
+  const sourceHint = imported ? 'Importado do OFX' : 'Dados do extrato';
 
   return (
     <section className="admin-financial-summary" aria-label="Resumo financeiro mensal">
       <article className="admin-financial-summary-card admin-financial-summary-card--blue">
-        <span className="admin-financial-summary-card__icon">R$</span>
+        <span className="admin-financial-summary-card__icon"><img src={totalIcon} alt="" /></span>
         <div>
           <small>Total do mês</small>
           <strong>{formatCurrency(data.totalEntries)}</strong>
-          <em>{baseHint}</em>
+          <em>{sourceHint}</em>
         </div>
       </article>
       <article className="admin-financial-summary-card admin-financial-summary-card--green">
-        <span className="admin-financial-summary-card__icon">+</span>
+        <span className="admin-financial-summary-card__icon"><img src={walletIcon} alt="" /></span>
         <div>
           <small>Saldo disponível</small>
           <strong>{formatCurrency(data.availableBalance)}</strong>
           <em>Entradas menos saídas</em>
         </div>
       </article>
+      <article className="admin-financial-summary-card admin-financial-summary-card--green">
+        <span className="admin-financial-summary-card__icon"><img src={entryIcon} alt="" /></span>
+        <div>
+          <small>Entradas</small>
+          <strong>{formatCurrency(data.totalEntries)}</strong>
+          <em>Recebimentos do período</em>
+        </div>
+      </article>
+      <article className="admin-financial-summary-card admin-financial-summary-card--red">
+        <span className="admin-financial-summary-card__icon"><img src={exitIcon} alt="" /></span>
+        <div>
+          <small>Saídas</small>
+          <strong>{formatCurrency(data.totalExits)}</strong>
+          <em>Despesas do período</em>
+        </div>
+      </article>
       <article className="admin-financial-summary-card admin-financial-summary-card--purple">
-        <span className="admin-financial-summary-card__icon">#</span>
+        <span className="admin-financial-summary-card__icon"><img src={calendarIcon} alt="" /></span>
         <div>
           <small>Total de agendamentos</small>
           <strong>{data.totalAppointments}</strong>
           <em>Atendimentos no período</em>
-        </div>
-      </article>
-      <article className="admin-financial-summary-card admin-financial-summary-card--orange">
-        <span className="admin-financial-summary-card__icon">12%</span>
-        <div>
-          <small>Pix SG</small>
-          <strong>{formatCurrency(data.pixCommissionAmount)}</strong>
-          <em>Comissão sobre entradas</em>
         </div>
       </article>
     </section>

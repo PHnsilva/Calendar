@@ -20,7 +20,7 @@ function getMonthDays(monthStart: string): Array<{ date: string; isCurrentMonth:
   const sundayOffset = firstDay.getDay();
   const gridStart = new Date(reference.getFullYear(), reference.getMonth(), 1 - sundayOffset);
 
-  return Array.from({ length: 35 }, (_, index) => {
+  return Array.from({ length: 42 }, (_, index) => {
     const date = new Date(gridStart);
     date.setDate(gridStart.getDate() + index);
 

@@ -87,6 +87,8 @@ public class GoogleCalendarClient implements CalendarClient {
         ext.put("clientComplement", safe(s.getClientComplement()));
         ext.put("clientCity", safe(s.getClientCity()));
         ext.put("clientState", safe(s.getClientState()));
+        putInstantIfPresent(ext, "appointmentStart", s.getAppointmentStart());
+        putInstantIfPresent(ext, "appointmentEnd", s.getAppointmentEnd());
         putIfNotBlank(ext, "assignedProviderId", s.getAssignedProviderId());
         putIfNotBlank(ext, "assignedProviderName", s.getAssignedProviderName());
         putIfNotBlank(ext, "assignedProviderPhone", s.getAssignedProviderPhone());
@@ -141,6 +143,8 @@ public class GoogleCalendarClient implements CalendarClient {
         ext.put("clientComplement", safe(s.getClientComplement()));
         ext.put("clientCity", safe(s.getClientCity()));
         ext.put("clientState", safe(s.getClientState()));
+        putInstantIfPresent(ext, "appointmentStart", s.getAppointmentStart());
+        putInstantIfPresent(ext, "appointmentEnd", s.getAppointmentEnd());
         putIfNotBlank(ext, "assignedProviderId", s.getAssignedProviderId());
         putIfNotBlank(ext, "assignedProviderName", s.getAssignedProviderName());
         putIfNotBlank(ext, "assignedProviderPhone", s.getAssignedProviderPhone());
@@ -356,6 +360,14 @@ public class GoogleCalendarClient implements CalendarClient {
         if (!safeValue.isBlank()) {
             ext.put(key, safeValue);
         }
+    }
+
+    private void putInstantIfPresent(Map<String, String> ext, String key, Instant value) {
+        if (value == null) {
+            ext.remove(key);
+            return;
+        }
+        ext.put(key, value.toString());
     }
 
     private String withStatusInSummary(String title, String status) {

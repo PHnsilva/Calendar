@@ -1099,6 +1099,50 @@
 
 .wf-contact-options small, .wf-provider-list small { display: block; color: var(--wf-muted); font-weight: 600; margin-top: 4px; }
 
+.wf-notification-list--wireframe p {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto 10px;
+  gap: 14px;
+  align-items: center;
+  margin: 0;
+}
+
+.wf-notification-list--wireframe .wf-icon {
+  width: 58px;
+  min-width: 58px;
+  height: 58px;
+}
+
+.wf-notification-list--wireframe strong,
+.wf-notification-list--wireframe small {
+  display: block;
+}
+
+.wf-notification-list--wireframe strong {
+  color: var(--wf-navy);
+  font-size: 18px;
+}
+
+.wf-notification-list--wireframe small {
+  margin-top: 5px;
+  color: var(--wf-blue-2);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.wf-notification-list--wireframe em {
+  color: var(--wf-muted);
+  font-style: normal;
+  font-weight: 750;
+}
+
+.wf-notification-list--wireframe i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--wf-blue);
+}
+
 .wf-notification-list p { margin: 0; justify-content: space-between; }
 
 .wf-notification-list p span { width: 28px; height: 28px; border-radius: 50%; background: #eef5ff; color: var(--wf-blue); display: inline-flex; align-items: center; justify-content: center; }
@@ -2963,6 +3007,11 @@
   color: #1f2c44;
   font-size: 1.1rem;
   font-weight: 800;
+}
+
+.booking-day-picker__nav button:disabled {
+  cursor: not-allowed;
+  opacity: .38;
 }
 
 .booking-day-picker__month-label {

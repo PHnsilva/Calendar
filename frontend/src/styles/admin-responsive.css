@@ -44,9 +44,9 @@
 
   .wf-section-title h1, .wf-admin-section h1, .wf-details-main h1, .wf-finance-title-row h1 { font-size: 34px; }
 
-  .wf-filters-bar { grid-template-columns: 1fr 52px; }
+  .wf-filters-bar { grid-template-columns: auto minmax(220px, 1fr) 52px; }
 
-  .wf-filter-tabs { grid-column: 1 / -1; overflow-x: auto; }
+  .wf-filter-tabs { grid-column: auto; overflow-x: auto; }
 
   .wf-search { min-width: 0; }
 
@@ -56,7 +56,10 @@
 
   .wf-booking-meta { grid-template-columns: 1fr; }
 
-  .wf-booking-actions button { flex: 1 1 150px; }
+  .wf-booking-actions button {
+    flex: 0 0 auto;
+    padding-inline: 12px;
+  }
 
   .wf-date-tile strong { font-size: 44px; }
 
@@ -116,15 +119,71 @@
 @media (max-width: 680px) {
   .wf-header, .wf-header--admin { padding: 12px 18px; height: 100px; }
 
-  .wf-booking-card { grid-template-columns: 1fr; }
+  .wf-filters-bar { grid-template-columns: 1fr 48px; }
 
-  .wf-date-tile { min-height: 82px; flex-direction: row; gap: 10px; }
+  .wf-filter-tabs { grid-column: 1 / -1; }
+
+  .wf-booking-card { grid-template-columns: minmax(76px, 84px) minmax(0, 1fr); }
+
+  .wf-date-tile {
+    align-self: start;
+    min-height: 174px;
+    height: auto;
+    flex-direction: column;
+    gap: 4px;
+  }
 
   .wf-date-tile strong { font-size: 42px; }
 
-  .wf-booking-content { padding: 14px; }
+  .wf-booking-content { padding: 14px 12px; }
 
   .wf-booking-main h2 { font-size: 20px; }
+
+  .wf-booking-main p {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .wf-provider-box strong {
+    margin-bottom: 5px;
+    font-size: 12px;
+  }
+
+  .wf-booking-actions {
+    gap: 8px;
+    margin: 10px 0;
+  }
+
+  .wf-booking-actions button {
+    min-height: 34px;
+    padding-inline: 9px;
+    gap: 6px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+
+  .wf-booking-actions .wf-icon--image,
+  .wf-booking-main p .wf-icon--image,
+  .wf-provider-box .wf-icon--image {
+    width: 17px;
+    min-width: 17px;
+    height: 17px;
+  }
+
+  .wf-booking-meta {
+    gap: 9px 12px;
+  }
+
+  .wf-booking-meta span {
+    grid-template-columns: 21px 1fr;
+    font-size: 11.5px;
+  }
+
+  .wf-booking-meta .wf-icon--image {
+    width: 19px;
+    min-width: 19px;
+    height: 19px;
+  }
 
   .wf-admin-title-row { align-items: flex-start; }
 
@@ -143,6 +202,64 @@
   .wf-map-label--dest { right: 16px; top: 132px; }
 
   .wf-finance-actions { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 681px) and (max-width: 799px) {
+  .wf-date-tile {
+    align-self: start;
+    min-height: 174px;
+    height: auto;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 380px) {
+  .wf-booking-card { grid-template-columns: 72px minmax(0, 1fr); }
+
+  .wf-date-tile {
+    min-height: 166px;
+    gap: 3px;
+  }
+
+  .wf-date-tile small,
+  .wf-date-tile span {
+    font-size: 12px;
+  }
+
+  .wf-date-tile strong { font-size: 36px; }
+
+  .wf-date-tile em {
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  .wf-booking-content { padding: 12px 10px; }
+
+  .wf-booking-actions {
+    display: grid;
+    width: min(100%, calc(100vw - 124px));
+    max-width: calc(100vw - 124px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .wf-booking-actions button {
+    width: 100%;
+    min-width: 0;
+    min-height: 32px;
+    padding-inline: 5px;
+    gap: 4px;
+    font-size: 10.5px;
+  }
+
+  .wf-booking-actions .wf-icon--image,
+  .wf-booking-main p .wf-icon--image,
+  .wf-provider-box .wf-icon--image {
+    width: 14px;
+    min-width: 14px;
+    height: 14px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1062,4 +1179,341 @@
     .wf-header--admin .wf-admin-tab {
       min-height: 42px;
     }
+}
+
+@media (max-width: 1280px) {
+  .admin-financial-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-history-wireframe-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-history-selected {
+    position: static;
+  }
+}
+
+@media (max-width: 1024px) {
+  .admin-panel-header--plain,
+  .admin-financial-title {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-panel-header--plain .admin-panel-header__icon {
+    display: none;
+  }
+
+  .admin-history-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-history-card-list button {
+    grid-template-columns: 150px minmax(0, 1fr) 150px;
+  }
+
+  .admin-history-details {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 799px) {
+  .admin-panel-header--plain,
+  .admin-financial-title {
+    padding: 22px 0 12px;
+  }
+
+  .admin-panel-header--plain h1 {
+    font-size: clamp(38px, 10vw, 48px);
+  }
+
+  .admin-financial-title .admin-panel-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-financial-title .admin-primary-button--orange {
+    grid-column: 1 / -1;
+  }
+
+  .admin-history-filters,
+  .admin-history-results,
+  .admin-history-selected {
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .admin-history-filters {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .admin-history-card-list {
+    gap: 12px;
+  }
+
+  .admin-history-card-list button {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    border: 1px solid var(--wf-line);
+    border-left: 4px solid var(--wf-orange);
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .admin-history-provider {
+    grid-template-columns: 46px 1fr;
+  }
+
+  .admin-history-avatar {
+    width: 46px;
+    height: 46px;
+  }
+
+  .admin-history-details {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .admin-history-selected__person {
+    grid-template-columns: 64px 1fr;
+  }
+
+  .admin-history-selected__person .admin-history-avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 20px;
+  }
+
+  .admin-history-selected dt,
+  .admin-history-selected dd {
+    float: none;
+    width: auto;
+    margin-left: 0;
+  }
+
+  .admin-history-selected dd {
+    padding-top: 0;
+  }
+
+  .admin-financial-action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wf-booking-tools {
+    justify-content: stretch;
+  }
+
+  .wf-booking-tools button {
+    flex: 1 1 150px;
+  }
+}
+
+@media (max-width: 430px) {
+  .admin-financial-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-financial-title .admin-panel-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-history-client em {
+    white-space: normal;
+  }
+}
+
+/* Final appointment screen pass: avoid cramped cards and truncated city names. */
+.wf-city-box__list {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  justify-content: start !important;
+  overflow: visible !important;
+}
+
+.wf-city-pill {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 42px !important;
+  padding: 6px 9px !important;
+  min-width: 0 !important;
+  justify-content: flex-start !important;
+}
+
+.wf-city-pill span {
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.12 !important;
+}
+
+@media (max-width: 1180px) {
+  .wf-city-box__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .wf-two-column--bookings,
+  .wf-two-column--admin {
+    width: min(100% - 20px, 720px) !important;
+    gap: 16px !important;
+  }
+
+  .wf-calendar-panel,
+  .wf-booking-list-panel {
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .wf-booking-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .wf-date-tile {
+    min-height: 0 !important;
+    padding: 10px 12px !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .wf-date-tile strong {
+    font-size: 32px !important;
+  }
+
+  .wf-date-tile em {
+    margin: 0 0 0 auto !important;
+    font-size: 13px !important;
+  }
+
+  .wf-booking-main p {
+    overflow-wrap: anywhere !important;
+  }
+
+  .wf-booking-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .wf-booking-actions button {
+    width: 100% !important;
+    min-width: 0 !important;
+    white-space: normal !important;
+    line-height: 1.12 !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .wf-city-box__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .wf-booking-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .wf-booking-content {
+    padding: 12px !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .wf-city-box__list {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Final admin landing card pass aligned with mobile wireframes. */
+@media (max-width: 900px) {
+  .wf-admin-card-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .wf-admin-card,
+  .wf-admin-card:nth-child(4),
+  .wf-admin-card--wide {
+    grid-column: auto !important;
+    min-height: 152px !important;
+    grid-template-columns: 86px minmax(0, 1fr) 30px !important;
+    gap: 16px !important;
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .wf-admin-card--with-media {
+    grid-template-columns: 72px minmax(0, 1fr) minmax(96px, 24vw) 28px !important;
+  }
+
+  .wf-admin-card__icon .wf-icon,
+  .wf-admin-card--wide .wf-admin-card__icon .wf-icon {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .wf-admin-card__media .wf-icon--image {
+    width: 100% !important;
+    max-width: 190px !important;
+  }
+
+  .wf-admin-card strong {
+    font-size: clamp(22px, 5.8vw, 30px) !important;
+    margin-bottom: 8px !important;
+  }
+
+  .wf-admin-card small {
+    font-size: clamp(14px, 4vw, 18px) !important;
+    line-height: 1.32 !important;
+  }
+
+  .wf-admin-card__arrow {
+    width: 34px !important;
+    height: 34px !important;
+    justify-self: end;
+  }
+
+  .wf-admin-card__arrow .wf-icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .wf-admin-card,
+  .wf-admin-card:nth-child(4),
+  .wf-admin-card--wide {
+    min-height: 136px !important;
+    grid-template-columns: 68px minmax(0, 1fr) 24px !important;
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+
+  .wf-admin-card--with-media {
+    grid-template-columns: 58px minmax(0, 1fr) 82px 22px !important;
+  }
+
+  .wf-admin-card__icon .wf-icon,
+  .wf-admin-card--wide .wf-admin-card__icon .wf-icon {
+    width: 58px !important;
+    height: 58px !important;
+  }
+
+  .wf-admin-card__icon .wf-icon--admin-history {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .wf-admin-card strong {
+    font-size: clamp(19px, 5.4vw, 24px) !important;
+  }
+
+  .wf-admin-card small {
+    font-size: clamp(12px, 3.6vw, 15px) !important;
+  }
 }

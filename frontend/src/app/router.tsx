@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 import PublicLayout from "../layouts/PublicLayout";
 import AdminLayout from "../layouts/AdminLayout";
 import HomePage from "../pages/home/HomePage";
@@ -17,7 +17,8 @@ const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: "my", element: <MyBookingsPage /> },
+      { path: "meus-agendamentos", element: <MyBookingsPage /> },
+      { path: "my", element: <Navigate to="/meus-agendamentos" replace /> },
       { path: "recover", element: <RecoverPage /> },
       { path: "403", element: <ForbiddenPage /> },
       { path: "500", element: <ServerErrorPage /> },

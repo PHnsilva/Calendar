@@ -1,10 +1,9 @@
-export const PRIMARY_CITY = "Belo Horizonte";
+export const PRIMARY_CITY = "Itabirito";
 
 export const OTHER_ALLOWED_CITIES = [
-  "Itabirito",
   "Ouro Preto",
   "Moeda",
-  "Congonhas",
+  "Belo Horizonte",
   "Nova Lima",
 ] as const;
 
@@ -21,7 +20,6 @@ export function getCityTone(city?: string): CityTone {
   if (normalized.includes("itabirito")) return "cyan";
   if (normalized.includes("ouro preto")) return "indigo";
   if (normalized.includes("moeda")) return "orange";
-  if (normalized.includes("congonhas")) return "teal";
   if (normalized.includes("nova lima")) return "amber";
   return "royal";
 }

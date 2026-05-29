@@ -7,6 +7,8 @@ const FALLBACK_DURATION_BY_CITY: Record<string, number> = {
   Itabirito: 60,
   "Ouro Preto": 240,
   Moeda: 240,
+  "Belo Horizonte": 240,
+  "Nova Lima": 240,
 };
 
 function normalizeArray(values?: string[] | null): string[] {
@@ -44,6 +46,12 @@ export function getDefaultState(bootstrap?: PublicBootstrapResponse | null): str
 export function getSlotMinutes(bootstrap?: PublicBootstrapResponse | null): number {
   const slotMinutes = Number(bootstrap?.booking?.slotMinutes ?? FALLBACK_SLOT_MINUTES);
   return Number.isFinite(slotMinutes) && slotMinutes > 0 ? slotMinutes : FALLBACK_SLOT_MINUTES;
+}
+
+export function getMaxFutureMonthsAhead(bootstrap?: PublicBootstrapResponse | null): number {
+  const months = Number(bootstrap?.booking?.maxFutureMonthsAhead ?? 1);
+  if (!Number.isFinite(months)) return 1;
+  return Math.max(0, Math.floor(months));
 }
 
 export function getScheduleTimeOptions(bootstrap?: PublicBootstrapResponse | null): string[] {

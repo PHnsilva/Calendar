@@ -42,6 +42,14 @@ public class ServicoService {
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
     private static final Set<Integer> ALLOWED_MINUTES = Set.of(0);
 
+    private record BookingWindow(
+            Instant blockStart,
+            Instant blockEnd,
+            Instant appointmentStart,
+            Instant appointmentEnd,
+            int blockMinutes) {
+    }
+
     public ServicoService(
             CalendarClient calendar,
             TokenUtil tokenUtil,
@@ -76,11 +84,9 @@ public class ServicoService {
             throw new ConflictException("Você já tem um agendamento pendente de confirmação");
         }
 
-        int durationMinutes = props.getBookingDurationMinutesForCity(req.getClientCity());
-        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
-        ZonedDateTime endZ = startZ.plusMinutes(durationMinutes);
-        Instant start = startZ.toInstant();
-        Instant end = endZ.toInstant();
+        BookingWindow window = resolveBookingWindow(req.getDate(), req.getTime(), req.getClientCity());
+        Instant start = window.blockStart();
+        Instant end = window.blockEnd();
 
         if (!end.isAfter(start)) {
             throw new BadRequestException("Horário inválido");
@@ -105,6 +111,8 @@ public class ServicoService {
 
         s.setStart(start);
         s.setEnd(end);
+        s.setAppointmentStart(window.appointmentStart());
+        s.setAppointmentEnd(window.appointmentEnd());
 
         s.setClientFirstName(req.getClientFirstName());
         s.setClientLastName(req.getClientLastName());
@@ -284,11 +292,9 @@ public class ServicoService {
         validateManageWindow(existing);
         validateCityImmutable(req, ext0);
 
-        int durationMinutes = props.getBookingDurationMinutesForCity(req.getClientCity());
-        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
-        ZonedDateTime endZ = startZ.plusMinutes(durationMinutes);
-        Instant start = startZ.toInstant();
-        Instant end = endZ.toInstant();
+        BookingWindow window = resolveBookingWindow(req.getDate(), req.getTime(), req.getClientCity());
+        Instant start = window.blockStart();
+        Instant end = window.blockEnd();
 
         if (!end.isAfter(start)) {
             throw new BadRequestException("Horário inválido");
@@ -329,6 +335,8 @@ public class ServicoService {
         s.setDescription(req.getServiceType());
         s.setStart(start);
         s.setEnd(end);
+        s.setAppointmentStart(window.appointmentStart());
+        s.setAppointmentEnd(window.appointmentEnd());
 
         s.setClientFirstName(req.getClientFirstName());
         s.setClientLastName(req.getClientLastName());
@@ -614,11 +622,9 @@ public class ServicoService {
         validateTime(req.getTime());
         validateServiceArea(req);
 
-        int durationMinutes = props.getBookingDurationMinutesForCity(req.getClientCity());
-        ZonedDateTime startZ = ZonedDateTime.of(req.getDate(), req.getTime(), ZONE);
-        ZonedDateTime endZ = startZ.plusMinutes(durationMinutes);
-        Instant start = startZ.toInstant();
-        Instant end = endZ.toInstant();
+        BookingWindow window = resolveBookingWindow(req.getDate(), req.getTime(), req.getClientCity());
+        Instant start = window.blockStart();
+        Instant end = window.blockEnd();
         if (!end.isAfter(start)) {
             throw new BadRequestException("Horario invalido");
         }
@@ -638,6 +644,8 @@ public class ServicoService {
         s.setDescription(req.getServiceType());
         s.setStart(start);
         s.setEnd(end);
+        s.setAppointmentStart(window.appointmentStart());
+        s.setAppointmentEnd(window.appointmentEnd());
         s.setClientFirstName(req.getClientFirstName());
         s.setClientLastName(req.getClientLastName());
         s.setClientEmail(req.getClientEmail());
@@ -682,7 +690,7 @@ public class ServicoService {
             return Collections.emptyList();
         }
 
-        int durationMinutes = props.getBookingDurationMinutesForCity(city);
+        int blockDurationMinutes = props.getBookingDurationMinutesForCity(city);
         ZonedDateTime dayStart = ZonedDateTime.of(date, props.getWorkStart(), ZONE);
         ZonedDateTime dayEnd = ZonedDateTime.of(date, props.getWorkEnd(), ZONE);
 
@@ -697,9 +705,10 @@ public class ServicoService {
         List<AvailableSlotResponse> slots = new ArrayList<>();
         ZonedDateTime current = dayStart;
 
-        while (!current.plusMinutes(durationMinutes).isAfter(dayEnd)) {
-            Instant slotStart = current.toInstant();
-            Instant slotEnd = current.plusMinutes(durationMinutes).toInstant();
+        while (!current.plusMinutes(slotMinutes).isAfter(dayEnd)) {
+            BookingWindow window = resolveBookingWindow(date, current.toLocalTime(), city);
+            Instant slotStart = window.blockStart();
+            Instant slotEnd = window.blockEnd();
 
             TimeWindow requested = new TimeWindow(slotStart, slotEnd);
             if (!isInsideAllowedWindows(requested, allowedWindows)) {
@@ -725,14 +734,43 @@ public class ServicoService {
                 slots.add(new AvailableSlotResponse(
                         date.toString(),
                         current.toLocalTime().toString(),
-                        current.plusMinutes(durationMinutes).toLocalTime().toString(),
-                        durationMinutes));
+                        ZonedDateTime.ofInstant(window.appointmentEnd(), ZONE).toLocalTime().toString(),
+                        blockDurationMinutes));
             }
 
             current = current.plusMinutes(slotMinutes);
         }
 
         return slots;
+    }
+
+    private BookingWindow resolveBookingWindow(LocalDate date, LocalTime appointmentTime, String city) {
+        int slotMinutes = props.getBookingSlotMinutes();
+        int blockMinutes = Math.max(slotMinutes, props.getBookingDurationMinutesForCity(city));
+
+        ZonedDateTime appointmentStartZ = ZonedDateTime.of(date, appointmentTime, ZONE);
+        ZonedDateTime appointmentEndZ = appointmentStartZ.plusMinutes(slotMinutes);
+
+        if (blockMinutes <= slotMinutes) {
+            return new BookingWindow(
+                    appointmentStartZ.toInstant(),
+                    appointmentEndZ.toInstant(),
+                    appointmentStartZ.toInstant(),
+                    appointmentEndZ.toInstant(),
+                    blockMinutes);
+        }
+
+        long minutesBefore = blockMinutes / 2L;
+        long minutesAfter = blockMinutes - minutesBefore;
+        ZonedDateTime blockStartZ = appointmentStartZ.minusMinutes(minutesBefore);
+        ZonedDateTime blockEndZ = appointmentStartZ.plusMinutes(minutesAfter);
+
+        return new BookingWindow(
+                blockStartZ.toInstant(),
+                blockEndZ.toInstant(),
+                appointmentStartZ.toInstant(),
+                appointmentEndZ.toInstant(),
+                blockMinutes);
     }
 
     private void validateRequestedWindowAvailable(Instant start, Instant end) throws IOException {
@@ -898,6 +936,21 @@ public class ServicoService {
         return Instant.ofEpochMilli(dt.getValue());
     }
 
+    private Instant instantFromExt(Map<String, String> ext, String key, Instant fallback) {
+        String value = ext.getOrDefault(key, "").trim();
+        if (value.isBlank()) {
+            return fallback;
+        }
+        try {
+            if (value.matches("\\d+")) {
+                return Instant.ofEpochSecond(Long.parseLong(value));
+            }
+            return Instant.parse(value);
+        } catch (Exception ignored) {
+            return fallback;
+        }
+    }
+
     private boolean isExpiredPending(Map<String, String> ext) {
         String status = ext.getOrDefault("status", "");
         if (!"PENDING_PHONE".equalsIgnoreCase(status))
@@ -969,8 +1022,10 @@ public class ServicoService {
         Map<String, String> ext = privateExt(e);
 
         s.setServiceType(ext.getOrDefault("serviceType", e.getSummary() == null ? "" : e.getSummary()));
-        s.setStart(instantFrom(e.getStart()));
-        s.setEnd(instantFrom(e.getEnd()));
+        Instant blockStart = instantFrom(e.getStart());
+        Instant blockEnd = instantFrom(e.getEnd());
+        s.setStart(instantFromExt(ext, "appointmentStart", blockStart));
+        s.setEnd(instantFromExt(ext, "appointmentEnd", blockEnd));
 
         s.setClientFirstName(ext.getOrDefault("clientFirstName", ""));
         s.setClientLastName(ext.getOrDefault("clientLastName", ""));
@@ -1012,8 +1067,12 @@ public class ServicoService {
         s.setEventId(e.getId());
         s.setTitle(ext.getOrDefault("serviceType", e.getSummary() == null ? "" : e.getSummary()));
         s.setDescription(e.getDescription() == null ? "" : e.getDescription());
-        s.setStart(instantFrom(e.getStart()));
-        s.setEnd(instantFrom(e.getEnd()));
+        Instant blockStart = instantFrom(e.getStart());
+        Instant blockEnd = instantFrom(e.getEnd());
+        s.setStart(blockStart);
+        s.setEnd(blockEnd);
+        s.setAppointmentStart(instantFromExt(ext, "appointmentStart", blockStart));
+        s.setAppointmentEnd(instantFromExt(ext, "appointmentEnd", blockEnd));
 
         s.setClientFirstName(ext.getOrDefault("clientFirstName", ""));
         s.setClientLastName(ext.getOrDefault("clientLastName", ""));

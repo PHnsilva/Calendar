@@ -44,7 +44,7 @@ export default function AdminTokenGate({ redirectTo = "/admin/dashboard", initia
     <section className="admin-gate-card">
       <span className="booking-preview-modal__eyebrow">Admin</span>
       <h1 className="booking-preview-modal__title">Acessar painel administrativo</h1>
-      <p className="booking-form__hint">Cole o X-ADMIN-TOKEN para liberar agenda, detalhes e rotas.</p>
+      <p className="booking-form__hint">Use o login por telefone em /admin para liberar agenda, detalhes e rotas.</p>
       <input
         type="password"
         className="booking-form__input"

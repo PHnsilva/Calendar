@@ -1,4 +1,4 @@
-import type { AdminStatementEntry, OfxParseResult } from "../types";
+import type { AdminStatementEntry, FinancialDashboardDTO, FinancialTransaction, OfxParseResult } from "../types";
 
 function toIsoDate(date: Date): string {
   const year = date.getFullYear();
@@ -73,4 +73,87 @@ export function parseOfxFile(text: string, fileName: string): OfxParseResult {
     creditTotal: entries.filter((entry) => entry.amount > 0).reduce((sum, entry) => sum + entry.amount, 0),
     debitTotal: Math.abs(entries.filter((entry) => entry.amount < 0).reduce((sum, entry) => sum + entry.amount, 0)),
   };
+}
+
+function getDaysInMonth(year: number, monthIndex: number): number {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+function getAppointmentCode(text: string): string | undefined {
+  const match = text.match(/\b(?:AGD|SG)-[0-9A-Z-]+\b/i);
+  return match?.[0]?.toUpperCase();
+}
+
+function normalizeCategory(entry: AdminStatementEntry): string {
+  const value = entry.category.toLowerCase();
+  if (value.includes("fee") || value.includes("tax") || value.includes("taxa")) return "Taxas e tarifas";
+  if (value.includes("debit") || value.includes("pagamento") || value.includes("material")) return entry.amount < 0 ? "Materiais" : "Serviços de reparo";
+  if (entry.amount > 0) return "Serviços de reparo";
+  return "Despesas";
+}
+
+export function buildFinancialDashboardFromEntries(entries: AdminStatementEntry[]): FinancialDashboardDTO {
+  const normalizedEntries = [...entries].filter((entry) => entry.date && Number.isFinite(entry.amount));
+  const firstDate = normalizedEntries[0]?.date ? new Date(`${normalizedEntries[0].date}T12:00:00`) : new Date();
+  const year = firstDate.getFullYear();
+  const monthIndex = firstDate.getMonth();
+  const month = `${year}-${`${monthIndex + 1}`.padStart(2, "0")}`;
+  const days = getDaysInMonth(year, monthIndex);
+
+  const transactions: FinancialTransaction[] = normalizedEntries
+    .map((entry) => {
+      const amount = Math.abs(entry.amount);
+      const type: FinancialTransaction["type"] = entry.amount >= 0 ? "ENTRY" : "EXIT";
+      return {
+        date: entry.date,
+        description: entry.title,
+        type,
+        category: normalizeCategory(entry),
+        appointmentCode: getAppointmentCode(entry.title),
+        amount,
+      };
+    })
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  const byDay = new Map<string, { entries: number; exits: number }>();
+  transactions.forEach((transaction) => {
+    const date = new Date(`${transaction.date}T12:00:00`);
+    if (date.getFullYear() !== year || date.getMonth() !== monthIndex) return;
+    const key = `${date.getDate()}`.padStart(2, "0");
+    const current = byDay.get(key) ?? { entries: 0, exits: 0 };
+    if (transaction.type === "ENTRY") current.entries += transaction.amount;
+    else current.exits += transaction.amount;
+    byDay.set(key, current);
+  });
+
+  let balance = 0;
+  const chart = Array.from({ length: days }, (_, index) => {
+    const dayNumber = `${index + 1}`.padStart(2, "0");
+    const totals = byDay.get(dayNumber) ?? { entries: 0, exits: 0 };
+    balance += totals.entries - totals.exits;
+    return {
+      day: `${dayNumber}/${`${monthIndex + 1}`.padStart(2, "0")}`,
+      entries: totals.entries,
+      exits: totals.exits,
+      balance,
+    };
+  });
+
+  const appointmentCodes = new Set(transactions.map((transaction) => transaction.appointmentCode).filter(Boolean));
+  const totalEntries = transactions.filter((transaction) => transaction.type === "ENTRY").reduce((sum, transaction) => sum + transaction.amount, 0);
+  const totalExits = transactions.filter((transaction) => transaction.type === "EXIT").reduce((sum, transaction) => sum + transaction.amount, 0);
+
+  return {
+    month,
+    totalEntries,
+    totalExits,
+    availableBalance: totalEntries - totalExits,
+    totalAppointments: appointmentCodes.size,
+    chart,
+    transactions,
+  };
+}
+
+export function parseOfxToFinancialDashboard(text: string, fileName: string): FinancialDashboardDTO {
+  return buildFinancialDashboardFromEntries(parseOfxFile(text, fileName).entries);
 }

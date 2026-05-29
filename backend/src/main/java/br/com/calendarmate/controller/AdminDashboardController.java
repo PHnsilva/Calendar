@@ -1,8 +1,9 @@
 package br.com.calendarmate.controller;
 
 import br.com.calendarmate.dto.AdminDashboardSummaryResponse;
+import br.com.calendarmate.model.AdminPrincipal;
+import br.com.calendarmate.service.AdminAuthService;
 import br.com.calendarmate.service.AdminDashboardService;
-import br.com.calendarmate.util.AdminTokenGuard;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,20 +15,22 @@ import java.time.LocalDate;
 public class AdminDashboardController {
 
     private final AdminDashboardService service;
+    private final AdminAuthService adminAuthService;
 
-    public AdminDashboardController(AdminDashboardService service) {
+    public AdminDashboardController(AdminDashboardService service, AdminAuthService adminAuthService) {
         this.service = service;
+        this.adminAuthService = adminAuthService;
     }
 
     @GetMapping("/summary")
     public ResponseEntity<AdminDashboardSummaryResponse> summary(
-            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String header,
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String city
     ) throws IOException {
-        AdminTokenGuard.require(header);
-        return ResponseEntity.ok(service.summary(from, to, status, city));
+        AdminPrincipal principal = adminAuthService.require(session);
+        return ResponseEntity.ok(service.summary(principal, from, to, status, city));
     }
 }

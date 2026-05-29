@@ -15,6 +15,32 @@ export type OfxParseResult = {
   debitTotal: number;
 };
 
+export type FinancialChartPoint = {
+  day: string;
+  entries: number;
+  exits: number;
+  balance: number;
+};
+
+export type FinancialTransaction = {
+  date: string;
+  description: string;
+  type: "ENTRY" | "EXIT";
+  category?: string;
+  appointmentCode?: string;
+  amount: number;
+};
+
+export type FinancialDashboardDTO = {
+  month: string;
+  totalEntries: number;
+  totalExits: number;
+  availableBalance: number;
+  totalAppointments: number;
+  chart: FinancialChartPoint[];
+  transactions: FinancialTransaction[];
+};
+
 export type PixPayloadConfig = {
   key: string;
   recipientName: string;

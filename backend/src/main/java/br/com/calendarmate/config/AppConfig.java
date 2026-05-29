@@ -90,6 +90,21 @@ public class AppConfig {
     }
 
     @Bean
+    public InMemoryAdminUserStore inMemoryAdminUserStore(AppProperties props) {
+        return new InMemoryAdminUserStore(props.getAdminUsersCsv());
+    }
+
+    @Bean
+    public InMemoryAdminSessionStore inMemoryAdminSessionStore() {
+        return new InMemoryAdminSessionStore();
+    }
+
+    @Bean
+    public InMemoryBookingHistoryStore inMemoryBookingHistoryStore() {
+        return new InMemoryBookingHistoryStore();
+    }
+
+    @Bean
     @ConditionalOnProperty(name = "supabase.enabled", havingValue = "true")
     public SupabaseClient supabaseClient(RestTemplate http, AppProperties props) {
         return new SupabaseClient(http, props.getSupabaseUrl(), props.getSupabaseKey(), props.getSupabaseSchema());
@@ -132,20 +147,75 @@ public class AppConfig {
     }
 
     @Bean
+    public AdminUserStore adminUserStore(
+            AppProperties props,
+            ObjectProvider<SupabaseClient> supabaseClientProvider,
+            InMemoryAdminUserStore mem) {
+        SupabaseClient sb = supabaseClientProvider.getIfAvailable();
+        if (props.isSupabaseEnabled() && sb != null) {
+            return new SupabaseAdminUserStore(sb, props.getTableAdminUsers(), props.getAdminUsersCsv());
+        }
+        return mem;
+    }
+
+    @Bean
+    public AdminSessionStore adminSessionStore(
+            AppProperties props,
+            ObjectProvider<SupabaseClient> supabaseClientProvider,
+            InMemoryAdminSessionStore mem) {
+        SupabaseClient sb = supabaseClientProvider.getIfAvailable();
+        if (props.isSupabaseEnabled() && sb != null) {
+            return new SupabaseAdminSessionStore(sb, props.getTableAdminSessions());
+        }
+        return mem;
+    }
+
+    @Bean
+    public BookingHistoryStore bookingHistoryStore(
+            AppProperties props,
+            ObjectProvider<SupabaseClient> supabaseClientProvider,
+            InMemoryBookingHistoryStore mem) {
+        SupabaseClient sb = supabaseClientProvider.getIfAvailable();
+        if (props.isSupabaseEnabled() && sb != null) {
+            return new SupabaseBookingHistoryStore(sb, props.getTableBookingHistory());
+        }
+        return mem;
+    }
+
+    @Bean
+    public AdminAuthService adminAuthService(
+            AdminUserStore adminUserStore,
+            AdminSessionStore adminSessionStore,
+            VerificationStore verificationStore,
+            OtpDeliveryClient otpDeliveryClient,
+            AppProperties props) {
+        return new AdminAuthService(
+                adminUserStore,
+                adminSessionStore,
+                verificationStore,
+                otpDeliveryClient,
+                props);
+    }
+
+    @Bean
     public ServicoService servicoService(
             CalendarClient calendarClient,
             TokenUtil tokenUtil,
             VerificationService verificationService,
             PendingStore pendingStore,
             AppProperties props,
-            AvailabilityPolicyService availabilityPolicyService) {
+            AvailabilityPolicyService availabilityPolicyService,
+            AdminAuthService adminAuthService,
+            BookingHistoryStore bookingHistoryStore) {
         return new ServicoService(
                 calendarClient,
                 tokenUtil,
                 verificationService,
                 pendingStore,
                 props,
-                availabilityPolicyService);
+                availabilityPolicyService,
+                adminAuthService,
+                bookingHistoryStore);
     }
 
     @Bean
@@ -155,14 +225,16 @@ public class AppConfig {
             VerificationStore verificationStore,
             PendingStore pendingStore,
             OtpDeliveryClient otpDeliveryClient,
-            AppProperties props) {
+            AppProperties props,
+            AdminAuthService adminAuthService) {
         return new VerificationService(
                 calendarClient,
                 tokenUtil,
                 verificationStore,
                 pendingStore,
                 otpDeliveryClient,
-                props);
+                props,
+                adminAuthService);
     }
 
     @Bean
@@ -172,14 +244,16 @@ public class AppConfig {
             OtpDeliveryClient otpDeliveryClient,
             AppProperties props,
             ServicoService servicoService,
-            TokenUtil tokenUtil) {
+            TokenUtil tokenUtil,
+            AdminAuthService adminAuthService) {
         return new RecoveryService(
                 verificationStore,
                 historyStore,
                 otpDeliveryClient,
                 props,
                 servicoService,
-                tokenUtil);
+                tokenUtil,
+                adminAuthService);
     }
 
     @Bean
@@ -193,12 +267,14 @@ public class AppConfig {
             PendingStore pendingStore,
             VerificationStore verificationStore,
             HistoryStore historyStore,
+            BookingHistoryStore bookingHistoryStore,
             AppProperties props) {
         return new InternalCleanupService(
                 calendarClient,
                 pendingStore,
                 verificationStore,
                 historyStore,
+                bookingHistoryStore,
                 props);
     }
 

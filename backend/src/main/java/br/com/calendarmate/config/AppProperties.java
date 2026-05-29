@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 @Configuration
 public class AppProperties {
+    private static final String DEFAULT_ADMIN_USERS = "31995438467|SG Admin|OWNER";
 
     @Value("${app.zone:America/Sao_Paulo}")
     private String zone;
@@ -64,8 +65,17 @@ public class AppProperties {
     @Value("${app.admin.bulkCancel.maxItems:200}")
     private int adminBulkCancelMaxItems;
 
-    @Value("${admin.token:${ADMIN_TOKEN:}}")
-    private String adminToken;
+    @Value("${app.admin.session.ttlDays:${ADMIN_SESSION_TTL_DAYS:7}}")
+    private long adminSessionTtlDays;
+
+    @Value("${app.admin.users:${ADMIN_USERS:}}")
+    private String adminUsersCsv;
+
+    @Value("${app.admin.booking.activePastDays:${ADMIN_BOOKING_ACTIVE_PAST_DAYS:10}}")
+    private int adminBookingActivePastDays;
+
+    @Value("${app.admin.booking.maxFutureMonthsAhead:${ADMIN_BOOKING_MAX_FUTURE_MONTHS_AHEAD:6}}")
+    private int adminBookingMaxFutureMonthsAhead;
 
     @Value("${frontend.url:${FRONTEND_URL:}}")
     private String frontendUrl;
@@ -130,6 +140,15 @@ public class AppProperties {
     @Value("${supabase.table.history_records:history_records}")
     private String tableHistory;
 
+    @Value("${supabase.table.admin_users:${SUPABASE_TABLE_ADMIN_USERS:admin_users}}")
+    private String tableAdminUsers;
+
+    @Value("${supabase.table.admin_sessions:${SUPABASE_TABLE_ADMIN_SESSIONS:admin_sessions}}")
+    private String tableAdminSessions;
+
+    @Value("${supabase.table.booking_history_records:${SUPABASE_TABLE_BOOKING_HISTORY_RECORDS:booking_history_records}}")
+    private String tableBookingHistory;
+
     @Value("${google.maps.enabled:false}")
     private boolean googleMapsEnabled;
 
@@ -160,8 +179,8 @@ public class AppProperties {
     @Value("${geoapify.geocoding.country:br}")
     private String geoapifyGeocodingCountry;
 
-    @Value("${app.history.retentionMonths:2}")
-    private int historyRetentionMonths;
+    @Value("${app.history.retentionMonths:${APP_HISTORY_RETENTION_MONTHS:2.0}}")
+    private String historyRetentionMonths;
 
     public int getBookingSlotMinutes() { return 60; }
 
@@ -235,7 +254,16 @@ public class AppProperties {
         return 60;
     }
 
-    public int getHistoryRetentionMonths() { return Math.max(0, Math.min(historyRetentionMonths, 24)); }
+    public int getHistoryRetentionMonths() { return (int) Math.ceil(getHistoryRetentionMonthsValue()); }
+    public double getHistoryRetentionMonthsValue() {
+        try {
+            double parsed = Double.parseDouble(historyRetentionMonths == null ? "2.0" : historyRetentionMonths.trim().replace(",", "."));
+            return Math.max(0D, Math.min(parsed, 24D));
+        } catch (Exception e) {
+            return 2D;
+        }
+    }
+    public int getHistoryRetentionDays() { return (int) Math.ceil(getHistoryRetentionMonthsValue() * 31D); }
     public String getZone() { return zone; }
     public String getServiceCity() { return serviceCity == null ? "" : serviceCity.trim(); }
     public String getServiceState() { return serviceState == null ? "" : serviceState.trim(); }
@@ -285,8 +313,14 @@ public class AppProperties {
     public Duration getOtpTtl() { return Duration.ofSeconds(otpTtlSeconds); }
     public Duration getOtpResendAfter() { return Duration.ofSeconds(otpResendAfterSeconds); }
     public int getAdminBulkCancelMaxItems() { return Math.max(1, Math.min(adminBulkCancelMaxItems, 1000)); }
+    public Duration getAdminSessionTtl() { return Duration.ofDays(Math.max(1, Math.min(adminSessionTtlDays, 30))); }
+    public String getAdminUsersCsv() {
+        String value = adminUsersCsv == null ? "" : adminUsersCsv.trim();
+        return value.isBlank() ? DEFAULT_ADMIN_USERS : value;
+    }
+    public int getAdminBookingActivePastDays() { return Math.max(0, Math.min(adminBookingActivePastDays, 90)); }
+    public int getAdminBookingMaxFutureMonthsAhead() { return Math.max(1, Math.min(adminBookingMaxFutureMonthsAhead, 24)); }
 
-    public String getAdminToken() { return adminToken == null ? "" : adminToken.trim(); }
     public String getFrontendUrl() { return frontendUrl == null ? "" : frontendUrl.trim(); }
     public String getPublicDomain() { return cleanOrDefault(publicDomain, "calendar-mate.vercel.app"); }
     public String getVerificationChannel() { return verificationChannel == null ? "DUMMY" : verificationChannel.trim().toUpperCase(Locale.ROOT); }
@@ -319,6 +353,9 @@ public class AppProperties {
     public String getTableVerification() { return tableVerification; }
     public String getTablePending() { return tablePending; }
     public String getTableHistory() { return tableHistory; }
+    public String getTableAdminUsers() { return cleanOrDefault(tableAdminUsers, "admin_users"); }
+    public String getTableAdminSessions() { return cleanOrDefault(tableAdminSessions, "admin_sessions"); }
+    public String getTableBookingHistory() { return cleanOrDefault(tableBookingHistory, "booking_history_records"); }
     public boolean isGoogleMapsEnabled() { return googleMapsEnabled; }
     public String getGoogleMapsApiKey() { return googleMapsApiKey == null ? "" : googleMapsApiKey.trim(); }
     public boolean isGoogleRoutesTraffic() { return googleRoutesTraffic; }

@@ -1,0 +1,307 @@
+/* Global tokens, resets, and shared application base styles. */
+
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:wght@100..900&display=swap");
+
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --app-bg: #eef3f9;
+  --app-surface: rgba(255, 255, 255, 0.82);
+  --app-surface-solid: #ffffff;
+  --app-surface-soft: #f4f7fb;
+  --app-surface-muted: #e9eff7;
+
+  --text-primary: #1f3148;
+  --text-secondary: #566b84;
+  --text-muted: #7f91a8;
+  --text-inverse: #ffffff;
+
+  --border-soft: rgba(115, 141, 170, 0.18);
+  --border-strong: rgba(86, 123, 167, 0.28);
+
+  --accent: #2f7dcb;
+  --accent-strong: #1e5b95;
+  --accent-soft: rgba(47, 125, 203, 0.12);
+
+  --success: #4a9b69;
+  --success-soft: rgba(74, 155, 105, 0.12);
+  --warning: #b77212;
+  --warning-soft: rgba(183, 114, 18, 0.14);
+  --danger: #b15562;
+  --danger-soft: rgba(177, 85, 98, 0.14);
+
+  --today-ring: #2f7dcb;
+
+  --city-violet: #7c4dff;
+  --city-cyan: #06b6d4;
+  --city-indigo: #4f46e5;
+  --city-orange: #f97316;
+  --city-teal: #14b8a6;
+  --city-amber: #f59e0b;
+  --city-royal: #2563eb;
+
+  --wk-0: #d97706;
+  --wk-1: #3b82f6;
+  --wk-2: #7c3aed;
+  --wk-3: #0f766e;
+  --wk-4: #ea580c;
+  --wk-5: #db2777;
+  --wk-6: #0284c7;
+
+  --shadow-xs: 0 4px 10px rgba(24, 45, 74, 0.06);
+  --shadow-sm: 0 10px 20px rgba(24, 45, 74, 0.08);
+  --shadow-md: 0 18px 34px rgba(24, 45, 74, 0.12);
+  --shadow-lg: 0 26px 50px rgba(24, 45, 74, 0.14);
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --transition-fast: 160ms ease;
+  --transition-base: 220ms ease;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --app-bg: #182231;
+  --app-surface: rgba(32, 44, 61, 0.84);
+  --app-surface-solid: #243244;
+  --app-surface-soft: #2a3a4e;
+  --app-surface-muted: #30435b;
+
+  --text-primary: #edf4fb;
+  --text-secondary: #c0cfde;
+  --text-muted: #93a8bf;
+  --text-inverse: #ffffff;
+
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --accent: #59a8f4;
+  --accent-strong: #2f7dcb;
+  --accent-soft: rgba(89, 168, 244, 0.16);
+
+  --success: #6abd89;
+  --success-soft: rgba(106, 189, 137, 0.14);
+  --warning: #f5b34d;
+  --warning-soft: rgba(245, 179, 77, 0.16);
+  --danger: #db7b89;
+  --danger-soft: rgba(219, 123, 137, 0.15);
+
+  --today-ring: #7fc1ff;
+
+  --shadow-xs: 0 6px 14px rgba(0, 0, 0, 0.18);
+  --shadow-sm: 0 12px 24px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 20px 36px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 28px 54px rgba(0, 0, 0, 0.32);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+}
+
+body,
+#root {
+  min-height: 100vh;
+  height: 100vh;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(47, 125, 203, 0.08), transparent 24%),
+    radial-gradient(circle at top right, rgba(124, 77, 255, 0.06), transparent 22%),
+    var(--app-bg);
+  color: var(--text-primary);
+  font-family: "Inter", system-ui, sans-serif;
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: none;
+  background: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.booking-start-banner {
+  pointer-events: none;
+  align-items: start;
+}
+
+.booking-start-banner__card {
+  margin-top: 16px;
+  width: min(100%, 760px);
+  pointer-events: auto;
+  border: 1px solid rgba(47, 125, 203, 0.18);
+  background: color-mix(in srgb, var(--app-surface) 92%, white 8%);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.booking-start-banner__content {
+  display: grid;
+  gap: 6px;
+}
+
+.booking-start-banner__text {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.booking-start-banner__action {
+  white-space: nowrap;
+}
+
+@keyframes monthFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes availableFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes focusPulse {
+  0%, 100% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(47, 125, 203, 0.08);
+  }
+}
+
+:root {
+  --font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Geist", Georgia, "Times New Roman", serif;
+  --cta-orange: #f97316;
+  --cta-orange-strong: #ea580c;
+  --cta-orange-soft: rgba(249, 115, 22, 0.16);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-ui);
+}
+
+:root {
+  --wf-blue: #0358ff;
+  --wf-blue-2: #072aa4;
+  --wf-navy: #08145f;
+  --wf-orange: #ff4b0b;
+  --wf-red: #a50627;
+  --wf-green: #09a64b;
+  --wf-purple: #7b2df3;
+  --wf-cyan: #06a6cf;
+  --wf-ink: #07135d;
+  --wf-muted: #536296;
+  --wf-line: #d7dff0;
+  --wf-soft: #f7faff;
+  --wf-shadow: 0 18px 48px rgba(8, 20, 95, 0.11);
+  --wf-radius: 24px;
+  --wf-page-max: 1584px;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { min-height: 100%; }
+
+body {
+  margin: 0;
+  color: var(--wf-ink);
+  background:
+    radial-gradient(circle at 20% 2%, rgba(3, 88, 255, 0.06), transparent 34%),
+    linear-gradient(180deg, #fff 0%, #fbfdff 48%, #f8fbff 100%);
+}
+
+a { color: inherit; text-decoration: none; }
+
+button, input, select, textarea { font: inherit; }
+
+button { cursor: pointer; }
+
+img { max-width: 100%; display: block; }
+
+.wf-danger { color: #f21717 !important; border-color: #ffd1d1 !important; }
+
+.wf-route-line { position: absolute; left: 150px; top: 355px; width: 560px; height: 180px; border: 7px solid var(--wf-blue); border-left: 0; border-bottom: 0; transform: rotate(-31deg); z-index: 2; }

@@ -37,8 +37,8 @@ export default function CalendarToolbar({
   const currentYear = currentMonth.slice(0, 4);
   const previousMonth = shiftMonth(currentMonth, -1);
   const nextMonth = shiftMonth(currentMonth, 1);
-  const canGoPrev = currentMonth !== currentAllowedMonth;
-  const canGoNext = currentMonth !== nextAllowedMonth;
+  const canGoPrev = currentMonth > currentAllowedMonth;
+  const canGoNext = currentMonth < nextAllowedMonth;
 
   return (
     <div className="calendar-toolbar calendar-toolbar--month-switcher">

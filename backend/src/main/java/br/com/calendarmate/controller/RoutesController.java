@@ -3,8 +3,10 @@ package br.com.calendarmate.controller;
 import br.com.calendarmate.dto.RouteAdminComputeRequest;
 import br.com.calendarmate.dto.RouteComputeRequest;
 import br.com.calendarmate.dto.RouteComputeResponse;
+import br.com.calendarmate.model.AdminPrincipal;
+import br.com.calendarmate.service.AdminAuthService;
 import br.com.calendarmate.service.RoutesService;
-import br.com.calendarmate.util.AdminTokenGuard;
+import br.com.calendarmate.service.ServicoService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,9 +17,13 @@ import java.io.IOException;
 public class RoutesController {
 
     private final RoutesService routesService;
+    private final AdminAuthService adminAuthService;
+    private final ServicoService servicoService;
 
-    public RoutesController(RoutesService routesService) {
+    public RoutesController(RoutesService routesService, AdminAuthService adminAuthService, ServicoService servicoService) {
         this.routesService = routesService;
+        this.adminAuthService = adminAuthService;
+        this.servicoService = servicoService;
     }
 
     // Cliente (se você não quiser usar no front, pode manter mas não expor na UI)
@@ -29,10 +35,11 @@ public class RoutesController {
     // ADMIN: mapa/rota de QUALQUER agendamento por eventId
     @PostMapping("/admin/compute")
     public RouteComputeResponse computeAdmin(
-            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String header,
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
             @Valid @RequestBody RouteAdminComputeRequest req
     ) throws IOException {
-        AdminTokenGuard.require(header);
+        AdminPrincipal principal = adminAuthService.require(session);
+        servicoService.requireActiveAdminAccess(req.getEventId(), principal);
         return routesService.computeByEventIdAdmin(req.getEventId(), req.getOriginLat(), req.getOriginLng());
     }
 }

@@ -1,8 +1,10 @@
 import type { CalendarEvent } from "../features/calendar/types";
 import type { ServicoResponse } from "../types/api";
+import type { AdminMeResponse, AdminRole } from "../types/api";
 
 const ADMIN_TOKEN_STORAGE_KEY = "calendar.admin.token";
 const LEGACY_ADMIN_TOKEN_STORAGE_KEY = "calendar.adminToken";
+const ADMIN_SESSION_STORAGE_KEY = "calendar.admin.session";
 const MANAGE_TOKENS_KEY = "calendar.manageTokens";
 const MANAGE_TOKEN_MAP_KEY = "calendar.manageTokenByEvent";
 const LOCAL_EVENTS_KEY = "calendar.localEvents";
@@ -17,6 +19,10 @@ export type StoredPhoneVerification = {
   phone: string;
   verifiedAt: string;
   recoveredCount?: number;
+};
+
+export type StoredAdminSession = AdminMeResponse & {
+  sessionToken: string;
 };
 
 type AdminCalendarMode = "view" | "block";
@@ -131,6 +137,9 @@ export function getPhoneVerificationChangedEventName(): string {
 
 
 export function getStoredAdminToken(): string {
+  const session = getStoredAdminSession();
+  if (session?.sessionToken) return session.sessionToken;
+
   const storage = getStorage();
   return storage?.getItem(ADMIN_TOKEN_STORAGE_KEY)?.trim()
     || storage?.getItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY)?.trim()
@@ -143,19 +152,60 @@ export function setStoredAdminToken(token: string): void {
 
   if (!storage) return;
   if (!normalized) {
+    storage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     storage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
     storage.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
     return;
   }
 
-  storage.setItem(ADMIN_TOKEN_STORAGE_KEY, normalized);
+  const fallbackSession: StoredAdminSession = {
+    id: "legacy-owner",
+    name: "Admin",
+    phone: "",
+    role: "OWNER",
+    permissions: [],
+    sessionExpiresAt: Math.floor(Date.now() / 1000) + 7 * 24 * 3600,
+    sessionToken: normalized,
+  };
+  writeJson(ADMIN_SESSION_STORAGE_KEY, fallbackSession);
   storage.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
+  storage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
 }
 
 export function clearStoredAdminToken(): void {
   const storage = getStorage();
+  storage?.removeItem(ADMIN_SESSION_STORAGE_KEY);
   storage?.removeItem(ADMIN_TOKEN_STORAGE_KEY);
   storage?.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
+}
+
+export function getStoredAdminSession(): StoredAdminSession | null {
+  const session = readJson<StoredAdminSession | null>(ADMIN_SESSION_STORAGE_KEY, null);
+  if (!session?.sessionToken) return null;
+  if (session.sessionExpiresAt && session.sessionExpiresAt * 1000 < Date.now()) {
+    clearStoredAdminToken();
+    return null;
+  }
+  return session;
+}
+
+export function saveAdminSession(sessionToken: string, admin: AdminMeResponse): StoredAdminSession {
+  const session: StoredAdminSession = {
+    ...admin,
+    sessionToken: sessionToken.trim(),
+  };
+  writeJson(ADMIN_SESSION_STORAGE_KEY, session);
+  getStorage()?.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+  getStorage()?.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
+  return session;
+}
+
+export function getStoredAdminRole(): AdminRole | null {
+  return getStoredAdminSession()?.role ?? null;
+}
+
+export function isStoredAdminOwner(): boolean {
+  return getStoredAdminRole() === "OWNER";
 }
 
 export function getManageTokens(): string[] {

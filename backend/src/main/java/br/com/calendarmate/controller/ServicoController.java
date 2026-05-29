@@ -1,12 +1,15 @@
 package br.com.calendarmate.controller;
 
+import br.com.calendarmate.dto.AdminAssignProviderRequest;
 import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.dto.ServicoResponse;
+import br.com.calendarmate.model.AdminPrincipal;
+import br.com.calendarmate.model.AdminUser;
+import br.com.calendarmate.service.AdminAuthService;
 import br.com.calendarmate.service.ServicoService;
 import br.com.calendarmate.service.TokenUtil;
-import br.com.calendarmate.util.AdminTokenGuard;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +25,12 @@ public class ServicoController {
 
     private final ServicoService service;
     private final TokenUtil tokenUtil;
+    private final AdminAuthService adminAuthService;
 
-    public ServicoController(ServicoService service, TokenUtil tokenUtil) {
+    public ServicoController(ServicoService service, TokenUtil tokenUtil, AdminAuthService adminAuthService) {
         this.service = service;
         this.tokenUtil = tokenUtil;
+        this.adminAuthService = adminAuthService;
     }
 
     // PUBLIC
@@ -68,24 +73,57 @@ public class ServicoController {
 
     @GetMapping("/admin")
     public ResponseEntity<List<ServicoResponse>> listAll(
-            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String header,
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String city) throws IOException {
 
-        AdminTokenGuard.require(header);
-        return ResponseEntity.ok(service.listAllAdmin(from, to, status, city));
+        AdminPrincipal principal = adminAuthService.require(session);
+        return ResponseEntity.ok(service.listAllAdmin(principal, from, to, status, city));
+    }
+
+    @GetMapping("/admin/history")
+    public ResponseEntity<List<ServicoResponse>> listHistory(
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String city) throws IOException {
+
+        AdminPrincipal principal = adminAuthService.require(session);
+        return ResponseEntity.ok(service.listHistoryAdmin(principal, from, to, status, city));
     }
 
     @DeleteMapping("/admin/{eventId}")
     public ResponseEntity<Void> adminDelete(
-            @RequestHeader(value = "X-ADMIN-TOKEN", required = false) String header,
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
             @PathVariable String eventId) throws IOException {
 
-        AdminTokenGuard.require(header);
+        adminAuthService.requireOwner(session);
         service.deleteByIdAdmin(eventId);
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/admin/{eventId}")
+    public ResponseEntity<ServicoResponse> adminUpdate(
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @PathVariable String eventId,
+            @Valid @RequestBody ServicoRequest req) throws IOException {
+
+        AdminPrincipal principal = adminAuthService.require(session);
+        return ResponseEntity.ok(service.updateByIdAdmin(eventId, principal, req));
+    }
+
+    @PutMapping("/admin/{eventId}/assignee")
+    public ResponseEntity<ServicoResponse> assignProvider(
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @PathVariable String eventId,
+            @Valid @RequestBody AdminAssignProviderRequest req) throws IOException {
+
+        adminAuthService.requireOwner(session);
+        AdminUser provider = adminAuthService.requireAssignableProvider(req.getProviderId());
+        return ResponseEntity.ok(service.assignProviderAdmin(eventId, provider));
     }
 
     // AVAILABLE

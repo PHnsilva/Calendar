@@ -1,5 +1,5 @@
-import HomePage from "../home/HomePage";
+import { AdminBookingDetails } from '../../components/wireframes/WireframeReplica';
 
 export default function AdminBookingPage() {
-  return <HomePage mode="admin" />;
+  return <AdminBookingDetails />;
 }

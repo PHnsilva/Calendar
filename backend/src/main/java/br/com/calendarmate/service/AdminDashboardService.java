@@ -4,6 +4,7 @@ import br.com.calendarmate.dto.AdminDashboardSummaryResponse;
 import br.com.calendarmate.dto.AdminStatementItem;
 import br.com.calendarmate.dto.AdminStatementResponse;
 import br.com.calendarmate.dto.ServicoResponse;
+import br.com.calendarmate.model.AdminPrincipal;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -28,8 +29,8 @@ public class AdminDashboardService {
         this.adminFinanceService = adminFinanceService;
     }
 
-    public AdminDashboardSummaryResponse summary(LocalDate from, LocalDate to, String status, String city) throws IOException {
-        List<ServicoResponse> bookings = servicoService.listAllAdmin(from, to, status, city);
+    public AdminDashboardSummaryResponse summary(AdminPrincipal principal, LocalDate from, LocalDate to, String status, String city) throws IOException {
+        List<ServicoResponse> bookings = servicoService.listAllAdmin(principal, from, to, status, city);
         int totalBookings = bookings.size();
 
         int pendingBookings = 0;
@@ -48,20 +49,22 @@ public class AdminDashboardService {
         }
 
         long totalAmountCents = 0L;
-        try {
-            String fromStr = from == null ? null : from.toString();
-            String toStr = to == null ? null : to.toString();
-            AdminStatementResponse statement = adminFinanceService.statement(fromStr, toStr);
+        if (principal == null || principal.isOwner()) {
+            try {
+                String fromStr = from == null ? null : from.toString();
+                String toStr = to == null ? null : to.toString();
+                AdminStatementResponse statement = adminFinanceService.statement(fromStr, toStr);
 
-            if (statement != null && statement.getItems() != null) {
-                for (AdminStatementItem item : statement.getItems()) {
-                    totalAmountCents += item.getAmountCents();
+                if (statement != null && statement.getItems() != null) {
+                    for (AdminStatementItem item : statement.getItems()) {
+                        totalAmountCents += item.getAmountCents();
+                    }
                 }
+            } catch (Exception ignored) {
             }
-        } catch (Exception ignored) {
         }
 
-        int totalBlocks = availabilityBlockService.list(from, to).size();
+        int totalBlocks = (principal == null || principal.isOwner()) ? availabilityBlockService.list(from, to).size() : 0;
 
         AdminDashboardSummaryResponse out = new AdminDashboardSummaryResponse();
         out.setTotalBookings(totalBookings);

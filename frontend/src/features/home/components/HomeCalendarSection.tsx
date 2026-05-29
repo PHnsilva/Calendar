@@ -54,7 +54,7 @@ export default function HomeCalendarSection({
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const previewMonth = useMemo(() => shiftMonth(currentMonth, 1), [currentMonth]);
   const previewDisabled = previewMonth > nextAllowedMonth;
-  const mobileMonths = useMemo(() => [currentAllowedMonth, nextAllowedMonth], [currentAllowedMonth, nextAllowedMonth]);
+  const mobileMonths = useMemo(() => Array.from(new Set([currentAllowedMonth, nextAllowedMonth])), [currentAllowedMonth, nextAllowedMonth]);
   const mobileScrollRef = useRef<HTMLDivElement | null>(null);
   const mobileMonthRefs = useRef<Record<string, HTMLElement | null>>({});
 

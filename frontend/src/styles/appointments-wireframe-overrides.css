@@ -1,0 +1,1560 @@
+/* Appointment wireframe patch v7: restores non-deformed cards and hardens responsiveness for 1000-1800px widths. */
+
+.wf-page--list,
+.wf-admin-dashboard,
+.wf-admin-details-page {
+  overflow-x: hidden;
+}
+
+/* Profile dropdown: keeps the original navbar layout and only changes the profile button behavior. */
+.wf-profile-menu-wrap {
+  position: relative;
+  z-index: 120;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.wf-profile-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 9999;
+  width: min(250px, calc(100vw - 24px));
+  padding: 8px;
+  border: 1px solid rgba(3, 88, 255, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 42px rgba(8, 20, 95, 0.18);
+  display: grid;
+  gap: 4px;
+}
+
+.wf-profile-menu::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: 28px;
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  border-top: 1px solid rgba(3, 88, 255, 0.16);
+  border-left: 1px solid rgba(3, 88, 255, 0.16);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.wf-navbar .wf-profile-menu button,
+.wf-navbar .wf-profile-menu .wf-profile-menu-link {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  height: auto !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-radius: 11px !important;
+  background: transparent !important;
+  color: var(--wf-blue-2) !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  font-size: 14px !important;
+  font-weight: 850 !important;
+  line-height: 1.1 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  cursor: pointer;
+}
+
+.wf-navbar .wf-profile-menu button:hover,
+.wf-navbar .wf-profile-menu .wf-profile-menu-link:hover {
+  background: #eef5ff !important;
+}
+
+.wf-navbar .wf-profile-menu button.is-danger {
+  color: #e11d14 !important;
+}
+
+.wf-navbar .wf-profile-menu .wf-icon {
+  width: 21px !important;
+  min-width: 21px !important;
+  height: 21px !important;
+}
+
+/* These filters are rendered before the calendar for tablet/mobile widths. */
+.wf-filters-bar--mobile {
+  display: none !important;
+}
+
+.wf-admin-budget-toolbar {
+  display: none !important;
+}
+
+.wf-two-column--bookings,
+.wf-booking-list-panel,
+.wf-calendar-panel,
+.wf-booking-stack,
+.wf-booking-card,
+.wf-booking-content,
+.wf-booking-main,
+.wf-booking-meta,
+.wf-booking-actions {
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+.wf-calendar-panel {
+  overflow-x: hidden !important;
+}
+
+.wf-calendar-grid {
+  width: 100% !important;
+  max-width: 100% !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  overflow: hidden !important;
+}
+
+.wf-calendar-day,
+.wf-calendar-weekday {
+  min-width: 0 !important;
+}
+
+.wf-city-box,
+.wf-city-box__content,
+.wf-city-box__list {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.wf-booking-card {
+  display: grid !important;
+  grid-template-columns: clamp(86px, 5.6vw, 104px) minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+}
+
+.wf-date-tile {
+  align-self: stretch !important;
+  min-height: 166px !important;
+  height: auto !important;
+  padding: 12px 8px !important;
+  text-align: center !important;
+}
+
+.wf-date-tile .wf-icon,
+.wf-date-tile .wf-icon svg {
+  width: 16px !important;
+  min-width: 16px !important;
+  height: 16px !important;
+}
+
+.wf-booking-content {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: clamp(13px, 1vw, 18px) clamp(14px, 1.25vw, 22px) 12px !important;
+  overflow: hidden !important;
+}
+
+.wf-booking-main {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.28fr) minmax(160px, 0.72fr) auto !important;
+  align-items: start !important;
+  gap: clamp(12px, 1.1vw, 20px) !important;
+  width: 100% !important;
+}
+
+.wf-booking-main > div,
+.wf-provider-box,
+.wf-booking-main p,
+.wf-booking-main h2 {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.wf-booking-main h2 {
+  margin-bottom: 7px !important;
+  font-size: clamp(20px, 1.28vw, 26px) !important;
+  line-height: 1.05 !important;
+  overflow-wrap: anywhere;
+}
+
+.wf-booking-main p,
+.wf-provider-box p {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 7px !important;
+  margin: 4px 0 !important;
+  min-width: 0 !important;
+  font-size: clamp(12px, .78vw, 14px) !important;
+  line-height: 1.25 !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+
+.wf-booking-main p .wf-icon,
+.wf-provider-box p .wf-icon {
+  flex: 0 0 18px !important;
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  margin-top: 1px !important;
+}
+
+.wf-provider-box strong {
+  display: block !important;
+  margin-bottom: 8px !important;
+  color: var(--wf-blue) !important;
+  font-size: clamp(12px, .78vw, 14px) !important;
+  line-height: 1.15 !important;
+}
+
+.wf-booking-main > .wf-badge {
+  justify-self: end !important;
+  align-self: start !important;
+  width: max-content !important;
+  max-width: 150px !important;
+  white-space: nowrap !important;
+  font-size: clamp(11px, .72vw, 13px) !important;
+  padding: 8px 13px !important;
+}
+
+.wf-booking-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 9px !important;
+  margin: 12px 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.wf-booking-actions button {
+  flex: 0 1 auto !important;
+  min-width: 116px !important;
+  min-height: 36px !important;
+  padding: 0 13px !important;
+  white-space: nowrap !important;
+  font-size: clamp(12px, .74vw, 14px) !important;
+  line-height: 1.1 !important;
+}
+
+.wf-booking-actions .wf-booking-action--assign {
+  min-width: 162px !important;
+}
+
+.wf-booking-actions .wf-booking-action--cancel {
+  margin-left: auto !important;
+}
+
+.wf-booking-meta {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px 18px !important;
+  width: 100% !important;
+  border-top: 1px solid var(--wf-line) !important;
+  padding-top: 12px !important;
+}
+
+.wf-booking-meta span {
+  display: grid !important;
+  grid-template-columns: 24px minmax(0, 1fr) !important;
+  gap: 8px !important;
+  align-items: start !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  font-size: clamp(11.5px, .72vw, 13px) !important;
+  line-height: 1.22 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.wf-booking-meta .wf-icon,
+.wf-booking-meta .wf-icon--image {
+  width: 21px !important;
+  min-width: 21px !important;
+  height: 21px !important;
+}
+
+.wf-booking-meta b {
+  display: block !important;
+  color: var(--wf-navy) !important;
+  font-weight: 900 !important;
+}
+
+/* Real two-column desktop starts later; 1366/1400px becomes the single-column wireframe instead of a cramped split view. */
+@media (min-width: 1800px) {
+  .wf-page--list > .wf-two-column--bookings {
+    width: min(1740px, calc(100vw - 42px)) !important;
+    height: calc(100dvh - 124px) !important;
+    max-height: calc(100dvh - 124px) !important;
+    margin: 0 auto 22px !important;
+    display: grid !important;
+    grid-template-columns: minmax(510px, 46%) minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: clamp(16px, 1.5vw, 28px) !important;
+    overflow: hidden !important;
+  }
+
+  .wf-admin-dashboard .wf-admin-main {
+    width: min(1740px, calc(100vw - 42px)) !important;
+    margin: 0 auto 22px !important;
+  }
+
+  .wf-admin-dashboard .wf-admin-main > .wf-two-column--bookings {
+    width: 100% !important;
+    height: calc(100dvh - 124px) !important;
+    max-height: calc(100dvh - 124px) !important;
+    margin: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(510px, 46%) minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: clamp(16px, 1.5vw, 28px) !important;
+    overflow: hidden !important;
+  }
+
+  .wf-two-column--bookings > .wf-calendar-panel,
+  .wf-two-column--bookings > .wf-booking-list-panel {
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: none !important;
+  }
+
+  .wf-two-column--bookings > .wf-calendar-panel {
+    overflow: auto !important;
+  }
+
+  .wf-two-column--bookings > .wf-booking-list-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding: clamp(16px, 1.25vw, 24px) !important;
+  }
+
+  .wf-booking-list-panel > .wf-booking-stack {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 6px !important;
+    scrollbar-width: thin;
+  }
+}
+
+@media (min-width: 1800px) and (max-width: 1919px) {
+  .wf-booking-main {
+    grid-template-columns: minmax(0, 1fr) minmax(152px, .62fr) !important;
+  }
+
+  .wf-booking-main > .wf-badge {
+    grid-column: 2 !important;
+    justify-self: start !important;
+  }
+
+  .wf-booking-actions button {
+    min-width: 108px !important;
+    padding-inline: 10px !important;
+  }
+
+  .wf-booking-actions .wf-booking-action--assign {
+    min-width: 148px !important;
+  }
+
+  .wf-booking-actions .wf-booking-action--cancel {
+    margin-left: 0 !important;
+  }
+
+  .wf-booking-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Tablet / compact desktop / smaller desktop: full-width calendar and full-width cards. */
+@media (max-width: 1799px) {
+  .wf-page--list > .wf-two-column--bookings,
+  .wf-admin-dashboard .wf-admin-main,
+  .wf-admin-dashboard .wf-admin-main > .wf-two-column--bookings {
+    width: min(calc(100vw - 48px), 1320px) !important;
+    max-width: 1320px !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 auto 28px !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    align-items: start !important;
+    gap: 18px !important;
+    overflow: visible !important;
+    padding-inline: 0 !important;
+  }
+
+  .wf-filters-bar--desktop {
+    display: none !important;
+  }
+
+  .wf-filters-bar--mobile {
+    display: grid !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .wf-booking-tools {
+    display: none !important;
+  }
+
+  .wf-booking-list-panel {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .wf-booking-stack {
+    overflow: visible !important;
+    padding-right: 0 !important;
+  }
+
+  .wf-calendar-panel {
+    min-height: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .wf-booking-card {
+    grid-template-columns: clamp(92px, 8vw, 112px) minmax(0, 1fr) !important;
+  }
+
+  .wf-date-tile {
+    min-height: 176px !important;
+  }
+
+  .wf-booking-main {
+    grid-template-columns: minmax(0, 1.15fr) minmax(210px, .75fr) auto !important;
+  }
+
+  .wf-booking-actions .wf-booking-action--cancel {
+    margin-left: auto !important;
+  }
+}
+
+@media (max-width: 1180px) {
+  .wf-page--list > .wf-two-column--bookings,
+  .wf-admin-dashboard .wf-admin-main,
+  .wf-admin-dashboard .wf-admin-main > .wf-two-column--bookings {
+    width: min(100% - 28px, 980px) !important;
+    max-width: 980px !important;
+    gap: 14px !important;
+  }
+
+  .wf-booking-main {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, .72fr) !important;
+  }
+
+  .wf-booking-main > .wf-badge {
+    grid-column: 2 !important;
+    justify-self: start !important;
+  }
+
+  .wf-booking-actions .wf-booking-action--cancel {
+    margin-left: 0 !important;
+  }
+
+  .wf-booking-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .wf-section-title--calendar {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    gap: 10px !important;
+    align-items: center !important;
+  }
+
+  .wf-section-title--calendar .wf-month-pills {
+    grid-column: 1 / -1 !important;
+    justify-self: start !important;
+    width: 100% !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    padding-bottom: 2px !important;
+  }
+
+  .wf-section-title--calendar h1 {
+    font-size: clamp(36px, 9vw, 54px) !important;
+  }
+
+  .wf-section-title--calendar p {
+    font-size: clamp(13px, 3.1vw, 16px) !important;
+  }
+
+  .wf-calendar-panel {
+    padding: clamp(14px, 3.4vw, 22px) !important;
+    border-radius: 16px !important;
+  }
+
+  .wf-city-box {
+    grid-template-columns: clamp(56px, 15vw, 78px) minmax(0, 1fr) !important;
+    padding: clamp(12px, 3.2vw, 18px) !important;
+    gap: 12px !important;
+  }
+
+  .wf-city-box__media {
+    width: clamp(54px, 15vw, 74px) !important;
+    height: clamp(54px, 15vw, 74px) !important;
+  }
+
+  .wf-city-box__list {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 9px !important;
+  }
+
+  .wf-city-pill {
+    flex: 1 1 118px !important;
+    min-width: min(100%, 118px) !important;
+    justify-content: center !important;
+  }
+
+  .wf-filters-bar {
+    grid-template-columns: minmax(0, 1fr) 52px !important;
+    gap: 10px !important;
+  }
+
+  .wf-filter-tabs {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    gap: 10px !important;
+  }
+
+  .wf-filter-tabs button {
+    flex: 0 0 auto !important;
+    min-width: clamp(78px, 24vw, 112px) !important;
+  }
+
+  .wf-search {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .wf-filter-btn--wide {
+    display: none !important;
+  }
+
+  .wf-calendar-day {
+    min-height: clamp(48px, 12.2vw, 74px) !important;
+    padding: clamp(5px, 1.5vw, 8px) !important;
+  }
+
+  .wf-calendar-weekday {
+    font-size: clamp(10px, 2.7vw, 13px) !important;
+  }
+
+  .wf-booking-card {
+    grid-template-columns: clamp(78px, 21vw, 104px) minmax(0, 1fr) !important;
+    border-radius: 14px !important;
+  }
+
+  .wf-date-tile {
+    min-height: 100% !important;
+    padding: 11px 7px !important;
+  }
+
+  .wf-date-tile strong {
+    font-size: clamp(38px, 10.2vw, 56px) !important;
+  }
+
+  .wf-date-tile small,
+  .wf-date-tile span {
+    font-size: clamp(12px, 3.2vw, 16px) !important;
+  }
+
+  .wf-date-tile em {
+    font-size: clamp(11px, 2.9vw, 14px) !important;
+  }
+
+  .wf-booking-content {
+    padding: clamp(12px, 3.2vw, 18px) !important;
+  }
+
+  .wf-booking-main {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 9px !important;
+  }
+
+  .wf-booking-main > .wf-badge {
+    justify-self: start !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
+    max-width: 100% !important;
+  }
+
+  .wf-booking-main h2 {
+    font-size: clamp(20px, 5.5vw, 26px) !important;
+  }
+
+  .wf-booking-main p,
+  .wf-provider-box p,
+  .wf-provider-box strong {
+    font-size: clamp(11.5px, 3.05vw, 14px) !important;
+  }
+
+  .wf-booking-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .wf-booking-actions button,
+  .wf-booking-actions .wf-booking-action--assign {
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    padding-inline: 7px !important;
+    white-space: normal !important;
+    font-size: clamp(11px, 2.9vw, 13px) !important;
+  }
+
+  .wf-booking-actions .wf-booking-action--assign,
+  .wf-booking-actions .wf-booking-action--cancel {
+    grid-column: auto !important;
+  }
+
+  .wf-booking-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 11px 12px !important;
+  }
+
+  .wf-booking-meta span {
+    font-size: clamp(10.7px, 2.75vw, 12.5px) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .wf-page--list > .wf-two-column--bookings,
+  .wf-admin-dashboard .wf-admin-main,
+  .wf-admin-dashboard .wf-admin-main > .wf-two-column--bookings {
+    width: calc(100% - 20px) !important;
+    gap: 12px !important;
+  }
+
+  .wf-calendar-panel {
+    padding: 12px !important;
+  }
+
+  .wf-city-box {
+    grid-template-columns: 1fr !important;
+  }
+
+  .wf-city-box__media {
+    display: none !important;
+  }
+
+  .wf-city-box__content h3 {
+    justify-content: flex-start !important;
+  }
+
+  .wf-city-pill {
+    flex-basis: calc(50% - 6px) !important;
+    min-height: 39px !important;
+    padding-inline: 8px !important;
+    font-size: clamp(11px, 3vw, 13px) !important;
+  }
+
+  .wf-calendar-grid {
+    gap: 0 !important;
+  }
+
+  .wf-calendar-day {
+    min-height: clamp(44px, 12vw, 60px) !important;
+  }
+
+  .wf-booking-card {
+    grid-template-columns: clamp(72px, 20vw, 86px) minmax(0, 1fr) !important;
+  }
+
+  .wf-date-tile {
+    padding-inline: 6px !important;
+  }
+
+  .wf-booking-content {
+    padding: 12px 10px !important;
+  }
+
+  .wf-booking-meta {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .wf-booking-actions {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .wf-section-title--calendar .wf-large-icon {
+    width: 50px !important;
+    min-width: 50px !important;
+    height: 50px !important;
+  }
+
+  .wf-section-title--calendar h1 {
+    font-size: clamp(30px, 8vw, 36px) !important;
+  }
+
+  .wf-booking-card {
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+  }
+
+  .wf-date-tile strong {
+    font-size: 34px !important;
+  }
+
+  .wf-date-tile small,
+  .wf-date-tile span,
+  .wf-date-tile em {
+    font-size: 10.5px !important;
+  }
+}
+
+/* Navbar responsive correction v5.
+   This block is intentionally loaded last through appointments-wireframe-overrides.css.
+   It neutralizes older navbar media rules that made the Admin and Client bars overflow or switch too late. */
+.wf-navbar.wf-header,
+.wf-navbar.wf-header * {
+  box-sizing: border-box !important;
+}
+
+.wf-navbar.wf-header {
+  overflow: visible !important;
+  min-width: 0 !important;
+}
+
+.wf-navbar__logo,
+.wf-navbar__nav,
+.wf-navbar__actions,
+.wf-navbar__mobile-leading,
+.wf-navbar__mobile-actions,
+.wf-navbar .wf-header-actions,
+.wf-navbar .wf-mobile-actions,
+.wf-admin-tabs,
+.wf-profile-menu-wrap {
+  min-width: 0 !important;
+}
+
+.wf-navbar .wf-logo img {
+  display: block !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+.wf-navbar .wf-header-actions,
+.wf-navbar .wf-mobile-actions {
+  flex-wrap: nowrap !important;
+}
+
+.wf-navbar .wf-top-btn {
+  flex: 0 1 auto !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.wf-navbar .wf-top-btn > span:not(.wf-icon) {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.wf-navbar .wf-profile-menu {
+  overflow: visible !important;
+}
+
+/* Full desktop: visual parity with the wireframes without exaggerated logo/button sizes. */
+@media (min-width: 1280px) {
+  .wf-navbar--client.wf-header,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header {
+    width: min(var(--wf-page-max, 1660px), calc(100vw - 44px)) !important;
+    min-height: 86px !important;
+    grid-template-columns: minmax(178px, clamp(188px, 16vw, 275px)) minmax(0, 1fr) !important;
+    gap: clamp(14px, 1.4vw, 24px) !important;
+    padding-block: 8px !important;
+  }
+
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: clamp(58px, 4.7vw, 82px) !important;
+    max-width: clamp(180px, 16vw, 275px) !important;
+  }
+
+  .wf-navbar--client .wf-header-actions {
+    gap: clamp(10px, 1vw, 16px) !important;
+  }
+
+  .wf-navbar--client .wf-top-btn {
+    min-height: clamp(50px, 3.6vw, 62px) !important;
+    min-width: 0 !important;
+    padding-inline: clamp(15px, 1.3vw, 24px) !important;
+    font-size: clamp(13px, .95vw, 16px) !important;
+    border-radius: 12px !important;
+  }
+
+  .wf-navbar--client .wf-header-actions .wf-top-btn:first-child {
+    min-width: clamp(150px, 13vw, 215px) !important;
+  }
+
+  .wf-navbar--client .wf-client-profile-trigger {
+    min-width: clamp(135px, 12vw, 190px) !important;
+  }
+
+  .wf-navbar--admin.wf-header {
+    width: 100% !important;
+    min-height: 88px !important;
+    grid-template-columns: minmax(170px, clamp(178px, 15vw, 240px)) minmax(0, 1fr) minmax(260px, auto) !important;
+    align-items: center !important;
+    gap: clamp(10px, 1vw, 18px) !important;
+    padding: 8px clamp(22px, 3vw, 56px) !important;
+  }
+
+  .wf-navbar--admin .wf-logo img {
+    height: clamp(56px, 4.4vw, 76px) !important;
+    max-width: clamp(170px, 15vw, 240px) !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tabs {
+    width: 100% !important;
+    min-height: 52px !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    padding-inline: 7px !important;
+    overflow: hidden !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tab {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    min-height: 50px !important;
+    padding-inline: clamp(6px, .7vw, 12px) !important;
+    gap: 6px !important;
+    font-size: clamp(11px, .82vw, 14px) !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tab .wf-icon {
+    width: clamp(16px, 1.1vw, 20px) !important;
+    min-width: clamp(16px, 1.1vw, 20px) !important;
+    height: clamp(16px, 1.1vw, 20px) !important;
+  }
+
+  .wf-navbar--admin .wf-header-actions {
+    gap: clamp(9px, .9vw, 14px) !important;
+  }
+
+  .wf-navbar--admin .wf-top-btn {
+    min-height: clamp(50px, 3.6vw, 62px) !important;
+    padding-inline: clamp(13px, 1.15vw, 22px) !important;
+    font-size: clamp(12px, .88vw, 15px) !important;
+    border-radius: 12px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger {
+    min-width: clamp(130px, 12vw, 190px) !important;
+  }
+}
+
+/* Compact desktop / notebook: keep desktop navbars, but make them physically fit. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .wf-navbar--client.wf-header,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header {
+    width: min(100% - 28px, 1180px) !important;
+    min-height: 76px !important;
+    grid-template-columns: minmax(146px, 176px) minmax(0, 1fr) !important;
+    gap: 10px !important;
+    padding-block: 7px !important;
+  }
+
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: 58px !important;
+    max-width: 176px !important;
+  }
+
+  .wf-navbar--client .wf-header-actions {
+    gap: 8px !important;
+  }
+
+  .wf-navbar--client .wf-top-btn {
+    min-height: 46px !important;
+    padding-inline: 11px !important;
+    gap: 7px !important;
+    font-size: 12px !important;
+    border-radius: 11px !important;
+  }
+
+  .wf-navbar--client .wf-top-btn .wf-icon {
+    width: 19px !important;
+    min-width: 19px !important;
+    height: 19px !important;
+  }
+
+  .wf-navbar--client .wf-header-actions .wf-top-btn:first-child {
+    min-width: 142px !important;
+  }
+
+  .wf-navbar--client .wf-client-profile-trigger {
+    min-width: 122px !important;
+  }
+
+  .wf-navbar--admin.wf-header {
+    width: 100% !important;
+    min-height: 82px !important;
+    grid-template-columns: minmax(150px, 178px) minmax(0, 1fr) minmax(228px, auto) !important;
+    gap: 8px !important;
+    padding: 7px 18px !important;
+  }
+
+  .wf-navbar--admin .wf-logo img {
+    height: 58px !important;
+    max-width: 178px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tabs {
+    min-height: 48px !important;
+    gap: 1px !important;
+    padding-inline: 4px !important;
+    overflow: hidden !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tab {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    min-height: 46px !important;
+    padding-inline: 5px !important;
+    gap: 4px !important;
+    font-size: 11px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tab .wf-icon {
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+  }
+
+  .wf-navbar--admin .wf-header-actions {
+    gap: 7px !important;
+  }
+
+  .wf-navbar--admin .wf-top-btn {
+    min-height: 46px !important;
+    padding-inline: 10px !important;
+    gap: 6px !important;
+    font-size: 12px !important;
+    border-radius: 11px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger {
+    min-width: 118px !important;
+  }
+}
+
+/* Tablet admin: use a stable two-row layout instead of crushing tabs and action buttons. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .wf-navbar--admin.wf-header {
+    width: 100% !important;
+    min-height: auto !important;
+    display: grid !important;
+    grid-template-columns: minmax(144px, 190px) minmax(0, 1fr) !important;
+    grid-template-areas:
+      "logo actions"
+      "nav nav" !important;
+    gap: 8px 12px !important;
+    padding: 8px 16px 10px !important;
+  }
+
+  .wf-navbar--admin .wf-navbar__logo {
+    grid-area: logo !important;
+  }
+
+  .wf-navbar--admin .wf-navbar__nav {
+    grid-area: nav !important;
+    display: flex !important;
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  .wf-navbar--admin .wf-navbar__actions {
+    grid-area: actions !important;
+  }
+
+  .wf-navbar--admin .wf-header-actions {
+    display: flex !important;
+    gap: 7px !important;
+  }
+
+  .wf-navbar--admin .wf-mobile-actions {
+    display: none !important;
+  }
+
+  .wf-navbar--admin .wf-logo img {
+    height: 56px !important;
+    max-width: 176px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tabs {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0 4px !important;
+    scrollbar-width: thin;
+  }
+
+  .wf-navbar--admin .wf-admin-tab {
+    flex: 0 0 auto !important;
+    min-height: 44px !important;
+    padding-inline: 9px !important;
+    gap: 5px !important;
+    font-size: 11.5px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tab .wf-icon {
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+  }
+
+  .wf-navbar--admin .wf-top-btn {
+    min-height: 44px !important;
+    padding-inline: 11px !important;
+    gap: 6px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger {
+    min-width: 116px !important;
+  }
+}
+
+/* Tablet client: switch to the mobile action composition before the three desktop buttons start colliding. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .wf-navbar--client.wf-header,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header {
+    width: min(100% - 24px, 960px) !important;
+    min-height: 76px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 8px 12px !important;
+  }
+
+  .wf-navbar--client .wf-navbar__mobile-leading {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .wf-navbar--client .wf-navbar__nav,
+  .wf-navbar--client .wf-header-actions {
+    display: none !important;
+  }
+
+  .wf-navbar--client .wf-mobile-actions {
+    display: flex !important;
+    justify-self: end !important;
+    gap: 8px !important;
+  }
+
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  .wf-navbar--client.wf-navbar--has-mobile-leading .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-navbar--has-mobile-leading.wf-header .wf-logo img {
+    width: auto !important;
+    height: 60px !important;
+    max-width: 190px !important;
+  }
+
+  .wf-navbar--client .wf-top-btn {
+    min-height: 46px !important;
+    padding-inline: 12px !important;
+    gap: 7px !important;
+    font-size: 12px !important;
+    border-radius: 11px !important;
+  }
+
+  .wf-navbar--client .wf-top-btn--compact {
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    padding: 0 !important;
+  }
+
+  .wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    min-width: 128px !important;
+  }
+}
+
+/* Phone layout for both navbars. Keep the logo and actions inside the viewport at 360/390/430px. */
+@media (max-width: 767px) {
+  .wf-navbar.wf-header,
+  .wf-navbar--admin.wf-header,
+  .wf-navbar--client.wf-header,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header {
+    width: 100% !important;
+    min-height: 70px !important;
+    height: auto !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 12px !important;
+    border-bottom: 0 !important;
+  }
+
+  .wf-navbar--has-mobile-leading.wf-header,
+  .wf-navbar--client.wf-navbar--has-mobile-leading.wf-header,
+  .wf-page .wf-navbar.wf-navbar--client.wf-navbar--has-mobile-leading.wf-header {
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+  }
+
+  .wf-navbar__nav,
+  .wf-navbar .wf-header-actions,
+  .wf-navbar--admin .wf-navbar__nav,
+  .wf-navbar--admin .wf-header-actions,
+  .wf-navbar--client .wf-header-actions {
+    display: none !important;
+  }
+
+  .wf-navbar__mobile-leading,
+  .wf-navbar .wf-mobile-actions,
+  .wf-navbar--admin .wf-mobile-actions,
+  .wf-navbar--client .wf-mobile-actions {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .wf-navbar .wf-mobile-actions,
+  .wf-navbar--admin .wf-mobile-actions,
+  .wf-navbar--client .wf-mobile-actions {
+    justify-self: end !important;
+    margin-left: 0 !important;
+    gap: 7px !important;
+  }
+
+  .wf-navbar .wf-logo img,
+  .wf-navbar--admin .wf-logo img,
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  .wf-navbar--client.wf-navbar--has-mobile-leading .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-navbar--has-mobile-leading.wf-header .wf-logo img {
+    width: auto !important;
+    height: clamp(48px, 15vw, 66px) !important;
+    max-width: clamp(136px, 43vw, 190px) !important;
+  }
+
+  .wf-navbar .wf-top-btn {
+    min-height: 46px !important;
+    padding-inline: 11px !important;
+    gap: 6px !important;
+    font-size: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .wf-navbar .wf-top-btn--compact,
+  .wf-navbar--admin .wf-mobile-actions .wf-top-btn--compact,
+  .wf-navbar--client .wf-mobile-actions .wf-top-btn--compact {
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  .wf-navbar .wf-top-btn .wf-icon {
+    width: 22px !important;
+    min-width: 22px !important;
+    height: 22px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger,
+  .wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    min-width: 108px !important;
+    max-width: 138px !important;
+    padding-inline: 11px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger > span:not(.wf-icon),
+  .wf-navbar--client .wf-client-profile-trigger > span:not(.wf-icon) {
+    max-width: 64px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .wf-navbar.wf-header,
+  .wf-navbar--admin.wf-header,
+  .wf-navbar--client.wf-header,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header {
+    padding-inline: 9px !important;
+    gap: 6px !important;
+  }
+
+  .wf-navbar .wf-logo img,
+  .wf-navbar--admin .wf-logo img,
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  .wf-navbar--client.wf-navbar--has-mobile-leading .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-navbar--has-mobile-leading.wf-header .wf-logo img {
+    height: clamp(46px, 14vw, 60px) !important;
+    max-width: clamp(128px, 39vw, 164px) !important;
+  }
+
+  .wf-navbar .wf-mobile-actions,
+  .wf-navbar--admin .wf-mobile-actions,
+  .wf-navbar--client .wf-mobile-actions {
+    gap: 5px !important;
+  }
+
+  .wf-navbar .wf-top-btn--compact,
+  .wf-navbar--admin .wf-mobile-actions .wf-top-btn--compact,
+  .wf-navbar--client .wf-mobile-actions .wf-top-btn--compact {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger,
+  .wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    min-width: 98px !important;
+    max-width: 116px !important;
+    min-height: 44px !important;
+    padding-inline: 9px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger > span:not(.wf-icon),
+  .wf-navbar--client .wf-client-profile-trigger > span:not(.wf-icon) {
+    max-width: 52px !important;
+  }
+
+  .wf-navbar .wf-top-btn .wf-icon {
+    width: 20px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .wf-navbar.wf-header,
+  .wf-navbar--admin.wf-header,
+  .wf-navbar--client.wf-header,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header {
+    padding-inline: 7px !important;
+  }
+
+  .wf-navbar .wf-logo img,
+  .wf-navbar--admin .wf-logo img,
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  .wf-navbar--client.wf-navbar--has-mobile-leading .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-navbar--has-mobile-leading.wf-header .wf-logo img {
+    max-width: 126px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger,
+  .wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    padding: 0 !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger > span:not(.wf-icon),
+  .wf-navbar--admin .wf-admin-profile-trigger .wf-icon--chevron,
+  .wf-navbar--client .wf-client-profile-trigger > span:not(.wf-icon),
+  .wf-navbar--client .wf-client-profile-trigger .wf-icon--chevron {
+    display: none !important;
+  }
+
+  .wf-navbar .wf-top-btn--compact,
+  .wf-navbar--admin .wf-mobile-actions .wf-top-btn--compact,
+  .wf-navbar--client .wf-mobile-actions .wf-top-btn--compact {
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
+  }
+}
+
+/* v7 final correction:
+   The previous v6 file overwrote this page-level structure and caused the list/cards
+   to collapse beside the calendar at 1366-1400px. Keep smaller desktops stacked and
+   constrain only the navbar internals, not the page components. */
+@media (min-width: 1181px) and (max-width: 1799px) {
+  .wf-page--list > .wf-two-column--bookings,
+  .wf-admin-dashboard .wf-admin-main,
+  .wf-admin-dashboard .wf-admin-main > .wf-two-column--bookings {
+    width: min(calc(100vw - 48px), 1440px) !important;
+    max-width: 1440px !important;
+    height: auto !important;
+    max-height: none !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    align-items: start !important;
+    gap: clamp(14px, 1.6vw, 22px) !important;
+    overflow: visible !important;
+  }
+
+  .wf-two-column--bookings > .wf-calendar-panel,
+  .wf-two-column--bookings > .wf-booking-list-panel {
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .wf-booking-list-panel {
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .wf-booking-stack {
+    display: grid !important;
+    gap: 14px !important;
+    overflow: visible !important;
+  }
+
+  .wf-booking-card {
+    grid-template-columns: clamp(92px, 7.5vw, 116px) minmax(0, 1fr) !important;
+  }
+
+  .wf-booking-main {
+    grid-template-columns: minmax(0, 1.15fr) minmax(190px, .75fr) auto !important;
+  }
+
+  .wf-booking-actions {
+    flex-wrap: wrap !important;
+  }
+}
+
+@media (min-width: 1181px) and (max-width: 1350px) {
+  .wf-booking-main {
+    grid-template-columns: minmax(0, 1fr) minmax(170px, .72fr) !important;
+  }
+
+  .wf-booking-main > .wf-badge {
+    grid-column: 2 !important;
+    justify-self: start !important;
+  }
+
+  .wf-booking-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .wf-booking-actions .wf-booking-action--cancel {
+    margin-left: 0 !important;
+  }
+}
+
+/* Smaller desktop navbar hardening. This keeps the Admin/Client structure but prevents
+   oversized logos/buttons from squeezing the page between 1000px and 1800px. */
+@media (min-width: 1280px) and (max-width: 1799px) {
+  .wf-navbar--client.wf-header,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header {
+    width: min(100% - 36px, 1540px) !important;
+    min-height: 78px !important;
+    grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) !important;
+    gap: clamp(10px, 1vw, 18px) !important;
+    padding-block: 7px !important;
+  }
+
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: clamp(54px, 4vw, 72px) !important;
+    max-width: clamp(164px, 14vw, 220px) !important;
+  }
+
+  .wf-navbar--client .wf-header-actions {
+    gap: clamp(8px, .8vw, 14px) !important;
+  }
+
+  .wf-navbar--client .wf-top-btn {
+    min-height: clamp(46px, 3.2vw, 56px) !important;
+    padding-inline: clamp(12px, 1.05vw, 20px) !important;
+    font-size: clamp(12px, .86vw, 15px) !important;
+  }
+
+  .wf-navbar--client .wf-header-actions .wf-top-btn:first-child {
+    min-width: clamp(135px, 11vw, 190px) !important;
+  }
+
+  .wf-navbar--client .wf-client-profile-trigger {
+    min-width: clamp(120px, 10vw, 168px) !important;
+  }
+
+  .wf-navbar--admin.wf-header {
+    min-height: 78px !important;
+    grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) minmax(230px, max-content) !important;
+    gap: clamp(8px, .9vw, 16px) !important;
+    padding: 7px clamp(18px, 2.6vw, 46px) !important;
+  }
+
+  .wf-navbar--admin .wf-logo img {
+    height: clamp(54px, 3.8vw, 70px) !important;
+    max-width: clamp(160px, 13.5vw, 220px) !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tabs {
+    min-height: 48px !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding-inline: 5px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tab {
+    flex: 1 0 auto !important;
+    min-width: max-content !important;
+    min-height: 46px !important;
+    padding-inline: clamp(7px, .65vw, 12px) !important;
+    gap: 5px !important;
+    font-size: clamp(11px, .78vw, 13.5px) !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tab span:not(.wf-icon) {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .wf-navbar--admin .wf-top-btn {
+    min-height: clamp(46px, 3.1vw, 56px) !important;
+    padding-inline: clamp(10px, .95vw, 18px) !important;
+    font-size: clamp(12px, .82vw, 14px) !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger {
+    min-width: clamp(112px, 9vw, 160px) !important;
+  }
+}
+
+/* 1000-1279px: desktop content can exist, but Admin needs two rows to avoid crushing tabs.
+   Client stays compact in a single row. */
+@media (min-width: 1000px) and (max-width: 1279px) {
+  .wf-navbar--client.wf-header,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header {
+    width: min(100% - 28px, 1180px) !important;
+    min-height: 72px !important;
+    grid-template-columns: minmax(140px, 168px) minmax(0, 1fr) !important;
+    gap: 8px !important;
+    padding: 6px 12px !important;
+  }
+
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: 54px !important;
+    max-width: 168px !important;
+  }
+
+  .wf-navbar--client .wf-header-actions {
+    gap: 7px !important;
+  }
+
+  .wf-navbar--client .wf-top-btn {
+    min-height: 44px !important;
+    padding-inline: 10px !important;
+    gap: 6px !important;
+    font-size: 12px !important;
+  }
+
+  .wf-navbar--client .wf-top-btn .wf-icon {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+  }
+
+  .wf-navbar--client .wf-header-actions .wf-top-btn:first-child {
+    min-width: 132px !important;
+  }
+
+  .wf-navbar--client .wf-client-profile-trigger {
+    min-width: 112px !important;
+  }
+
+  .wf-navbar--admin.wf-header {
+    display: grid !important;
+    grid-template-columns: minmax(148px, 178px) minmax(0, 1fr) !important;
+    grid-template-areas:
+      "logo actions"
+      "nav nav" !important;
+    gap: 8px 12px !important;
+    min-height: auto !important;
+    padding: 7px 18px 10px !important;
+  }
+
+  .wf-navbar--admin .wf-navbar__logo {
+    grid-area: logo !important;
+  }
+
+  .wf-navbar--admin .wf-navbar__nav {
+    grid-area: nav !important;
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  .wf-navbar--admin .wf-navbar__actions {
+    grid-area: actions !important;
+    justify-self: end !important;
+  }
+
+  .wf-navbar--admin .wf-header-actions {
+    display: flex !important;
+    gap: 8px !important;
+  }
+
+  .wf-navbar--admin .wf-mobile-actions {
+    display: none !important;
+  }
+
+  .wf-navbar--admin .wf-logo img {
+    height: 56px !important;
+    max-width: 176px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tabs {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: thin;
+    padding-inline: 4px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-tab {
+    flex: 0 0 auto !important;
+    min-height: 44px !important;
+    padding-inline: 9px !important;
+    gap: 5px !important;
+    font-size: 11.5px !important;
+  }
+
+  .wf-navbar--admin .wf-top-btn {
+    min-height: 44px !important;
+    padding-inline: 10px !important;
+    font-size: 12px !important;
+  }
+
+  .wf-navbar--admin .wf-admin-profile-trigger {
+    min-width: 112px !important;
+  }
+}
+
+

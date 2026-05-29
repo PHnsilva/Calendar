@@ -1,6 +1,9 @@
 package br.com.calendarmate.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -8,11 +11,13 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private ResponseEntity<ApiError> build(HttpStatus status, String code, String msg, HttpServletRequest req) {
         return ResponseEntity
@@ -54,6 +59,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), req);
     }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiError> constraint(ConstraintViolationException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Dados invalidos.", req);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiError> typeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
         // ex: date=abc
@@ -83,8 +93,19 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "GOOGLE_IO", "Erro de comunicação com Google Calendar.", req);
     }
 
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<ApiError> external(ExternalServiceException ex, HttpServletRequest req) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL_SERVICE_ERROR", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(RestClientException.class)
+    public ResponseEntity<ApiError> restClient(RestClientException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_GATEWAY, "UPSTREAM_ERROR", "Falha de comunicacao com servico externo.", req);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> generic(Exception ex, HttpServletRequest req) {
+        log.error("Unexpected error at {}", req.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Erro inesperado.", req);
     }
 }

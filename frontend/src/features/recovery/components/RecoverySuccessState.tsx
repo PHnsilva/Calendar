@@ -22,7 +22,7 @@ export function RecoverySuccessState({ bookings, onRecoverAnother }: RecoverySuc
         ))}
       </div>
       <div className="recovery-card__actions">
-        <Link to="/my" className="primary-action">Ir para meus agendamentos</Link>
+        <Link to="/meus-agendamentos" className="primary-action">Ir para meus agendamentos</Link>
         <button type="button" className="secondary-action" onClick={onRecoverAnother}>Recuperar outro telefone</button>
       </div>
     </section>

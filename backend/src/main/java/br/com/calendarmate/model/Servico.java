@@ -10,6 +10,8 @@ public class Servico {
 
     private Instant start;
     private Instant end;
+    private Instant appointmentStart;
+    private Instant appointmentEnd;
 
     private Instant phoneVerifiedAt;
 
@@ -31,6 +33,10 @@ public class Servico {
     private String status; // PENDING_PHONE / CONFIRMED etc
     private Instant pendingExpiresAt;
 
+    private String assignedProviderId;
+    private String assignedProviderName;
+    private String assignedProviderPhone;
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -45,6 +51,12 @@ public class Servico {
 
     public Instant getEnd() { return end; }
     public void setEnd(Instant end) { this.end = end; }
+
+    public Instant getAppointmentStart() { return appointmentStart; }
+    public void setAppointmentStart(Instant appointmentStart) { this.appointmentStart = appointmentStart; }
+
+    public Instant getAppointmentEnd() { return appointmentEnd; }
+    public void setAppointmentEnd(Instant appointmentEnd) { this.appointmentEnd = appointmentEnd; }
 
     public Instant getPhoneVerifiedAt() { return phoneVerifiedAt; }
     public void setPhoneVerifiedAt(Instant phoneVerifiedAt) { this.phoneVerifiedAt = phoneVerifiedAt; }
@@ -90,4 +102,13 @@ public class Servico {
 
     public Instant getPendingExpiresAt() { return pendingExpiresAt; }
     public void setPendingExpiresAt(Instant pendingExpiresAt) { this.pendingExpiresAt = pendingExpiresAt; }
+
+    public String getAssignedProviderId() { return assignedProviderId; }
+    public void setAssignedProviderId(String assignedProviderId) { this.assignedProviderId = assignedProviderId; }
+
+    public String getAssignedProviderName() { return assignedProviderName; }
+    public void setAssignedProviderName(String assignedProviderName) { this.assignedProviderName = assignedProviderName; }
+
+    public String getAssignedProviderPhone() { return assignedProviderPhone; }
+    public void setAssignedProviderPhone(String assignedProviderPhone) { this.assignedProviderPhone = assignedProviderPhone; }
 }

@@ -54,7 +54,7 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
     headers: {
       Accept: "application/json",
       ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-      ...(adminToken ? { "X-ADMIN-TOKEN": adminToken } : {}),
+      ...(adminToken ? { "X-ADMIN-SESSION": adminToken } : {}),
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,

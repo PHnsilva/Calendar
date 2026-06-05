@@ -1,0 +1,103 @@
+// @vitest-environment jsdom
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useState } from "react";
+import type { AddressSuggestion } from "../hooks/useAddressSuggestions";
+
+beforeEach(() => {
+  vi.resetModules();
+  vi.stubEnv("VITE_GEOAPIFY_PUBLIC_KEY", "public-test-key");
+  vi.unstubAllGlobals();
+});
+
+describe("AddressAutocompleteField", () => {
+  it("renders valid suggestions from the selected city and selects one", async () => {
+    const selected: AddressSuggestion[] = [];
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        results: [{
+          place_id: "city-place-id",
+          city: "Itabirito",
+          state_code: "MG",
+          lat: -20.2533,
+          lon: -43.8014,
+        }],
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        results: [
+          {
+            place_id: "valid-address",
+            formatted: "Rua Sao Jose, Itabirito - MG",
+            street: "Rua Sao Jose",
+            suburb: "Centro",
+            city: "Itabirito",
+            state_code: "MG",
+            postcode: "35450000",
+            lat: -20.25,
+            lon: -43.8,
+          },
+          {
+            place_id: "outside-address",
+            formatted: "Rua Itabirito, Manaus - AM",
+            street: "Rua Itabirito",
+            city: "Manaus",
+            state_code: "AM",
+            lat: -3.1,
+            lon: -60,
+          },
+        ],
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { default: AddressAutocompleteField } = await import("./AddressAutocompleteField");
+
+    function Harness() {
+      const [value, setValue] = useState("");
+      return (
+        <AddressAutocompleteField
+          value={value}
+          selectedCity="Itabirito"
+          selectedState="MG"
+          onChange={setValue}
+          onSelectSuggestion={(suggestion) => {
+            selected.push(suggestion);
+            setValue(suggestion.formatted);
+          }}
+        />
+      );
+    }
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness />
+      </QueryClientProvider>,
+    );
+    const input = screen.getByPlaceholderText(/cidade selecionada: Itabirito\/MG/i) as HTMLInputElement;
+
+    await userEvent.click(input);
+    await userEvent.type(input, "rua");
+
+    const option = await screen.findByRole("button", { name: /Rua Sao Jose/i });
+    expect(screen.queryByText(/Manaus/i)).toBeNull();
+
+    fireEvent.mouseDown(option);
+
+    await waitFor(() => {
+      expect(input.value).toBe("Rua Sao Jose, Itabirito - MG");
+    });
+    expect(selected).toHaveLength(1);
+    expect(selected[0]?.city).toBe("Itabirito");
+  });
+});

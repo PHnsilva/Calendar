@@ -920,7 +920,7 @@ export default function BookingFormModal({
 
                 <label className="booking-form__field booking-form__field--full booking-form__field--with-error">
                   <span>Endereço</span>
-                  <AddressAutocompleteField value={addressInput} selectedCity={effectiveCity} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
+                  <AddressAutocompleteField value={addressInput} selectedCity={effectiveCity} selectedState={formValues.clientState || defaultState} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
                   {validationErrors.addressInput ? <small className="booking-form__field-error">{validationErrors.addressInput}</small> : null}
                 </label>
 

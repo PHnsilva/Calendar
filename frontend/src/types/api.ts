@@ -115,10 +115,14 @@ export type CepLookupResponse = {
 };
 
 export type GeoapifyAddressSuggestion = {
+  id: string;
+  label: string;
   placeId: string;
   formatted: string;
   latitude: number;
   longitude: number;
+  lat: number;
+  lon: number;
   addressLine1: string;
   addressLine2?: string;
   street: string;
@@ -127,6 +131,16 @@ export type GeoapifyAddressSuggestion = {
   city: string;
   state: string;
   postcode: string;
+  raw?: Record<string, unknown>;
+};
+
+export type GeoapifyCityContext = {
+  name: string;
+  state?: string;
+  placeId?: string;
+  latitude?: number;
+  longitude?: number;
+  raw?: Record<string, unknown>;
 };
 
 export type AdminDashboardSummaryResponse = {

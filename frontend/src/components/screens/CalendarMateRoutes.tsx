@@ -1792,7 +1792,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
           <span className="wf-field-label">Endereço<em>*</em></span>
           <span className="wf-input-shell wf-input-shell--address">
             <Icon name="map" />
-            <AddressAutocompleteField value={addressInput} selectedCity={selectedCity} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
+            <AddressAutocompleteField value={addressInput} selectedCity={selectedCity} selectedState={defaultState} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
           </span>
           {fieldErrors.address ? <small className="wf-field-error">{fieldErrors.address}</small> : null}
         </label>

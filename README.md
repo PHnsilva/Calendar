@@ -150,7 +150,7 @@ VITE_GEOAPIFY_PUBLIC_KEY=...
 VITE_ADMIN_ENABLED=true
 ```
 
-No Vercel, configure `VITE_API_BASE_URL` com a URL pública do backend no Render.
+No Vercel, configure `VITE_API_BASE_URL` com a URL pública do backend no Render e `VITE_GEOAPIFY_PUBLIC_KEY` no mesmo ambiente (Production/Preview/Development conforme o deploy). A chave pública precisa permitir o domínio do Vercel nas restrições do Geoapify. O backend também deve ter `GEOAPIFY_API_KEY` configurada para o proxy de autocomplete/fallback seguro e `FRONTEND_URL` deve incluir os domínios do Vercel permitidos no CORS. Depois de alterar variáveis `VITE_`, faça um novo deploy para o bundle receber os valores.
 
 ## Rodar localmente
 

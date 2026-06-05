@@ -262,6 +262,11 @@ public class AppConfig {
     }
 
     @Bean
+    public AddressAutocompleteService addressAutocompleteService(RestTemplate restTemplate, AppProperties props) {
+        return new AddressAutocompleteService(restTemplate, props);
+    }
+
+    @Bean
     public InternalCleanupService internalCleanupService(
             CalendarClient calendarClient,
             PendingStore pendingStore,

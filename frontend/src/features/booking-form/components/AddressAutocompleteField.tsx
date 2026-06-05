@@ -15,13 +15,12 @@ export default function AddressAutocompleteField({
   onSelectSuggestion,
 }: AddressAutocompleteFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
-  const { suggestions, isLoading, error, isEnabled } = useAddressSuggestions(value, selectedCity, isFocused);
+  const { suggestions, isLoading, error } = useAddressSuggestions(value, selectedCity, isFocused);
 
   const shouldShowPanel = useMemo(() => {
-    if (!isEnabled) return false;
     if (value.trim().length < 3) return false;
     return isFocused || isLoading || suggestions.length > 0 || Boolean(error);
-  }, [error, isEnabled, isFocused, isLoading, suggestions.length, value]);
+  }, [error, isFocused, isLoading, suggestions.length, value]);
 
   return (
     <div className="booking-address-autocomplete">

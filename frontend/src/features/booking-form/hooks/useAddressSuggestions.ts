@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { env } from "../../../lib/env";
 import { searchAddresses } from "../api/search-addresses";
 import type { GeoapifyAddressSuggestion } from "../../../types/api";
 
@@ -13,6 +12,8 @@ export type AddressSuggestion = GeoapifyAddressSuggestion & {
 function normalizeCity(value?: string | null) {
   return (value ?? "").trim().toLowerCase();
 }
+
+let hasWarnedGeoapifyRequestFailure = false;
 
 function toAddressSuggestion(item: GeoapifyAddressSuggestion): AddressSuggestion {
   return {
@@ -30,7 +31,7 @@ export function useAddressSuggestions(query: string, selectedCity: string, enabl
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!enabled || !env.geoapifyPublicKey) {
+    if (!enabled) {
       setSuggestions([]);
       setIsLoading(false);
       setError(null);
@@ -67,6 +68,10 @@ export function useAddressSuggestions(query: string, selectedCity: string, enabl
         if (!active) return;
         setSuggestions([]);
         setError((requestError as Error).message);
+        if (!hasWarnedGeoapifyRequestFailure) {
+          hasWarnedGeoapifyRequestFailure = true;
+          console.warn("[CalendarMate] Geoapify autocomplete request failed.", requestError);
+        }
       } finally {
         if (active) setIsLoading(false);
       }
@@ -82,6 +87,6 @@ export function useAddressSuggestions(query: string, selectedCity: string, enabl
     suggestions,
     isLoading,
     error,
-    isEnabled: Boolean(enabled && env.geoapifyPublicKey),
+    isEnabled: Boolean(enabled),
   };
 }

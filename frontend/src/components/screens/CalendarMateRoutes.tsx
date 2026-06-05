@@ -108,6 +108,8 @@ type ModalKind =
   | 'confirm-phone'
   | 'client-details'
   | 'contact'
+  | 'services-info'
+  | 'help-contact'
   | 'notifications'
   | 'block-admin'
   | 'assign-provider'
@@ -379,10 +381,32 @@ function useAdminBlocksData() {
   return { blocks: query.data ?? [], isLoading: query.isFetching, isError: query.isError, hasAdminToken };
 }
 
+const supportPhoneDigits = '553195415323';
+const supportPhoneDisplay = '(31) 9541-5323';
+const supportWhatsAppUrl = `https://wa.me/${supportPhoneDigits}`;
+const supportInstagramUrl = 'https://www.instagram.com/sg_pequenos_reparos/';
+const supportEmail = 'sgpequenosreparos@gmail.com';
+
+function openExternal(url: string) {
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function openSupportWhatsApp() {
+  openExternal(supportWhatsAppUrl);
+}
+
+function openSupportPhone() {
+  window.location.href = `tel:+${supportPhoneDigits}`;
+}
+
+function openSupportEmail() {
+  window.location.href = `mailto:${supportEmail}`;
+}
+
 function openWhatsApp(phone?: string) {
   const digits = (phone ?? '').replace(/\D/g, '');
   if (!digits) {
-    window.alert('Telefone não disponível para este agendamento.');
+    openSupportWhatsApp();
     return;
   }
   const normalized = digits.startsWith('55') ? digits : `55${digits}`;
@@ -390,7 +414,7 @@ function openWhatsApp(phone?: string) {
 }
 
 function notifyUnavailable(action: string) {
-  window.alert(`${action} depende do fluxo real do sistema. Mantive o botão ativo e sem dados simulados.`);
+  window.alert(`${action} ainda não possui ação configurada nesta tela.`);
 }
 
 function Icon({ name }: { name: string }) {
@@ -676,15 +700,19 @@ function HeroVisual({ type, className }: { type: 'client' | 'admin'; className?:
   );
 }
 
-function LandingFooter({ admin = false }: { admin?: boolean }) {
+function LandingFooter({ admin = false, setModal }: { admin?: boolean; setModal?: (modal: ModalKind) => void }) {
+  const openServices = () => setModal?.('services-info');
+  const openHelp = () => setModal?.('help-contact');
+  const openContact = () => setModal?.('contact');
+
   if (admin) {
     return (
       <footer className="wf-footer">
         <LogoMark compact />
         <p>Plataforma completa para gestão de agendamentos.</p>
-        <button type="button" onClick={() => notifyUnavailable('Sobre o serviço')}>Sobre o serviço</button>
-        <button type="button" onClick={() => notifyUnavailable('Perguntas frequentes')}>Perguntas frequentes</button>
-        <button type="button" onClick={() => notifyUnavailable('Contato')}>Contato</button>
+        <button type="button" onClick={openServices}>Sobre o serviço</button>
+        <button type="button" onClick={openHelp}>Precisa de ajuda?</button>
+        <button type="button" onClick={openContact}>Contato</button>
         <strong><Icon name="footer-security" /> Seus dados protegidos com privacidade.</strong>
       </footer>
     );
@@ -699,9 +727,9 @@ function LandingFooter({ admin = false }: { admin?: boolean }) {
         <Icon name="lock" />
       </div>
       <nav className="wf-footer-links" aria-label="Links institucionais">
-        <button type="button" onClick={() => notifyUnavailable('Sobre o serviço')}>Sobre o serviço</button>
-        <button type="button" onClick={() => notifyUnavailable('Perguntas frequentes')}>Perguntas frequentes</button>
-        <button type="button" onClick={() => notifyUnavailable('Contato')}>Contato</button>
+        <button type="button" onClick={openServices}>Sobre o serviço</button>
+        <button type="button" onClick={openHelp}>Precisa de ajuda?</button>
+        <button type="button" onClick={openContact}>Contato</button>
       </nav>
     </footer>
   );
@@ -720,7 +748,6 @@ function ClientLandingModalButtons({ setModal }: { setModal: (modal: ModalKind) 
 
 export function ClientLanding() {
   const [modal, setModal] = useState<ModalKind>(null);
-  const scrollToInfo = () => document.getElementById('wf-why-use')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   return (
     <PageShell className="wf-page wf-client-landing">
       <ClientNavbar onCreate={() => setModal('create-client')} onNotifications={() => setModal('notifications')} onConfirmPhone={() => setModal('confirm-phone')} />
@@ -732,7 +759,7 @@ export function ClientLanding() {
             
             <div className="wf-hero-buttons">
               <button type="button" className="wf-primary-cta" onClick={() => setModal('create-client')}><Icon name="calendar" /> Criar agendamento</button>
-              <button type="button" className="wf-secondary-cta" onClick={scrollToInfo}><span className="wf-play"><Icon name="play" /></span> Como funciona?</button>
+              <button type="button" className="wf-secondary-cta" onClick={() => setModal('services-info')}><span className="wf-play"><Icon name="play" /></span> Como funciona?</button>
             </div>
           </div>
           <ResponsiveAsset
@@ -755,7 +782,7 @@ export function ClientLanding() {
             </div>
           </article>
         </section>
-        <LandingFooter />
+        <LandingFooter setModal={setModal} />
       </main>
       <CalendarMateModal modal={modal} onClose={() => setModal(null)} />
     </PageShell>
@@ -1035,7 +1062,7 @@ export function AdminLanding() {
           <AdminLandingCard icon="admin-history" title="Histórico" text="Consulte atendimentos realizados e detalhes completos de cada serviço." color="purple" view="historico" onOpen={openView} />
           {owner ? <AdminLandingCard icon="budget-blue" mediaIcon="admin-finance" title="Extrato / Financeiro" text="Acompanhe recebimentos, faturamento e saldos de forma organizada." color="blue" view="extrato" onOpen={openView} wide /> : null}
         </section>
-        <LandingFooter admin />
+        <LandingFooter admin setModal={setModal} />
       </main>
       <CalendarMateModal modal={modal} onClose={() => setModal(null)} />
     </PageShell>
@@ -1401,6 +1428,8 @@ function CalendarMateModal({
     modal === 'confirm-phone' && 'wf-modal--confirm',
     modal === 'client-details' && 'wf-modal--details',
     modal === 'contact' && 'wf-modal--contact',
+    modal === 'services-info' && 'wf-modal--services-info',
+    modal === 'help-contact' && 'wf-modal--help-contact',
     modal === 'notifications' && 'wf-modal--notifications',
     modal === 'block-admin' && 'wf-modal--admin-block',
     modal === 'assign-provider' && 'wf-modal--assign',
@@ -1416,6 +1445,8 @@ function CalendarMateModal({
         {modal === 'confirm-phone' ? <ConfirmPhoneModal onClose={onClose} /> : null}
         {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={onClose} /> : null}
         {modal === 'contact' ? <ContactModal onClose={onClose} /> : null}
+        {modal === 'services-info' ? <ServicesInfoModal /> : null}
+        {modal === 'help-contact' ? <HelpContactModal /> : null}
         {modal === 'notifications' ? <NotificationsModal onClose={onClose} /> : null}
         {modal === 'block-admin' ? <AdminBlockModal onClose={onClose} /> : null}
         {modal === 'assign-provider' ? <AssignProviderModal booking={context.booking} onClose={onClose} /> : null}
@@ -1950,12 +1981,59 @@ function ContactModal({ onClose }: { onClose: () => void }) {
     <>
       <ModalTitle icon="chat-bubbles" title="Fale conosco" text="Escolha o canal de atendimento." />
       <div className="wf-contact-options wf-contact-options--wireframe">
-        <ContactOption icon="contact-whatsapp" title="WhatsApp" text="Fale conosco pelo WhatsApp." color="green" onClick={() => notifyUnavailable('WhatsApp de suporte')} />
-        <ContactOption icon="contact-instagram" title="Instagram" text="Envie uma mensagem pelo Instagram." color="purple" onClick={() => notifyUnavailable('Instagram')} />
-        <ContactOption icon="contact-phone" title="Telefone" text="Entre em contato pelo nosso telefone." color="blue" onClick={() => notifyUnavailable('Telefone de contato')} />
-        <ContactOption icon="contact-email" title="E-mail" text="Envie um e-mail para nossa equipe." color="orange" onClick={() => window.location.href = 'mailto:'} />
+        <ContactOption icon="contact-whatsapp" title="WhatsApp" text={`Atendimento pelo número ${supportPhoneDisplay}.`} color="green" onClick={openSupportWhatsApp} />
+        <ContactOption icon="contact-instagram" title="Instagram" text="Acompanhe e envie mensagem pelo perfil oficial." color="purple" onClick={() => openExternal(supportInstagramUrl)} />
+        <ContactOption icon="contact-phone" title="Telefone" text={`Ligue para ${supportPhoneDisplay}.`} color="blue" onClick={openSupportPhone} />
+        <ContactOption icon="contact-email" title="E-mail" text={supportEmail} color="orange" onClick={openSupportEmail} />
       </div>
       <p className="wf-modal-footnote"><Icon name="lock" /> Atendimento rápido, seguro e confiável.</p>
+    </>
+  );
+}
+
+const serviceCategories = [
+  { title: 'Elétrica básica', items: ['troca de tomadas e interruptores', 'instalação de luminárias', 'chuveiros', 'disjuntores simples'] },
+  { title: 'Hidráulica', items: ['torneiras', 'sifões', 'vazamentos simples', 'descargas', 'registros', 'caixas acopladas'] },
+  { title: 'Montagem e instalação', items: ['móveis', 'prateleiras', 'suportes de TV', 'varões', 'nichos', 'quadros e espelhos'] },
+  { title: 'Serviços de pedreiro', items: ['rebocos e correções pontuais', 'assentamento e troca de pisos', 'ajustes em alvenaria', 'pequenos reparos estruturais'] },
+  { title: 'Serviços de pintor', items: ['pintura interna e externa', 'retoques em paredes e tetos', 'preparação de superfícies', 'acabamentos e textura simples'] },
+  { title: 'Filmagem com drone', items: ['captação aérea de imóveis', 'registros para obras e terrenos', 'conteúdo promocional', 'imagens para inspeção visual'] },
+  { title: 'Desenvolvimento de sistemas e aplicações web', items: ['sites institucionais', 'landing pages', 'sistemas sob medida', 'manutenção e melhorias em aplicações web'] },
+  { title: 'Visita técnica', items: ['avaliação do problema', 'orçamento', 'orientação sobre materiais e execução'] },
+];
+
+function ServicesInfoModal() {
+  return (
+    <>
+      <section className="wf-services-info wf-services-info--plain">
+        <header className="wf-services-info__header">
+          <div className="wf-services-info__logo"><LogoMark /></div>
+          <div className="wf-services-info__title-block">
+            <h2>Sobre os serviços</h2>
+          </div>
+        </header>
+        <div className="wf-services-info__grid">
+          {serviceCategories.map((category) => (
+            <article key={category.title}>
+              <strong>{category.title}</strong>
+              <ul>
+                {category.items.map((item) => <li key={item}>{item}</li>)}</ul>
+            </article>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
+function HelpContactModal() {
+  return (
+    <>
+      <ModalTitle icon="contact-phone" title="Precisa de ajuda?" text="Fale com a SG Pequenos Reparos pelo WhatsApp ou telefone." />
+      <div className="wf-contact-options wf-contact-options--wireframe wf-help-contact-options">
+        <ContactOption icon="contact-whatsapp" title="WhatsApp" text={supportPhoneDisplay} color="green" onClick={openSupportWhatsApp} />
+        <ContactOption icon="contact-phone" title="Telefone" text={supportPhoneDisplay} color="blue" onClick={openSupportPhone} />
+      </div>
     </>
   );
 }

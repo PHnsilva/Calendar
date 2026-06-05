@@ -2117,3 +2117,22 @@
     line-height: 1.22 !important;
   }
 }
+
+/* 2026-06-04: strengthen footer text and links */
+@media (min-width: 320px) and (max-width: 900px) {
+  .wf-client-landing .wf-footer.wf-footer--client-final .wf-footer-privacy-card p {
+    color: #0a1e6a !important;
+    font-size: clamp(8.3px, 2.2vw, 17px) !important;
+    line-height: 1.2 !important;
+    font-weight: 850 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .wf-client-landing .wf-footer.wf-footer--client-final .wf-footer-links button {
+    color: #0732c9 !important;
+    font-size: clamp(9px, 2.55vw, 15.5px) !important;
+    line-height: 1.2 !important;
+    font-weight: 850 !important;
+    letter-spacing: -0.01em !important;
+  }
+}

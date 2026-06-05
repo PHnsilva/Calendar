@@ -161,6 +161,8 @@ const ptDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digi
 const ptWeekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' });
 const ptMonth = new Intl.DateTimeFormat('pt-BR', { month: 'short' });
 const ptLongDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+const weekdayShortLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const monthShortLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 function cx(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(' ');
@@ -215,9 +217,13 @@ function splitFullName(value: string): { firstName: string; lastName: string } {
   return { firstName, lastName };
 }
 
-function formatDateOptionLabel(dateString: string): string {
+function formatDateOptionLabel(dateString: string): { weekday: string; day: string; month: string } {
   const date = toLocalDate(dateString);
-  return `${ptWeekday.format(date).replace('.', '')}\n${date.getDate()}\n${ptMonth.format(date).replace('.', '')}`;
+  return {
+    weekday: weekdayShortLabels[date.getDay()] ?? ptWeekday.format(date).replace('.', '').slice(0, 3),
+    day: String(date.getDate()),
+    month: monthShortLabels[date.getMonth()] ?? ptMonth.format(date).replace('.', '').slice(0, 3),
+  };
 }
 
 function mapCreatedServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
@@ -632,11 +638,11 @@ function Badge({ icon, children, color = 'orange' }: { icon?: string; children: 
   return <span className={cx('wf-badge', `wf-badge--${color}`)}>{icon ? <Icon name={icon} /> : null}{children}</span>;
 }
 
-function ActionCard({ icon, title, text, color, onClick, to }: { icon: string; title: string; text: string; color: Accent; onClick?: () => void; to?: string }) {
+function ActionCard({ icon, title, text, color, onClick, to }: { icon: string; title: string; text?: string; color: Accent; onClick?: () => void; to?: string }) {
   const content = (
     <>
       <span className="wf-action-card__icon"><Icon name={icon} /></span>
-      <span className="wf-action-card__body"><strong>{title}</strong><small>{text}</small></span>
+      <span className="wf-action-card__body"><strong>{title}</strong>{text ? <small>{text}</small> : null}</span>
       <span className="wf-action-card__arrow">›</span>
     </>
   );
@@ -702,10 +708,10 @@ function LandingFooter({ admin = false }: { admin?: boolean }) {
 function ClientLandingModalButtons({ setModal }: { setModal: (modal: ModalKind) => void }) {
   return (
     <div className="wf-actions-grid wf-actions-grid--client">
-      <ActionCard icon="calendar-create" title="Criar agendamento" text="Escolha o serviço, data e horário ideal para você." color="orange" onClick={() => setModal('create-client')} />
-      <ActionCard icon="calendar-clock" title="Acompanhar agendamento" text="Veja os detalhes e o status do seu agendamento." color="blue" to="/meus-agendamentos" />
-      <ActionCard icon="mobile-phone" title="Confirmar telefone" text="Confirme seu número no dia do atendimento." color="green" onClick={() => setModal('confirm-phone')} />
-      <ActionCard icon="chat-bubbles" title="Fale conosco" text="Dúvidas ou suporte? Estamos aqui para ajudar." color="purple" onClick={() => setModal('contact')} />
+      <ActionCard icon="calendar-create" title="Criar agendamento" color="orange" onClick={() => setModal('create-client')} />
+      <ActionCard icon="calendar-clock" title="Acompanhar agendamento" color="blue" to="/meus-agendamentos" />
+      <ActionCard icon="mobile-phone" title="Confirmar telefone" color="green" onClick={() => setModal('confirm-phone')} />
+      <ActionCard icon="chat-bubbles" title="Fale conosco" color="purple" onClick={() => setModal('contact')} />
     </div>
   );
 }
@@ -721,7 +727,7 @@ export function ClientLanding() {
           <div className="wf-hero-copy wf-client-hero-copy-final">
             <Badge icon="calendar" color="orange">Simples, rápido e sem complicações</Badge>
             <h1>Organize seus agendamentos e pequenos reparos com <span>facilidade.</span></h1>
-            <p>Crie seu agendamento sem precisar fazer login.<br />No dia, confirme seu número de telefone e pronto!</p>
+
             <div className="wf-hero-buttons">
               <button type="button" className="wf-primary-cta" onClick={() => setModal('create-client')}><Icon name="calendar" /> Criar agendamento</button>
               <button type="button" className="wf-secondary-cta" onClick={scrollToInfo}><span className="wf-play"><Icon name="play" /></span> Como funciona?</button>
@@ -744,16 +750,15 @@ export function ClientLanding() {
             <img src={houseCard} alt="Casa atendida" />
             <div>
               <h2>Agende quando e onde estiver</h2>
-              <p>Do computador ou do celular, organize seus atendimentos de forma rápida e segura, 24 horas por dia.</p>
             </div>
           </article>
           <article className="wf-why-card">
             <h2>Por que usar o SG Agendamentos?</h2>
             <div className="wf-mini-features">
-              <span><Icon name="benefit-practicality" /><strong>Mais praticidade</strong><small>Tudo online, sem burocracia.</small></span>
-              <span><Icon name="benefit-security" /><strong>Mais segurança</strong><small>Confirmação por telefone no dia.</small></span>
-              <span><Icon name="benefit-speed" /><strong>Mais rapidez</strong><small>Agende em poucos cliques.</small></span>
-              <span><Icon name="benefit-follow" /><strong>Acompanhamento</strong><small>Acompanhe o status do seu pedido.</small></span>
+              <span><Icon name="benefit-practicality" /><strong>Mais praticidade</strong></span>
+              <span><Icon name="benefit-security" /><strong>Mais segurança</strong></span>
+              <span><Icon name="benefit-speed" /><strong>Mais rapidez</strong></span>
+              <span><Icon name="benefit-follow" /><strong>Acompanhamento</strong></span>
             </div>
           </article>
         </section>
@@ -1482,6 +1487,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
   const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);
   const slotMinutes = getSlotMinutes(bootstrap);
+  const maxFutureMonthsAhead = getMaxFutureMonthsAhead(bootstrap);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -1500,9 +1506,9 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   const selectedCity = allowedCities.includes(city) ? city : defaultCity;
   const bookingDurationMinutes = getBookingDurationMinutesByCity(bootstrap, selectedCity);
   const createBookingMutation = useCreateBooking();
-  const monthAvailability = useAvailableMonthDates(monthStart, true, selectedCity, slotMinutes, bookingDurationMinutes);
+  const monthAvailability = useAvailableMonthDates(monthStart, true, selectedCity, slotMinutes, bookingDurationMinutes, maxFutureMonthsAhead);
   const availableDateOptions = useMemo(
-    () => monthAvailability.availableDates.slice(0, 6).map((date) => ({ value: date, label: formatDateOptionLabel(date) })),
+    () => monthAvailability.availableDates.map((date) => ({ value: date, label: formatDateOptionLabel(date) })),
     [monthAvailability.availableDates],
   );
   const activeSelectedDate = selectedDate && monthAvailability.availableDates.includes(selectedDate)
@@ -1516,23 +1522,9 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
     Boolean(activeSelectedDate),
   );
 
-  useEffect(() => {
-    if (defaultCity && !city) setCity(defaultCity);
-  }, [city, defaultCity]);
-
-  useEffect(() => {
-    if (!selectedDate && availableDateOptions[0]?.value) {
-      setSelectedDate(availableDateOptions[0].value);
-    }
-  }, [availableDateOptions, selectedDate]);
-
-  useEffect(() => {
-    const stillAvailable = availableSlots.some((slot) => slot.startTime === selectedTime);
-    if (!stillAvailable) {
-      setSelectedTime('');
-      setSelectedEndTime('');
-    }
-  }, [availableSlots, selectedTime]);
+  const selectedSlot = availableSlots.find((slot) => slot.startTime === selectedTime);
+  const activeSelectedTime = selectedSlot ? selectedTime : '';
+  const activeSelectedEndTime = selectedSlot ? selectedEndTime || selectedSlot.endTime : '';
 
   const handleCityChange = (value: string) => {
     setCity(value);
@@ -1561,7 +1553,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
     const { firstName, lastName } = splitFullName(fullName);
     const phoneDigits = digitsOnly(phone);
     const cepDigits = digitsOnly(selectedAddress?.postcode ?? '');
-    if (!firstName || !lastName || !email.trim() || phoneDigits.length < 10 || !selectedAddress || !activeSelectedDate || !selectedTime) {
+    if (!firstName || !lastName || !email.trim() || phoneDigits.length < 10 || !selectedAddress || !activeSelectedDate || !activeSelectedTime) {
       setFormError('Preencha nome, telefone, e-mail, endereço validado, data e horário.');
       return;
     }
@@ -1573,7 +1565,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
       const response = await createBookingMutation.mutateAsync({
         serviceType: 'Visita técnica',
         date: activeSelectedDate,
-        time: selectedTime,
+        time: activeSelectedTime,
         clientFirstName: firstName,
         clientLastName: lastName,
         clientEmail: cleanFormText(email),
@@ -1627,20 +1619,28 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
         <div className="wf-span-2 wf-choice-block">
           <strong>Escolha a data<em>*</em></strong>
           {monthAvailability.isLoading ? <small className="wf-choice-helper">Carregando dias disponíveis...</small> : null}
-          {!monthAvailability.isLoading && availableDateOptions.length === 0 ? <small className="wf-choice-helper">Nenhum dia com horário disponível neste mês.</small> : null}
-          <div className="wf-date-options wf-date-options--scroll">{availableDateOptions.map((date) => <button className={activeSelectedDate === date.value ? 'is-active' : ''} type="button" key={date.value} onClick={() => { setSelectedDate(date.value); setSelectedTime(''); setSelectedEndTime(''); }}>{date.label}</button>)}</div>
+          {!monthAvailability.isLoading && availableDateOptions.length === 0 ? <small className="wf-choice-helper">Nenhum dia com horário disponível na janela configurada.</small> : null}
+          <div className="wf-date-options wf-date-options--scroll">
+            {availableDateOptions.map((date) => (
+              <button className={activeSelectedDate === date.value ? 'is-active' : ''} type="button" key={date.value} data-date={date.value} onClick={() => { setSelectedDate(date.value); setSelectedTime(''); setSelectedEndTime(''); }}>
+                <span className="wf-date-option__weekday">{date.label.weekday}</span>
+                <span className="wf-date-option__day">{date.label.day}</span>
+                <span className="wf-date-option__month">{date.label.month}</span>
+              </button>
+            ))}
+          </div>
         </div>
         <div className="wf-span-2 wf-choice-block">
           <strong>Horários disponíveis<em>*</em></strong>
           {isLoadingSlots ? <small className="wf-choice-helper">Carregando horários...</small> : null}
           {slotsError ? <small className="wf-choice-helper wf-choice-helper--error">Não foi possível carregar os horários.</small> : null}
           {!isLoadingSlots && !slotsError && activeSelectedDate && availableSlots.length === 0 ? <small className="wf-choice-helper">Esse dia não possui horários livres.</small> : null}
-          <div className="wf-time-options wf-time-options--scroll">{availableSlots.map((slot) => <button className={selectedTime === slot.startTime ? 'is-active' : ''} type="button" key={`${slot.date}-${slot.startTime}`} onClick={() => { setSelectedTime(slot.startTime); setSelectedEndTime(slot.endTime); }}>{slot.startTime}</button>)}</div>
+          <div className="wf-time-options wf-time-options--scroll">{availableSlots.map((slot) => <button className={activeSelectedTime === slot.startTime ? 'is-active' : ''} type="button" key={`${slot.date}-${slot.startTime}`} data-time={slot.startTime} onClick={() => { setSelectedTime(slot.startTime); setSelectedEndTime(slot.endTime); }}>{slot.startTime}</button>)}</div>
         </div>
         <ModalField className="wf-span-2" label="Ponto de referência" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
         <ModalField className="wf-span-2" label="Observações" icon="edit" placeholder="Informações adicionais que possam ajudar." value={notes} onChange={setNotes} />
       </div>
-      {selectedTime ? <p className="wf-create-selected-slot">Horário selecionado: <strong>{selectedTime}{selectedEndTime ? ` - ${selectedEndTime}` : ''}</strong></p> : null}
+      {activeSelectedTime ? <p className="wf-create-selected-slot">Horário selecionado: <strong>{activeSelectedTime}{activeSelectedEndTime ? ` - ${activeSelectedEndTime}` : ''}</strong></p> : null}
       {successMessage ? <p className="wf-auth-feedback wf-auth-feedback--success">{successMessage}</p> : null}
       {formError ? <p className="wf-auth-feedback wf-auth-feedback--error">{formError}</p> : null}
       <ModalActions primary={createBookingMutation.isPending ? 'Agendando...' : 'Confirmar agendamento'} secondary="Cancelar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={handleCreateBooking} disabledPrimary={createBookingMutation.isPending} />

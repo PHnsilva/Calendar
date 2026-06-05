@@ -4701,3 +4701,456 @@ body {
   padding: 0 12px 0 0 !important;
   outline: none !important;
 }
+
+/* 2026-06-04: reorganize landing action-card titles after subtitle removal */
+.wf-client-landing .wf-actions-grid--client .wf-action-card {
+  align-items: center !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card__body {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-self: stretch !important;
+  min-height: 100% !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card__body strong {
+  margin: 0 !important;
+  font-size: clamp(18px, 4.9vw, 26px) !important;
+  line-height: 1.05 !important;
+  font-weight: 1000 !important;
+  letter-spacing: -0.03em !important;
+  text-wrap: balance !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card__body small {
+  margin-top: 0 !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--orange .wf-action-card__body strong {
+  background: linear-gradient(135deg, #ff6a00 0%, #ff8c42 38%, #0a1e6a 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--blue .wf-action-card__body strong {
+  background: linear-gradient(135deg, #003bd9 0%, #2463ff 42%, #07135d 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--green .wf-action-card__body strong {
+  background: linear-gradient(135deg, #119d41 0%, #2dc85c 40%, #0a1e6a 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--purple .wf-action-card__body strong {
+  background: linear-gradient(135deg, #6d31ff 0%, #8b4dff 38%, #0a1e6a 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+@media (max-width: 420px) {
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__body strong {
+    font-size: clamp(16px, 5vw, 21px) !important;
+    line-height: 1.06 !important;
+  }
+}
+
+/* 2026-06-04: action card title correction - no gradient, no clipping */
+.wf-client-landing .wf-actions-grid--client .wf-action-card__body {
+  padding-right: clamp(2px, 0.8vw, 8px) !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card__body strong {
+  display: block !important;
+  margin: 0 !important;
+  font-size: clamp(15px, 3.9vw, 22px) !important;
+  line-height: 1.08 !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.025em !important;
+  white-space: normal !important;
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
+  hyphens: none !important;
+  text-wrap: balance !important;
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  color: #061457 !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--orange .wf-action-card__body strong {
+  color: #ef6b1b !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--blue .wf-action-card__body strong {
+  color: #1254f4 !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--green .wf-action-card__body strong {
+  color: #19a44a !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--purple .wf-action-card__body strong {
+  color: #7c3fff !important;
+}
+
+@media (max-width: 430px) {
+  .wf-client-landing .wf-actions-grid--client .wf-action-card {
+    min-height: 96px !important;
+    grid-template-columns: 44px minmax(0, 1fr) 16px !important;
+    gap: 8px !important;
+    padding: 10px 10px 10px 10px !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__icon,
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__icon .wf-icon--image {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__body strong {
+    font-size: clamp(13.2px, 3.95vw, 16.8px) !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.03em !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__arrow {
+    font-size: 30px !important;
+  }
+}
+
+/* 2026-06-04: final landing typography + navbar sizing corrections */
+
+/* Remove gradient text and prevent clipping on the 4 action cards. */
+.wf-client-landing .wf-actions-grid--client .wf-action-card__body strong {
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  color: #061457 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  word-break: keep-all !important;
+  overflow-wrap: anywhere !important;
+  font-size: clamp(14px, 3.7vw, 20px) !important;
+  line-height: 1.08 !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--orange .wf-action-card__body strong {
+  color: #ea6a1a !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--blue .wf-action-card__body strong {
+  color: #1550ff !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--green .wf-action-card__body strong {
+  color: #18a94b !important;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--purple .wf-action-card__body strong {
+  color: #7d45ff !important;
+}
+
+@media (min-width: 320px) and (max-width: 900px) {
+  .wf-client-landing .wf-actions-grid--client .wf-action-card {
+    min-height: clamp(92px, 24vw, 126px) !important;
+    grid-template-columns: clamp(42px, 13vw, 66px) minmax(0, 1fr) clamp(14px, 4vw, 24px) !important;
+    column-gap: clamp(8px, 2.5vw, 14px) !important;
+    padding: clamp(10px, 3.2vw, 18px) !important;
+    align-items: center !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__icon,
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__icon .wf-icon,
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__icon .wf-icon--image {
+    width: clamp(34px, 10vw, 56px) !important;
+    min-width: clamp(34px, 10vw, 56px) !important;
+    height: clamp(34px, 10vw, 56px) !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__body {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-self: stretch !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__body strong {
+    font-size: clamp(12.8px, 3.35vw, 18px) !important;
+    line-height: 1.06 !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__arrow {
+    font-size: clamp(18px, 5vw, 28px) !important;
+  }
+
+  /* Make the house card title and benefit titles larger on mobile/tablet. */
+  .wf-client-landing .wf-house-card h2 {
+    font-size: clamp(15px, 4.25vw, 25px) !important;
+    line-height: 1.06 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.025em !important;
+  }
+
+  .wf-client-landing #wf-why-use .wf-mini-features strong,
+  .wf-client-landing .wf-mini-features strong {
+    font-size: clamp(8.2px, 2.05vw, 14px) !important;
+    line-height: 1.14 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .wf-client-landing #wf-why-use .wf-mini-features span,
+  .wf-client-landing .wf-mini-features span {
+    column-gap: clamp(4px, 1.2vw, 12px) !important;
+  }
+
+  .wf-client-landing #wf-why-use .wf-mini-features .wf-icon,
+  .wf-client-landing #wf-why-use .wf-mini-features .wf-icon--image,
+  .wf-client-landing .wf-mini-features .wf-icon,
+  .wf-client-landing .wf-mini-features .wf-icon--image {
+    width: clamp(18px, 5vw, 30px) !important;
+    min-width: clamp(18px, 5vw, 30px) !important;
+    height: clamp(18px, 5vw, 30px) !important;
+  }
+
+  /* Bigger and better-spaced client navbar controls. */
+  .wf-client-landing .wf-navbar--client.wf-header,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header {
+    min-height: clamp(66px, 18vw, 92px) !important;
+    padding-inline: clamp(10px, 3.6vw, 20px) !important;
+    column-gap: clamp(10px, 3.6vw, 18px) !important;
+  }
+
+  .wf-client-landing .wf-navbar--client .wf-logo,
+  .wf-page .wf-navbar.wf-navbar--client .wf-logo {
+    margin-right: clamp(6px, 2vw, 12px) !important;
+  }
+
+  .wf-client-landing .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: clamp(28px, 8.5vw, 46px) !important;
+    max-width: clamp(126px, 39vw, 184px) !important;
+    width: auto !important;
+  }
+
+  .wf-client-landing .wf-navbar--client .wf-mobile-actions,
+  .wf-page .wf-navbar.wf-navbar--client .wf-mobile-actions {
+    gap: clamp(8px, 2.8vw, 14px) !important;
+    align-items: center !important;
+  }
+
+  .wf-client-landing .wf-navbar--client .wf-top-btn,
+  .wf-page .wf-navbar.wf-navbar--client .wf-top-btn {
+    min-height: clamp(38px, 11vw, 50px) !important;
+    border-radius: clamp(10px, 3vw, 14px) !important;
+    padding-inline: clamp(10px, 3vw, 16px) !important;
+    gap: clamp(6px, 2vw, 10px) !important;
+  }
+
+  .wf-client-landing .wf-navbar--client .wf-client-mobile-user,
+  .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-user {
+    min-height: clamp(38px, 11vw, 50px) !important;
+    padding-inline: clamp(12px, 3.2vw, 18px) !important;
+    gap: clamp(7px, 2vw, 10px) !important;
+  }
+
+  .wf-client-landing .wf-navbar--client .wf-top-btn--compact,
+  .wf-page .wf-navbar.wf-navbar--client .wf-top-btn--compact {
+    width: clamp(36px, 10.5vw, 48px) !important;
+    min-width: clamp(36px, 10.5vw, 48px) !important;
+    height: clamp(36px, 10.5vw, 48px) !important;
+  }
+
+  .wf-client-landing .wf-navbar--client .wf-top-btn .wf-icon,
+  .wf-page .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon {
+    width: clamp(16px, 4.7vw, 22px) !important;
+    min-width: clamp(16px, 4.7vw, 22px) !important;
+    height: clamp(16px, 4.7vw, 22px) !important;
+  }
+}
+
+@media (min-width: 320px) and (max-width: 380px) {
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__body strong {
+    font-size: clamp(12px, 3.7vw, 14px) !important;
+    line-height: 1.04 !important;
+  }
+
+  .wf-client-landing .wf-house-card h2 {
+    font-size: clamp(14px, 4.55vw, 18px) !important;
+  }
+
+  .wf-client-landing #wf-why-use .wf-mini-features strong,
+  .wf-client-landing .wf-mini-features strong {
+    font-size: clamp(7.4px, 2.25vw, 10px) !important;
+  }
+}
+
+
+/* 2026-06-05: enlarge benefit labels, restore card borders, remove tiny text issues */
+@media (min-width: 320px) and (max-width: 900px) {
+  .wf-client-landing .wf-actions-grid--client .wf-action-card {
+    border: 1.5px solid #d7dff0 !important;
+    box-shadow: none !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card--orange {
+    border-color: #f2cdb4 !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card--blue {
+    border-color: #c9d9ff !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card--green {
+    border-color: #c6e8d1 !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card--purple {
+    border-color: #ddcff8 !important;
+  }
+
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__body strong {
+    font-size: clamp(14px, 3.9vw, 19px) !important;
+    line-height: 1.08 !important;
+    font-weight: 950 !important;
+  }
+
+  .wf-client-landing .wf-house-card h2 {
+    font-size: clamp(17px, 4.8vw, 25px) !important;
+    line-height: 1.05 !important;
+  }
+
+  .wf-client-landing #wf-why-use .wf-mini-features span,
+  .wf-client-landing .wf-mini-features span {
+    min-height: 56px !important;
+    grid-template-columns: clamp(18px, 5vw, 24px) minmax(0, 1fr) !important;
+    column-gap: clamp(5px, 1.6vw, 10px) !important;
+    row-gap: 1px !important;
+    padding-inline: clamp(4px, 1.6vw, 10px) !important;
+    align-items: start !important;
+  }
+
+  .wf-client-landing #wf-why-use .wf-mini-features .wf-icon,
+  .wf-client-landing #wf-why-use .wf-mini-features .wf-icon--image,
+  .wf-client-landing .wf-mini-features .wf-icon,
+  .wf-client-landing .wf-mini-features .wf-icon--image {
+    width: clamp(16px, 4.8vw, 23px) !important;
+    min-width: clamp(16px, 4.8vw, 23px) !important;
+    height: clamp(16px, 4.8vw, 23px) !important;
+    grid-row: 1 / span 2 !important;
+    align-self: center !important;
+  }
+
+  .wf-client-landing #wf-why-use .wf-mini-features strong,
+  .wf-client-landing .wf-mini-features strong {
+    font-size: clamp(8.9px, 2.45vw, 13px) !important;
+    line-height: 1.12 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.015em !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+}
+
+@media (min-width: 320px) and (max-width: 380px) {
+  .wf-client-landing .wf-actions-grid--client .wf-action-card__body strong {
+    font-size: clamp(13px, 4.05vw, 15px) !important;
+  }
+
+  .wf-client-landing #wf-why-use .wf-mini-features strong,
+  .wf-client-landing .wf-mini-features strong {
+    font-size: clamp(8.2px, 2.65vw, 10.5px) !important;
+    line-height: 1.1 !important;
+  }
+
+  .wf-client-landing #wf-why-use .wf-mini-features span,
+  .wf-client-landing .wf-mini-features span {
+    grid-template-columns: 16px minmax(0, 1fr) !important;
+    column-gap: 4px !important;
+    padding-inline: 3px !important;
+  }
+
+  .wf-client-landing #wf-why-use .wf-mini-features .wf-icon,
+  .wf-client-landing #wf-why-use .wf-mini-features .wf-icon--image,
+  .wf-client-landing .wf-mini-features .wf-icon,
+  .wf-client-landing .wf-mini-features .wf-icon--image {
+    width: 15px !important;
+    min-width: 15px !important;
+    height: 15px !important;
+  }
+}
+
+/* 2026-06-05: complete visible availability lists in the create-booking modal */
+.wf-create-booking-form--wireframe .wf-date-options--scroll,
+.wf-create-booking-form--wireframe .wf-time-options--scroll {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  padding-bottom: 0 !important;
+}
+
+.wf-create-booking-form--wireframe .wf-date-options--scroll button {
+  display: grid !important;
+  grid-template-rows: auto 1fr auto !important;
+  place-items: center !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.wf-create-booking-form--wireframe .wf-date-option__weekday,
+.wf-create-booking-form--wireframe .wf-date-option__month {
+  display: block !important;
+  width: 100% !important;
+  line-height: 1.05 !important;
+  font-size: 0.78em !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+.wf-create-booking-form--wireframe .wf-date-option__day {
+  display: block !important;
+  width: 100% !important;
+  line-height: 1 !important;
+  font-size: 1.25em !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+/* 2026-06-05: text integrity guard for viewport-dependent visual word corruption */
+.wf-client-landing .wf-actions-grid--client .wf-action-card__body strong,
+.wf-client-landing #wf-why-use .wf-mini-features strong,
+.wf-client-landing .wf-mini-features strong,
+.wf-navbar .wf-profile-menu .wf-profile-menu-item > span:not(.wf-icon),
+.wf-navbar .wf-profile-menu .wf-profile-menu-link > span:not(.wf-icon),
+.wf-modal--notifications .wf-notification-tabs button,
+.wf-modal--notifications .wf-notification-item__body strong,
+.wf-create-booking-form--wireframe .wf-date-option__weekday,
+.wf-create-booking-form--wireframe .wf-date-option__day,
+.wf-create-booking-form--wireframe .wf-date-option__month {
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  -webkit-text-fill-color: currentColor !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}

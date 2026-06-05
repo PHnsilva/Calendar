@@ -10,6 +10,7 @@ export type BookingFormValues = {
   clientComplement: string;
   clientCity: string;
   clientState: string;
+  serviceNotes: string;
 };
 
 export type AdminBulkCancelRequest = {

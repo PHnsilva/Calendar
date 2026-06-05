@@ -29,6 +29,7 @@ create table if not exists public.booking_history_records (
   event_id text primary key,
   event_link text,
   service_type text,
+  service_notes text,
   start_epoch bigint not null,
   end_epoch bigint,
   client_first_name text,
@@ -49,6 +50,9 @@ create table if not exists public.booking_history_records (
   assigned_provider_phone text,
   archived_at bigint not null
 );
+
+alter table public.booking_history_records
+  add column if not exists service_notes text;
 
 create index if not exists idx_booking_history_start_epoch on public.booking_history_records(start_epoch desc);
 create index if not exists idx_booking_history_provider on public.booking_history_records(assigned_provider_id);

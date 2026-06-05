@@ -207,6 +207,7 @@ function buildUpdatePayload(servico: ServicoResponse, draft: EditDraft): Servico
   const parsedAddress = parseAddressLine(draft.addressLine, servico);
   return {
     serviceType: servico.serviceType,
+    serviceNotes: servico.serviceNotes || "Observacao detalhada nao informada.",
     date: draft.date,
     time: draft.time,
     clientFirstName: servico.clientFirstName,

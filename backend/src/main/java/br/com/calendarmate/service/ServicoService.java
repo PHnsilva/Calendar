@@ -73,6 +73,7 @@ public class ServicoService {
         validateDateWindow(req.getDate());
         validateTime(req.getTime());
         validateServiceArea(req);
+        String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
 
         String phoneDigits = normalizePhone(req.getClientPhone());
         if (adminAuthService.isAdminPhone(phoneDigits)) {
@@ -107,7 +108,8 @@ public class ServicoService {
         s.setId(UUID.randomUUID().toString());
 
         s.setTitle(req.getServiceType());
-        s.setDescription(req.getServiceType());
+        s.setDescription(serviceNotes);
+        s.setServiceNotes(serviceNotes);
 
         s.setStart(start);
         s.setEnd(end);
@@ -266,6 +268,7 @@ public class ServicoService {
         validateDateWindow(req.getDate());
         validateTime(req.getTime());
         validateServiceArea(req);
+        String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
 
         TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
         if (vt == null || !vt.getEventId().equals(eventId)) {
@@ -332,7 +335,8 @@ public class ServicoService {
         Servico s = new Servico();
         s.setEventId(eventId);
         s.setTitle(req.getServiceType());
-        s.setDescription(req.getServiceType());
+        s.setDescription(serviceNotes);
+        s.setServiceNotes(serviceNotes);
         s.setStart(start);
         s.setEnd(end);
         s.setAppointmentStart(window.appointmentStart());
@@ -621,6 +625,7 @@ public class ServicoService {
         validateAdminDateWindow(req.getDate());
         validateTime(req.getTime());
         validateServiceArea(req);
+        String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
 
         BookingWindow window = resolveBookingWindow(req.getDate(), req.getTime(), req.getClientCity());
         Instant start = window.blockStart();
@@ -641,7 +646,8 @@ public class ServicoService {
         Servico s = new Servico();
         s.setEventId(eventId);
         s.setTitle(req.getServiceType());
-        s.setDescription(req.getServiceType());
+        s.setDescription(serviceNotes);
+        s.setServiceNotes(serviceNotes);
         s.setStart(start);
         s.setEnd(end);
         s.setAppointmentStart(window.appointmentStart());
@@ -778,6 +784,25 @@ public class ServicoService {
         if (!allowed) {
             throw new BadRequestException("Horário indisponível");
         }
+    }
+
+    private String normalizeServiceNotes(String value) {
+        String notes = value == null ? "" : value.trim().replaceAll("\\s+", " ");
+        if (notes.length() < 10) {
+            throw new BadRequestException("Observacao e obrigatoria e deve explicar o servico com pelo menos 10 caracteres. Exemplo: trocar tomada da sala");
+        }
+        if (notes.length() > 2000) {
+            throw new BadRequestException("Observacao deve ter no maximo 2000 caracteres");
+        }
+        return notes;
+    }
+
+    private String resolveServiceNotes(Map<String, String> ext, Event event) {
+        String fromExt = ext.getOrDefault("serviceNotes", "").trim();
+        if (!fromExt.isBlank()) {
+            return fromExt;
+        }
+        return event == null || event.getDescription() == null ? "" : event.getDescription().trim();
     }
 
     private boolean isInsideAllowedWindows(TimeWindow requested, List<TimeWindow> allowedWindows) {
@@ -1022,6 +1047,7 @@ public class ServicoService {
         Map<String, String> ext = privateExt(e);
 
         s.setServiceType(ext.getOrDefault("serviceType", e.getSummary() == null ? "" : e.getSummary()));
+        s.setServiceNotes(resolveServiceNotes(ext, e));
         Instant blockStart = instantFrom(e.getStart());
         Instant blockEnd = instantFrom(e.getEnd());
         s.setStart(instantFromExt(ext, "appointmentStart", blockStart));
@@ -1066,7 +1092,9 @@ public class ServicoService {
         Servico s = new Servico();
         s.setEventId(e.getId());
         s.setTitle(ext.getOrDefault("serviceType", e.getSummary() == null ? "" : e.getSummary()));
-        s.setDescription(e.getDescription() == null ? "" : e.getDescription());
+        String serviceNotes = resolveServiceNotes(ext, e);
+        s.setDescription(serviceNotes);
+        s.setServiceNotes(serviceNotes);
         Instant blockStart = instantFrom(e.getStart());
         Instant blockEnd = instantFrom(e.getEnd());
         s.setStart(blockStart);

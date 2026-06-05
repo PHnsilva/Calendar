@@ -11,6 +11,10 @@ public class ServicoRequest {
     @NotBlank
     private String serviceType;
 
+    @NotBlank(message = "Observação é obrigatória. Explique o que precisa de serviço, com pelo menos 10 caracteres. Exemplo: trocar tomada da sala")
+    @Size(min = 10, max = 2000, message = "Observação deve ter entre 10 e 2000 caracteres. Exemplo: trocar tomada da sala")
+    private String serviceNotes;
+
     @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
@@ -56,6 +60,9 @@ public class ServicoRequest {
 
     public String getServiceType() { return serviceType; }
     public void setServiceType(String serviceType) { this.serviceType = serviceType; }
+
+    public String getServiceNotes() { return serviceNotes; }
+    public void setServiceNotes(String serviceNotes) { this.serviceNotes = serviceNotes; }
 
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }

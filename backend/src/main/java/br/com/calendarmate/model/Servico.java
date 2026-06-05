@@ -7,6 +7,7 @@ public class Servico {
 
     private String title;
     private String description;
+    private String serviceNotes;
 
     private Instant start;
     private Instant end;
@@ -45,6 +46,9 @@ public class Servico {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getServiceNotes() { return serviceNotes; }
+    public void setServiceNotes(String serviceNotes) { this.serviceNotes = serviceNotes; }
 
     public Instant getStart() { return start; }
     public void setStart(Instant start) { this.start = start; }

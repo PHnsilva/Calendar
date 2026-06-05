@@ -215,6 +215,7 @@ public class DummyCalendarClient implements CalendarClient {
         ext.put("appSource", "calendar-backend");
         ext.put("entityType", "booking");
         ext.put("serviceType", safe(s.getTitle()));
+        ext.put("serviceNotes", safe(s.getServiceNotes()));
         ext.put("status", safe(s.getStatus()));
 
         if (s.getPendingExpiresAt() != null) {

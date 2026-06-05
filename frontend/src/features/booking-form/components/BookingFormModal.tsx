@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import '../../../app/booking-modal-day-picker.css';
 import { useAvailableSlots } from '../../calendar/hooks/useAvailableSlots';
+import { useAvailableMonthDates } from '../../calendar/hooks/useAvailableMonthDates';
 import type { CalendarEvent } from '../../calendar/types';
 import { useCreateBooking } from '../../bookings/hooks/useCreateBooking';
 import OtpConfirmModal from '../../otp/components/OtpConfirmModal';
@@ -22,7 +23,11 @@ import {
 } from '../../../lib/bootstrap-config';
 import { usePublicBootstrap } from '../../public-config/hooks/usePublicBootstrap';
 import AlertNotice from '../../../components/ui/AlertNotice';
-import { build4x4UnavailableDates } from '../../calendar/utils/schedule-rules';
+import cityBeloHorizonteIcon from '../../../assets/wireframes/icons/city-belo-horizonte.svg';
+import cityItabiritoIcon from '../../../assets/wireframes/icons/city-itabirito.svg';
+import cityMoedaIcon from '../../../assets/wireframes/icons/city-moeda.svg';
+import cityNovaLimaIcon from '../../../assets/wireframes/icons/city-nova-lima.svg';
+import cityOuroPretoIcon from '../../../assets/wireframes/icons/city-ouro-preto.svg';
 
 type BookingFormModalProps = {
   open: boolean;
@@ -65,6 +70,7 @@ const INITIAL_FORM: BookingFormValues = {
   clientComplement: '',
   clientCity: '',
   clientState: 'MG',
+  serviceNotes: '',
 };
 const BOOKING_DRAFT_STORAGE_KEY = 'calendar.booking.prefill';
 
@@ -160,20 +166,6 @@ function getTodayIso() {
   return toIsoDate(new Date());
 }
 
-function findNextAvailableDate(startDate: string, unavailableDates: string[], maxDate: string): string {
-  const blocked = new Set(unavailableDates);
-  const cursor = toLocalDate(startDate);
-
-  for (let index = 0; index < 62; index += 1) {
-    const iso = toIsoDate(cursor);
-    if (iso > maxDate) return startDate;
-    if (!blocked.has(iso)) return iso;
-    cursor.setDate(cursor.getDate() + 1);
-  }
-
-  return startDate;
-}
-
 function formatDate(dateString: string): string {
   return new Intl.DateTimeFormat('pt-BR', {
     weekday: 'long',
@@ -194,6 +186,24 @@ function digitsOnly(value: string) {
   return value.replace(/\D/g, '');
 }
 
+function isHouseNumberValid(value: string) {
+  const normalized = normalizeText(value).toLowerCase();
+  if (!normalized) return false;
+  if (/^(s\/?n|sem numero|sem número)$/.test(normalized)) return true;
+  if (/^\d{1,6}[a-z]?([-/]\d{1,4})?$/i.test(normalized)) return true;
+  return /^(casa|apto|apartamento|lote|loja|sala|bloco|fundos|galpao|galpão)\s+[a-z0-9 .\/-]{1,24}$/i.test(normalized);
+}
+
+function normalizeHouseNumber(value: string) {
+  const normalized = normalizeText(value).replace(/\s+/g, ' ');
+  if (/^(s\/?n|sem numero|sem número)$/i.test(normalized)) return 'S/N';
+  return normalized;
+}
+
+function isServiceNotesValid(value: string) {
+  return normalizeText(value).replace(/\s+/g, ' ').length >= 10;
+}
+
 function mapServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
   const customerName = `${servico.clientFirstName} ${servico.clientLastName}`.trim();
   return {
@@ -207,6 +217,7 @@ function mapServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
     customerAddress: servico.clientAddressLine,
     customerEmail: servico.clientEmail,
     customerPhone: servico.clientPhone,
+    notes: servico.serviceNotes,
     serviceLabel: servico.serviceType,
     status: 'booked',
   };
@@ -224,12 +235,6 @@ function normalizeCity(value?: string | null) {
   return (value ?? '').trim().toLowerCase();
 }
 
-function buildPersistedNumber(number: string, complement: string) {
-  const normalizedNumber = normalizeText(number);
-  const normalizedComplement = normalizeText(complement);
-  return normalizedComplement ? `${normalizedNumber} - Compl.: ${normalizedComplement}` : normalizedNumber;
-}
-
 function validateForm(
   values: BookingFormValues,
   addressInput: string,
@@ -238,12 +243,13 @@ function validateForm(
   selectedSlot: HomeSelectedSlot,
 ): ValidationErrors {
   const errors: ValidationErrors = {};
-  if (!normalizeText(values.clientFirstName)) errors.clientFirstName = 'Informe seu nome.';
-  if (!normalizeText(values.clientLastName)) errors.clientLastName = 'Informe seu sobrenome.';
-  if (!isEmailValid(values.clientEmail)) errors.clientEmail = 'Informe um e-mail válido.';
+  if (!normalizeText(values.clientFirstName)) errors.clientFirstName = 'Nome: informe seu primeiro nome. Exemplo: Pedro.';
+  if (!normalizeText(values.clientLastName)) errors.clientLastName = 'Sobrenome: informe pelo menos um sobrenome. Exemplo: Silva.';
+  if (!isEmailValid(values.clientEmail)) errors.clientEmail = 'E-mail: use um e-mail valido com @ e dominio. Exemplo: voce@email.com.';
   const phoneDigits = digitsOnly(values.clientPhone);
-  if (phoneDigits.length < 10 || phoneDigits.length > 11) errors.clientPhone = 'Informe um telefone válido com DDD.';
-  if (!selectedSlot) errors.draftSlot = 'Selecione um horário para continuar.';
+  if (phoneDigits.length < 10 || phoneDigits.length > 11) errors.clientPhone = 'Telefone: informe DDD + numero com 10 ou 11 digitos. Exemplos: (31) 99999-9999 ou 31 3333-4444.';
+  if (!selectedSlot) errors.draftSlot = 'Horario: selecione um dos horarios disponiveis.';
+  if (!isServiceNotesValid(values.serviceNotes)) errors.serviceNotes = 'Observacao: explique o que precisa de servico com pelo menos 10 caracteres. Exemplo: trocar tomada da sala.';
 
   const cepDigits = digitsOnly(values.clientCep);
   const hasStructuredAddress = Boolean(
@@ -257,12 +263,12 @@ function validateForm(
     (!selectedSuggestion.city || normalizeCity(selectedSuggestion.city) === normalizeCity(selectedCity)),
   );
 
-  if (selectedSuggestion && !normalizeText(values.clientNumber)) {
-    errors.clientNumber = 'Informe o número.';
+  if (selectedSuggestion && !isHouseNumberValid(values.clientNumber)) {
+    errors.clientNumber = 'Numero: informe 123, 123A, Casa 2, Lote 5 ou S/N.';
   }
 
   if (!normalizeText(addressInput) || !hasStructuredAddress || !suggestionMatchesCity) {
-    errors.addressInput = GENERIC_ADDRESS_ERROR;
+    errors.addressInput = 'Endereco: escolha uma sugestao da lista para validar rua, bairro e CEP. Exemplo: Rua Sao Jose, Centro.';
   }
 
   return errors;
@@ -289,6 +295,47 @@ function mapCreateError(errorMessage: string): string {
     return GENERIC_ADDRESS_ERROR;
   }
   return errorMessage;
+}
+
+type CityVisual = {
+  background: string;
+  icon: string;
+};
+
+function normalizeCityKey(city: string) {
+  return city.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+}
+
+function getCityVisual(city: string): CityVisual {
+  const normalized = normalizeCityKey(city);
+  if (normalized.includes('belo horizonte')) return { background: '#3559d8', icon: cityBeloHorizonteIcon };
+  if (normalized.includes('ouro preto')) return { background: '#4f46e5', icon: cityOuroPretoIcon };
+  if (normalized.includes('moeda')) return { background: '#d97706', icon: cityMoedaIcon };
+  if (normalized.includes('nova lima')) return { background: '#0f9f6e', icon: cityNovaLimaIcon };
+  return { background: '#f97316', icon: cityItabiritoIcon };
+}
+
+function CityPickerButton({
+  city,
+  active,
+  onClick,
+}: {
+  city: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const visual = getCityVisual(city);
+  return (
+    <button
+      type="button"
+      className={['booking-city-submodal__option', active ? 'booking-city-submodal__option--active' : ''].filter(Boolean).join(' ')}
+      style={{ '--city-bg': visual.background } as CSSProperties}
+      onClick={onClick}
+    >
+      <span className="booking-city-submodal__icon"><img src={visual.icon} alt="" /></span>
+      <span>{city}</span>
+    </button>
+  );
 }
 
 function SpinnerIcon() {
@@ -320,9 +367,7 @@ function EditIcon() {
 export default function BookingFormModal({
   open,
   selectedDate,
-  selectedSlot,
   events,
-  unavailableDates,
   onClose,
   onBookingCreated,
 }: BookingFormModalProps) {
@@ -332,24 +377,17 @@ export default function BookingFormModal({
   const maxFutureMonthsAhead = getMaxFutureMonthsAhead(bootstrap);
   const maxAllowedMonth = shiftMonth(currentAllowedMonth, maxFutureMonthsAhead);
   const maxDate = useMemo(() => endOfMonth(maxAllowedMonth), [maxAllowedMonth]);
-  const disabledDateSet = useMemo(() => {
-    const dates = new Set(unavailableDates);
-    for (let month = currentAllowedMonth; month <= maxAllowedMonth; month = shiftMonth(month, 1)) {
-      build4x4UnavailableDates(month, bootstrap?.schedule?.cycleStart).forEach((date) => dates.add(date));
-    }
-    return dates;
-  }, [bootstrap?.schedule?.cycleStart, currentAllowedMonth, maxAllowedMonth, unavailableDates]);
-  const defaultDate = useMemo(
-    () => findNextAvailableDate(selectedDate >= todayIso && selectedDate <= maxDate ? selectedDate : todayIso, Array.from(disabledDateSet), maxDate),
-    [disabledDateSet, maxDate, selectedDate, todayIso],
+  const initialCalendarMonth = useMemo(
+    () => selectedDate >= todayIso && selectedDate <= maxDate ? toMonthStart(selectedDate) : currentAllowedMonth,
+    [currentAllowedMonth, maxDate, selectedDate, todayIso],
   );
 
-  const [calendarDate, setCalendarDate] = useState(defaultDate);
-  const [calendarMonth, setCalendarMonth] = useState(toMonthStart(defaultDate));
+  const [calendarDate, setCalendarDate] = useState('');
+  const [calendarMonth, setCalendarMonth] = useState(initialCalendarMonth);
   const [confirmedDate, setConfirmedDate] = useState<string | null>(null);
   const [dateButtonState, setDateButtonState] = useState<'idle' | 'loading' | 'success'>('idle');
   const [calendarExpanded, setCalendarExpanded] = useState(false);
-  const [draftSlot, setDraftSlot] = useState<HomeSelectedSlot>(selectedSlot);
+  const [draftSlot, setDraftSlot] = useState<HomeSelectedSlot>(null);
   const [formValues, setFormValues] = useState<BookingFormValues>(() => buildInitialForm());
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [addressInput, setAddressInput] = useState('');
@@ -357,15 +395,30 @@ export default function BookingFormModal({
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [verificationState, setVerificationState] = useState<VerificationState | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [cityPickerOpen, setCityPickerOpen] = useState(false);
 
   const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
   const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
   const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);
   const slotMinutes = getSlotMinutes(bootstrap);
   const bookingDurationMinutes = getBookingDurationMinutesByCity(bootstrap, selectedCity || defaultCity);
-  const primaryCities = allowedCities.slice(0, 2);
-  const extraCities = allowedCities.slice(2);
-  const effectiveDate = confirmedDate ?? calendarDate;
+  const effectiveCity = selectedCity || defaultCity;
+  const selectedCityVisual = getCityVisual(effectiveCity);
+  const monthAvailability = useAvailableMonthDates(
+    currentAllowedMonth,
+    open && Boolean(effectiveCity),
+    effectiveCity,
+    slotMinutes,
+    bookingDurationMinutes,
+    maxFutureMonthsAhead,
+  );
+  const availableDateSet = useMemo(() => new Set(monthAvailability.availableDates), [monthAvailability.availableDates]);
+  const disabledDateSet = useMemo(
+    () => new Set(monthAvailability.monthDates.filter((date) => !availableDateSet.has(date))),
+    [availableDateSet, monthAvailability.monthDates],
+  );
+  const effectiveDate = confirmedDate ?? '';
+  const visibleDate = confirmedDate ?? calendarDate;
 
   const monthGrid = useMemo(
     () => buildCalendarCells(calendarMonth, disabledDateSet, todayIso, maxDate),
@@ -375,14 +428,14 @@ export default function BookingFormModal({
   const confirmedUnavailable = Boolean(confirmedDate && (confirmedDate < todayIso || confirmedDate > maxDate || disabledDateSet.has(confirmedDate)));
   const { data: availableSlots = [], isLoading: isLoadingSlots, error: slotsError } = useAvailableSlots(
     effectiveDate,
-    selectedCity || defaultCity,
+    effectiveCity,
     slotMinutes,
     bookingDurationMinutes,
     open && Boolean(confirmedDate) && !confirmedUnavailable,
   );
   const createBookingMutation = useCreateBooking();
   const { requestOpenProfile } = useHomeBookingSelection();
-  const dayEvents = useMemo(() => events.filter((event) => event.date === effectiveDate), [effectiveDate, events]);
+  const dayEvents = useMemo(() => events.filter((event) => event.date === visibleDate), [events, visibleDate]);
 
   useEffect(() => {
     if (!allowedCities.includes(selectedCity)) setSelectedCity(defaultCity);
@@ -395,8 +448,8 @@ export default function BookingFormModal({
 
   useEffect(() => {
     if (!open) return;
-    setCalendarDate(defaultDate);
-    setCalendarMonth(toMonthStart(defaultDate));
+    setCalendarDate('');
+    setCalendarMonth(initialCalendarMonth);
     setConfirmedDate(null);
     setDateButtonState('idle');
     setDraftSlot(null);
@@ -409,7 +462,8 @@ export default function BookingFormModal({
     setSuccessMessage(null);
     setVerificationState(null);
     setCalendarExpanded(false);
-  }, [defaultCity, defaultDate, defaultState, open]);
+    setCityPickerOpen(false);
+  }, [defaultCity, defaultState, initialCalendarMonth, open]);
 
   useEffect(() => {
     setFormValues((current) => {
@@ -437,6 +491,10 @@ export default function BookingFormModal({
       return '';
     });
     setSelectedAddress(null);
+    setCalendarDate('');
+    setConfirmedDate(null);
+    setDateButtonState('idle');
+    setDraftSlot(null);
     setValidationErrors((current) => {
       const next = { ...current };
       delete next.addressInput;
@@ -501,7 +559,7 @@ export default function BookingFormModal({
         clientNeighborhood: normalizeText(suggestion.neighborhood || current.clientNeighborhood),
         clientNumber: normalizeText(suggestion.houseNumber),
         clientComplement: '',
-        clientCity: selectedCity,
+        clientCity: effectiveCity,
         clientState: normalizeText((suggestion.stateCode || suggestion.state || current.clientState || defaultState)).toUpperCase(),
       };
       saveStoredBookingDraft(next, suggestion.formatted);
@@ -527,7 +585,7 @@ export default function BookingFormModal({
         clientNumber: '',
         clientComplement: '',
         clientCep: '',
-        clientCity: selectedCity,
+        clientCity: effectiveCity,
       };
       saveStoredBookingDraft(next, value);
       return next;
@@ -542,7 +600,7 @@ export default function BookingFormModal({
   };
 
   const handleConfirmDay = async () => {
-    if (calendarDate < todayIso || calendarDate > maxDate || disabledDateSet.has(calendarDate)) return;
+    if (!calendarDate || calendarDate < todayIso || calendarDate > maxDate || !availableDateSet.has(calendarDate)) return;
     setDateButtonState('loading');
     setDraftSlot(null);
     await new Promise((resolve) => window.setTimeout(resolve, 650));
@@ -562,7 +620,7 @@ export default function BookingFormModal({
   };
 
   const handleSubmit = async () => {
-    const errors = validateForm(formValues, addressInput, selectedCity, selectedAddress, draftSlot);
+    const errors = validateForm(formValues, addressInput, effectiveCity, selectedAddress, draftSlot);
     setValidationErrors(errors);
     if (Object.keys(errors).length > 0 || !draftSlot) return;
 
@@ -572,6 +630,7 @@ export default function BookingFormModal({
     try {
       const response = await createBookingMutation.mutateAsync({
         serviceType: DEFAULT_SERVICE_TYPE,
+        serviceNotes: normalizeText(formValues.serviceNotes).replace(/\s+/g, ' '),
         date: draftSlot.date,
         time: draftSlot.startTime,
         clientFirstName: normalizeText(formValues.clientFirstName),
@@ -581,9 +640,9 @@ export default function BookingFormModal({
         clientCep: digitsOnly(formValues.clientCep).slice(0, 8),
         clientStreet: normalizeText(formValues.clientStreet),
         clientNeighborhood: normalizeText(formValues.clientNeighborhood),
-        clientNumber: buildPersistedNumber(formValues.clientNumber, normalizedComplement),
-        clientComplement: undefined,
-        clientCity: selectedCity,
+        clientNumber: normalizeHouseNumber(formValues.clientNumber),
+        clientComplement: normalizedComplement || undefined,
+        clientCity: effectiveCity,
         clientState: normalizeText(formValues.clientState || defaultState).slice(0, 2).toUpperCase(),
       });
 
@@ -624,12 +683,12 @@ export default function BookingFormModal({
   const submitDisabled = createBookingMutation.isPending || !confirmedDate || isLoadingSlots;
   const backendError = createBookingMutation.error ? mapCreateError(createBookingMutation.error.message) : null;
   const shouldShowComplementField = Boolean(selectedAddress);
-  const shouldShowNumberField = Boolean(selectedAddress && !normalizeText(selectedAddress.houseNumber));
+  const shouldShowNumberField = Boolean(selectedAddress);
   const durationLabel = formatDurationLabel(bookingDurationMinutes);
   const monthTitle = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(toLocalDate(calendarMonth));
   const canGoPrevMonth = calendarMonth > currentAllowedMonth;
   const canGoNextMonth = calendarMonth < maxAllowedMonth;
-  const selectedDayDisabled = calendarDate < todayIso || calendarDate > maxDate || disabledDateSet.has(calendarDate);
+  const selectedDayDisabled = !calendarDate || calendarDate < todayIso || calendarDate > maxDate || !availableDateSet.has(calendarDate);
   const sectionTitle = confirmedDate ? formatDate(confirmedDate) : 'Selecione um dia no calendário';
 
   return (
@@ -651,7 +710,7 @@ export default function BookingFormModal({
               <div className="booking-day-picker__intro">
                 <div>
                   <strong>Selecione um dia no calendário</strong>
-                  <span>O próximo dia disponível já vem pré-selecionado.</span>
+                  <span>Nenhum dia vem pre-selecionado; os dias ativos vem do backend.</span>
                 </div>
                 <button type="button" className="booking-day-picker__expand" onClick={() => setCalendarExpanded((current) => !current)}>
                   {calendarExpanded ? 'Reduzir calendário' : 'Aumentar calendário'}
@@ -661,8 +720,8 @@ export default function BookingFormModal({
               <div className="booking-day-picker__card">
                 <div className="booking-day-picker__hero">
                   <div>
-                    <strong>{calendarDate.slice(8, 10)}</strong>
-                    <span>{new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(toLocalDate(calendarDate))}</span>
+                    <strong>{calendarDate ? calendarDate.slice(8, 10) : '--'}</strong>
+                    <span>{calendarDate ? new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(toLocalDate(calendarDate)) : monthTitle}</span>
                   </div>
                   <div className="booking-day-picker__nav">
                     <button type="button" onClick={() => { if (canGoPrevMonth) setCalendarMonth(shiftMonth(calendarMonth, -1)); }} disabled={!canGoPrevMonth} aria-label="Mês anterior">‹</button>
@@ -671,6 +730,12 @@ export default function BookingFormModal({
                 </div>
 
                 <div className="booking-day-picker__month-label">{monthTitle}</div>
+                {monthAvailability.isLoading ? <div className="booking-preview-modal__empty"><strong>Carregando dias disponiveis...</strong></div> : null}
+                {monthAvailability.hasError ? (
+                  <AlertNotice variant="warning" title="Falha ao carregar dias" compact>
+                    <p>Confira a conexao e tente novamente.</p>
+                  </AlertNotice>
+                ) : null}
                 <div className="booking-day-picker__weekdays">
                   {WEEKDAY_LABELS.map((label) => <span key={label}>{label}</span>)}
                 </div>
@@ -810,21 +875,36 @@ export default function BookingFormModal({
 
                 <div className="booking-form__field booking-form__field--full">
                   <span>Cidade</span>
-                  <div className="booking-city-picker">
-                    {primaryCities.map((city, index) => (
-                      <button key={city} type="button" className={['booking-city-choice', selectedCity === city ? 'booking-city-choice--active' : 'booking-city-choice--muted'].join(' ')} onClick={() => setSelectedCity(city)}>
-                        <span className="booking-city-choice__icon">{String.fromCharCode(65 + index)}</span>
-                        <span>{city}</span>
-                      </button>
-                    ))}
-                    {extraCities.length > 0 ? (
-                      <label className={['booking-city-select', !primaryCities.includes(selectedCity) ? 'booking-city-select--active' : 'booking-city-select--muted'].join(' ')}>
-                        <span className="booking-city-choice__icon">+</span>
-                        <select value={primaryCities.includes(selectedCity) ? '' : selectedCity} onChange={(event) => setSelectedCity(event.target.value || extraCities[0])}>
-                          <option value="">Outras</option>
-                          {extraCities.map((city) => <option key={city} value={city}>{city}</option>)}
-                        </select>
-                      </label>
+                  <div className="booking-city-picker booking-city-picker--submodal">
+                    <button
+                      type="button"
+                      className="booking-city-choice booking-city-choice--active booking-city-choice--launcher"
+                      style={{ '--city-bg': selectedCityVisual.background } as CSSProperties}
+                      onClick={() => setCityPickerOpen(true)}
+                    >
+                      <span className="booking-city-choice__icon"><img src={selectedCityVisual.icon} alt="" /></span>
+                      <span>{effectiveCity}</span>
+                    </button>
+                    {cityPickerOpen ? (
+                      <div className="booking-city-submodal" role="dialog" aria-modal="false" aria-label="Selecionar cidade">
+                        <div className="booking-city-submodal__header">
+                          <strong>Selecionar cidade</strong>
+                          <button type="button" onClick={() => setCityPickerOpen(false)} aria-label="Fechar cidades">x</button>
+                        </div>
+                        <div className="booking-city-submodal__grid">
+                          {allowedCities.map((city) => (
+                            <CityPickerButton
+                              key={city}
+                              city={city}
+                              active={effectiveCity === city}
+                              onClick={() => {
+                                setSelectedCity(city);
+                                setCityPickerOpen(false);
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     ) : null}
                   </div>
                   <small className="booking-form__hint">Duração estimada deste atendimento: <strong>{durationLabel}</strong>.</small>
@@ -840,24 +920,36 @@ export default function BookingFormModal({
 
                 <label className="booking-form__field booking-form__field--full booking-form__field--with-error">
                   <span>Endereço</span>
-                  <AddressAutocompleteField value={addressInput} selectedCity={selectedCity} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
+                  <AddressAutocompleteField value={addressInput} selectedCity={effectiveCity} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
                   {validationErrors.addressInput ? <small className="booking-form__field-error">{validationErrors.addressInput}</small> : null}
                 </label>
 
                 {shouldShowNumberField ? (
                   <label className="booking-form__field booking-form__field--with-error">
                     <span>Número</span>
-                    <input value={formValues.clientNumber} onChange={(event) => handleFieldChange('clientNumber', event.target.value)} className="booking-form__input" inputMode="numeric" placeholder="123" />
+                    <input value={formValues.clientNumber} onChange={(event) => handleFieldChange('clientNumber', event.target.value)} className="booking-form__input" inputMode="text" placeholder="123, 123A, Casa 2 ou S/N" />
                     {validationErrors.clientNumber ? <small className="booking-form__field-error">{validationErrors.clientNumber}</small> : null}
                   </label>
                 ) : null}
 
                 {shouldShowComplementField ? (
                   <label className={['booking-form__field', shouldShowNumberField ? '' : 'booking-form__field--full'].filter(Boolean).join(' ')}>
-                    <span>Complemento</span>
-                    <input value={formValues.clientComplement} onChange={(event) => handleFieldChange('clientComplement', event.target.value)} className="booking-form__input" placeholder="Apto, bloco, referência..." />
+                    <span>(opcional) Complemento</span>
+                    <input value={formValues.clientComplement} onChange={(event) => handleFieldChange('clientComplement', event.target.value)} className="booking-form__input" placeholder="Ex.: Apto 101, Bloco B ou fundos" />
                   </label>
                 ) : null}
+
+                <label className="booking-form__field booking-form__field--full booking-form__field--with-error">
+                  <span>Observação</span>
+                  <textarea
+                    value={formValues.serviceNotes}
+                    onChange={(event) => handleFieldChange('serviceNotes', event.target.value)}
+                    className="booking-form__input booking-form__textarea"
+                    minLength={10}
+                    placeholder="Explique detalhadamente o que precisa de serviço. Exemplo: trocar tomada da sala que parou de funcionar."
+                  />
+                  {validationErrors.serviceNotes ? <small className="booking-form__field-error">{validationErrors.serviceNotes}</small> : null}
+                </label>
               </div>
 
               {backendError && backendError !== GENERIC_ADDRESS_ERROR ? (

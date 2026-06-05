@@ -15,6 +15,7 @@ function toFormState(booking: ServicoResponse): ServicoRequest {
   const pad = (value: number) => String(value).padStart(2, "0");
   return {
     serviceType: booking.serviceType,
+    serviceNotes: booking.serviceNotes || "Observacao detalhada nao informada.",
     date: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
     time: `${pad(start.getHours())}:${pad(start.getMinutes())}`,
     clientFirstName: booking.clientFirstName,
@@ -73,6 +74,7 @@ export function BookingDetailCard({ booking }: BookingDetailCardProps) {
       {isEditing ? (
         <div className="booking-detail__form">
           <label><span>Serviço</span><input value={form.serviceType} onChange={(e) => onChange("serviceType", e.target.value)} /></label>
+          <label><span>Observação</span><textarea value={form.serviceNotes} onChange={(e) => onChange("serviceNotes", e.target.value)} /></label>
           <div className="booking-detail__form-grid">
             <label><span>Data</span><input type="date" value={form.date} onChange={(e) => onChange("date", e.target.value)} /></label>
             <label><span>Horário</span><input type="time" value={form.time} onChange={(e) => onChange("time", e.target.value)} /></label>

@@ -1767,6 +1767,14 @@
 
 .wf-field-label em { color: #ff4b0b; font-style: normal; }
 
+.wf-field-error {
+  display: block;
+  color: #c81e1e;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
 .wf-input-shell {
   min-height: 44px;
   border: 1px solid #dfe6f4;
@@ -1800,6 +1808,150 @@
   border: 0;
   padding: 0 12px 0 0;
   background: transparent;
+}
+
+.wf-create-booking-form textarea,
+.booking-form__textarea {
+  min-height: 104px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.wf-city-select-field,
+.booking-city-picker--submodal {
+  position: relative;
+}
+
+.wf-city-select-launcher,
+.booking-city-choice--launcher {
+  min-height: 56px;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  color: #fff;
+  font-weight: 900;
+  background: #0358ff;
+  box-shadow: 0 10px 22px rgba(8, 20, 95, .14);
+}
+
+.wf-city-select-launcher .wf-icon,
+.booking-city-choice--launcher .booking-city-choice__icon {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  border-radius: 9px;
+  background: rgba(255,255,255,.18);
+}
+
+.booking-city-choice--launcher {
+  background: var(--city-bg);
+}
+
+.booking-city-choice__icon img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.wf-city-select-launcher--orange { background: #f97316; }
+.wf-city-select-launcher--green { background: #169b63; }
+.wf-city-select-launcher--purple { background: #7c3aed; }
+.wf-city-select-launcher--blue { background: #3559d8; }
+.wf-city-select-launcher--red { background: #dc2626; }
+.wf-city-select-launcher--cyan { background: #0891b2; }
+.wf-city-select-launcher--gray { background: #475569; }
+
+.wf-city-submodal,
+.booking-city-submodal {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(420px, 100%);
+  border: 1px solid #dfe6f4;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 22px 52px rgba(8, 20, 95, .18);
+  padding: 12px;
+}
+
+.wf-city-submodal__header,
+.booking-city-submodal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: #07135d;
+}
+
+.wf-city-submodal__header button,
+.booking-city-submodal__header button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f5fb;
+  color: #07135d;
+  font-weight: 900;
+}
+
+.wf-city-submodal__grid,
+.booking-city-submodal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.wf-city-submodal__button,
+.booking-city-submodal__option {
+  min-height: 58px;
+  border: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  color: #fff;
+  font-weight: 900;
+  text-align: left;
+  background: var(--city-bg, #0358ff);
+}
+
+.wf-city-submodal__button .wf-icon,
+.booking-city-submodal__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.18);
+  flex: 0 0 auto;
+}
+
+.booking-city-submodal__icon img,
+.wf-city-submodal__button .wf-icon img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.wf-city-submodal__button--orange { background: #f97316; }
+.wf-city-submodal__button--green { background: #169b63; }
+.wf-city-submodal__button--purple { background: #7c3aed; }
+.wf-city-submodal__button--blue { background: #3559d8; }
+.wf-city-submodal__button--red { background: #dc2626; }
+.wf-city-submodal__button--cyan { background: #0891b2; }
+.wf-city-submodal__button--gray { background: #475569; }
+
+.wf-city-submodal__button.is-active,
+.booking-city-submodal__option--active {
+  outline: 3px solid rgba(3, 88, 255, .22);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.72);
 }
 
 .wf-input-action--with-icon {

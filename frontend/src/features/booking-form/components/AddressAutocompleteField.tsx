@@ -32,7 +32,7 @@ export default function AddressAutocompleteField({
           window.setTimeout(() => setIsFocused(false), 180);
         }}
         className="booking-form__input"
-        placeholder={`Digite o endereço em ${selectedCity}`}
+        placeholder={`Digite rua, avenida ou praça; cidade selecionada: ${selectedCity}`}
         autoComplete="street-address"
         aria-invalid={Boolean(error)}
       />

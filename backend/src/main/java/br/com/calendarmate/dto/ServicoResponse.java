@@ -7,6 +7,7 @@ public class ServicoResponse {
     private String eventLink;
 
     private String serviceType;
+    private String serviceNotes;
     private Instant start;
     private Instant end;
 
@@ -38,6 +39,9 @@ public class ServicoResponse {
 
     public String getServiceType() { return serviceType; }
     public void setServiceType(String serviceType) { this.serviceType = serviceType; }
+
+    public String getServiceNotes() { return serviceNotes; }
+    public void setServiceNotes(String serviceNotes) { this.serviceNotes = serviceNotes; }
 
     public Instant getStart() { return start; }
     public void setStart(Instant start) { this.start = start; }

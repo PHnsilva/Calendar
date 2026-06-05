@@ -1,5 +1,6 @@
 export type ServicoRequest = {
   serviceType: string;
+  serviceNotes: string;
   date: string;
   time: string;
   clientFirstName: string;
@@ -19,6 +20,7 @@ export type ServicoResponse = {
   eventId: string;
   eventLink: string;
   serviceType: string;
+  serviceNotes: string;
   start: string;
   end: string;
   clientFirstName: string;

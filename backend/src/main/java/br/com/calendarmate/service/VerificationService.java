@@ -221,7 +221,12 @@ public class VerificationService {
         }
         s.setTitle(serviceType);
 
-        s.setDescription(e.getDescription() == null ? "" : e.getDescription());
+        String serviceNotes = ext.getOrDefault("serviceNotes", "").trim();
+        if (serviceNotes.isBlank() && e.getDescription() != null) {
+            serviceNotes = e.getDescription().trim();
+        }
+        s.setDescription(serviceNotes);
+        s.setServiceNotes(serviceNotes);
 
         if (e.getStart() != null && e.getStart().getDateTime() != null) {
             s.setStart(Instant.ofEpochMilli(e.getStart().getDateTime().getValue()));

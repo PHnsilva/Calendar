@@ -27,6 +27,7 @@ public class SupabaseBookingHistoryStore implements BookingHistoryStore {
         row.put("event_id", booking.getEventId());
         row.put("event_link", booking.getEventLink());
         row.put("service_type", booking.getServiceType());
+        row.put("service_notes", booking.getServiceNotes());
         row.put("start_epoch", booking.getStart() == null ? 0L : booking.getStart().getEpochSecond());
         row.put("end_epoch", booking.getEnd() == null ? 0L : booking.getEnd().getEpochSecond());
         row.put("client_first_name", booking.getClientFirstName());
@@ -81,6 +82,7 @@ public class SupabaseBookingHistoryStore implements BookingHistoryStore {
         out.setEventId(str(row.get("event_id")));
         out.setEventLink(str(row.get("event_link")));
         out.setServiceType(str(row.get("service_type")));
+        out.setServiceNotes(str(row.get("service_notes")));
         out.setStart(toInstant(row.get("start_epoch")));
         out.setEnd(toInstant(row.get("end_epoch")));
         out.setClientFirstName(str(row.get("client_first_name")));

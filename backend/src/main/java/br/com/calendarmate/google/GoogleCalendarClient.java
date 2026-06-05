@@ -66,6 +66,7 @@ public class GoogleCalendarClient implements CalendarClient {
         ext.put(APP_KEY, APP_VALUE);
         ext.put(ENTITY_TYPE_KEY, ENTITY_TYPE_BOOKING);
         ext.put("serviceType", safe(s.getTitle()));
+        ext.put("serviceNotes", safe(s.getServiceNotes()));
         ext.put("status", safe(s.getStatus()));
 
         if (s.getPendingExpiresAt() != null) {
@@ -129,6 +130,7 @@ public class GoogleCalendarClient implements CalendarClient {
         ext.put(APP_KEY, APP_VALUE);
         ext.put(ENTITY_TYPE_KEY, ENTITY_TYPE_BOOKING);
         ext.put("serviceType", safe(s.getTitle()));
+        ext.put("serviceNotes", safe(s.getServiceNotes()));
         ext.put("status", safe(s.getStatus()));
 
         ext.put("clientFirstName", safe(s.getClientFirstName()));

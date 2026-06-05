@@ -46,6 +46,7 @@ const INITIAL_FORM: BookingFormValues = {
   clientComplement: "",
   clientCity: "",
   clientState: "MG",
+  serviceNotes: "Observacao detalhada nao informada.",
 };
 
 function formatDate(dateString: string): string {
@@ -333,6 +334,7 @@ export default function BookingFormModal({
     try {
       const response = await createBookingMutation.mutateAsync({
         serviceType: DEFAULT_SERVICE_TYPE,
+        serviceNotes: normalizeText(formValues.serviceNotes) || "Observacao detalhada nao informada.",
         date: draftSlot.date,
         time: draftSlot.startTime,
         clientFirstName: normalizeText(formValues.clientFirstName),

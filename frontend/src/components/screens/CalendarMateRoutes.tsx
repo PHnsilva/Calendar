@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type InputHTMLAttributes, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
@@ -214,6 +214,35 @@ function cleanFormText(value?: string | null): string {
   return (value ?? '').trim();
 }
 
+function formatPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function isEmailValid(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function isHouseNumberValid(value: string): boolean {
+  const normalized = cleanFormText(value).toLowerCase();
+  if (!normalized) return false;
+  if (/^(s\/?n|sem numero|sem número)$/.test(normalized)) return true;
+  if (/^\d{1,6}[a-z]?([-/]\d{1,4})?$/i.test(normalized)) return true;
+  return /^(casa|apto|apartamento|lote|loja|sala|bloco|fundos|galpao|galpão)\s+[a-z0-9 .\/-]{1,24}$/i.test(normalized);
+}
+
+function normalizeHouseNumber(value: string): string {
+  const normalized = cleanFormText(value).replace(/\s+/g, ' ');
+  if (/^(s\/?n|sem numero|sem número)$/i.test(normalized)) return 'S/N';
+  return normalized;
+}
+
+function isServiceNotesValid(value: string): boolean {
+  return cleanFormText(value).replace(/\s+/g, ' ').length >= 10;
+}
+
 function splitFullName(value: string): { firstName: string; lastName: string } {
   const parts = cleanFormText(value).split(/\s+/).filter(Boolean);
   const firstName = parts.shift() ?? '';
@@ -239,6 +268,7 @@ function mapCreatedServicoToCalendarEvent(servico: ServicoResponse): CalendarEve
     customerAddress: servico.clientAddressLine,
     customerEmail: servico.clientEmail,
     customerPhone: servico.clientPhone,
+    notes: servico.serviceNotes,
     serviceLabel: servico.serviceType,
     status: servico.status?.toLowerCase().includes('conclu') ? 'completed' : 'booked',
   };
@@ -290,7 +320,7 @@ function bookingFromServico(servico: ServicoResponse, index = 0): BookingItem {
     time: servico.start?.slice(11, 16) || '--:--',
     endTime: servico.end?.slice(11, 16),
     provider: servico.assignedProviderName || 'A definir',
-    notes: undefined,
+    notes: servico.serviceNotes,
     color: accentCycle[index % accentCycle.length],
     status: formatStatus(servico.status),
     source: servico,
@@ -455,6 +485,11 @@ function Icon({ name }: { name: string }) {
     'booking-meta-bell': bookingMetaBellIcon,
     'booking-search': bookingSearchIcon,
     'booking-filter': bookingFilterIcon,
+    'city-itabirito': cityItabiritoIcon,
+    'city-ouro-preto': cityOuroPretoIcon,
+    'city-moeda': cityMoedaIcon,
+    'city-belo-horizonte': cityBeloHorizonteIcon,
+    'city-nova-lima': cityNovaLimaIcon,
     'confirm-phone-security': confirmPhoneSecurityIllustration,
     'email-illustration': emailIllustrationAsset,
   };
@@ -1479,6 +1514,8 @@ function ModalField({
   defaultValue,
   value,
   type = 'text',
+  inputMode,
+  error,
   onChange,
 }: {
   label: string;
@@ -1489,6 +1526,8 @@ function ModalField({
   defaultValue?: string;
   value?: string;
   type?: string;
+  inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode'];
+  error?: string;
   onChange?: (value: string) => void;
 }) {
   return (
@@ -1496,13 +1535,88 @@ function ModalField({
       <span className="wf-field-label">{label}{required ? <em>*</em> : null}</span>
       <span className="wf-input-shell">
         <Icon name={icon} />
-        <input type={type} value={value} defaultValue={value === undefined ? defaultValue : undefined} placeholder={placeholder} onChange={(event) => onChange?.(event.target.value)} />
+        <input type={type} inputMode={inputMode} value={value} defaultValue={value === undefined ? defaultValue : undefined} placeholder={placeholder} onChange={(event) => onChange?.(event.target.value)} />
       </span>
+      {error ? <small className="wf-field-error">{error}</small> : null}
     </label>
   );
 }
 
+function cityIconName(city: string): string {
+  const normalized = normalizeText(city);
+  if (normalized.includes('belo horizonte')) return 'city-belo-horizonte';
+  if (normalized.includes('ouro preto')) return 'city-ouro-preto';
+  if (normalized.includes('moeda')) return 'city-moeda';
+  if (normalized.includes('nova lima')) return 'city-nova-lima';
+  return 'city-itabirito';
+}
+
+function CitySelectField({
+  selectedCity,
+  cities,
+  open,
+  onOpenChange,
+  onSelect,
+}: {
+  selectedCity: string;
+  cities: string[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelect: (city: string) => void;
+}) {
+  const selectedStyle = resolveSupportedCityStyle(selectedCity, 0);
+  return (
+    <div className="wf-modal-field wf-city-select-field">
+      <span className="wf-field-label">Cidade<em>*</em></span>
+      <button type="button" className={cx('wf-city-select-launcher', `wf-city-select-launcher--${selectedStyle.color}`)} onClick={() => onOpenChange(true)}>
+        <Icon name={cityIconName(selectedCity)} />
+        <span>{selectedCity}</span>
+      </button>
+      {open ? (
+        <div className="wf-city-submodal" role="dialog" aria-modal="false" aria-label="Selecionar cidade">
+          <div className="wf-city-submodal__header">
+            <strong>Selecionar cidade</strong>
+            <button type="button" onClick={() => onOpenChange(false)} aria-label="Fechar cidades">x</button>
+          </div>
+          <div className="wf-city-submodal__grid">
+            {cities.map((city, index) => {
+              const style = resolveSupportedCityStyle(city, index);
+              return (
+                <button
+                  key={city}
+                  type="button"
+                  className={cx('wf-city-submodal__button', `wf-city-submodal__button--${style.color}`, selectedCity === city && 'is-active')}
+                  onClick={() => {
+                    onSelect(city);
+                    onOpenChange(false);
+                  }}
+                >
+                  <Icon name={cityIconName(city)} />
+                  <span>{city}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 const modalTimeOptions = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+
+type CreateBookingField =
+  | 'fullName'
+  | 'phone'
+  | 'email'
+  | 'city'
+  | 'address'
+  | 'number'
+  | 'date'
+  | 'time'
+  | 'notes';
+
+type CreateBookingErrors = Partial<Record<CreateBookingField, string>>;
 
 function CreateBookingModal({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
@@ -1511,12 +1625,14 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
   const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);
   const slotMinutes = getSlotMinutes(bootstrap);
+  const maxFutureMonthsAhead = getMaxFutureMonthsAhead(bootstrap);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [city, setCity] = useState(defaultCity);
   const [addressInput, setAddressInput] = useState('');
   const [selectedAddress, setSelectedAddress] = useState<AddressSuggestion | null>(null);
+  const [houseNumber, setHouseNumber] = useState('');
   const [complement, setComplement] = useState('');
   const [referencePoint, setReferencePoint] = useState('');
   const [notes, setNotes] = useState('');
@@ -1524,19 +1640,21 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedEndTime, setSelectedEndTime] = useState('');
   const [monthStart] = useState(() => startOfMonth());
-  const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<CreateBookingErrors>({});
+  const [backendError, setBackendError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [cityPickerOpen, setCityPickerOpen] = useState(false);
   const selectedCity = allowedCities.includes(city) ? city : defaultCity;
   const bookingDurationMinutes = getBookingDurationMinutesByCity(bootstrap, selectedCity);
   const createBookingMutation = useCreateBooking();
-  const monthAvailability = useAvailableMonthDates(monthStart, true, selectedCity, slotMinutes, bookingDurationMinutes);
+  const monthAvailability = useAvailableMonthDates(monthStart, true, selectedCity, slotMinutes, bookingDurationMinutes, maxFutureMonthsAhead);
   const availableDateOptions = useMemo(
-    () => monthAvailability.availableDates.slice(0, 6).map((date) => ({ value: date, label: formatDateOptionLabel(date) })),
+    () => monthAvailability.availableDates.map((date) => ({ value: date, label: formatDateOptionLabel(date) })),
     [monthAvailability.availableDates],
   );
   const activeSelectedDate = selectedDate && monthAvailability.availableDates.includes(selectedDate)
     ? selectedDate
-    : availableDateOptions[0]?.value ?? '';
+    : '';
   const { data: availableSlots = [], isFetching: isLoadingSlots, error: slotsError } = useAvailableSlots(
     activeSelectedDate,
     selectedCity,
@@ -1550,12 +1668,6 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   }, [city, defaultCity]);
 
   useEffect(() => {
-    if (!selectedDate && availableDateOptions[0]?.value) {
-      setSelectedDate(availableDateOptions[0].value);
-    }
-  }, [availableDateOptions, selectedDate]);
-
-  useEffect(() => {
     const stillAvailable = availableSlots.some((slot) => slot.startTime === selectedTime);
     if (!stillAvailable) {
       setSelectedTime('');
@@ -1567,40 +1679,78 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
     setCity(value);
     setAddressInput('');
     setSelectedAddress(null);
+    setHouseNumber('');
     setSelectedDate('');
     setSelectedTime('');
     setSelectedEndTime('');
-    setFormError('');
+    setFieldErrors({});
+    setBackendError('');
   };
 
   const handleAddressChange = (value: string) => {
     setAddressInput(value);
     setSelectedAddress(null);
-    setFormError('');
+    setHouseNumber('');
+    setFieldErrors((current) => ({ ...current, address: undefined, number: undefined }));
+    setBackendError('');
   };
 
   const handleAddressSelect = (suggestion: AddressSuggestion) => {
     setSelectedAddress(suggestion);
     setAddressInput(suggestion.formatted);
+    setHouseNumber(suggestion.houseNumber || '');
     setComplement('');
-    setFormError('');
+    setFieldErrors((current) => ({ ...current, address: undefined, number: undefined }));
+    setBackendError('');
   };
 
   const handleCreateBooking = async () => {
     const { firstName, lastName } = splitFullName(fullName);
     const phoneDigits = digitsOnly(phone);
     const cepDigits = digitsOnly(selectedAddress?.postcode ?? '');
-    if (!firstName || !lastName || !email.trim() || phoneDigits.length < 10 || !selectedAddress || !activeSelectedDate || !selectedTime) {
-      setFormError('Preencha nome, telefone, e-mail, endereço validado, data e horário.');
-      return;
+    const nextErrors: CreateBookingErrors = {};
+
+    if (!firstName || !lastName || firstName === lastName) {
+      nextErrors.fullName = 'Nome completo: informe nome e sobrenome. Exemplo: Pedro Silva.';
+    }
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      nextErrors.phone = 'Telefone: informe DDD + numero com 10 ou 11 digitos. Exemplos: (31) 99999-9999 ou 31 3333-4444.';
+    }
+    if (!isEmailValid(email)) {
+      nextErrors.email = 'E-mail: use @ e dominio valido. Exemplo: voce@email.com.';
+    }
+    if (!selectedCity) {
+      nextErrors.city = 'Cidade: escolha uma das cidades atendidas.';
+    }
+    if (!selectedAddress || cepDigits.length !== 8) {
+      nextErrors.address = 'Endereco: escolha uma sugestao da lista para validar rua, bairro e CEP. Exemplo: Rua Sao Jose, Centro.';
+    }
+    if (!isHouseNumberValid(houseNumber)) {
+      nextErrors.number = 'Numero: informe 123, 123A, Casa 2, Lote 5 ou S/N.';
+    }
+    if (!activeSelectedDate) {
+      nextErrors.date = 'Data: selecione um dia disponivel carregado pelo backend.';
+    }
+    if (!selectedTime) {
+      nextErrors.time = 'Horario: selecione um horario disponivel para a data escolhida.';
+    }
+    if (!isServiceNotesValid(notes)) {
+      nextErrors.notes = 'Observacao: explique o que precisa de servico com pelo menos 10 caracteres. Exemplo: trocar tomada da sala.';
     }
 
-    setFormError('');
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+    if (!selectedAddress) return;
+
+    setBackendError('');
     setSuccessMessage('');
 
     try {
       const response = await createBookingMutation.mutateAsync({
         serviceType: 'Visita técnica',
+        serviceNotes: cleanFormText(notes).replace(/\s+/g, ' '),
         date: activeSelectedDate,
         time: selectedTime,
         clientFirstName: firstName,
@@ -1610,8 +1760,8 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
         clientCep: cepDigits.slice(0, 8),
         clientStreet: cleanFormText(selectedAddress.street || selectedAddress.addressLine1 || selectedAddress.formatted),
         clientNeighborhood: cleanFormText(selectedAddress.neighborhood || selectedAddress.addressLine2 || selectedCity),
-        clientNumber: cleanFormText(selectedAddress.houseNumber || 'S/N'),
-        clientComplement: cleanFormText([complement, referencePoint, notes].filter(Boolean).join(' | ')) || undefined,
+        clientNumber: normalizeHouseNumber(houseNumber),
+        clientComplement: cleanFormText([complement, referencePoint].filter(Boolean).join(' | ')) || undefined,
         clientCity: selectedCity,
         clientState: cleanFormText(selectedAddress.stateCode || selectedAddress.state || defaultState).slice(0, 2).toUpperCase(),
       });
@@ -1625,7 +1775,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
       setSuccessMessage('Agendamento criado. Confirme seu telefone para acompanhar o atendimento.');
       window.setTimeout(onClose, 700);
     } catch (error) {
-      setFormError((error as Error).message || 'Não foi possível criar o agendamento.');
+      setBackendError((error as Error).message || 'Nao foi possivel criar o agendamento.');
     }
   };
 
@@ -1633,31 +1783,27 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
     <>
       <ModalTitle icon="calendar-modal-blue" title="Criar agendamento" text="Preencha seus dados e informe onde e quando o serviço será realizado." />
       <div className="wf-create-booking-form wf-create-booking-form--wireframe">
-        <ModalField className="wf-span-2" label="Nome completo" icon="user" placeholder="Digite seu nome completo" required value={fullName} onChange={setFullName} />
-        <ModalField className="wf-span-2" label="Telefone" icon="phone" placeholder="(11) 99999-9999" required value={phone} onChange={setPhone} />
-        <ModalField className="wf-span-2" label="E-mail" icon="mail" placeholder="seu@email.com" required value={email} type="email" onChange={setEmail} />
-        <label className="wf-modal-field">
-          <span className="wf-field-label">Cidade<em>*</em></span>
-          <span className="wf-input-shell wf-input-shell--select">
-            <Icon name="home" />
-            <select value={selectedCity} onChange={(event) => handleCityChange(event.target.value)}>
-              {allowedCities.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-          </span>
-        </label>
+        <ModalField className="wf-span-2" label="Nome completo" icon="user" placeholder="Ex.: Pedro Silva" required value={fullName} onChange={setFullName} error={fieldErrors.fullName} />
+        <ModalField className="wf-span-2" label="Telefone" icon="phone" placeholder="(31) 99999-9999 ou 31 3333-4444" required value={phone} inputMode="tel" onChange={(value) => setPhone(formatPhoneInput(value))} error={fieldErrors.phone} />
+        <ModalField className="wf-span-2" label="E-mail" icon="mail" placeholder="voce@email.com" required value={email} type="email" onChange={setEmail} error={fieldErrors.email} />
+        <CitySelectField selectedCity={selectedCity} cities={allowedCities} open={cityPickerOpen} onOpenChange={setCityPickerOpen} onSelect={handleCityChange} />
+        {fieldErrors.city ? <small className="wf-field-error wf-span-2">{fieldErrors.city}</small> : null}
         <label className="wf-modal-field wf-create-address-field">
           <span className="wf-field-label">Endereço<em>*</em></span>
           <span className="wf-input-shell wf-input-shell--address">
             <Icon name="map" />
             <AddressAutocompleteField value={addressInput} selectedCity={selectedCity} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
           </span>
+          {fieldErrors.address ? <small className="wf-field-error">{fieldErrors.address}</small> : null}
         </label>
-        <ModalField className="wf-span-2" label="Complemento" icon="edit" placeholder="Ex.: Apto 101, Bloco B, Fundos" value={complement} onChange={setComplement} />
+        <ModalField label="Número" icon="home" placeholder="123, 123A, Casa 2 ou S/N" required value={houseNumber} inputMode="text" onChange={setHouseNumber} error={fieldErrors.number} />
+        <ModalField className="wf-span-2" label="(opcional) Complemento" icon="edit" placeholder="Ex.: Apto 101, Bloco B, Fundos" value={complement} onChange={setComplement} />
         <div className="wf-span-2 wf-choice-block">
           <strong>Escolha a data<em>*</em></strong>
           {monthAvailability.isLoading ? <small className="wf-choice-helper">Carregando dias disponíveis...</small> : null}
           {!monthAvailability.isLoading && availableDateOptions.length === 0 ? <small className="wf-choice-helper">Nenhum dia com horário disponível neste mês.</small> : null}
           <div className="wf-date-options wf-date-options--scroll">{availableDateOptions.map((date) => <button className={activeSelectedDate === date.value ? 'is-active' : ''} type="button" key={date.value} onClick={() => { setSelectedDate(date.value); setSelectedTime(''); setSelectedEndTime(''); }}>{date.label}</button>)}</div>
+          {fieldErrors.date ? <small className="wf-field-error">{fieldErrors.date}</small> : null}
         </div>
         <div className="wf-span-2 wf-choice-block">
           <strong>Horários disponíveis<em>*</em></strong>
@@ -1665,13 +1811,23 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
           {slotsError ? <small className="wf-choice-helper wf-choice-helper--error">Não foi possível carregar os horários.</small> : null}
           {!isLoadingSlots && !slotsError && activeSelectedDate && availableSlots.length === 0 ? <small className="wf-choice-helper">Esse dia não possui horários livres.</small> : null}
           <div className="wf-time-options wf-time-options--scroll">{availableSlots.map((slot) => <button className={selectedTime === slot.startTime ? 'is-active' : ''} type="button" key={`${slot.date}-${slot.startTime}`} onClick={() => { setSelectedTime(slot.startTime); setSelectedEndTime(slot.endTime); }}>{slot.startTime}</button>)}</div>
+          {fieldErrors.time ? <small className="wf-field-error">{fieldErrors.time}</small> : null}
         </div>
-        <ModalField className="wf-span-2" label="Ponto de referência" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
-        <ModalField className="wf-span-2" label="Observações" icon="edit" placeholder="Informações adicionais que possam ajudar." value={notes} onChange={setNotes} />
+        <ModalField className="wf-span-2" label="(opcional) Ponto de referência" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
+        <label className="wf-modal-field wf-span-2">
+          <span className="wf-field-label">Observação<em>*</em></span>
+          <textarea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            minLength={10}
+            placeholder="Explique detalhadamente o que precisa de serviço. Exemplo: trocar tomada da sala que parou de funcionar."
+          />
+          {fieldErrors.notes ? <small className="wf-field-error">{fieldErrors.notes}</small> : null}
+        </label>
       </div>
       {selectedTime ? <p className="wf-create-selected-slot">Horário selecionado: <strong>{selectedTime}{selectedEndTime ? ` - ${selectedEndTime}` : ''}</strong></p> : null}
       {successMessage ? <p className="wf-auth-feedback wf-auth-feedback--success">{successMessage}</p> : null}
-      {formError ? <p className="wf-auth-feedback wf-auth-feedback--error">{formError}</p> : null}
+      {backendError ? <p className="wf-auth-feedback wf-auth-feedback--error">{backendError}</p> : null}
       <ModalActions primary={createBookingMutation.isPending ? 'Agendando...' : 'Confirmar agendamento'} secondary="Cancelar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={handleCreateBooking} disabledPrimary={createBookingMutation.isPending} />
     </>
   );
@@ -2182,6 +2338,7 @@ function EditAdminBookingModal({ booking, onClose }: { booking?: BookingItem; on
   const [date, setDate] = useState(booking?.date ?? '');
   const [time, setTime] = useState(booking?.time ?? '');
   const [serviceType, setServiceType] = useState(source?.serviceType || booking?.service || '');
+  const [serviceNotes, setServiceNotes] = useState(source?.serviceNotes || booking?.notes || 'Observacao detalhada nao informada.');
   const [firstName, setFirstName] = useState(source?.clientFirstName || booking?.name.split(' ')[0] || '');
   const [lastName, setLastName] = useState(source?.clientLastName || booking?.name.split(' ').slice(1).join(' ') || '');
   const [email, setEmail] = useState(source?.clientEmail || booking?.email || '');
@@ -2195,6 +2352,7 @@ function EditAdminBookingModal({ booking, onClose }: { booking?: BookingItem; on
     setError('');
     const payload: ServicoRequest = {
       serviceType,
+      serviceNotes,
       date,
       time,
       clientFirstName: firstName,
@@ -2227,6 +2385,7 @@ function EditAdminBookingModal({ booking, onClose }: { booking?: BookingItem; on
       {source ? (
         <section className="wf-form-grid">
           <ModalField label="Servico" icon="edit" value={serviceType} onChange={setServiceType} />
+          <label className="wf-span-2">Observacao<textarea value={serviceNotes} onChange={(event) => setServiceNotes(event.target.value)} placeholder="Explique o servico solicitado pelo cliente." /></label>
           <ModalField label="Data" icon="calendar" type="date" value={date} onChange={setDate} />
           <ModalField label="Horario" icon="clock" type="time" value={time} onChange={setTime} />
           <ModalField label="Telefone" icon="phone" value={phone} onChange={setPhone} />

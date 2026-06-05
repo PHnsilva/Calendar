@@ -1517,3 +1517,83 @@
     font-size: clamp(12px, 3.6vw, 15px) !important;
   }
 }
+
+
+/* --- rebuilt appointment cards from mobile wireframe --- */
+@media (max-width: 760px) {
+  .wf-booking-card {
+    display: grid !important;
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .wf-date-tile {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    padding: 10px 4px !important;
+    min-height: 100% !important;
+  }
+
+  .wf-date-tile small,
+  .wf-date-tile span,
+  .wf-date-tile em {
+    font-size: 10px !important;
+    line-height: 1.04 !important;
+  }
+
+  .wf-date-tile strong {
+    font-size: 32px !important;
+    line-height: .88 !important;
+  }
+
+  .wf-booking-content {
+    padding: 10px !important;
+    min-width: 0 !important;
+  }
+
+  .wf-booking-main {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .wf-booking-main h2 {
+    margin: 0 0 6px !important;
+    font-size: 15px !important;
+    line-height: 1.08 !important;
+  }
+
+  .wf-booking-main p,
+  .wf-provider-box p,
+  .wf-provider-box strong,
+  .wf-booking-main > .wf-badge {
+    font-size: 10px !important;
+    line-height: 1.18 !important;
+  }
+
+  .wf-booking-main p .wf-icon,
+  .wf-booking-main p .wf-icon--image,
+  .wf-provider-box p .wf-icon,
+  .wf-provider-box p .wf-icon--image {
+    width: 14px !important;
+    min-width: 14px !important;
+    height: 14px !important;
+  }
+
+  .wf-booking-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .wf-booking-actions button {
+    min-height: 32px !important;
+    font-size: 10px !important;
+    padding: 0 5px !important;
+    white-space: nowrap !important;
+  }
+}

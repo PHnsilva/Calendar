@@ -145,13 +145,6 @@
   box-shadow: none;
 }
 
-.wf-navbar .wf-client-mobile-menu {
-  color: var(--wf-blue-2);
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-}
-
 .wf-navbar .wf-client-mobile-user {
   min-height: clamp(48px, 4.2vw, 60px);
   padding-inline: clamp(14px, 1.2vw, 20px);

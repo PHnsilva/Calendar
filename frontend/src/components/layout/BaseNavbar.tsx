@@ -35,6 +35,7 @@ type NavbarButtonProps = {
   ariaLabel?: string;
   className?: string;
   compact?: boolean;
+  dataMenuAction?: string;
   onClick?: () => void;
   title?: string;
   to?: string;
@@ -149,6 +150,7 @@ export function NavbarButton({
   ariaLabel,
   className,
   compact = false,
+  dataMenuAction,
   onClick,
   title,
   to,
@@ -158,14 +160,14 @@ export function NavbarButton({
 
   if (to) {
     return (
-      <Link to={to} className={buttonClassName} aria-label={ariaLabel} title={title} onClick={onClick}>
+      <Link to={to} className={buttonClassName} aria-label={ariaLabel} data-menu-action={dataMenuAction} title={title} onClick={onClick}>
         {children}
       </Link>
     );
   }
 
   return (
-    <button type="button" className={buttonClassName} onClick={onClick} aria-label={ariaLabel} title={title}>
+    <button type="button" className={buttonClassName} data-menu-action={dataMenuAction} onClick={onClick} aria-label={ariaLabel} title={title}>
       {children}
     </button>
   );

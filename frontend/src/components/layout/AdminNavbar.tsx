@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import BaseNavbar, { NavbarButton, NavbarIcon, type NavbarIconName } from './BaseNavbar';
+import NavbarMenu from '../../shared/ui/NavbarMenu';
 
-export type AdminNavView = 'email' | 'agendamentos' | 'bloqueios' | 'historico' | 'extrato';
+export type AdminNavView = 'agenda' | 'agendamentos' | 'bloqueios' | 'historico' | 'extrato';
 
 type AdminNavbarProps = {
   active?: AdminNavView;
@@ -25,6 +26,7 @@ type AdminTab = {
 };
 
 type ProfileMenuItem = {
+  action: 'notifications' | 'email' | 'budget' | 'logout';
   icon: NavbarIconName;
   label: string;
   onClick?: () => void;
@@ -32,7 +34,6 @@ type ProfileMenuItem = {
 };
 
 const adminTabs: AdminTab[] = [
-  { key: 'email', label: 'Email', icon: 'mail' },
   { key: 'agendamentos', label: 'Agendamentos', icon: 'calendar' },
   { key: 'bloqueios', label: 'Bloqueios', icon: 'lock', ownerOnly: true },
   { key: 'historico', label: 'Histórico', icon: 'clock' },
@@ -61,67 +62,47 @@ function AdminProfileMenu({
   onLogout?: () => void;
   onNotificationsClick?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return undefined;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (menuRef.current?.contains(event.target as Node)) return;
-      setOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [open]);
-
   const menuItems: ProfileMenuItem[] = [
-    { icon: 'bell', label: 'Notificações', onClick: onNotificationsClick },
-    { icon: 'mail', label: 'Email', onClick: onEmailClick },
-    { icon: 'budget', label: 'Orçamento', onClick: onBudgetClick },
-    { icon: 'user', label: 'Sair', onClick: onLogout, danger: true },
+    { action: 'notifications', icon: 'bell', label: 'Notificações', onClick: onNotificationsClick },
+    { action: 'email', icon: 'mail', label: 'Email', onClick: onEmailClick },
+    { action: 'budget', icon: 'budget', label: 'Orçamento', onClick: onBudgetClick },
+    { action: 'logout', icon: 'user', label: 'Sair', onClick: onLogout, danger: true },
   ];
 
   return (
-    <div className="wf-profile-menu-wrap" ref={menuRef}>
-      <NavbarButton
-        compact={compact}
-        onClick={() => setOpen((current) => !current)}
-        ariaLabel="Abrir opções do administrador"
-        title="Abrir opções do administrador"
-        className="wf-admin-profile-trigger"
-      >
-        {labelContent ?? <><NavbarIcon name="user" /> <span>{greeting}</span> <NavbarIcon name="chevron" /></>}
-      </NavbarButton>
-      {open ? (
-        <div className="wf-profile-menu" role="menu" aria-label="Opções do administrador">
-          {menuItems.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              className={item.danger ? 'is-danger' : undefined}
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                item.onClick?.();
-              }}
-            >
-              <NavbarIcon name={item.icon} />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
+    <NavbarMenu
+      ariaLabel="Opções do administrador"
+      trigger={({ toggle }) => (
+        <NavbarButton
+          compact={compact}
+          onClick={toggle}
+          ariaLabel="Abrir opções do administrador"
+          title="Abrir opções do administrador"
+          className="wf-admin-profile-trigger"
+        >
+          {labelContent ?? <><NavbarIcon name="user" /> <span>{greeting}</span> <NavbarIcon name="chevron" /></>}
+        </NavbarButton>
+      )}
+    >
+      {({ close }) => menuItems.map((item) => (
+        <button
+          key={item.label}
+          type="button"
+          className={['wf-profile-menu-item', item.danger ? 'is-danger' : ''].filter(Boolean).join(' ')}
+          data-menu-action={item.action}
+          aria-label={item.label}
+          title={item.label}
+          role="menuitem"
+          onClick={() => {
+            close();
+            item.onClick?.();
+          }}
+        >
+          <NavbarIcon name={item.icon} />
+          <span>{item.label}</span>
+        </button>
+      ))}
+    </NavbarMenu>
   );
 }
 
@@ -140,7 +121,7 @@ export default function AdminNavbar({
 }: AdminNavbarProps) {
   const visibleTabs = adminTabs.filter((tab) => owner || !tab.ownerOnly);
   const greeting = getAdminGreeting(adminName);
-  const openEmail = onEmailClick ?? (() => onView?.('email'));
+  const openEmail = onEmailClick ?? (() => undefined);
 
   const desktopActions = (
     <>
@@ -158,8 +139,9 @@ export default function AdminNavbar({
   const mobileActions = (
     <>
       <AdminProfileMenu
+        compact
         greeting={greeting}
-        labelContent={<><NavbarIcon name="user" /><span>Admin</span><NavbarIcon name="chevron" /></>}
+        labelContent={<NavbarIcon name="user" />}
         onBudgetClick={onBudgetClick}
         onEmailClick={openEmail}
         onLogout={onMobileAdminClick ?? onAdminClick}

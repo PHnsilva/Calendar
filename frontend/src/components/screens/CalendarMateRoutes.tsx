@@ -22,6 +22,10 @@ import adminHistoryIcon from '../../assets/wireframes/icons/admin-history-clock.
 import adminFinanceIcon from '../../assets/wireframes/icons/admin-finance-chart.png';
 import adminAgendaCalendarIcon from '../../assets/wireframes/icons/admin-agenda-calendar.png';
 import appointmentsTitleCalendarIcon from '../../assets/wireframes/icons/appointments-title-calendar.png';
+import benefitPracticalityIcon from '../../assets/wireframes/icons/benefit-practicality-clock.png';
+import benefitSecurityIcon from '../../assets/wireframes/icons/benefit-security-shield.png';
+import benefitSpeedIcon from '../../assets/wireframes/icons/benefit-speed-flash.png';
+import benefitFollowIcon from '../../assets/wireframes/icons/benefit-follow-calendar.png';
 import cityPanelIcon from '../../assets/wireframes/icons/city-panel-marker.svg';
 import cityBeloHorizonteIcon from '../../assets/wireframes/icons/city-belo-horizonte.svg';
 import cityItabiritoIcon from '../../assets/wireframes/icons/city-itabirito.svg';
@@ -161,8 +165,6 @@ const ptDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digi
 const ptWeekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' });
 const ptMonth = new Intl.DateTimeFormat('pt-BR', { month: 'short' });
 const ptLongDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-const weekdayShortLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-const monthShortLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 function cx(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(' ');
@@ -217,13 +219,9 @@ function splitFullName(value: string): { firstName: string; lastName: string } {
   return { firstName, lastName };
 }
 
-function formatDateOptionLabel(dateString: string): { weekday: string; day: string; month: string } {
+function formatDateOptionLabel(dateString: string): string {
   const date = toLocalDate(dateString);
-  return {
-    weekday: weekdayShortLabels[date.getDay()] ?? ptWeekday.format(date).replace('.', '').slice(0, 3),
-    day: String(date.getDate()),
-    month: monthShortLabels[date.getMonth()] ?? ptMonth.format(date).replace('.', '').slice(0, 3),
-  };
+  return `${ptWeekday.format(date).replace('.', '')}\n${date.getDate()}\n${ptMonth.format(date).replace('.', '')}`;
 }
 
 function mapCreatedServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
@@ -406,6 +404,10 @@ function Icon({ name }: { name: string }) {
     'contact-instagram': contactInstagramIcon,
     'contact-phone': contactPhoneIcon,
     'contact-email': contactEmailIcon,
+    'benefit-practicality': benefitPracticalityIcon,
+    'benefit-security': benefitSecurityIcon,
+    'benefit-speed': benefitSpeedIcon,
+    'benefit-follow': benefitFollowIcon,
     'footer-security': footerSecurityIcon,
     'admin-appointments': adminAppointmentsIcon,
     'admin-blocks': adminBlocksIcon,
@@ -727,7 +729,7 @@ export function ClientLanding() {
           <div className="wf-hero-copy wf-client-hero-copy-final">
             <Badge icon="calendar" color="orange">Simples, rápido e sem complicações</Badge>
             <h1>Organize seus agendamentos e pequenos reparos com <span>facilidade.</span></h1>
-
+            
             <div className="wf-hero-buttons">
               <button type="button" className="wf-primary-cta" onClick={() => setModal('create-client')}><Icon name="calendar" /> Criar agendamento</button>
               <button type="button" className="wf-secondary-cta" onClick={scrollToInfo}><span className="wf-play"><Icon name="play" /></span> Como funciona?</button>
@@ -746,19 +748,10 @@ export function ClientLanding() {
         <ClientLandingModalButtons setModal={setModal} />
 
         <section className="wf-info-row" id="wf-why-use">
-          <article className="wf-house-card">
+          <article className="wf-house-card wf-house-card--full-width">
             <img src={houseCard} alt="Casa atendida" />
             <div>
               <h2>Agende quando e onde estiver</h2>
-            </div>
-          </article>
-          <article className="wf-why-card">
-            <h2>Por que usar o SG Agendamentos?</h2>
-            <div className="wf-mini-features">
-              <span><Icon name="benefit-practicality" /><strong>Mais praticidade</strong></span>
-              <span><Icon name="benefit-security" /><strong>Mais segurança</strong></span>
-              <span><Icon name="benefit-speed" /><strong>Mais rapidez</strong></span>
-              <span><Icon name="benefit-follow" /><strong>Acompanhamento</strong></span>
             </div>
           </article>
         </section>
@@ -1487,7 +1480,6 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
   const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);
   const slotMinutes = getSlotMinutes(bootstrap);
-  const maxFutureMonthsAhead = getMaxFutureMonthsAhead(bootstrap);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -1506,9 +1498,9 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   const selectedCity = allowedCities.includes(city) ? city : defaultCity;
   const bookingDurationMinutes = getBookingDurationMinutesByCity(bootstrap, selectedCity);
   const createBookingMutation = useCreateBooking();
-  const monthAvailability = useAvailableMonthDates(monthStart, true, selectedCity, slotMinutes, bookingDurationMinutes, maxFutureMonthsAhead);
+  const monthAvailability = useAvailableMonthDates(monthStart, true, selectedCity, slotMinutes, bookingDurationMinutes);
   const availableDateOptions = useMemo(
-    () => monthAvailability.availableDates.map((date) => ({ value: date, label: formatDateOptionLabel(date) })),
+    () => monthAvailability.availableDates.slice(0, 6).map((date) => ({ value: date, label: formatDateOptionLabel(date) })),
     [monthAvailability.availableDates],
   );
   const activeSelectedDate = selectedDate && monthAvailability.availableDates.includes(selectedDate)
@@ -1522,9 +1514,23 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
     Boolean(activeSelectedDate),
   );
 
-  const selectedSlot = availableSlots.find((slot) => slot.startTime === selectedTime);
-  const activeSelectedTime = selectedSlot ? selectedTime : '';
-  const activeSelectedEndTime = selectedSlot ? selectedEndTime || selectedSlot.endTime : '';
+  useEffect(() => {
+    if (defaultCity && !city) setCity(defaultCity);
+  }, [city, defaultCity]);
+
+  useEffect(() => {
+    if (!selectedDate && availableDateOptions[0]?.value) {
+      setSelectedDate(availableDateOptions[0].value);
+    }
+  }, [availableDateOptions, selectedDate]);
+
+  useEffect(() => {
+    const stillAvailable = availableSlots.some((slot) => slot.startTime === selectedTime);
+    if (!stillAvailable) {
+      setSelectedTime('');
+      setSelectedEndTime('');
+    }
+  }, [availableSlots, selectedTime]);
 
   const handleCityChange = (value: string) => {
     setCity(value);
@@ -1553,7 +1559,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
     const { firstName, lastName } = splitFullName(fullName);
     const phoneDigits = digitsOnly(phone);
     const cepDigits = digitsOnly(selectedAddress?.postcode ?? '');
-    if (!firstName || !lastName || !email.trim() || phoneDigits.length < 10 || !selectedAddress || !activeSelectedDate || !activeSelectedTime) {
+    if (!firstName || !lastName || !email.trim() || phoneDigits.length < 10 || !selectedAddress || !activeSelectedDate || !selectedTime) {
       setFormError('Preencha nome, telefone, e-mail, endereço validado, data e horário.');
       return;
     }
@@ -1565,7 +1571,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
       const response = await createBookingMutation.mutateAsync({
         serviceType: 'Visita técnica',
         date: activeSelectedDate,
-        time: activeSelectedTime,
+        time: selectedTime,
         clientFirstName: firstName,
         clientLastName: lastName,
         clientEmail: cleanFormText(email),
@@ -1619,28 +1625,20 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
         <div className="wf-span-2 wf-choice-block">
           <strong>Escolha a data<em>*</em></strong>
           {monthAvailability.isLoading ? <small className="wf-choice-helper">Carregando dias disponíveis...</small> : null}
-          {!monthAvailability.isLoading && availableDateOptions.length === 0 ? <small className="wf-choice-helper">Nenhum dia com horário disponível na janela configurada.</small> : null}
-          <div className="wf-date-options wf-date-options--scroll">
-            {availableDateOptions.map((date) => (
-              <button className={activeSelectedDate === date.value ? 'is-active' : ''} type="button" key={date.value} data-date={date.value} onClick={() => { setSelectedDate(date.value); setSelectedTime(''); setSelectedEndTime(''); }}>
-                <span className="wf-date-option__weekday">{date.label.weekday}</span>
-                <span className="wf-date-option__day">{date.label.day}</span>
-                <span className="wf-date-option__month">{date.label.month}</span>
-              </button>
-            ))}
-          </div>
+          {!monthAvailability.isLoading && availableDateOptions.length === 0 ? <small className="wf-choice-helper">Nenhum dia com horário disponível neste mês.</small> : null}
+          <div className="wf-date-options wf-date-options--scroll">{availableDateOptions.map((date) => <button className={activeSelectedDate === date.value ? 'is-active' : ''} type="button" key={date.value} onClick={() => { setSelectedDate(date.value); setSelectedTime(''); setSelectedEndTime(''); }}>{date.label}</button>)}</div>
         </div>
         <div className="wf-span-2 wf-choice-block">
           <strong>Horários disponíveis<em>*</em></strong>
           {isLoadingSlots ? <small className="wf-choice-helper">Carregando horários...</small> : null}
           {slotsError ? <small className="wf-choice-helper wf-choice-helper--error">Não foi possível carregar os horários.</small> : null}
           {!isLoadingSlots && !slotsError && activeSelectedDate && availableSlots.length === 0 ? <small className="wf-choice-helper">Esse dia não possui horários livres.</small> : null}
-          <div className="wf-time-options wf-time-options--scroll">{availableSlots.map((slot) => <button className={activeSelectedTime === slot.startTime ? 'is-active' : ''} type="button" key={`${slot.date}-${slot.startTime}`} data-time={slot.startTime} onClick={() => { setSelectedTime(slot.startTime); setSelectedEndTime(slot.endTime); }}>{slot.startTime}</button>)}</div>
+          <div className="wf-time-options wf-time-options--scroll">{availableSlots.map((slot) => <button className={selectedTime === slot.startTime ? 'is-active' : ''} type="button" key={`${slot.date}-${slot.startTime}`} onClick={() => { setSelectedTime(slot.startTime); setSelectedEndTime(slot.endTime); }}>{slot.startTime}</button>)}</div>
         </div>
         <ModalField className="wf-span-2" label="Ponto de referência" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
         <ModalField className="wf-span-2" label="Observações" icon="edit" placeholder="Informações adicionais que possam ajudar." value={notes} onChange={setNotes} />
       </div>
-      {activeSelectedTime ? <p className="wf-create-selected-slot">Horário selecionado: <strong>{activeSelectedTime}{activeSelectedEndTime ? ` - ${activeSelectedEndTime}` : ''}</strong></p> : null}
+      {selectedTime ? <p className="wf-create-selected-slot">Horário selecionado: <strong>{selectedTime}{selectedEndTime ? ` - ${selectedEndTime}` : ''}</strong></p> : null}
       {successMessage ? <p className="wf-auth-feedback wf-auth-feedback--success">{successMessage}</p> : null}
       {formError ? <p className="wf-auth-feedback wf-auth-feedback--error">{formError}</p> : null}
       <ModalActions primary={createBookingMutation.isPending ? 'Agendando...' : 'Confirmar agendamento'} secondary="Cancelar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={handleCreateBooking} disabledPrimary={createBookingMutation.isPending} />

@@ -1,5 +1,5 @@
-import { ClientBookings } from '../../components/wireframes/WireframeReplica';
+import AppointmentsPage from '../../features/appointments/ui/AppointmentsPage';
 
 export default function MyBookingsPage() {
-  return <ClientBookings />;
+  return <AppointmentsPage />;
 }

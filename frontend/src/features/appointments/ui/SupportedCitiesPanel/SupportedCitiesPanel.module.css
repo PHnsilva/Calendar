@@ -1,0 +1,155 @@
+.root {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: clamp(62px, 10vw, 84px) minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 16px !important;
+  border: 2px solid #3a74ff !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+}
+
+.media {
+  width: clamp(62px, 10vw, 84px) !important;
+  min-width: clamp(62px, 10vw, 84px) !important;
+  height: clamp(54px, 9vw, 76px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.media img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+.content {
+  min-width: 0 !important;
+}
+
+.content h3 {
+  margin: 0 0 12px !important;
+  color: #07135d !important;
+  font-size: clamp(20px, 3.4vw, 26px) !important;
+  line-height: 1.05 !important;
+  font-weight: 900 !important;
+}
+
+.list {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+}
+
+.cityPill {
+  min-width: 0 !important;
+  min-height: 48px !important;
+  padding: 0 12px !important;
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  color: #fff !important;
+  font-size: clamp(13px, 2vw, 16px) !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  box-shadow: 0 8px 18px rgba(8, 20, 95, .11) !important;
+  overflow: hidden !important;
+}
+
+.cityPill img {
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  object-fit: contain !important;
+  display: inline-block !important;
+}
+
+.cityPill span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.cityPill_blue {
+  background: linear-gradient(135deg, #045bf5, #0837c9) !important;
+}
+
+.cityPill_orange {
+  background: linear-gradient(135deg, #ff6a14, #e93200) !important;
+}
+
+.cityPill_green {
+  background: linear-gradient(135deg, #16b85a, #087c39) !important;
+}
+
+.cityPill_purple {
+  background: linear-gradient(135deg, #9c40ff, #6817c4) !important;
+}
+
+.cityPill_cyan {
+  background: linear-gradient(135deg, #15aee4, #087fab) !important;
+}
+
+.cityPill_red {
+  background: linear-gradient(135deg, #ff4a3d, #b81515) !important;
+}
+
+@media (max-width: 900px) {
+  .list {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .root {
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .media {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 40px !important;
+  }
+
+  .content h3 {
+    margin-bottom: 8px !important;
+    font-size: 15px !important;
+  }
+
+  .list {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .cityPill {
+    min-height: 34px !important;
+    padding: 0 6px !important;
+    border-radius: 8px !important;
+    gap: 4px !important;
+    font-size: 9.5px !important;
+  }
+
+  .cityPill img {
+    width: 14px !important;
+    min-width: 14px !important;
+    height: 14px !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}

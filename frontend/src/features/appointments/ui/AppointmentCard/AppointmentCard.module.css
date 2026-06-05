@@ -1,0 +1,959 @@
+.root {
+  --appointment-accent: #0358ff;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 128px minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  border: 1px solid #dfe6f3 !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  background: #fff !important;
+  box-shadow: 0 12px 26px rgba(8, 20, 95, .055) !important;
+}
+
+.root,
+.root * {
+  box-sizing: border-box !important;
+}
+
+.root[data-accent="orange"] { --appointment-accent: #ff4b0b; }
+.root[data-accent="purple"] { --appointment-accent: #7b2df3; }
+.root[data-accent="green"] { --appointment-accent: #09a64b; }
+.root[data-accent="cyan"] { --appointment-accent: #109ac7; }
+.root[data-accent="red"] { --appointment-accent: #ff261f; }
+.root[data-accent="gray"] { --appointment-accent: #64748b; }
+
+.dateTile {
+  min-width: 0 !important;
+  min-height: 100% !important;
+  padding: 18px 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  color: #fff !important;
+  text-align: center !important;
+  background: linear-gradient(180deg, #075cff 0%, #061fbe 100%) !important;
+}
+
+.root[data-accent="orange"] .dateTile { background: linear-gradient(180deg, #ff7318 0%, #e93200 100%) !important; }
+.root[data-accent="purple"] .dateTile { background: linear-gradient(180deg, #9b46ff 0%, #6519ca 100%) !important; }
+.root[data-accent="green"] .dateTile { background: linear-gradient(180deg, #19bd5e 0%, #087c39 100%) !important; }
+.root[data-accent="cyan"] .dateTile { background: linear-gradient(180deg, #15aee4 0%, #087fab 100%) !important; }
+.root[data-accent="red"] .dateTile { background: linear-gradient(180deg, #ff4a3d 0%, #b81515 100%) !important; }
+.root[data-accent="gray"] .dateTile { background: linear-gradient(180deg, #64748b 0%, #334155 100%) !important; }
+
+.dateTile small,
+.dateTile span {
+  display: block !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  text-transform: uppercase !important;
+}
+
+.dateTile strong {
+  display: block !important;
+  font-size: 64px !important;
+  line-height: .86 !important;
+  font-weight: 900 !important;
+  letter-spacing: -2px !important;
+}
+
+.dateTile em {
+  margin-top: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  font-style: normal !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+}
+
+.dateTile em :global(.wf-icon),
+.dateTile em :global(.wf-icon--image) {
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+}
+
+.content {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 18px 20px 16px !important;
+}
+
+.headerRow {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.08fr) minmax(220px, .78fr) auto !important;
+  align-items: start !important;
+  gap: 28px !important;
+}
+
+.customer,
+.provider,
+.statusBox,
+.actions,
+.meta,
+.metaColumn,
+.metaItem,
+.metaText {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.customer h2 {
+  margin: 0 0 10px !important;
+  color: #07135d !important;
+  font-size: 26px !important;
+  line-height: 1.04 !important;
+  font-weight: 900 !important;
+  letter-spacing: -.3px !important;
+  overflow-wrap: anywhere !important;
+}
+
+.infoLine {
+  margin: 5px 0 !important;
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) !important;
+  gap: 9px !important;
+  align-items: start !important;
+  color: #06186f !important;
+  font-size: 15px !important;
+  line-height: 1.24 !important;
+  font-weight: 720 !important;
+}
+
+.infoLine :global(.wf-icon),
+.infoLine :global(.wf-icon--image) {
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+}
+
+.infoLine span,
+.providerPhone,
+.metaText small {
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.provider strong {
+  display: block !important;
+  margin-bottom: 10px !important;
+  color: #0358ff !important;
+  font-size: 16px !important;
+  line-height: 1.05 !important;
+  font-weight: 900 !important;
+}
+
+.providerPhone {
+  margin: -2px 0 0 27px !important;
+  color: #06186f !important;
+  font-size: 15px !important;
+  line-height: 1.18 !important;
+  font-weight: 720 !important;
+}
+
+.statusBox {
+  justify-self: end !important;
+  align-self: start !important;
+}
+
+.statusBox :global(.wf-badge) {
+  min-height: 38px !important;
+  max-width: 100% !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  gap: 9px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+.statusBox :global(.wf-badge .wf-icon) {
+  width: 19px !important;
+  min-width: 19px !important;
+  height: 19px !important;
+}
+
+.actions {
+  margin: 18px 0 14px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(128px, 1fr)) !important;
+  gap: 14px !important;
+}
+
+.action {
+  appearance: none !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  padding: 0 12px !important;
+  border-radius: 11px !important;
+  border: 1px solid #dce3f1 !important;
+  background: #fff !important;
+  color: #06136f !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  font-size: 15px !important;
+  line-height: 1.05 !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+
+.action span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.action :global(.wf-icon),
+.action :global(.wf-icon--image) {
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+}
+
+.whatsapp { color: #078d45 !important; }
+.cancel { color: #ff261f !important; border-color: #ffd7d4 !important; }
+.assign { color: #0358ff !important; }
+
+.meta {
+  border-top: 1px solid #dce3f1 !important;
+  padding-top: 14px !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  min-width: 0 !important;
+  background: #fff !important;
+}
+
+.metaColumn {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  gap: 12px !important;
+  padding: 0 24px !important;
+  border-left: 1px solid #dce3f1 !important;
+}
+
+.metaColumn:first-child {
+  padding-left: 0 !important;
+  border-left: 0 !important;
+}
+
+.metaColumn:last-child { padding-right: 0 !important; }
+
+.metaItem {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) !important;
+  gap: 9px !important;
+  align-items: start !important;
+  color: #06186f !important;
+}
+
+.metaIcon {
+  display: inline-flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+}
+
+.metaIcon :global(.wf-icon),
+.metaIcon :global(.wf-icon--image) {
+  width: 21px !important;
+  min-width: 21px !important;
+  height: 21px !important;
+}
+
+.metaText b {
+  display: block !important;
+  margin-bottom: 3px !important;
+  color: #06136f !important;
+  font-size: 13px !important;
+  line-height: 1.08 !important;
+  font-weight: 900 !important;
+}
+
+.metaText small {
+  display: block !important;
+  color: #06186f !important;
+  font: inherit !important;
+  font-size: 13px !important;
+  line-height: 1.16 !important;
+  font-weight: 720 !important;
+}
+
+@media (max-width: 900px) {
+  .root {
+    grid-template-columns: clamp(96px, 13vw, 112px) minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto !important;
+    align-items: start !important;
+    border-radius: 18px !important;
+    box-shadow: inset 4px 0 0 var(--appointment-accent), 0 12px 26px rgba(8, 20, 95, .055) !important;
+  }
+
+  .dateTile {
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    min-height: 184px !important;
+    height: 100% !important;
+    align-self: stretch !important;
+    border-radius: 16px !important;
+    padding: 16px 8px !important;
+  }
+
+  .content {
+    display: contents !important;
+    padding: 0 !important;
+  }
+
+  .dateTile small,
+  .dateTile span { font-size: 15px !important; }
+  .dateTile strong { font-size: 56px !important; }
+  .dateTile em { font-size: 14px !important; }
+
+  .headerRow {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    grid-template-columns: minmax(0, 1fr) minmax(154px, .72fr) auto !important;
+    gap: clamp(12px, 2vw, 18px) !important;
+    padding: 18px 16px 0 22px !important;
+  }
+
+  .customer h2 { font-size: 22px !important; }
+  .infoLine,
+  .providerPhone,
+  .action,
+  .metaText b,
+  .metaText small { font-size: 13px !important; }
+  .provider strong { font-size: 14px !important; }
+
+  .actions {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    margin: 16px 16px 12px 22px !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .meta {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    padding: 14px 22px 15px !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .metaColumn { padding: 0 16px !important; }
+}
+
+@media (max-width: 760px) and (min-width: 641px) {
+  .root { grid-template-columns: 96px minmax(0, 1fr) !important; }
+  .headerRow { grid-template-columns: minmax(0, 1fr) auto !important; }
+  .customer { grid-column: 1 !important; }
+  .provider { grid-column: 1 !important; }
+  .statusBox {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+  }
+  .actions { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+@media (max-width: 640px) {
+  .root {
+    grid-template-columns: clamp(68px, 20vw, 86px) minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto !important;
+    align-items: start !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    box-shadow: inset 3px 0 0 var(--appointment-accent), 0 10px 22px rgba(8, 20, 95, .06) !important;
+  }
+
+  .dateTile {
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    min-height: 100% !important;
+    height: 100% !important;
+    align-self: stretch !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 12px 6px !important;
+    border-radius: 0 !important;
+  }
+
+  .content {
+    display: contents !important;
+    padding: 0 !important;
+  }
+
+  .dateTile small,
+  .dateTile span {
+    font-size: clamp(10px, 2.9vw, 13px) !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
+  }
+
+  .dateTile strong {
+    font-size: clamp(34px, 10.5vw, 46px) !important;
+    line-height: .9 !important;
+    letter-spacing: -1px !important;
+  }
+
+  .dateTile em {
+    margin-top: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    font-size: clamp(9.5px, 2.6vw, 12px) !important;
+    white-space: nowrap !important;
+  }
+
+  .dateTile em :global(.wf-icon),
+  .dateTile em :global(.wf-icon--image) {
+    width: clamp(10px, 2.8vw, 13px) !important;
+    min-width: clamp(10px, 2.8vw, 13px) !important;
+    height: clamp(10px, 2.8vw, 13px) !important;
+  }
+
+  .headerRow {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    padding: 12px 12px 0 !important;
+  }
+
+  .customer h2 {
+    font-size: clamp(17px, 5vw, 21px) !important;
+    line-height: 1.08 !important;
+    margin-bottom: 7px !important;
+  }
+
+  .infoLine {
+    grid-template-columns: 15px minmax(0, 1fr) !important;
+    gap: 6px !important;
+    margin: 4px 0 !important;
+  }
+
+  .infoLine,
+  .providerPhone,
+  .provider strong {
+    font-size: clamp(10.5px, 3vw, 12.5px) !important;
+    line-height: 1.2 !important;
+  }
+
+  .infoLine :global(.wf-icon),
+  .infoLine :global(.wf-icon--image) {
+    width: 15px !important;
+    min-width: 15px !important;
+    height: 15px !important;
+  }
+
+  .provider {
+    padding-top: 2px !important;
+  }
+
+  .provider strong {
+    margin-bottom: 5px !important;
+  }
+
+  .providerPhone {
+    margin-left: 21px !important;
+  }
+
+  .statusBox {
+    justify-self: start !important;
+  }
+
+  .statusBox :global(.wf-badge) {
+    min-height: 30px !important;
+    padding: 0 9px !important;
+    gap: 5px !important;
+    font-size: 10.5px !important;
+  }
+
+  .statusBox :global(.wf-badge .wf-icon) {
+    width: 14px !important;
+    min-width: 14px !important;
+    height: 14px !important;
+  }
+
+  .actions {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    margin: 10px 10px 12px 12px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .action {
+    min-height: 35px !important;
+    padding: 0 6px !important;
+    border-radius: 9px !important;
+    font-size: clamp(9.6px, 2.9vw, 11.5px) !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+  }
+
+  .action span {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.08 !important;
+  }
+
+  .action :global(.wf-icon),
+  .action :global(.wf-icon--image) {
+    width: clamp(12px, 3.1vw, 14px) !important;
+    min-width: clamp(12px, 3.1vw, 14px) !important;
+    height: clamp(12px, 3.1vw, 14px) !important;
+  }
+
+  .meta {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px 12px !important;
+    padding: 12px 14px 14px !important;
+    border-top: 1px solid #dce3f1 !important;
+    background: #fff !important;
+  }
+
+  .metaColumn,
+  .metaColumn:first-child,
+  .metaColumn:last-child {
+    padding: 0 !important;
+    border-left: 0 !important;
+    gap: 8px !important;
+  }
+
+  .metaItem {
+    grid-template-columns: 16px minmax(0, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  .metaIcon :global(.wf-icon),
+  .metaIcon :global(.wf-icon--image) {
+    width: 15px !important;
+    min-width: 15px !important;
+    height: 15px !important;
+  }
+
+  .metaText b,
+  .metaText small {
+    font-size: clamp(10px, 2.8vw, 11.2px) !important;
+    line-height: 1.16 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .root {
+    grid-template-columns: clamp(64px, 21vw, 76px) minmax(0, 1fr) !important;
+  }
+
+  .headerRow {
+    padding: 11px 10px 0 !important;
+    gap: 7px !important;
+  }
+
+  .actions {
+    margin: 9px 9px 11px 10px !important;
+    gap: 6px !important;
+  }
+
+  .meta {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 9px !important;
+    padding: 11px 12px 13px !important;
+  }
+
+  .metaColumn {
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .root {
+    grid-template-columns: 62px minmax(0, 1fr) !important;
+    border-radius: 14px !important;
+  }
+
+  .dateTile {
+    padding: 10px 4px !important;
+  }
+
+  .dateTile small,
+  .dateTile span {
+    font-size: 9.2px !important;
+  }
+
+  .dateTile strong {
+    font-size: 31px !important;
+  }
+
+  .dateTile em {
+    margin-top: 5px !important;
+    font-size: 8.8px !important;
+    gap: 3px !important;
+  }
+
+  .headerRow {
+    padding: 10px 8px 0 !important;
+    gap: 6px !important;
+  }
+
+  .customer h2 {
+    font-size: 15.5px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .infoLine,
+  .providerPhone,
+  .provider strong {
+    font-size: 9.6px !important;
+  }
+
+  .infoLine {
+    grid-template-columns: 13px minmax(0, 1fr) !important;
+    gap: 5px !important;
+  }
+
+  .infoLine :global(.wf-icon),
+  .infoLine :global(.wf-icon--image) {
+    width: 13px !important;
+    min-width: 13px !important;
+    height: 13px !important;
+  }
+
+  .providerPhone {
+    margin-left: 18px !important;
+  }
+
+  .statusBox :global(.wf-badge) {
+    min-height: 27px !important;
+    padding-inline: 7px !important;
+    font-size: 9px !important;
+  }
+
+  .actions {
+    margin: 8px 7px 10px 8px !important;
+    gap: 5px !important;
+  }
+
+  .action {
+    min-height: 32px !important;
+    padding-inline: 4px !important;
+    font-size: 8.7px !important;
+    gap: 3px !important;
+  }
+
+  .action :global(.wf-icon),
+  .action :global(.wf-icon--image) {
+    width: 11px !important;
+    min-width: 11px !important;
+    height: 11px !important;
+  }
+
+  .meta {
+    padding: 10px !important;
+  }
+
+  .metaText b,
+  .metaText small {
+    font-size: 9.4px !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .root {
+    grid-template-columns: 58px minmax(0, 1fr) !important;
+  }
+
+  .dateTile strong {
+    font-size: 28px !important;
+  }
+
+  .dateTile em {
+    font-size: 8.2px !important;
+  }
+
+  .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .action {
+    font-size: 8.2px !important;
+  }
+}
+
+
+/* v4 hard override: keep small cards compact and keep actions/meta in two columns down to 320px. */
+@media (max-width: 640px) {
+  .root {
+    grid-template-columns: clamp(62px, 19vw, 82px) minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .dateTile {
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    min-height: 100% !important;
+    height: 100% !important;
+    align-self: stretch !important;
+  }
+
+  .headerRow {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-width: 0 !important;
+    padding: clamp(10px, 2.7vw, 13px) clamp(8px, 2.8vw, 12px) 0 !important;
+  }
+
+  .actions {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: clamp(5px, 1.8vw, 8px) !important;
+    margin: clamp(8px, 2.4vw, 11px) clamp(7px, 2.5vw, 10px) clamp(10px, 2.8vw, 12px) clamp(8px, 2.8vw, 12px) !important;
+  }
+
+  .action {
+    min-width: 0 !important;
+    min-height: clamp(31px, 9vw, 36px) !important;
+    padding: 0 clamp(4px, 1.6vw, 7px) !important;
+    font-size: clamp(8.7px, 2.75vw, 11.2px) !important;
+    white-space: nowrap !important;
+  }
+
+  .action span {
+    display: inline-block !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .meta {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: clamp(8px, 2.4vw, 12px) !important;
+    padding: clamp(10px, 3vw, 14px) clamp(10px, 3vw, 14px) !important;
+  }
+
+  .metaColumn,
+  .metaColumn:first-child,
+  .metaColumn:last-child {
+    display: contents !important;
+    padding: 0 !important;
+    border-left: 0 !important;
+  }
+
+  .metaItem {
+    min-width: 0 !important;
+    grid-template-columns: clamp(14px, 4vw, 17px) minmax(0, 1fr) !important;
+    gap: clamp(5px, 1.8vw, 7px) !important;
+  }
+
+  .metaText b,
+  .metaText small {
+    font-size: clamp(9.2px, 2.75vw, 11.2px) !important;
+    line-height: 1.15 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .metaColumn,
+  .metaColumn:first-child,
+  .metaColumn:last-child {
+    display: contents !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .root {
+    grid-template-columns: 58px minmax(0, 1fr) !important;
+  }
+
+  .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  .action {
+    min-height: 30px !important;
+    padding-inline: 3px !important;
+    font-size: 8px !important;
+    gap: 3px !important;
+  }
+
+  .action :global(.wf-icon),
+  .action :global(.wf-icon--image) {
+    width: 10px !important;
+    min-width: 10px !important;
+    height: 10px !important;
+  }
+
+  .meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px 6px !important;
+    padding: 9px 8px 10px !important;
+  }
+
+  .metaText b,
+  .metaText small {
+    font-size: 8.4px !important;
+  }
+}
+
+/* v5 hard override: keep bottom card information as 2 rows x 3 columns until 320px. */
+@media (max-width: 640px) {
+  .meta {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, auto) !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: minmax(0, 1fr) !important;
+    gap: clamp(8px, 2.4vw, 11px) clamp(6px, 2vw, 10px) !important;
+    padding: clamp(10px, 2.8vw, 13px) clamp(8px, 2.5vw, 12px) !important;
+    border-top: 1px solid #dce3f1 !important;
+    background: #fff !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .metaColumn,
+  .metaColumn:first-child,
+  .metaColumn:last-child {
+    display: contents !important;
+    padding: 0 !important;
+    border-left: 0 !important;
+  }
+
+  .metaItem {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: clamp(12px, 3.2vw, 15px) minmax(0, 1fr) !important;
+    gap: clamp(3px, 1.1vw, 5px) !important;
+    align-items: start !important;
+    overflow: hidden !important;
+  }
+
+  .metaIcon {
+    min-width: 0 !important;
+    width: clamp(12px, 3.2vw, 15px) !important;
+  }
+
+  .metaIcon :global(.wf-icon),
+  .metaIcon :global(.wf-icon--image) {
+    width: clamp(12px, 3.2vw, 15px) !important;
+    min-width: clamp(12px, 3.2vw, 15px) !important;
+    height: clamp(12px, 3.2vw, 15px) !important;
+  }
+
+  .metaText {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .metaText b {
+    display: block !important;
+    margin-bottom: 2px !important;
+    font-size: clamp(8.4px, 2.45vw, 10.8px) !important;
+    line-height: 1.08 !important;
+    font-weight: 900 !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+
+  .metaText small {
+    display: block !important;
+    font-size: clamp(7.8px, 2.25vw, 10.2px) !important;
+    line-height: 1.12 !important;
+    font-weight: 720 !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, auto) !important;
+    grid-auto-flow: column !important;
+    gap: 8px 5px !important;
+    padding: 10px 7px !important;
+  }
+
+  .metaItem {
+    grid-template-columns: 11px minmax(0, 1fr) !important;
+    gap: 3px !important;
+  }
+
+  .metaIcon,
+  .metaIcon :global(.wf-icon),
+  .metaIcon :global(.wf-icon--image) {
+    width: 11px !important;
+    min-width: 11px !important;
+    height: 11px !important;
+  }
+
+  .metaText b {
+    font-size: 7.8px !important;
+    line-height: 1.05 !important;
+  }
+
+  .metaText small {
+    font-size: 7.4px !important;
+    line-height: 1.08 !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .meta {
+    gap: 7px 4px !important;
+    padding-inline: 6px !important;
+  }
+
+  .metaItem {
+    grid-template-columns: 10px minmax(0, 1fr) !important;
+    gap: 3px !important;
+  }
+
+  .metaIcon,
+  .metaIcon :global(.wf-icon),
+  .metaIcon :global(.wf-icon--image) {
+    width: 10px !important;
+    min-width: 10px !important;
+    height: 10px !important;
+  }
+
+  .metaText b { font-size: 7.2px !important; }
+  .metaText small { font-size: 6.9px !important; }
+}

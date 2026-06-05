@@ -1,0 +1,31 @@
+.root {
+  container: page-title / inline-size;
+}
+
+.content {
+  min-width: 0;
+}
+
+.kicker {
+  display: block;
+  margin: 0 0 var(--cm-space-1);
+  color: var(--cm-color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  text-wrap: balance;
+}
+
+.description {
+  text-wrap: pretty;
+}
+
+@container page-title (max-width: 360px) {
+  .root {
+    gap: var(--cm-space-3);
+  }
+}

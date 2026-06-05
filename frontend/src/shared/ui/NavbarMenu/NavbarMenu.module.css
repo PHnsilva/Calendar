@@ -1,0 +1,7 @@
+.root {
+  container: navbar-menu / inline-size;
+}
+
+.panel {
+  max-width: min(88vw, 320px);
+}

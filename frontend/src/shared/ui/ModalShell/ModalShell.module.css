@@ -1,0 +1,13 @@
+.backdrop {
+  container: modal-shell / inline-size;
+}
+
+.shell {
+  container: modal-content / inline-size;
+}
+
+@container modal-shell (max-width: 640px) {
+  .shell {
+    max-width: 100%;
+  }
+}

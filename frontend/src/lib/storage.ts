@@ -1,6 +1,7 @@
 import type { CalendarEvent } from "../features/calendar/types";
 import type { ServicoResponse } from "../types/api";
 import type { AdminMeResponse, AdminRole } from "../types/api";
+import { isValidPhone, normalizePhone } from "./authRole";
 
 const ADMIN_TOKEN_STORAGE_KEY = "calendar.admin.token";
 const LEGACY_ADMIN_TOKEN_STORAGE_KEY = "calendar.adminToken";
@@ -71,18 +72,11 @@ function dispatchPhoneVerificationChanged(): void {
 }
 
 export function normalizeBrazilianPhone(value: string): string {
-  let digits = value.replace(/\D/g, "");
-
-  if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) {
-    digits = digits.slice(2);
-  }
-
-  return digits.slice(0, 11);
+  return normalizePhone(value);
 }
 
 export function isValidBrazilianPhone(value: string): boolean {
-  const digits = normalizeBrazilianPhone(value);
-  return digits.length === 10 || digits.length === 11;
+  return isValidPhone(value);
 }
 
 export function formatPhoneForDisplay(value: string): string {

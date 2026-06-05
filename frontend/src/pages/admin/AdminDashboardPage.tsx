@@ -1,5 +1,5 @@
-import { AdminDashboardReplica } from '../../components/wireframes/WireframeReplica';
+import AdminAppointmentsDashboardPage from '../../features/appointments/ui/AdminAppointmentsDashboardPage';
 
 export default function AdminDashboardPage() {
-  return <AdminDashboardReplica />;
+  return <AdminAppointmentsDashboardPage />;
 }

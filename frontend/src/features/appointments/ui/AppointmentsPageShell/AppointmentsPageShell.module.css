@@ -1,0 +1,23 @@
+.root {
+  container: appointments-shell / inline-size;
+}
+
+.layout {
+  container: appointments-layout / inline-size;
+}
+
+.panel {
+  min-width: 0;
+}
+
+@container appointments-layout (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr !important;
+  }
+}

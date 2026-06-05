@@ -1,5 +1,5 @@
-import { AdminLanding } from '../../components/wireframes/WireframeReplica';
+import AdminLandingPage from '../../features/landing/ui/AdminLandingPage';
 
 export default function AdminGatePage() {
-  return <AdminLanding />;
+  return <AdminLandingPage />;
 }

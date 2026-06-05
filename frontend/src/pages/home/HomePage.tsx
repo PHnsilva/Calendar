@@ -1,5 +1,5 @@
-import { ClientLanding } from '../../components/wireframes/WireframeReplica';
+import LandingPage from '../../features/landing/ui/LandingPage';
 
 export default function HomePage() {
-  return <ClientLanding />;
+  return <LandingPage />;
 }

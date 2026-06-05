@@ -1,0 +1,13 @@
+.root {
+  container: notifications-modal / inline-size;
+}
+
+.list {
+  min-width: 0;
+}
+
+@container notifications-modal (max-width: 460px) {
+  .list article {
+    grid-template-columns: 44px 1fr;
+  }
+}

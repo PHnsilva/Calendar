@@ -1,5 +1,5 @@
-import { AdminBookingDetails } from '../../components/wireframes/WireframeReplica';
+import AdminAppointmentDetailsPage from '../../features/appointments/ui/AdminAppointmentDetailsPage';
 
 export default function AdminBookingPage() {
-  return <AdminBookingDetails />;
+  return <AdminAppointmentDetailsPage />;
 }

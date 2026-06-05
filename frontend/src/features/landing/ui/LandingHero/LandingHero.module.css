@@ -1,0 +1,14 @@
+.root {
+  container: landing-hero / inline-size;
+}
+
+.copy,
+.actions {
+  min-width: 0;
+}
+
+@container landing-hero (max-width: 720px) {
+  .actions {
+    width: 100%;
+  }
+}

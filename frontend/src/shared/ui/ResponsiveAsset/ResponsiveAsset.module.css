@@ -1,0 +1,20 @@
+.root {
+  container: responsive-asset / inline-size;
+}
+
+.picture,
+.image {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.image {
+  height: auto;
+}
+
+@container responsive-asset (max-width: 520px) {
+  .image {
+    object-fit: contain;
+  }
+}

@@ -2386,8 +2386,6 @@
 
 .wf-modal--create .wf-input-action--with-icon button { color: #0358ff; font-weight: 950; }
 
-.wf-modal--create .wf-date-options--scroll button:first-child { color: #0358ff; border-color: #0358ff; background: #f4f8ff; box-shadow: inset 0 0 0 1px #0358ff; }
-
 .wf-modal--create .wf-time-options--scroll button { box-shadow: none; }
 
 .wf-admin-budget-toolbar {

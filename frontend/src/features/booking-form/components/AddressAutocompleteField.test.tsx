@@ -89,9 +89,12 @@ describe("AddressAutocompleteField", () => {
     await userEvent.click(input);
     await userEvent.type(input, "rua");
 
+    const listbox = await screen.findByRole("listbox");
     const option = await screen.findByRole("button", { name: /Rua Sao Jose/i });
+    expect(listbox).toBeTruthy();
     expect(screen.queryByText(/Manaus/i)).toBeNull();
 
+    fireEvent.blur(input);
     fireEvent.mouseDown(option);
 
     await waitFor(() => {

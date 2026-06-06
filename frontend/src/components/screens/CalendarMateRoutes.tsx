@@ -61,6 +61,7 @@ import SupportedCitiesPanel from '../../features/appointments/ui/SupportedCities
 import NotificationsModalView, { type NotificationModalItem } from '../../features/notifications/ui/NotificationsModal';
 import AddressAutocompleteField from '../../features/booking-form/components/AddressAutocompleteField';
 import type { AddressSuggestion } from '../../features/booking-form/hooks/useAddressSuggestions';
+import { buildSuggestionInputValue, buildSuggestionStreetLine, getSuggestionHouseNumber, shouldShowManualHouseNumber } from '../../features/booking-form/utils/address-selection';
 import { useCreateBooking } from '../../features/bookings/hooks/useCreateBooking';
 import { useAvailableSlots } from '../../features/calendar/hooks/useAvailableSlots';
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
@@ -230,7 +231,7 @@ function isHouseNumberValid(value: string): boolean {
   if (!normalized) return false;
   if (/^(s\/?n|sem numero|sem número)$/.test(normalized)) return true;
   if (/^\d{1,6}[a-z]?([-/]\d{1,4})?$/i.test(normalized)) return true;
-  return /^(casa|apto|apartamento|lote|loja|sala|bloco|fundos|galpao|galpão)\s+[a-z0-9 .\/-]{1,24}$/i.test(normalized);
+  return /^(casa|apto|apartamento|lote|loja|sala|bloco|fundos|galpao|galpão)\s+[a-z0-9 ./-]{1,24}$/i.test(normalized);
 }
 
 function normalizeHouseNumber(value: string): string {
@@ -1573,29 +1574,31 @@ function CitySelectField({
         <span>{selectedCity}</span>
       </button>
       {open ? (
-        <div className="wf-city-submodal" role="dialog" aria-modal="false" aria-label="Selecionar cidade">
-          <div className="wf-city-submodal__header">
-            <strong>Selecionar cidade</strong>
-            <button type="button" onClick={() => onOpenChange(false)} aria-label="Fechar cidades">x</button>
-          </div>
-          <div className="wf-city-submodal__grid">
-            {cities.map((city, index) => {
-              const style = resolveSupportedCityStyle(city, index);
-              return (
-                <button
-                  key={city}
-                  type="button"
-                  className={cx('wf-city-submodal__button', `wf-city-submodal__button--${style.color}`, selectedCity === city && 'is-active')}
-                  onClick={() => {
-                    onSelect(city);
-                    onOpenChange(false);
-                  }}
-                >
-                  <Icon name={cityIconName(city)} />
-                  <span>{city}</span>
-                </button>
-              );
-            })}
+        <div className="wf-city-submodal-backdrop" onMouseDown={() => onOpenChange(false)}>
+          <div className="wf-city-submodal" role="dialog" aria-modal="true" aria-labelledby="wf-city-submodal-title" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="wf-city-submodal__header">
+              <strong id="wf-city-submodal-title">Selecione sua cidade</strong>
+              <button type="button" onClick={() => onOpenChange(false)} aria-label="Fechar cidades">x</button>
+            </div>
+            <div className="wf-city-submodal__grid">
+              {cities.map((city, index) => {
+                const style = resolveSupportedCityStyle(city, index);
+                return (
+                  <button
+                    key={city}
+                    type="button"
+                    className={cx('wf-city-submodal__button', `wf-city-submodal__button--${style.color}`, selectedCity === city && 'is-active')}
+                    onClick={() => {
+                      onSelect(city);
+                      onOpenChange(false);
+                    }}
+                  >
+                    <Icon name={cityIconName(city)} />
+                    <span>{city}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       ) : null}
@@ -1662,6 +1665,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
     bookingDurationMinutes,
     Boolean(activeSelectedDate),
   );
+  const needsManualHouseNumber = shouldShowManualHouseNumber(selectedAddress);
 
   useEffect(() => {
     if (defaultCity && !city) setCity(defaultCity);
@@ -1696,9 +1700,10 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   };
 
   const handleAddressSelect = (suggestion: AddressSuggestion) => {
+    const houseNumberFromSuggestion = getSuggestionHouseNumber(suggestion);
     setSelectedAddress(suggestion);
-    setAddressInput(suggestion.formatted);
-    setHouseNumber(suggestion.houseNumber || '');
+    setAddressInput(buildSuggestionInputValue(suggestion));
+    setHouseNumber(houseNumberFromSuggestion);
     setComplement('');
     setFieldErrors((current) => ({ ...current, address: undefined, number: undefined }));
     setBackendError('');
@@ -1708,6 +1713,8 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
     const { firstName, lastName } = splitFullName(fullName);
     const phoneDigits = digitsOnly(phone);
     const cepDigits = digitsOnly(selectedAddress?.postcode ?? '');
+    const houseNumberFromSuggestion = getSuggestionHouseNumber(selectedAddress);
+    const effectiveHouseNumber = houseNumberFromSuggestion || houseNumber;
     const nextErrors: CreateBookingErrors = {};
 
     if (!firstName || !lastName || firstName === lastName) {
@@ -1725,7 +1732,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
     if (!selectedAddress || cepDigits.length !== 8) {
       nextErrors.address = 'Endereco: escolha uma sugestao da lista para validar rua, bairro e CEP. Exemplo: Rua Sao Jose, Centro.';
     }
-    if (!isHouseNumberValid(houseNumber)) {
+    if (!isHouseNumberValid(effectiveHouseNumber)) {
       nextErrors.number = 'Numero: informe 123, 123A, Casa 2, Lote 5 ou S/N.';
     }
     if (!activeSelectedDate) {
@@ -1758,12 +1765,14 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
         clientEmail: cleanFormText(email),
         clientPhone: phoneDigits,
         clientCep: cepDigits.slice(0, 8),
-        clientStreet: cleanFormText(selectedAddress.street || selectedAddress.addressLine1 || selectedAddress.formatted),
+        clientStreet: cleanFormText(buildSuggestionStreetLine(selectedAddress)),
         clientNeighborhood: cleanFormText(selectedAddress.neighborhood || selectedAddress.addressLine2 || selectedCity),
-        clientNumber: normalizeHouseNumber(houseNumber),
+        clientNumber: normalizeHouseNumber(effectiveHouseNumber),
         clientComplement: cleanFormText([complement, referencePoint].filter(Boolean).join(' | ')) || undefined,
         clientCity: selectedCity,
         clientState: cleanFormText(selectedAddress.stateCode || selectedAddress.state || defaultState).slice(0, 2).toUpperCase(),
+        clientLatitude: selectedAddress.lat ?? selectedAddress.latitude,
+        clientLongitude: selectedAddress.lon ?? selectedAddress.longitude,
       });
 
       saveManageToken(response.manageToken, response.servico.eventId);
@@ -1788,16 +1797,20 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
         <ModalField className="wf-span-2" label="E-mail" icon="mail" placeholder="voce@email.com" required value={email} type="email" onChange={setEmail} error={fieldErrors.email} />
         <CitySelectField selectedCity={selectedCity} cities={allowedCities} open={cityPickerOpen} onOpenChange={setCityPickerOpen} onSelect={handleCityChange} />
         {fieldErrors.city ? <small className="wf-field-error wf-span-2">{fieldErrors.city}</small> : null}
-        <label className="wf-modal-field wf-create-address-field">
-          <span className="wf-field-label">Endereço<em>*</em></span>
-          <span className="wf-input-shell wf-input-shell--address">
-            <Icon name="map" />
-            <AddressAutocompleteField value={addressInput} selectedCity={selectedCity} selectedState={defaultState} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
-          </span>
-          {fieldErrors.address ? <small className="wf-field-error">{fieldErrors.address}</small> : null}
-        </label>
-        <ModalField label="Número" icon="home" placeholder="123, 123A, Casa 2 ou S/N" required value={houseNumber} inputMode="text" onChange={setHouseNumber} error={fieldErrors.number} />
-        <ModalField className="wf-span-2" label="(opcional) Complemento" icon="edit" placeholder="Ex.: Apto 101, Bloco B, Fundos" value={complement} onChange={setComplement} />
+        <div className={cx('wf-create-address-row wf-span-2', needsManualHouseNumber && 'wf-create-address-row--with-number')}>
+          <label className="wf-modal-field wf-create-address-field">
+            <span className="wf-field-label">Endereço<em>*</em></span>
+            <span className="wf-input-shell wf-input-shell--address">
+              <Icon name="map" />
+              <AddressAutocompleteField value={addressInput} selectedCity={selectedCity} selectedState={defaultState} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
+            </span>
+            {fieldErrors.address ? <small className="wf-field-error">{fieldErrors.address}</small> : null}
+          </label>
+          {needsManualHouseNumber ? (
+            <ModalField className="wf-create-number-field" label="Número" icon="home" placeholder="123 ou S/N" required value={houseNumber} inputMode="text" onChange={setHouseNumber} error={fieldErrors.number} />
+          ) : null}
+        </div>
+        <ModalField className="wf-span-2" label="Complemento (opcional)" icon="edit" placeholder="Apto, bloco ou fundos" value={complement} onChange={setComplement} />
         <div className="wf-span-2 wf-choice-block">
           <strong>Escolha a data<em>*</em></strong>
           {monthAvailability.isLoading ? <small className="wf-choice-helper">Carregando dias disponíveis...</small> : null}

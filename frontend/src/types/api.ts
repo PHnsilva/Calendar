@@ -14,6 +14,8 @@ export type ServicoRequest = {
   clientComplement?: string;
   clientCity: string;
   clientState: string;
+  clientLatitude?: number;
+  clientLongitude?: number;
 };
 
 export type ServicoResponse = {
@@ -34,6 +36,8 @@ export type ServicoResponse = {
   clientComplement?: string;
   clientCity: string;
   clientState: string;
+  clientLatitude?: number;
+  clientLongitude?: number;
   clientAddressLine: string;
   status: string;
   manageToken?: string;

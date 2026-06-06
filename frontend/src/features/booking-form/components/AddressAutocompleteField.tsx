@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAddressSuggestions, type AddressSuggestion } from "../hooks/useAddressSuggestions";
 
 type AddressAutocompleteFieldProps = {
@@ -17,12 +17,35 @@ export default function AddressAutocompleteField({
   onSelectSuggestion,
 }: AddressAutocompleteFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
-  const { suggestions, isLoading, error } = useAddressSuggestions(value, selectedCity, selectedState, Boolean(selectedCity), isFocused);
+  const debugEnabled = Boolean(import.meta.env.DEV && import.meta.env.MODE !== "test");
+  const { suggestions, isLoading, error, debug } = useAddressSuggestions(value, selectedCity, selectedState, Boolean(selectedCity), isFocused);
 
   const shouldShowPanel = useMemo(() => {
     if (value.trim().length < 3) return false;
     return isFocused || isLoading || suggestions.length > 0 || Boolean(error);
   }, [error, isFocused, isLoading, suggestions.length, value]);
+
+  useEffect(() => {
+    if (!debugEnabled) return;
+    console.debug("[CalendarMate] Address autocomplete render", {
+      inputValue: value,
+      selectedCityObject: {
+        name: selectedCity,
+        state: selectedState,
+      },
+      selectedCityName: selectedCity,
+      selectedCityState: selectedState,
+      finalSuggestionsCount: suggestions.length,
+      dropdownRenderCondition: shouldShowPanel,
+      inputFocused: isFocused,
+      loadingBlocksDropdown: isLoading,
+      errorBlocksDropdown: Boolean(error),
+      rawResultsCount: debug?.rawResultsCount ?? null,
+      rawFeaturesCount: debug?.rawFeaturesCount ?? null,
+      normalizedSuggestionCount: debug?.normalizedSuggestionCount ?? null,
+      filteredSuggestionCount: debug?.filteredSuggestionCount ?? null,
+    });
+  }, [debug, debugEnabled, error, isFocused, isLoading, selectedCity, selectedState, shouldShowPanel, suggestions.length, value]);
 
   return (
     <div className="booking-address-autocomplete">
@@ -64,6 +87,11 @@ export default function AddressAutocompleteField({
               ))
             : null}
         </div>
+      ) : null}
+      {debugEnabled ? (
+        <small className="booking-address-autocomplete__debug">
+          Geoapify debug: raw={debug?.rawResultsCount ?? 0}, normalized={debug?.normalizedSuggestionCount ?? 0}, filtered={debug?.filteredSuggestionCount ?? 0}, state={suggestions.length}, open={shouldShowPanel ? "true" : "false"}
+        </small>
       ) : null}
     </div>
   );

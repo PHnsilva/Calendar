@@ -38,6 +38,8 @@ describe("createBooking", () => {
       clientComplement: "Apto 101",
       clientCity: "Itabirito",
       clientState: "MG",
+      clientLatitude: -20.25,
+      clientLongitude: -43.8,
     };
 
     const { createBooking } = await import("./create-booking");

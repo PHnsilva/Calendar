@@ -15,6 +15,21 @@ type GeoapifyAutocompleteResponse = {
   features?: { properties?: GeoapifyResult }[];
 };
 
+export type GeoapifyAddressSearchDebug = {
+  inputValue: string;
+  selectedCityName: string;
+  selectedCityState: string;
+  selectedCityPlaceIdExists: boolean;
+  finalUrl?: string;
+  httpStatus?: number;
+  rawResultsCount: number;
+  rawFeaturesCount: number;
+  normalizedSuggestionCount: number;
+  filteredSuggestionCount: number;
+  stateSuggestionCount: number;
+  source: "direct" | "backend";
+};
+
 class GeoapifyDirectRequestError extends Error {
   status?: number;
 
@@ -26,6 +41,7 @@ class GeoapifyDirectRequestError extends Error {
 }
 
 let hasWarnedDirectFallback = false;
+let lastAddressSearchDebug: GeoapifyAddressSearchDebug | null = null;
 
 const BRAZIL_STATE_TO_UF: Record<string, string> = {
   acre: "AC",
@@ -58,12 +74,16 @@ const BRAZIL_STATE_TO_UF: Record<string, string> = {
 };
 
 function isDevelopment() {
-  return Boolean(import.meta.env.DEV);
+  return Boolean(import.meta.env.DEV && import.meta.env.MODE !== "test");
 }
 
 function logGeoapifyDebug(label: string, payload: Record<string, unknown>) {
   if (!isDevelopment()) return;
   console.debug(`[CalendarMate] Geoapify ${label}`, payload);
+}
+
+export function getLastAddressSearchDebug() {
+  return lastAddressSearchDebug;
 }
 
 function sanitizeGeoapifyUrl(url: string) {
@@ -131,12 +151,28 @@ export function extractGeoapifyResults(payload: GeoapifyAutocompleteResponse | n
   return [];
 }
 
+function countGeoapifyFeatures(payload: GeoapifyAutocompleteResponse | null | undefined) {
+  return Array.isArray(payload?.features) ? payload.features.length : 0;
+}
+
+function countGeoapifyResults(payload: GeoapifyAutocompleteResponse | null | undefined) {
+  return Array.isArray(payload?.results) ? payload.results.length : 0;
+}
+
 export function toSuggestion(properties: GeoapifyResult): GeoapifyAddressSuggestion | null {
-  const formatted = firstText(properties.formatted, properties.address_line1);
+  const rawLabel = firstText(
+    properties.formatted,
+    [properties.address_line1, properties.address_line2].map(normalizeText).filter(Boolean).join(", "),
+    [properties.name, properties.street, properties.housenumber, properties.suburb, properties.city, properties.state_code || properties.state, properties.country]
+      .map(normalizeText)
+      .filter(Boolean)
+      .join(", "),
+  );
+  const formatted = rawLabel;
   const street = firstText(properties.street, properties.address_line1);
   const houseNumber = normalizeText(properties.housenumber);
   const neighborhood = firstText(properties.suburb, properties.district, properties.neighbourhood);
-  const city = firstText(properties.city, properties.town, properties.village, properties.municipality, properties.county, properties.state_district);
+  const city = firstText(properties.city, properties.town, properties.village);
   const stateCode = normalizeUf(firstText(properties.state_code, properties.state));
   const state = stateCode || normalizeText(properties.state).toUpperCase();
   const postcode = normalizePostcode(properties.postcode);
@@ -145,7 +181,7 @@ export function toSuggestion(properties: GeoapifyResult): GeoapifyAddressSuggest
 
   if (!formatted || Number.isNaN(latitude) || Number.isNaN(longitude)) return null;
 
-  const id = firstText(properties.place_id, properties.placeId, `${formatted}-${latitude}-${longitude}`);
+  const id = firstText(properties.place_id, properties.placeId, `${latitude}-${longitude}-${formatted || street}`);
   const label = formatted;
 
   return {
@@ -157,8 +193,14 @@ export function toSuggestion(properties: GeoapifyResult): GeoapifyAddressSuggest
     longitude,
     lat: latitude,
     lon: longitude,
-    addressLine1: buildAddressLine1(street, houseNumber, formatted),
-    addressLine2: buildAddressLine2(neighborhood, city, state),
+    addressLine1: firstText(
+      buildAddressLine1(firstText(properties.street), houseNumber, ""),
+      properties.address_line1,
+      properties.name,
+      properties.street,
+      formatted,
+    ),
+    addressLine2: firstText(properties.address_line2, buildAddressLine2(neighborhood, city, state)),
     street,
     houseNumber,
     neighborhood,
@@ -169,6 +211,13 @@ export function toSuggestion(properties: GeoapifyResult): GeoapifyAddressSuggest
   };
 }
 
+export function normalizeGeoapifySuggestions(payload: GeoapifyAutocompleteResponse | null | undefined): GeoapifyAddressSuggestion[] {
+  return extractGeoapifyResults(payload)
+    .filter(Boolean)
+    .map(toSuggestion)
+    .filter((item): item is GeoapifyAddressSuggestion => Boolean(item));
+}
+
 function getCityCandidates(item: GeoapifyAddressSuggestion): string[] {
   const raw = item.raw ?? {};
   return [
@@ -176,12 +225,16 @@ function getCityCandidates(item: GeoapifyAddressSuggestion): string[] {
     raw.city,
     raw.town,
     raw.village,
-    raw.municipality,
-    raw.county,
-    raw.state_district,
   ]
     .map(normalizeForMatch)
     .filter(Boolean);
+}
+
+function getStateCandidates(item: GeoapifyAddressSuggestion): string[] {
+  const raw = item.raw ?? {};
+  const isoState = normalizeText(raw.iso3166_2).toUpperCase();
+  const isoUf = isoState.startsWith("BR-") ? isoState.slice(3, 5) : "";
+  return [item.state, raw.state_code, raw.state, isoUf].map(normalizeUf).filter(Boolean);
 }
 
 function cityMatchesSuggestion(item: GeoapifyAddressSuggestion, cityContext?: GeoapifyCityContext): boolean {
@@ -193,8 +246,7 @@ function cityMatchesSuggestion(item: GeoapifyAddressSuggestion, cityContext?: Ge
   const cityMatches = cityCandidates.some((candidate) => candidate === selectedCity);
 
   const selectedUf = normalizeUf(cityContext?.state);
-  const raw = item.raw ?? {};
-  const resultUfCandidates = [item.state, raw.state_code, raw.state].map(normalizeUf).filter(Boolean);
+  const resultUfCandidates = getStateCandidates(item);
   const hasStateData = resultUfCandidates.length > 0;
   const stateMatches = !selectedUf || !hasStateData || resultUfCandidates.includes(selectedUf);
 
@@ -206,7 +258,14 @@ export function filterSuggestionsBySelectedCity(
   suggestions: GeoapifyAddressSuggestion[],
   cityContext?: GeoapifyCityContext,
 ): GeoapifyAddressSuggestion[] {
-  return suggestions.filter((item) => cityMatchesSuggestion(item, cityContext));
+  return suggestions
+    .filter((item) => cityMatchesSuggestion(item, cityContext))
+    .sort((left, right) => {
+      const leftHasNumber = Boolean(normalizeText(left.houseNumber));
+      const rightHasNumber = Boolean(normalizeText(right.houseNumber));
+      if (leftHasNumber === rightHasNumber) return 0;
+      return leftHasNumber ? -1 : 1;
+    });
 }
 
 function toCityContext(properties: GeoapifyResult, requestedCity: string, requestedState?: string): GeoapifyCityContext | null {
@@ -347,7 +406,10 @@ async function resolveCityDirectly(cityName: string, state?: string): Promise<Ge
   logGeoapifyDebug("city resolver response", {
     selectedCity: cityName,
     selectedState: state ?? "",
+    httpStatus: response.status,
     responseHasResults: Array.isArray(payload.results),
+    rawResultsCount: countGeoapifyResults(payload),
+    rawFeaturesCount: countGeoapifyFeatures(payload),
     normalizedSuggestionCount: results.length,
     selectedCityPlaceIdExists: Boolean(context?.placeId),
   });
@@ -410,17 +472,36 @@ async function searchAddressesDirectly(query: string, cityContext: GeoapifyCityC
   }
 
   const payload = await parseGeoapifyResponse(response, "address");
-  const rawItems = extractGeoapifyResults(payload);
-  const normalized = rawItems.map(toSuggestion).filter((item): item is GeoapifyAddressSuggestion => Boolean(item));
+  const normalized = normalizeGeoapifySuggestions(payload);
   const filtered = filterSuggestionsBySelectedCity(normalized, cityContext);
+  lastAddressSearchDebug = {
+    inputValue: query,
+    selectedCityName: cityContext.name,
+    selectedCityState: cityContext.state ?? "",
+    selectedCityPlaceIdExists: Boolean(cityContext.placeId),
+    finalUrl: sanitizeGeoapifyUrl(url),
+    httpStatus: response.status,
+    rawResultsCount: countGeoapifyResults(payload),
+    rawFeaturesCount: countGeoapifyFeatures(payload),
+    normalizedSuggestionCount: normalized.length,
+    filteredSuggestionCount: filtered.length,
+    stateSuggestionCount: filtered.length,
+    source: "direct",
+  };
 
   logGeoapifyDebug("address response", {
+    inputValue: query,
     selectedCity: cityContext.name,
     selectedState: cityContext.state ?? "",
     selectedCityPlaceIdExists: Boolean(cityContext.placeId),
+    finalUrl: sanitizeGeoapifyUrl(url),
+    httpStatus: response.status,
     responseHasResults: Array.isArray(payload.results),
+    rawResultsCount: countGeoapifyResults(payload),
+    rawFeaturesCount: countGeoapifyFeatures(payload),
     normalizedSuggestionCount: normalized.length,
     filteredSuggestionCount: filtered.length,
+    finalSuggestionsCount: filtered.length,
   });
 
   return filtered;
@@ -439,7 +520,29 @@ async function searchAddressesThroughBackend(query: string, cityContext: Geoapif
         cityLon: cityContext.longitude,
       },
     });
-    return filterSuggestionsBySelectedCity(items, cityContext);
+    const filtered = filterSuggestionsBySelectedCity(items, cityContext);
+    lastAddressSearchDebug = {
+      inputValue: query,
+      selectedCityName: cityContext.name,
+      selectedCityState: cityContext.state ?? "",
+      selectedCityPlaceIdExists: Boolean(cityContext.placeId),
+      rawResultsCount: items.length,
+      rawFeaturesCount: 0,
+      normalizedSuggestionCount: items.length,
+      filteredSuggestionCount: filtered.length,
+      stateSuggestionCount: filtered.length,
+      source: "backend",
+    };
+    logGeoapifyDebug("backend address response", {
+      inputValue: query,
+      selectedCity: cityContext.name,
+      selectedState: cityContext.state ?? "",
+      selectedCityPlaceIdExists: Boolean(cityContext.placeId),
+      normalizedSuggestionCount: items.length,
+      filteredSuggestionCount: filtered.length,
+      finalSuggestionsCount: filtered.length,
+    });
+    return filtered;
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new Error("Nao foi possivel conectar ao backend de autocomplete de endereco.");

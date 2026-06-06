@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { resolveGeoapifyCityContext, searchAddresses } from "../api/search-addresses";
+import { getLastAddressSearchDebug, resolveGeoapifyCityContext, searchAddresses, type GeoapifyAddressSearchDebug } from "../api/search-addresses";
 import type { GeoapifyAddressSuggestion, GeoapifyCityContext } from "../../../types/api";
 
 export type AddressSuggestion = GeoapifyAddressSuggestion & {
@@ -12,6 +12,15 @@ export type AddressSuggestion = GeoapifyAddressSuggestion & {
 
 let hasWarnedGeoapifyRequestFailure = false;
 let hasWarnedCityResolverFailure = false;
+
+function isDevelopment() {
+  return Boolean(import.meta.env.DEV && import.meta.env.MODE !== "test");
+}
+
+function logAddressDebug(label: string, payload: Record<string, unknown>) {
+  if (!isDevelopment()) return;
+  console.debug(`[CalendarMate] Address autocomplete ${label}`, payload);
+}
 
 function toAddressSuggestion(item: GeoapifyAddressSuggestion): AddressSuggestion {
   return {
@@ -92,6 +101,7 @@ export function useAddressSuggestions(
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debug, setDebug] = useState<GeoapifyAddressSearchDebug | null>(null);
   const { cityContext, isResolvingCity, cityError } = useResolvedCityContext(selectedCity, selectedState, enabled);
 
   useEffect(() => {
@@ -99,6 +109,15 @@ export function useAddressSuggestions(
       setSuggestions([]);
       setIsLoading(false);
       setError(null);
+      setDebug(null);
+      logAddressDebug("cleared", {
+        inputValue: query,
+        selectedCityObject: cityContext,
+        selectedCityName: selectedCity,
+        selectedCityState: selectedState,
+        reason: !enabled ? "disabled" : "not-focused",
+        finalSuggestionsCount: 0,
+      });
       return;
     }
 
@@ -107,6 +126,15 @@ export function useAddressSuggestions(
       setSuggestions([]);
       setIsLoading(isResolvingCity);
       setError(cityError);
+      setDebug(null);
+      logAddressDebug("cleared", {
+        inputValue: query,
+        selectedCityObject: cityContext,
+        selectedCityName: selectedCity,
+        selectedCityState: selectedState,
+        reason: "too-short",
+        finalSuggestionsCount: 0,
+      });
       return;
     }
 
@@ -114,6 +142,14 @@ export function useAddressSuggestions(
       setSuggestions([]);
       setIsLoading(true);
       setError(null);
+      setDebug(null);
+      logAddressDebug("waiting-city", {
+        inputValue: trimmed,
+        selectedCityObject: cityContext,
+        selectedCityName: selectedCity,
+        selectedCityState: selectedState,
+        finalSuggestionsCount: 0,
+      });
       return;
     }
 
@@ -121,6 +157,15 @@ export function useAddressSuggestions(
       setSuggestions([]);
       setIsLoading(false);
       setError(cityError ?? "Cidade: aguarde a validacao da cidade para buscar enderecos.");
+      setDebug(null);
+      logAddressDebug("blocked-by-city", {
+        inputValue: trimmed,
+        selectedCityObject: cityContext,
+        selectedCityName: selectedCity,
+        selectedCityState: selectedState,
+        cityError,
+        finalSuggestionsCount: 0,
+      });
       return;
     }
 
@@ -131,12 +176,27 @@ export function useAddressSuggestions(
 
       try {
         const items = (await searchAddresses(trimmed, cityContext)).map(toAddressSuggestion);
+        const latestDebug = getLastAddressSearchDebug();
 
         if (!active) return;
         setSuggestions(items);
+        setDebug(latestDebug ? { ...latestDebug, stateSuggestionCount: items.length } : null);
+        logAddressDebug("state-update", {
+          inputValue: trimmed,
+          selectedCityObject: cityContext,
+          selectedCityName: cityContext.name,
+          selectedCityState: cityContext.state ?? selectedState,
+          selectedCityPlaceIdExists: Boolean(cityContext.placeId),
+          finalSuggestionsCount: items.length,
+          rawResultsCount: latestDebug?.rawResultsCount ?? null,
+          rawFeaturesCount: latestDebug?.rawFeaturesCount ?? null,
+          normalizedSuggestionCount: latestDebug?.normalizedSuggestionCount ?? null,
+          filteredSuggestionCount: latestDebug?.filteredSuggestionCount ?? null,
+        });
       } catch (requestError) {
         if (!active) return;
         setSuggestions([]);
+        setDebug(null);
         setError((requestError as Error).message);
         if (!hasWarnedGeoapifyRequestFailure) {
           hasWarnedGeoapifyRequestFailure = true;
@@ -151,12 +211,13 @@ export function useAddressSuggestions(
       active = false;
       window.clearTimeout(timeoutId);
     };
-  }, [cityContext, cityError, enabled, isResolvingCity, query, shouldSearch]);
+  }, [cityContext, cityError, enabled, isResolvingCity, query, selectedCity, selectedState, shouldSearch]);
 
   return {
     suggestions,
     isLoading,
     error,
+    debug,
     cityContext,
     isResolvingCity,
     isEnabled: Boolean(enabled),

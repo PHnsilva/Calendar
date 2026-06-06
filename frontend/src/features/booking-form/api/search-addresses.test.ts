@@ -21,12 +21,15 @@ beforeEach(() => {
 
 describe("Geoapify address autocomplete", () => {
   it("parses format=json data.results into normalized suggestions", async () => {
-    const { extractGeoapifyResults, toSuggestion } = await import("./search-addresses");
+    const { normalizeGeoapifySuggestions } = await import("./search-addresses");
     const payload = {
       results: [{
         place_id: "street-1",
-        formatted: "Rua Sao Jose, Itabirito - MG, Brasil",
+        formatted: "Domani, Rua Joao Pessoa 72, Centro, Itabirito - MG, 35450-045, Brasil",
+        address_line1: "Domani",
+        address_line2: "Rua Joao Pessoa 72, Centro, Itabirito - MG, 35450-045, Brasil",
         street: "Rua Sao Jose",
+        housenumber: "72",
         suburb: "Centro",
         city: "Itabirito",
         state_code: "MG",
@@ -36,13 +39,13 @@ describe("Geoapify address autocomplete", () => {
       }],
     };
 
-    const suggestions = extractGeoapifyResults(payload)
-      .map(toSuggestion)
-      .filter(present);
+    const suggestions = normalizeGeoapifySuggestions(payload);
 
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0]?.id).toBe("street-1");
-    expect(suggestions[0]?.label).toContain("Rua Sao Jose");
+    expect(suggestions[0]?.label).toContain("Domani");
+    expect(suggestions[0]?.addressLine1).toContain("72");
+    expect(suggestions[0]?.houseNumber).toBe("72");
     expect(suggestions[0]?.city).toBe("Itabirito");
     expect(suggestions[0]?.lat).toBe(-20.25);
     expect(suggestions[0]?.lon).toBe(-43.8);
@@ -99,6 +102,33 @@ describe("Geoapify address autocomplete", () => {
 
     expect(filtered).toHaveLength(1);
     expect(filtered[0]?.placeId).toBe("valid");
+  });
+
+  it("keeps Itabirito results when state is Minas Gerais and regional fields are long names", async () => {
+    const { filterSuggestionsBySelectedCity, normalizeGeoapifySuggestions } = await import("./search-addresses");
+    const normalized = normalizeGeoapifySuggestions({
+      results: [
+        {
+          place_id: "itabirito-building",
+          formatted: "Domani, Rua Joao Pessoa 72, Centro, Itabirito - MG",
+          address_line1: "Domani",
+          address_line2: "Rua Joao Pessoa 72, Centro, Itabirito - MG",
+          city: "Itabirito",
+          state: "Minas Gerais",
+          county: "Regiao Geografica Intermediaria de Belo Horizonte",
+          municipality: "Regiao Geografica Imediata de Santa Barbara - Ouro Preto",
+          iso3166_2: "BR-MG",
+          postcode: "35450045",
+          lat: -20.25,
+          lon: -43.8,
+        },
+      ],
+    });
+
+    const filtered = filterSuggestionsBySelectedCity(normalized, itabiritoContext);
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.placeId).toBe("itabirito-building");
   });
 
   it("searches with a city place filter and parses data.results from mocked fetch", async () => {

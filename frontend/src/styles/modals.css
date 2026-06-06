@@ -614,6 +614,12 @@
   overflow-y: auto;
 }
 
+.booking-address-autocomplete__panel--portal {
+  right: auto;
+  max-width: calc(100vw - 24px);
+  z-index: 10080;
+}
+
 .booking-address-autocomplete__debug {
   display: block;
   margin-top: 6px;

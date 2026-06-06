@@ -54,6 +54,24 @@ describe("AddressAutocompleteField", () => {
       }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        results: [
+          {
+            place_id: "benjamin-address",
+            formatted: "Rua Benjamin Simoes, Agostinho Rodrigues, Itabirito - MG",
+            street: "Rua Benjamin Simoes",
+            suburb: "Agostinho Rodrigues",
+            city: "Itabirito",
+            state_code: "MG",
+            postcode: "35450000",
+            lat: -20.24,
+            lon: -43.8,
+          },
+        ],
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
       }));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -103,5 +121,11 @@ describe("AddressAutocompleteField", () => {
     });
     expect(selected).toHaveLength(1);
     expect(selected[0]?.city).toBe("Itabirito");
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "beni");
+
+    const nextOption = await screen.findByRole("button", { name: /Rua Benjamin Simoes/i });
+    expect(nextOption).toBeTruthy();
   });
 });

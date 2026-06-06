@@ -25,7 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AddressAutocompleteService {
     private static final String AUTOCOMPLETE_ENDPOINT = "https://api.geoapify.com/v1/geocode/autocomplete";
     private static final int DEFAULT_LIMIT = 20;
-    private static final int CITY_RADIUS_METERS = 15_000;
+    private static final int CITY_RADIUS_METERS = 30_000;
+    private static final int FALLBACK_MIN_RESULTS = 5;
 
     private static final Map<String, String> BRAZIL_STATE_TO_UF = Map.ofEntries(
             Map.entry("acre", "AC"),
@@ -94,24 +95,34 @@ public class AddressAutocompleteService {
             throw new BadRequestException("Nao foi possivel restringir o autocomplete para a cidade selecionada.");
         }
 
-        URI uri = buildAutocompleteUri(query, cityContext, apiKey);
-
         try {
-            ResponseEntity<Map> response = http.exchange(uri, HttpMethod.GET, null, Map.class);
-            Map<String, Object> body = response.getBody();
-            if (body == null) return List.of();
-
-            List<Map<?, ?>> rawItems = extractResults(body);
-            List<AddressSuggestionResponse> normalized = rawItems.stream()
-                    .map(this::toSuggestion)
-                    .filter(Objects::nonNull)
-                    .toList();
-
+            List<URI> uris = buildAutocompleteUris(query, cityContext, apiKey);
             AddressCityContextResponse selectedCityContext = cityContext;
-            return normalized.stream()
-                    .filter((item) -> matchesSelectedCity(item, selectedCityContext))
-                    .limit(DEFAULT_LIMIT)
-                    .toList();
+            List<AddressSuggestionResponse> collected = new ArrayList<>();
+
+            for (URI uri : uris) {
+                ResponseEntity<Map> response = http.exchange(uri, HttpMethod.GET, null, Map.class);
+                Map<String, Object> body = response.getBody();
+                if (body == null) continue;
+
+                List<Map<?, ?>> rawItems = extractResults(body);
+                List<AddressSuggestionResponse> normalized = rawItems.stream()
+                        .map(this::toSuggestion)
+                        .filter(Objects::nonNull)
+                        .filter((item) -> matchesSelectedCity(item, selectedCityContext))
+                        .toList();
+
+                collected.addAll(normalized);
+                int uniqueCount = dedupeSuggestions(collected).size();
+                if (uris.size() <= 2 && uniqueCount > 0) {
+                    break;
+                }
+                if (uniqueCount >= FALLBACK_MIN_RESULTS) {
+                    break;
+                }
+            }
+
+            return dedupeSuggestions(collected).stream().limit(DEFAULT_LIMIT).toList();
         } catch (RestClientResponseException error) {
             throw mapGeoapifyError(error);
         } catch (RestClientException error) {
@@ -159,16 +170,33 @@ public class AddressAutocompleteService {
         }
     }
 
-    private URI buildAutocompleteUri(String query, AddressCityContextResponse cityContext, String apiKey) {
+    private URI buildAutocompleteUri(String query, String filter, String apiKey) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(AUTOCOMPLETE_ENDPOINT)
                 .queryParam("text", query)
-                .queryParam("filter", buildFilter(cityContext))
+                .queryParam("filter", filter)
                 .queryParam("limit", DEFAULT_LIMIT)
                 .queryParam("lang", "pt")
                 .queryParam("format", "json")
                 .queryParam("apiKey", apiKey);
 
         return builder.encode(StandardCharsets.UTF_8).build().toUri();
+    }
+
+    private List<URI> buildAutocompleteUris(String query, AddressCityContextResponse cityContext, String apiKey) {
+        List<String> filters = new ArrayList<>();
+        String placeFilter = buildPlaceFilter(cityContext);
+        String circleFilter = buildCircleFilter(cityContext);
+        if (!placeFilter.isBlank()) filters.add(placeFilter);
+        if (!circleFilter.isBlank() && !filters.contains(circleFilter)) filters.add(circleFilter);
+        if (filters.isEmpty()) filters.add(buildFilter(cityContext));
+
+        List<URI> uris = new ArrayList<>();
+        for (String variant : searchQueryVariants(query)) {
+            for (String filter : filters) {
+                uris.add(buildAutocompleteUri(variant, filter, apiKey));
+            }
+        }
+        return uris;
     }
 
     private URI buildCityUri(String city, String state, String apiKey) {
@@ -188,11 +216,20 @@ public class AddressAutocompleteService {
     }
 
     private String buildFilter(AddressCityContextResponse cityContext) {
+        String placeFilter = buildPlaceFilter(cityContext);
+        if (!placeFilter.isBlank()) return placeFilter;
+        return buildCircleFilter(cityContext);
+    }
+
+    private String buildPlaceFilter(AddressCityContextResponse cityContext) {
         String placeId = clean(cityContext == null ? "" : cityContext.getPlaceId());
         if (!placeId.isBlank()) {
             return "place:" + placeId + "|countrycode:" + country();
         }
+        return "";
+    }
 
+    private String buildCircleFilter(AddressCityContextResponse cityContext) {
         if (cityContext != null
                 && cityContext.getLatitude() != null
                 && cityContext.getLongitude() != null
@@ -202,6 +239,33 @@ public class AddressAutocompleteService {
         }
 
         return "";
+    }
+
+    private List<String> searchQueryVariants(String query) {
+        List<String> variants = new ArrayList<>();
+        addSearchVariant(variants, clean(query));
+        addSearchVariant(variants, normalizeSearchVariant(query));
+        String[] parts = clean(query).split("\\s+-\\s+");
+        if (parts.length > 0) {
+            addSearchVariant(variants, normalizeSearchVariant(parts[0]));
+        }
+        return variants;
+    }
+
+    private void addSearchVariant(List<String> variants, String value) {
+        String cleanValue = clean(value).replaceAll("\\s+", " ");
+        if (cleanValue.length() >= 3 && !variants.contains(cleanValue)) {
+            variants.add(cleanValue);
+        }
+    }
+
+    private String normalizeSearchVariant(String query) {
+        return clean(query)
+                .replaceFirst("(?i)^\\s*r\\.\\s+", "Rua ")
+                .replaceFirst("(?i)^\\s*av\\.\\s+", "Avenida ")
+                .replaceAll("\\s+-\\s+", ", ")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     private AddressCityContextResponse providedCityContext(
@@ -417,6 +481,21 @@ public class AddressAutocompleteService {
             return cityMatches && stateMatches;
         }
         return stateMatches;
+    }
+
+    private List<AddressSuggestionResponse> dedupeSuggestions(List<AddressSuggestionResponse> suggestions) {
+        Map<String, AddressSuggestionResponse> unique = new LinkedHashMap<>();
+        for (AddressSuggestionResponse suggestion : suggestions) {
+            String key = firstClean(
+                    suggestion.getPlaceId(),
+                    suggestion.getId(),
+                    suggestion.getLat() + ":" + suggestion.getLon() + ":" + suggestion.getLabel()
+            );
+            if (!key.isBlank()) {
+                unique.putIfAbsent(key, suggestion);
+            }
+        }
+        return new ArrayList<>(unique.values());
     }
 
     private BadRequestException mapGeoapifyError(RestClientResponseException error) {

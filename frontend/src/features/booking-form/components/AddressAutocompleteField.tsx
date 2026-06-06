@@ -20,8 +20,23 @@ export default function AddressAutocompleteField({
   const [isFocused, setIsFocused] = useState(false);
   const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const blurTimeoutRef = useRef<number | null>(null);
   const debugEnabled = Boolean(import.meta.env.DEV && import.meta.env.MODE !== "test");
   const { suggestions, isLoading, error, debug } = useAddressSuggestions(value, selectedCity, selectedState, Boolean(selectedCity), isFocused);
+
+  const keepSearchOpen = () => {
+    if (blurTimeoutRef.current !== null) {
+      window.clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    setIsFocused(true);
+  };
+
+  useEffect(() => () => {
+    if (blurTimeoutRef.current !== null) {
+      window.clearTimeout(blurTimeoutRef.current);
+    }
+  }, []);
 
   const shouldShowPanel = useMemo(() => {
     if (value.trim().length < 3) return false;
@@ -110,10 +125,18 @@ export default function AddressAutocompleteField({
     <div className="booking-address-autocomplete" ref={containerRef}>
       <input
         value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onFocus={() => setIsFocused(true)}
+        onChange={(event) => {
+          keepSearchOpen();
+          onChange(event.target.value);
+        }}
+        onMouseDown={keepSearchOpen}
+        onClick={keepSearchOpen}
+        onFocus={keepSearchOpen}
         onBlur={() => {
-          window.setTimeout(() => setIsFocused(false), 180);
+          blurTimeoutRef.current = window.setTimeout(() => {
+            setIsFocused(false);
+            blurTimeoutRef.current = null;
+          }, 180);
         }}
         className="booking-form__input"
         placeholder={`Digite rua, avenida ou praca; cidade selecionada: ${selectedCity}/${selectedState}`}

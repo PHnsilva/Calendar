@@ -6,7 +6,8 @@ const AUTOCOMPLETE_ENDPOINT = "https://api.geoapify.com/v1/geocode/autocomplete"
 const BACKEND_AUTOCOMPLETE_ENDPOINT = "/api/enderecos/autocomplete";
 const BACKEND_CITY_CONTEXT_ENDPOINT = "/api/enderecos/cidade";
 const DEFAULT_LIMIT = 20;
-const CITY_RADIUS_METERS = 15_000;
+const CITY_RADIUS_METERS = 30_000;
+const FALLBACK_MIN_RESULTS = 5;
 
 type GeoapifyResult = Record<string, unknown>;
 
@@ -165,6 +166,40 @@ function parseAddressLine2(value?: unknown): { street: string; houseNumber: stri
 
 function buildDisplayLabel(street: string, houseNumber: string, neighborhood: string, fallback: string): string {
   return [street, houseNumber, neighborhood].filter(Boolean).join(", ").trim() || fallback;
+}
+
+function dedupeSuggestions(suggestions: GeoapifyAddressSuggestion[]): GeoapifyAddressSuggestion[] {
+  const seen = new Set<string>();
+  const output: GeoapifyAddressSuggestion[] = [];
+
+  for (const suggestion of suggestions) {
+    const key = firstText(
+      suggestion.placeId,
+      suggestion.id,
+      `${suggestion.lat ?? suggestion.latitude}:${suggestion.lon ?? suggestion.longitude}:${suggestion.label}`,
+    );
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    output.push(suggestion);
+  }
+
+  return output;
+}
+
+function normalizeSearchVariant(query: string): string {
+  return query
+    .trim()
+    .replace(/^\s*r\.\s+/i, "Rua ")
+    .replace(/^\s*av\.\s+/i, "Avenida ")
+    .replace(/\s+-\s+/g, ", ")
+    .replace(/\s+/g, " ");
+}
+
+function getSearchQueryVariants(query: string): string[] {
+  const normalized = normalizeSearchVariant(query);
+  const streetOnly = normalizeSearchVariant(query.split(/\s+-\s+/)[0] ?? "");
+  const variants = [query.trim(), normalized, streetOnly].filter((item) => item.length >= 3);
+  return Array.from(new Set(variants));
 }
 
 export function extractGeoapifyResults(payload: GeoapifyAutocompleteResponse | null | undefined): GeoapifyResult[] {
@@ -338,10 +373,14 @@ function pickMatchingCityContext(
   }) ?? contexts[0] ?? null;
 }
 
-function buildGeoapifyFilter(cityContext?: GeoapifyCityContext): string {
+function buildGeoapifyPlaceFilter(cityContext?: GeoapifyCityContext): string {
   if (cityContext?.placeId) {
     return `place:${cityContext.placeId}|countrycode:br`;
   }
+  return "";
+}
+
+function buildGeoapifyCircleFilter(cityContext?: GeoapifyCityContext): string {
   const latitude = cityContext?.latitude;
   const longitude = cityContext?.longitude;
   if (
@@ -355,8 +394,12 @@ function buildGeoapifyFilter(cityContext?: GeoapifyCityContext): string {
   return "";
 }
 
-export function buildGeoapifyAddressUrl(query: string, cityContext: GeoapifyCityContext, apiKey: string): string {
-  const filter = buildGeoapifyFilter(cityContext);
+function buildGeoapifyFilter(cityContext?: GeoapifyCityContext): string {
+  return buildGeoapifyPlaceFilter(cityContext) || buildGeoapifyCircleFilter(cityContext);
+}
+
+export function buildGeoapifyAddressUrl(query: string, cityContext: GeoapifyCityContext, apiKey: string, filterOverride?: string): string {
+  const filter = filterOverride || buildGeoapifyFilter(cityContext);
   if (!filter) {
     throw new GeoapifyDirectRequestError("Cidade ainda nao foi resolvida para restringir a busca de endereco.");
   }
@@ -371,6 +414,21 @@ export function buildGeoapifyAddressUrl(query: string, cityContext: GeoapifyCity
   });
 
   return `${AUTOCOMPLETE_ENDPOINT}?${params.toString()}`;
+}
+
+function buildAddressSearchAttempts(query: string, cityContext: GeoapifyCityContext, apiKey: string): string[] {
+  const filters = [buildGeoapifyPlaceFilter(cityContext), buildGeoapifyCircleFilter(cityContext)].filter(Boolean);
+  const uniqueFilters = Array.from(new Set(filters.length > 0 ? filters : [buildGeoapifyFilter(cityContext)]));
+  const variants = getSearchQueryVariants(query);
+  const attempts: string[] = [];
+
+  for (const variant of variants) {
+    for (const filter of uniqueFilters) {
+      attempts.push(buildGeoapifyAddressUrl(variant, cityContext, apiKey, filter));
+    }
+  }
+
+  return attempts;
 }
 
 function buildGeoapifyCityUrl(cityName: string, state: string | undefined, apiKey: string): string {
@@ -472,8 +530,16 @@ export async function resolveGeoapifyCityContext(cityName: string, state?: strin
   }
 }
 
-async function searchAddressesDirectly(query: string, cityContext: GeoapifyCityContext): Promise<GeoapifyAddressSuggestion[]> {
-  const url = buildGeoapifyAddressUrl(query, cityContext, env.geoapifyPublicKey);
+async function fetchAddressSuggestionsFromUrl(
+  url: string,
+  cityContext: GeoapifyCityContext,
+): Promise<{
+  filtered: GeoapifyAddressSuggestion[];
+  normalizedCount: number;
+  rawResultsCount: number;
+  rawFeaturesCount: number;
+  httpStatus: number;
+}> {
 
   logGeoapifyDebug("address request", {
     selectedCity: cityContext.name,
@@ -492,16 +558,54 @@ async function searchAddressesDirectly(query: string, cityContext: GeoapifyCityC
   const payload = await parseGeoapifyResponse(response, "address");
   const normalized = normalizeGeoapifySuggestions(payload);
   const filtered = filterSuggestionsBySelectedCity(normalized, cityContext);
+
+  return {
+    filtered,
+    normalizedCount: normalized.length,
+    rawResultsCount: countGeoapifyResults(payload),
+    rawFeaturesCount: countGeoapifyFeatures(payload),
+    httpStatus: response.status,
+  };
+}
+
+async function searchAddressesDirectly(query: string, cityContext: GeoapifyCityContext): Promise<GeoapifyAddressSuggestion[]> {
+  const attempts = buildAddressSearchAttempts(query, cityContext, env.geoapifyPublicKey);
+  const collected: GeoapifyAddressSuggestion[] = [];
+  let rawResultsCount = 0;
+  let rawFeaturesCount = 0;
+  let normalizedSuggestionCount = 0;
+  let httpStatus = 0;
+  let lastUrl = attempts[0] ?? "";
+
+  for (const url of attempts) {
+    lastUrl = url;
+    const result = await fetchAddressSuggestionsFromUrl(url, cityContext);
+    collected.push(...result.filtered);
+    rawResultsCount += result.rawResultsCount;
+    rawFeaturesCount += result.rawFeaturesCount;
+    normalizedSuggestionCount += result.normalizedCount;
+    httpStatus = result.httpStatus;
+
+    const uniqueCount = dedupeSuggestions(collected).length;
+    if (attempts.length <= 2 && uniqueCount > 0) {
+      break;
+    }
+    if (uniqueCount >= FALLBACK_MIN_RESULTS) {
+      break;
+    }
+  }
+
+  const filtered = filterSuggestionsBySelectedCity(dedupeSuggestions(collected), cityContext);
   lastAddressSearchDebug = {
     inputValue: query,
     selectedCityName: cityContext.name,
     selectedCityState: cityContext.state ?? "",
     selectedCityPlaceIdExists: Boolean(cityContext.placeId),
-    finalUrl: sanitizeGeoapifyUrl(url),
-    httpStatus: response.status,
-    rawResultsCount: countGeoapifyResults(payload),
-    rawFeaturesCount: countGeoapifyFeatures(payload),
-    normalizedSuggestionCount: normalized.length,
+    finalUrl: sanitizeGeoapifyUrl(lastUrl),
+    httpStatus,
+    rawResultsCount,
+    rawFeaturesCount,
+    normalizedSuggestionCount,
     filteredSuggestionCount: filtered.length,
     stateSuggestionCount: filtered.length,
     source: "direct",
@@ -512,12 +616,12 @@ async function searchAddressesDirectly(query: string, cityContext: GeoapifyCityC
     selectedCity: cityContext.name,
     selectedState: cityContext.state ?? "",
     selectedCityPlaceIdExists: Boolean(cityContext.placeId),
-    finalUrl: sanitizeGeoapifyUrl(url),
-    httpStatus: response.status,
-    responseHasResults: Array.isArray(payload.results),
-    rawResultsCount: countGeoapifyResults(payload),
-    rawFeaturesCount: countGeoapifyFeatures(payload),
-    normalizedSuggestionCount: normalized.length,
+    finalUrl: sanitizeGeoapifyUrl(lastUrl),
+    httpStatus,
+    responseHasResults: rawResultsCount > 0,
+    rawResultsCount,
+    rawFeaturesCount,
+    normalizedSuggestionCount,
     filteredSuggestionCount: filtered.length,
     finalSuggestionsCount: filtered.length,
   });

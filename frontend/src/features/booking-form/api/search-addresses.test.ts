@@ -74,7 +74,7 @@ describe("Geoapify address autocomplete", () => {
     }, "secret-key"));
 
     expect(url.searchParams.get("text")).toBe("avenida");
-    expect(url.searchParams.get("filter")).toBe("circle:-43.8014,-20.2533,15000");
+    expect(url.searchParams.get("filter")).toBe("circle:-43.8014,-20.2533,30000");
   });
 
   it("filters suggestions outside the selected city after Geoapify returns results", async () => {
@@ -207,5 +207,48 @@ describe("Geoapify address autocomplete", () => {
     expect(requestedUrl.searchParams.get("filter")).toBe("place:city-place-id|countrycode:br");
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0]?.city).toBe("Itabirito");
+  });
+
+  it("falls back to a city circle and expanded street query when place results are sparse", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        results: [{
+          place_id: "benjamin-simoes",
+          formatted: "Rua Benjamin Simoes, Agostinho Rodrigues, Itabirito - MG",
+          street: "Rua Benjamin Simoes",
+          suburb: "Agostinho Rodrigues",
+          city: "Itabirito",
+          state_code: "MG",
+          postcode: "35450000",
+          lat: -20.24,
+          lon: -43.8,
+        }],
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }))
+      .mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { searchAddresses } = await import("./search-addresses");
+    const suggestions = await searchAddresses("R. Benjamin Simoes - Agostinho Rodrigues", itabiritoContext);
+    const requestedUrls = fetchMock.mock.calls.map((call) => new URL(String(call[0])));
+
+    expect(requestedUrls[0]?.searchParams.get("filter")).toBe("place:city-place-id|countrycode:br");
+    expect(requestedUrls[1]?.searchParams.get("filter")).toBe("circle:-43.8014,-20.2533,30000");
+    expect(requestedUrls[2]?.searchParams.get("text")).toBe("Rua Benjamin Simoes, Agostinho Rodrigues");
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0]?.label).toBe("Rua Benjamin Simoes, Agostinho Rodrigues");
   });
 });

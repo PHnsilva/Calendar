@@ -58,6 +58,9 @@ public class ServicoRequest {
     @Size(min = 2, max = 2, message = "UF deve ter 2 letras")
     private String clientState;
 
+    private Double clientLatitude;
+    private Double clientLongitude;
+
     public String getServiceType() { return serviceType; }
     public void setServiceType(String serviceType) { this.serviceType = serviceType; }
 
@@ -102,4 +105,10 @@ public class ServicoRequest {
 
     public String getClientState() { return clientState; }
     public void setClientState(String clientState) { this.clientState = clientState; }
+
+    public Double getClientLatitude() { return clientLatitude; }
+    public void setClientLatitude(Double clientLatitude) { this.clientLatitude = clientLatitude; }
+
+    public Double getClientLongitude() { return clientLongitude; }
+    public void setClientLongitude(Double clientLongitude) { this.clientLongitude = clientLongitude; }
 }

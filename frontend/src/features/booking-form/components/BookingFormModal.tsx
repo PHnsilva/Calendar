@@ -28,6 +28,8 @@ import cityItabiritoIcon from '../../../assets/wireframes/icons/city-itabirito.s
 import cityMoedaIcon from '../../../assets/wireframes/icons/city-moeda.svg';
 import cityNovaLimaIcon from '../../../assets/wireframes/icons/city-nova-lima.svg';
 import cityOuroPretoIcon from '../../../assets/wireframes/icons/city-ouro-preto.svg';
+import { buildSuggestionInputValue, buildSuggestionStreetLine, getSuggestionHouseNumber, shouldShowManualHouseNumber } from '../utils/address-selection';
+import { getBookingDayButtonClassName } from '../utils/day-picker';
 
 type BookingFormModalProps = {
   open: boolean;
@@ -191,7 +193,7 @@ function isHouseNumberValid(value: string) {
   if (!normalized) return false;
   if (/^(s\/?n|sem numero|sem número)$/.test(normalized)) return true;
   if (/^\d{1,6}[a-z]?([-/]\d{1,4})?$/i.test(normalized)) return true;
-  return /^(casa|apto|apartamento|lote|loja|sala|bloco|fundos|galpao|galpão)\s+[a-z0-9 .\/-]{1,24}$/i.test(normalized);
+  return /^(casa|apto|apartamento|lote|loja|sala|bloco|fundos|galpao|galpão)\s+[a-z0-9 ./-]{1,24}$/i.test(normalized);
 }
 
 function normalizeHouseNumber(value: string) {
@@ -263,7 +265,8 @@ function validateForm(
     (!selectedSuggestion.city || normalizeCity(selectedSuggestion.city) === normalizeCity(selectedCity)),
   );
 
-  if (selectedSuggestion && !isHouseNumberValid(values.clientNumber)) {
+  const addressNumber = selectedSuggestion ? getSuggestionHouseNumber(selectedSuggestion) || values.clientNumber : values.clientNumber;
+  if (selectedSuggestion && !isHouseNumberValid(addressNumber)) {
     errors.clientNumber = 'Numero: informe 123, 123A, Casa 2, Lote 5 ou S/N.';
   }
 
@@ -481,6 +484,7 @@ export default function BookingFormModal({
         clientStreet: '',
         clientNeighborhood: '',
         clientNumber: '',
+        clientComplement: '',
         clientCep: '',
       };
       saveStoredBookingDraft(next, '');
@@ -549,20 +553,22 @@ export default function BookingFormModal({
   };
 
   const handleAddressSelect = (suggestion: AddressSuggestion) => {
+    const houseNumber = getSuggestionHouseNumber(suggestion);
+    const displayAddress = buildSuggestionInputValue(suggestion);
     setSelectedAddress(suggestion);
-    setAddressInput(suggestion.formatted);
+    setAddressInput(displayAddress);
     setFormValues((current) => {
       const next = {
         ...current,
         clientCep: digitsOnly(suggestion.postcode ?? current.clientCep).slice(0, 8),
-        clientStreet: normalizeText(suggestion.street || suggestion.addressLine1 || suggestion.formatted),
+        clientStreet: normalizeText(buildSuggestionStreetLine(suggestion)),
         clientNeighborhood: normalizeText(suggestion.neighborhood || current.clientNeighborhood),
-        clientNumber: normalizeText(suggestion.houseNumber),
+        clientNumber: normalizeText(houseNumber),
         clientComplement: '',
         clientCity: effectiveCity,
         clientState: normalizeText((suggestion.stateCode || suggestion.state || current.clientState || defaultState)).toUpperCase(),
       };
-      saveStoredBookingDraft(next, suggestion.formatted);
+      saveStoredBookingDraft(next, displayAddress);
       return next;
     });
     setValidationErrors((current) => {
@@ -625,6 +631,8 @@ export default function BookingFormModal({
     if (Object.keys(errors).length > 0 || !draftSlot) return;
 
     const normalizedComplement = normalizeText(formValues.clientComplement);
+    const selectedHouseNumber = getSuggestionHouseNumber(selectedAddress);
+    const effectiveHouseNumber = normalizeHouseNumber(selectedHouseNumber || formValues.clientNumber);
     saveStoredBookingDraft(formValues, addressInput);
 
     try {
@@ -640,10 +648,12 @@ export default function BookingFormModal({
         clientCep: digitsOnly(formValues.clientCep).slice(0, 8),
         clientStreet: normalizeText(formValues.clientStreet),
         clientNeighborhood: normalizeText(formValues.clientNeighborhood),
-        clientNumber: normalizeHouseNumber(formValues.clientNumber),
+        clientNumber: effectiveHouseNumber,
         clientComplement: normalizedComplement || undefined,
         clientCity: effectiveCity,
         clientState: normalizeText(formValues.clientState || defaultState).slice(0, 2).toUpperCase(),
+        clientLatitude: selectedAddress?.lat ?? selectedAddress?.latitude,
+        clientLongitude: selectedAddress?.lon ?? selectedAddress?.longitude,
       });
 
       saveManageToken(response.manageToken, response.servico.eventId);
@@ -683,7 +693,7 @@ export default function BookingFormModal({
   const submitDisabled = createBookingMutation.isPending || !confirmedDate || isLoadingSlots;
   const backendError = createBookingMutation.error ? mapCreateError(createBookingMutation.error.message) : null;
   const shouldShowComplementField = Boolean(selectedAddress);
-  const shouldShowNumberField = Boolean(selectedAddress);
+  const shouldShowNumberField = shouldShowManualHouseNumber(selectedAddress);
   const durationLabel = formatDurationLabel(bookingDurationMinutes);
   const monthTitle = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(toLocalDate(calendarMonth));
   const canGoPrevMonth = calendarMonth > currentAllowedMonth;
@@ -744,13 +754,13 @@ export default function BookingFormModal({
                     <button
                       key={cell.date}
                       type="button"
-                      className={[
-                        'booking-day-picker__day',
-                        cell.isCurrentMonth ? '' : 'booking-day-picker__day--muted',
-                        calendarDate === cell.date ? 'booking-day-picker__day--selected' : '',
-                        confirmedDate === cell.date ? 'booking-day-picker__day--confirmed' : '',
-                        cell.isDisabled ? 'booking-day-picker__day--disabled' : '',
-                      ].filter(Boolean).join(' ')}
+                      className={getBookingDayButtonClassName({
+                        cellDate: cell.date,
+                        isCurrentMonth: cell.isCurrentMonth,
+                        isDisabled: cell.isDisabled,
+                        calendarDate,
+                        confirmedDate,
+                      })}
                       onClick={() => {
                         if (cell.isDisabled) return;
                         setCalendarDate(cell.date);
@@ -886,23 +896,25 @@ export default function BookingFormModal({
                       <span>{effectiveCity}</span>
                     </button>
                     {cityPickerOpen ? (
-                      <div className="booking-city-submodal" role="dialog" aria-modal="false" aria-label="Selecionar cidade">
-                        <div className="booking-city-submodal__header">
-                          <strong>Selecionar cidade</strong>
-                          <button type="button" onClick={() => setCityPickerOpen(false)} aria-label="Fechar cidades">x</button>
-                        </div>
-                        <div className="booking-city-submodal__grid">
-                          {allowedCities.map((city) => (
-                            <CityPickerButton
-                              key={city}
-                              city={city}
-                              active={effectiveCity === city}
-                              onClick={() => {
-                                setSelectedCity(city);
-                                setCityPickerOpen(false);
-                              }}
-                            />
-                          ))}
+                      <div className="booking-city-submodal-backdrop" onMouseDown={() => setCityPickerOpen(false)}>
+                        <div className="booking-city-submodal" role="dialog" aria-modal="true" aria-labelledby="booking-city-submodal-title" onMouseDown={(event) => event.stopPropagation()}>
+                          <div className="booking-city-submodal__header">
+                            <strong id="booking-city-submodal-title">Selecione sua cidade</strong>
+                            <button type="button" onClick={() => setCityPickerOpen(false)} aria-label="Fechar cidades">x</button>
+                          </div>
+                          <div className="booking-city-submodal__grid">
+                            {allowedCities.map((city) => (
+                              <CityPickerButton
+                                key={city}
+                                city={city}
+                                active={effectiveCity === city}
+                                onClick={() => {
+                                  setSelectedCity(city);
+                                  setCityPickerOpen(false);
+                                }}
+                              />
+                            ))}
+                          </div>
                         </div>
                       </div>
                     ) : null}
@@ -918,24 +930,26 @@ export default function BookingFormModal({
                   </div>
                 ) : null}
 
-                <label className="booking-form__field booking-form__field--full booking-form__field--with-error">
-                  <span>Endereço</span>
-                  <AddressAutocompleteField value={addressInput} selectedCity={effectiveCity} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
-                  {validationErrors.addressInput ? <small className="booking-form__field-error">{validationErrors.addressInput}</small> : null}
-                </label>
-
-                {shouldShowNumberField ? (
-                  <label className="booking-form__field booking-form__field--with-error">
-                    <span>Número</span>
-                    <input value={formValues.clientNumber} onChange={(event) => handleFieldChange('clientNumber', event.target.value)} className="booking-form__input" inputMode="text" placeholder="123, 123A, Casa 2 ou S/N" />
-                    {validationErrors.clientNumber ? <small className="booking-form__field-error">{validationErrors.clientNumber}</small> : null}
+                <div className={['booking-address-composite', shouldShowNumberField ? 'booking-address-composite--with-number' : ''].filter(Boolean).join(' ')}>
+                  <label className="booking-form__field booking-form__field--with-error booking-address-composite__address">
+                    <span>Endereço</span>
+                    <AddressAutocompleteField value={addressInput} selectedCity={effectiveCity} selectedState={formValues.clientState || defaultState} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
+                    {validationErrors.addressInput ? <small className="booking-form__field-error">{validationErrors.addressInput}</small> : null}
                   </label>
-                ) : null}
+
+                  {shouldShowNumberField ? (
+                    <label className="booking-form__field booking-form__field--with-error booking-form__field--number-compact booking-address-composite__number">
+                      <span>Número</span>
+                      <input value={formValues.clientNumber} onChange={(event) => handleFieldChange('clientNumber', event.target.value)} className="booking-form__input" inputMode="text" placeholder="123 ou S/N" />
+                      {validationErrors.clientNumber ? <small className="booking-form__field-error">{validationErrors.clientNumber}</small> : null}
+                    </label>
+                  ) : null}
+                </div>
 
                 {shouldShowComplementField ? (
                   <label className={['booking-form__field', shouldShowNumberField ? '' : 'booking-form__field--full'].filter(Boolean).join(' ')}>
-                    <span>(opcional) Complemento</span>
-                    <input value={formValues.clientComplement} onChange={(event) => handleFieldChange('clientComplement', event.target.value)} className="booking-form__input" placeholder="Ex.: Apto 101, Bloco B ou fundos" />
+                    <span>Complemento (opcional)</span>
+                    <input value={formValues.clientComplement} onChange={(event) => handleFieldChange('clientComplement', event.target.value)} className="booking-form__input" placeholder="Apto, bloco ou fundos" />
                   </label>
                 ) : null}
 

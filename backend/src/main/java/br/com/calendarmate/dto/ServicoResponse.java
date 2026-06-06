@@ -23,6 +23,8 @@ public class ServicoResponse {
     private String clientComplement;
     private String clientCity;
     private String clientState;
+    private Double clientLatitude;
+    private Double clientLongitude;
 
     private String clientAddressLine;
     private String status;
@@ -81,6 +83,12 @@ public class ServicoResponse {
 
     public String getClientState() { return clientState; }
     public void setClientState(String clientState) { this.clientState = clientState; }
+
+    public Double getClientLatitude() { return clientLatitude; }
+    public void setClientLatitude(Double clientLatitude) { this.clientLatitude = clientLatitude; }
+
+    public Double getClientLongitude() { return clientLongitude; }
+    public void setClientLongitude(Double clientLongitude) { this.clientLongitude = clientLongitude; }
 
     public String getClientAddressLine() { return clientAddressLine; }
     public void setClientAddressLine(String clientAddressLine) { this.clientAddressLine = clientAddressLine; }

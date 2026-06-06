@@ -128,6 +128,8 @@ public class ServicoService {
         s.setClientComplement(req.getClientComplement());
         s.setClientCity(req.getClientCity());
         s.setClientState(req.getClientState());
+        s.setClientLatitude(req.getClientLatitude());
+        s.setClientLongitude(req.getClientLongitude());
 
         s.setStatus("PENDING_PHONE");
         s.setPendingExpiresAt(pendingExpiresAt);
@@ -354,6 +356,8 @@ public class ServicoService {
         s.setClientComplement(req.getClientComplement());
         s.setClientCity(req.getClientCity());
         s.setClientState(req.getClientState());
+        s.setClientLatitude(req.getClientLatitude());
+        s.setClientLongitude(req.getClientLongitude());
 
         String curStatus = ext0.getOrDefault("status", "PENDING_PHONE");
         s.setStatus(curStatus);
@@ -663,6 +667,8 @@ public class ServicoService {
         s.setClientComplement(req.getClientComplement());
         s.setClientCity(req.getClientCity());
         s.setClientState(req.getClientState());
+        s.setClientLatitude(req.getClientLatitude());
+        s.setClientLongitude(req.getClientLongitude());
         s.setStatus(ext0.getOrDefault("status", "CONFIRMED"));
         s.setAssignedProviderId(ext0.getOrDefault("assignedProviderId", ""));
         s.setAssignedProviderName(ext0.getOrDefault("assignedProviderName", ""));
@@ -976,6 +982,19 @@ public class ServicoService {
         }
     }
 
+    private Double doubleFromExt(Map<String, String> ext, String key) {
+        String value = ext.getOrDefault(key, "").trim();
+        if (value.isBlank()) {
+            return null;
+        }
+        try {
+            double parsed = Double.parseDouble(value);
+            return Double.isFinite(parsed) ? parsed : null;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
     private boolean isExpiredPending(Map<String, String> ext) {
         String status = ext.getOrDefault("status", "");
         if (!"PENDING_PHONE".equalsIgnoreCase(status))
@@ -1065,6 +1084,8 @@ public class ServicoService {
         s.setClientComplement(ext.getOrDefault("clientComplement", ""));
         s.setClientCity(ext.getOrDefault("clientCity", ""));
         s.setClientState(ext.getOrDefault("clientState", ""));
+        s.setClientLatitude(doubleFromExt(ext, "clientLatitude"));
+        s.setClientLongitude(doubleFromExt(ext, "clientLongitude"));
 
         s.setClientAddressLine(buildAddressLine(s));
         s.setStatus(ext.getOrDefault("status", "PENDING_PHONE"));
@@ -1114,6 +1135,8 @@ public class ServicoService {
         s.setClientComplement(ext.getOrDefault("clientComplement", ""));
         s.setClientCity(ext.getOrDefault("clientCity", ""));
         s.setClientState(ext.getOrDefault("clientState", ""));
+        s.setClientLatitude(doubleFromExt(ext, "clientLatitude"));
+        s.setClientLongitude(doubleFromExt(ext, "clientLongitude"));
 
         s.setStatus(ext.getOrDefault("status", "PENDING_PHONE"));
         s.setAssignedProviderId(ext.getOrDefault("assignedProviderId", ""));

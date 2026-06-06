@@ -1,6 +1,7 @@
 package br.com.calendarmate.service;
 
 import br.com.calendarmate.config.AppProperties;
+import br.com.calendarmate.dto.AddressCityContextResponse;
 import br.com.calendarmate.dto.AddressSuggestionResponse;
 import br.com.calendarmate.exception.BadRequestException;
 import org.springframework.http.HttpMethod;
@@ -12,17 +13,53 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AddressAutocompleteService {
     private static final String AUTOCOMPLETE_ENDPOINT = "https://api.geoapify.com/v1/geocode/autocomplete";
     private static final int DEFAULT_LIMIT = 5;
+    private static final int CITY_RADIUS_METERS = 15_000;
+
+    private static final Map<String, String> BRAZIL_STATE_TO_UF = Map.ofEntries(
+            Map.entry("acre", "AC"),
+            Map.entry("alagoas", "AL"),
+            Map.entry("amapa", "AP"),
+            Map.entry("amazonas", "AM"),
+            Map.entry("bahia", "BA"),
+            Map.entry("ceara", "CE"),
+            Map.entry("distrito federal", "DF"),
+            Map.entry("espirito santo", "ES"),
+            Map.entry("goias", "GO"),
+            Map.entry("maranhao", "MA"),
+            Map.entry("mato grosso", "MT"),
+            Map.entry("mato grosso do sul", "MS"),
+            Map.entry("minas gerais", "MG"),
+            Map.entry("para", "PA"),
+            Map.entry("paraiba", "PB"),
+            Map.entry("parana", "PR"),
+            Map.entry("pernambuco", "PE"),
+            Map.entry("piaui", "PI"),
+            Map.entry("rio de janeiro", "RJ"),
+            Map.entry("rio grande do norte", "RN"),
+            Map.entry("rio grande do sul", "RS"),
+            Map.entry("rondonia", "RO"),
+            Map.entry("roraima", "RR"),
+            Map.entry("santa catarina", "SC"),
+            Map.entry("sao paulo", "SP"),
+            Map.entry("sergipe", "SE"),
+            Map.entry("tocantins", "TO")
+    );
 
     private final RestTemplate http;
     private final AppProperties props;
+    private final Map<String, AddressCityContextResponse> cityCache = new ConcurrentHashMap<>();
 
     public AddressAutocompleteService(RestTemplate http, AppProperties props) {
         this.http = http;
@@ -30,6 +67,17 @@ public class AddressAutocompleteService {
     }
 
     public List<AddressSuggestionResponse> search(String text, String city) {
+        return search(text, city, "MG", "", null, null);
+    }
+
+    public List<AddressSuggestionResponse> search(
+            String text,
+            String city,
+            String state,
+            String cityPlaceId,
+            Double cityLat,
+            Double cityLon
+    ) {
         String query = clean(text);
         if (query.length() < 3) return List.of();
 
@@ -38,40 +86,98 @@ public class AddressAutocompleteService {
             throw new BadRequestException("Autocomplete de endereco nao configurado no backend.");
         }
 
-        URI uri = buildUri(query, city, apiKey);
+        AddressCityContextResponse cityContext = providedCityContext(city, state, cityPlaceId, cityLat, cityLon);
+        if (!hasFilterConstraint(cityContext)) {
+            cityContext = resolveCity(city, state);
+        }
+        if (!hasFilterConstraint(cityContext)) {
+            throw new BadRequestException("Nao foi possivel restringir o autocomplete para a cidade selecionada.");
+        }
+
+        URI uri = buildAutocompleteUri(query, cityContext, apiKey);
 
         try {
             ResponseEntity<Map> response = http.exchange(uri, HttpMethod.GET, null, Map.class);
             Map<String, Object> body = response.getBody();
             if (body == null) return List.of();
 
-            Object resultsObj = body.get("results");
-            if (!(resultsObj instanceof List<?> results)) return List.of();
-
-            return results.stream()
-                    .filter(Map.class::isInstance)
-                    .map((item) -> toSuggestion((Map<?, ?>) item))
+            List<Map<?, ?>> rawItems = extractResults(body);
+            List<AddressSuggestionResponse> normalized = rawItems.stream()
+                    .map(this::toSuggestion)
                     .filter(Objects::nonNull)
+                    .toList();
+
+            AddressCityContextResponse selectedCityContext = cityContext;
+            return normalized.stream()
+                    .filter((item) -> matchesSelectedCity(item, selectedCityContext))
                     .limit(DEFAULT_LIMIT)
                     .toList();
         } catch (RestClientResponseException error) {
-            int status = error.getRawStatusCode();
-            if (status == 401 || status == 403) {
-                throw new BadRequestException("Geoapify recusou a chave do autocomplete no backend. Verifique GEOAPIFY_API_KEY e restricoes do dominio/servidor.");
-            }
-            if (status == 429) {
-                throw new BadRequestException("Limite de consultas do autocomplete atingido. Tente novamente em instantes.");
-            }
-            throw new BadRequestException("Nao foi possivel buscar sugestoes de endereco no Geoapify.");
+            throw mapGeoapifyError(error);
         } catch (RestClientException error) {
             throw new BadRequestException("Nao foi possivel conectar ao autocomplete de endereco.");
         }
     }
 
-    private URI buildUri(String query, String city, String apiKey) {
+    public AddressCityContextResponse resolveCity(String city, String state) {
         String cleanCity = clean(city);
+        if (cleanCity.isBlank()) {
+            throw new BadRequestException("Cidade e obrigatoria para resolver o autocomplete.");
+        }
+
+        String apiKey = props.getGeoapifyApiKey();
+        if (apiKey.isBlank()) {
+            throw new BadRequestException("Autocomplete de endereco nao configurado no backend.");
+        }
+
+        String cacheKey = normalizeForMatch(cleanCity) + "|" + normalizeUf(state);
+        AddressCityContextResponse cached = cityCache.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        URI uri = buildCityUri(cleanCity, state, apiKey);
+
+        try {
+            ResponseEntity<Map> response = http.exchange(uri, HttpMethod.GET, null, Map.class);
+            Map<String, Object> body = response.getBody();
+            if (body == null) {
+                throw new BadRequestException("Geoapify nao retornou dados para a cidade selecionada.");
+            }
+
+            AddressCityContextResponse resolved = pickMatchingCity(extractResults(body), cleanCity, state);
+            if (!hasFilterConstraint(resolved)) {
+                throw new BadRequestException("Geoapify nao retornou place_id ou coordenadas para a cidade selecionada.");
+            }
+
+            cityCache.put(cacheKey, resolved);
+            return resolved;
+        } catch (RestClientResponseException error) {
+            throw mapGeoapifyError(error);
+        } catch (RestClientException error) {
+            throw new BadRequestException("Nao foi possivel conectar ao resolvedor de cidade.");
+        }
+    }
+
+    private URI buildAutocompleteUri(String query, AddressCityContextResponse cityContext, String apiKey) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(AUTOCOMPLETE_ENDPOINT)
-                .queryParam("text", cleanCity.isBlank() ? query : query + ", " + cleanCity)
+                .queryParam("text", query)
+                .queryParam("filter", buildFilter(cityContext))
+                .queryParam("limit", DEFAULT_LIMIT)
+                .queryParam("lang", "pt")
+                .queryParam("format", "json")
+                .queryParam("apiKey", apiKey);
+
+        return builder.encode(StandardCharsets.UTF_8).build().toUri();
+    }
+
+    private URI buildCityUri(String city, String state, String apiKey) {
+        String statePart = clean(state);
+        String text = statePart.isBlank() ? city : city + ", " + statePart;
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(AUTOCOMPLETE_ENDPOINT)
+                .queryParam("text", text)
+                .queryParam("type", "city")
                 .queryParam("filter", "countrycode:" + country())
                 .queryParam("limit", DEFAULT_LIMIT)
                 .queryParam("lang", "pt")
@@ -81,8 +187,81 @@ public class AddressAutocompleteService {
         return builder.encode(StandardCharsets.UTF_8).build().toUri();
     }
 
+    private String buildFilter(AddressCityContextResponse cityContext) {
+        String placeId = clean(cityContext == null ? "" : cityContext.getPlaceId());
+        if (!placeId.isBlank()) {
+            return "place:" + placeId + "|countrycode:" + country();
+        }
+
+        if (cityContext != null
+                && cityContext.getLatitude() != null
+                && cityContext.getLongitude() != null
+                && Double.isFinite(cityContext.getLatitude())
+                && Double.isFinite(cityContext.getLongitude())) {
+            return "circle:" + cityContext.getLongitude() + "," + cityContext.getLatitude() + "," + CITY_RADIUS_METERS;
+        }
+
+        return "";
+    }
+
+    private AddressCityContextResponse providedCityContext(
+            String city,
+            String state,
+            String cityPlaceId,
+            Double cityLat,
+            Double cityLon
+    ) {
+        return new AddressCityContextResponse(
+                clean(city),
+                normalizeUf(state),
+                clean(cityPlaceId),
+                cityLat,
+                cityLon,
+                null
+        );
+    }
+
+    private boolean hasFilterConstraint(AddressCityContextResponse context) {
+        if (context == null) return false;
+        if (!clean(context.getPlaceId()).isBlank()) return true;
+        return context.getLatitude() != null
+                && context.getLongitude() != null
+                && Double.isFinite(context.getLatitude())
+                && Double.isFinite(context.getLongitude());
+    }
+
+    private List<Map<?, ?>> extractResults(Map<String, Object> body) {
+        Object resultsObj = body.get("results");
+        if (resultsObj instanceof List<?> results) {
+            List<Map<?, ?>> out = new ArrayList<>();
+            for (Object item : results) {
+                if (item instanceof Map<?, ?> map) {
+                    out.add(map);
+                }
+            }
+            return out;
+        }
+
+        Object featuresObj = body.get("features");
+        if (featuresObj instanceof List<?> features) {
+            List<Map<?, ?>> out = new ArrayList<>();
+            for (Object item : features) {
+                if (!(item instanceof Map<?, ?> feature)) {
+                    continue;
+                }
+                Object properties = feature.get("properties");
+                if (properties instanceof Map<?, ?> propertiesMap) {
+                    out.add(propertiesMap);
+                }
+            }
+            return out;
+        }
+
+        return List.of();
+    }
+
     private AddressSuggestionResponse toSuggestion(Map<?, ?> properties) {
-        String formatted = clean(properties.get("formatted"));
+        String formatted = firstClean(properties.get("formatted"), properties.get("address_line1"));
         double latitude = number(properties.get("lat"));
         double longitude = number(properties.get("lon"));
 
@@ -93,13 +272,22 @@ public class AddressAutocompleteService {
         String street = firstClean(properties.get("street"), properties.get("address_line1"));
         String houseNumber = clean(properties.get("housenumber"));
         String neighborhood = firstClean(properties.get("suburb"), properties.get("district"), properties.get("neighbourhood"));
-        String city = firstClean(properties.get("city"), properties.get("county"), properties.get("state_district"));
-        String stateCode = firstClean(properties.get("state_code"), properties.get("state")).toUpperCase(Locale.ROOT);
+        String city = firstClean(
+                properties.get("city"),
+                properties.get("town"),
+                properties.get("village"),
+                properties.get("municipality"),
+                properties.get("county"),
+                properties.get("state_district"));
+        String stateCode = normalizeUf(firstClean(properties.get("state_code"), properties.get("state")));
         String postcode = clean(properties.get("postcode")).replaceAll("\\D", "");
         if (postcode.length() > 8) postcode = postcode.substring(0, 8);
+        String id = firstClean(properties.get("place_id"), properties.get("placeId"), formatted + "-" + latitude + "-" + longitude);
 
         return new AddressSuggestionResponse(
-                firstClean(properties.get("place_id"), properties.get("result_type"), formatted),
+                id,
+                formatted,
+                id,
                 formatted,
                 latitude,
                 longitude,
@@ -110,8 +298,124 @@ public class AddressAutocompleteService {
                 neighborhood,
                 city,
                 stateCode,
-                postcode
+                postcode,
+                rawCopy(properties)
         );
+    }
+
+    private AddressCityContextResponse pickMatchingCity(List<Map<?, ?>> results, String city, String state) {
+        String expectedCity = normalizeForMatch(city);
+        String expectedUf = normalizeUf(state);
+        String expectedState = normalizeForMatch(state);
+
+        List<AddressCityContextResponse> contexts = new ArrayList<>();
+        for (Map<?, ?> result : results) {
+            AddressCityContextResponse context = toCityContext(result, city, state);
+            if (context != null) {
+                contexts.add(context);
+            }
+        }
+
+        for (AddressCityContextResponse context : contexts) {
+            Map<String, Object> raw = context.getRaw() == null ? Map.of() : context.getRaw();
+            List<String> cityCandidates = List.of(
+                    normalizeForMatch(context.getName()),
+                    normalizeForMatch(raw.get("city")),
+                    normalizeForMatch(raw.get("town")),
+                    normalizeForMatch(raw.get("village")),
+                    normalizeForMatch(raw.get("municipality")),
+                    normalizeForMatch(raw.get("name"))
+            );
+            boolean cityMatches = cityCandidates.stream().anyMatch(expectedCity::equals);
+
+            List<String> ufCandidates = List.of(
+                    normalizeUf(context.getState()),
+                    normalizeUf(raw.get("state_code")),
+                    normalizeUf(raw.get("state"))
+            );
+            List<String> stateCandidates = List.of(
+                    normalizeForMatch(context.getState()),
+                    normalizeForMatch(raw.get("state"))
+            );
+            boolean stateMatches = expectedUf.isBlank() && expectedState.isBlank()
+                    || ufCandidates.contains(expectedUf)
+                    || stateCandidates.contains(expectedState);
+
+            if (cityMatches && stateMatches) {
+                return context;
+            }
+        }
+
+        return contexts.isEmpty() ? null : contexts.get(0);
+    }
+
+    private AddressCityContextResponse toCityContext(Map<?, ?> properties, String requestedCity, String requestedState) {
+        String name = firstClean(
+                properties.get("city"),
+                properties.get("town"),
+                properties.get("village"),
+                properties.get("municipality"),
+                properties.get("name"),
+                requestedCity);
+        double latitude = number(properties.get("lat"));
+        double longitude = number(properties.get("lon"));
+
+        if (name.isBlank() || Double.isNaN(latitude) || Double.isNaN(longitude)) {
+            return null;
+        }
+
+        return new AddressCityContextResponse(
+                name,
+                firstClean(normalizeUf(firstClean(properties.get("state_code"), properties.get("state"))), normalizeUf(requestedState)),
+                firstClean(properties.get("place_id"), properties.get("placeId")),
+                latitude,
+                longitude,
+                rawCopy(properties)
+        );
+    }
+
+    private boolean matchesSelectedCity(AddressSuggestionResponse item, AddressCityContextResponse context) {
+        String selectedCity = normalizeForMatch(context == null ? "" : context.getName());
+        if (selectedCity.isBlank()) return true;
+
+        Map<String, Object> raw = item.getRaw() == null ? Map.of() : item.getRaw();
+        List<String> cityCandidates = List.of(
+                normalizeForMatch(item.getCity()),
+                normalizeForMatch(raw.get("city")),
+                normalizeForMatch(raw.get("town")),
+                normalizeForMatch(raw.get("village")),
+                normalizeForMatch(raw.get("municipality")),
+                normalizeForMatch(raw.get("county")),
+                normalizeForMatch(raw.get("state_district"))
+        ).stream().filter((value) -> !value.isBlank()).toList();
+
+        boolean hasCityData = !cityCandidates.isEmpty();
+        boolean cityMatches = cityCandidates.stream().anyMatch(selectedCity::equals);
+
+        String selectedUf = normalizeUf(context.getState());
+        List<String> ufCandidates = List.of(
+                normalizeUf(item.getState()),
+                normalizeUf(raw.get("state_code")),
+                normalizeUf(raw.get("state"))
+        ).stream().filter((value) -> !value.isBlank()).toList();
+        boolean hasStateData = !ufCandidates.isEmpty();
+        boolean stateMatches = selectedUf.isBlank() || !hasStateData || ufCandidates.contains(selectedUf);
+
+        if (hasCityData) {
+            return cityMatches && stateMatches;
+        }
+        return stateMatches;
+    }
+
+    private BadRequestException mapGeoapifyError(RestClientResponseException error) {
+        int status = error.getRawStatusCode();
+        if (status == 401 || status == 403) {
+            return new BadRequestException("Geoapify recusou a chave do autocomplete no backend. Verifique GEOAPIFY_API_KEY e restricoes do dominio/servidor.");
+        }
+        if (status == 429) {
+            return new BadRequestException("Limite de consultas do autocomplete atingido. Tente novamente em instantes.");
+        }
+        return new BadRequestException("Nao foi possivel buscar sugestoes de endereco no Geoapify.");
     }
 
     private String buildAddressLine1(String street, String houseNumber, String fallback) {
@@ -145,6 +449,24 @@ public class AddressAutocompleteService {
         return value == null ? "" : String.valueOf(value).trim();
     }
 
+    private String normalizeForMatch(Object value) {
+        String text = clean(value);
+        if (text.isBlank()) return "";
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9\\s]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        return normalized;
+    }
+
+    private String normalizeUf(Object value) {
+        String text = clean(value).toUpperCase(Locale.ROOT);
+        if (text.matches("^[A-Z]{2}$")) return text;
+        return BRAZIL_STATE_TO_UF.getOrDefault(normalizeForMatch(value), "");
+    }
+
     private double number(Object value) {
         if (value instanceof Number number) return number.doubleValue();
         try {
@@ -152,5 +474,15 @@ public class AddressAutocompleteService {
         } catch (Exception error) {
             return Double.NaN;
         }
+    }
+
+    private Map<String, Object> rawCopy(Map<?, ?> source) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : source.entrySet()) {
+            if (entry.getKey() != null) {
+                out.put(String.valueOf(entry.getKey()), entry.getValue());
+            }
+        }
+        return out;
     }
 }

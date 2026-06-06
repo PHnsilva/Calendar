@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type InputHTMLAttributes, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type InputHTMLAttributes, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
@@ -168,9 +168,89 @@ const ptDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digi
 const ptWeekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' });
 const ptMonth = new Intl.DateTimeFormat('pt-BR', { month: 'short' });
 const ptLongDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+let suppressNextExitGuard = false;
 
 function cx(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(' ');
+}
+
+function useLatestRef<T>(value: T) {
+  const ref = useRef(value);
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref;
+}
+
+function useModalBrowserBack(open: boolean, key: string, onClose: () => void) {
+  const onCloseRef = useLatestRef(onClose);
+  const stateIdRef = useRef('');
+
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return undefined;
+
+    const stateId = `calendarMateModal:${key}:${Date.now()}`;
+    stateIdRef.current = stateId;
+    window.history.pushState({ ...(window.history.state ?? {}), calendarMateModal: stateId }, '', window.location.href);
+
+    const handlePopState = () => {
+      if (!stateIdRef.current) return;
+      stateIdRef.current = '';
+      onCloseRef.current();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      stateIdRef.current = '';
+    };
+  }, [key, onCloseRef, open]);
+
+  return useCallback(() => {
+    const stateId = stateIdRef.current;
+    if (
+      open
+      && stateId
+      && typeof window !== 'undefined'
+      && window.history.state?.calendarMateModal === stateId
+    ) {
+      suppressNextExitGuard = true;
+      window.history.back();
+      return;
+    }
+    onCloseRef.current();
+  }, [onCloseRef, open]);
+}
+
+function useDoubleBackToLeavePage(enabled = true) {
+  const lastBackAtRef = useRef(0);
+
+  useEffect(() => {
+    if (!enabled || typeof window === 'undefined') return undefined;
+
+    const guardState = { ...(window.history.state ?? {}), calendarMateExitGuard: true };
+    window.history.pushState(guardState, '', window.location.href);
+
+    const handlePopState = () => {
+      if (suppressNextExitGuard) {
+        suppressNextExitGuard = false;
+        return;
+      }
+      const now = Date.now();
+      if (now - lastBackAtRef.current < 1600) {
+        window.removeEventListener('popstate', handlePopState);
+        window.history.back();
+        return;
+      }
+      lastBackAtRef.current = now;
+      window.history.pushState(guardState, '', window.location.href);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [enabled]);
 }
 
 function normalizeText(value: string): string {
@@ -784,6 +864,7 @@ function ClientLandingModalButtons({ setModal }: { setModal: (modal: ModalKind) 
 
 export function ClientLanding() {
   const [modal, setModal] = useState<ModalKind>(null);
+  useDoubleBackToLeavePage();
   return (
     <PageShell className="wf-page wf-client-landing">
       <ClientNavbar onCreate={() => setModal('create-client')} onNotifications={() => setModal('notifications')} onConfirmPhone={() => setModal('confirm-phone')} />
@@ -1058,6 +1139,7 @@ function getAdminAuthErrorMessage(error: unknown, step: 'start' | 'confirm'): st
 export function AdminLanding() {
   const [modal, setModal] = useState<ModalKind>(null);
   const navigate = useNavigate();
+  useDoubleBackToLeavePage();
   const session = getStoredAdminSession();
   const openView = (view: AdminView) => {
     navigate(`/admin/dashboard?view=${view === 'agenda' ? 'agendamentos' : view}`);
@@ -1457,6 +1539,7 @@ function CalendarMateModal({
   onClose: () => void;
   onOfxImported?: (dashboard: FinancialDashboardDTO) => void;
 }) {
+  const closeModal = useModalBrowserBack(Boolean(modal), `root-${modal ?? 'none'}`, onClose);
   if (!modal) return null;
   const modalClass = cx(
     'wf-modal',
@@ -1476,20 +1559,20 @@ function CalendarMateModal({
   );
 
   return (
-    <ModalShell open={Boolean(modal)} dataModal={modal} className={modalClass} onClose={onClose} closeIcon={<Icon name="close" />}>
-        {modal === 'create-client' ? <CreateBookingModal onClose={onClose} /> : null}
-        {modal === 'confirm-phone' ? <ConfirmPhoneModal onClose={onClose} /> : null}
-        {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={onClose} /> : null}
-        {modal === 'contact' ? <ContactModal onClose={onClose} /> : null}
+    <ModalShell open={Boolean(modal)} dataModal={modal} className={modalClass} onClose={closeModal} closeIcon={<Icon name="close" />}>
+        {modal === 'create-client' ? <CreateBookingModal onClose={closeModal} /> : null}
+        {modal === 'confirm-phone' ? <ConfirmPhoneModal onClose={closeModal} /> : null}
+        {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={closeModal} /> : null}
+        {modal === 'contact' ? <ContactModal onClose={closeModal} /> : null}
         {modal === 'services-info' ? <ServicesInfoModal /> : null}
         {modal === 'help-contact' ? <HelpContactModal /> : null}
-        {modal === 'notifications' ? <NotificationsModal onClose={onClose} /> : null}
-        {modal === 'block-admin' ? <AdminBlockModal onClose={onClose} /> : null}
-        {modal === 'assign-provider' ? <AssignProviderModal booking={context.booking} onClose={onClose} /> : null}
-        {modal === 'edit-admin' ? <EditAdminBookingModal booking={context.booking} onClose={onClose} /> : null}
-        {modal === 'email-admin' ? <EmailAdminModal booking={context.booking} onClose={onClose} /> : null}
-        {modal === 'ofx-admin' ? <OfxModal onClose={onClose} onImported={onOfxImported} /> : null}
-        {modal === 'budget-admin' ? <BudgetModal booking={context.booking} onClose={onClose} /> : null}
+        {modal === 'notifications' ? <NotificationsModal onClose={closeModal} /> : null}
+        {modal === 'block-admin' ? <AdminBlockModal onClose={closeModal} /> : null}
+        {modal === 'assign-provider' ? <AssignProviderModal booking={context.booking} onClose={closeModal} /> : null}
+        {modal === 'edit-admin' ? <EditAdminBookingModal booking={context.booking} onClose={closeModal} /> : null}
+        {modal === 'email-admin' ? <EmailAdminModal booking={context.booking} onClose={closeModal} /> : null}
+        {modal === 'ofx-admin' ? <OfxModal onClose={closeModal} onImported={onOfxImported} /> : null}
+        {modal === 'budget-admin' ? <BudgetModal booking={context.booking} onClose={closeModal} /> : null}
     </ModalShell>
   );
 }
@@ -1566,6 +1649,7 @@ function CitySelectField({
   onSelect: (city: string) => void;
 }) {
   const selectedStyle = resolveSupportedCityStyle(selectedCity, 0);
+  const closeCityPicker = useModalBrowserBack(open, 'city-picker', () => onOpenChange(false));
   return (
     <div className="wf-modal-field wf-city-select-field">
       <span className="wf-field-label">Cidade<em>*</em></span>
@@ -1574,11 +1658,11 @@ function CitySelectField({
         <span>{selectedCity}</span>
       </button>
       {open ? (
-        <div className="wf-city-submodal-backdrop" onMouseDown={() => onOpenChange(false)}>
+        <div className="wf-city-submodal-backdrop" onMouseDown={closeCityPicker}>
           <div className="wf-city-submodal" role="dialog" aria-modal="true" aria-labelledby="wf-city-submodal-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="wf-city-submodal__header">
               <strong id="wf-city-submodal-title">Selecione sua cidade</strong>
-              <button type="button" onClick={() => onOpenChange(false)} aria-label="Fechar cidades">x</button>
+              <button type="button" onClick={closeCityPicker} aria-label="Fechar cidades">x</button>
             </div>
             <div className="wf-city-submodal__grid">
               {cities.map((city, index) => {
@@ -1590,7 +1674,7 @@ function CitySelectField({
                     className={cx('wf-city-submodal__button', `wf-city-submodal__button--${style.color}`, selectedCity === city && 'is-active')}
                     onClick={() => {
                       onSelect(city);
-                      onOpenChange(false);
+                      closeCityPicker();
                     }}
                   >
                     <Icon name={cityIconName(city)} />
@@ -1826,7 +1910,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
           <div className="wf-time-options wf-time-options--scroll">{availableSlots.map((slot) => <button className={selectedTime === slot.startTime ? 'is-active' : ''} type="button" key={`${slot.date}-${slot.startTime}`} onClick={() => { setSelectedTime(slot.startTime); setSelectedEndTime(slot.endTime); }}>{slot.startTime}</button>)}</div>
           {fieldErrors.time ? <small className="wf-field-error">{fieldErrors.time}</small> : null}
         </div>
-        <ModalField className="wf-span-2" label="(opcional) Ponto de referência" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
+        <ModalField className="wf-span-2" label="Ponto de referência (opcional)" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
         <label className="wf-modal-field wf-span-2">
           <span className="wf-field-label">Observação<em>*</em></span>
           <textarea

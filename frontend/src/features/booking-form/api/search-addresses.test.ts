@@ -43,8 +43,11 @@ describe("Geoapify address autocomplete", () => {
 
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0]?.id).toBe("street-1");
-    expect(suggestions[0]?.label).toContain("Domani");
-    expect(suggestions[0]?.addressLine1).toContain("72");
+    expect(suggestions[0]?.label).toBe("Rua Sao Jose, 72, Centro");
+    expect(suggestions[0]?.label).not.toContain("Domani");
+    expect(suggestions[0]?.label).not.toContain("Itabirito");
+    expect(suggestions[0]?.addressLine1).toBe("Rua Sao Jose, 72");
+    expect(suggestions[0]?.addressLine2).toBe("Centro");
     expect(suggestions[0]?.houseNumber).toBe("72");
     expect(suggestions[0]?.city).toBe("Itabirito");
     expect(suggestions[0]?.lat).toBe(-20.25);
@@ -58,6 +61,7 @@ describe("Geoapify address autocomplete", () => {
     expect(url.searchParams.get("text")).toBe("rua");
     expect(url.searchParams.get("text")).not.toContain("Itabirito");
     expect(url.searchParams.get("filter")).toBe("place:city-place-id|countrycode:br");
+    expect(url.searchParams.get("limit")).toBe("20");
   });
 
   it("uses a circle filter when the selected city has coordinates but no place_id", async () => {
@@ -129,6 +133,52 @@ describe("Geoapify address autocomplete", () => {
 
     expect(filtered).toHaveLength(1);
     expect(filtered[0]?.placeId).toBe("itabirito-building");
+  });
+
+  it("keeps valid selected-city results without primary city fields when UF matches", async () => {
+    const { filterSuggestionsBySelectedCity, normalizeGeoapifySuggestions } = await import("./search-addresses");
+    const normalized = normalizeGeoapifySuggestions({
+      results: [
+        {
+          place_id: "valid-without-city",
+          formatted: "Rua Sem Cidade 123, Centro, Itabirito - MG",
+          address_line2: "Rua Sem Cidade 123, Centro, Itabirito - MG",
+          state: "Minas Gerais",
+          municipality: "Regiao Geografica Imediata de Santa Barbara - Ouro Preto",
+          county: "Regiao Geografica Intermediaria de Belo Horizonte",
+          iso3166_2: "BR-MG",
+          lat: -20.25,
+          lon: -43.8,
+        },
+      ],
+    });
+
+    const filtered = filterSuggestionsBySelectedCity(normalized, itabiritoContext);
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.label).toBe("Rua Sem Cidade, 123, Centro");
+  });
+
+  it("builds a short street number neighborhood label from formatted building results", async () => {
+    const { normalizeGeoapifySuggestions } = await import("./search-addresses");
+    const suggestions = normalizeGeoapifySuggestions({
+      results: [
+        {
+          place_id: "building-with-formatted-only",
+          formatted: "Domani, Rua Joao Pessoa 72, Centro, Itabirito - MG, 35450-045, Brasil",
+          address_line1: "Domani",
+          city: "Itabirito",
+          state_code: "MG",
+          lat: -20.25,
+          lon: -43.8,
+        },
+      ],
+    });
+
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0]?.label).toBe("Rua Joao Pessoa, 72, Centro");
+    expect(suggestions[0]?.addressLine1).toBe("Rua Joao Pessoa, 72");
+    expect(suggestions[0]?.addressLine2).toBe("Centro");
   });
 
   it("searches with a city place filter and parses data.results from mocked fetch", async () => {

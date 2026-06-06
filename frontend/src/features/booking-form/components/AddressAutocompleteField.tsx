@@ -99,8 +99,7 @@ export default function AddressAutocompleteField({
                 setIsFocused(false);
               }}
             >
-              <strong>{suggestion.addressLine1 || suggestion.label || suggestion.formatted}</strong>
-              <span>{suggestion.addressLine2 || suggestion.label || suggestion.formatted}</span>
+              <strong>{suggestion.label || suggestion.formatted || suggestion.addressLine1}</strong>
             </button>
           ))
         : null}

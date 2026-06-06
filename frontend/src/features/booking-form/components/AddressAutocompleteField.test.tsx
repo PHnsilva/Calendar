@@ -99,7 +99,7 @@ describe("AddressAutocompleteField", () => {
     fireEvent.mouseDown(option);
 
     await waitFor(() => {
-      expect(input.value).toBe("Rua Sao Jose, Itabirito - MG");
+      expect(input.value).toBe("Rua Sao Jose, Centro");
     });
     expect(selected).toHaveLength(1);
     expect(selected[0]?.city).toBe("Itabirito");

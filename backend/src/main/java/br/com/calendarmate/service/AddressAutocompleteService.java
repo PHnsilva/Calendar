@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class AddressAutocompleteService {
     private static final String AUTOCOMPLETE_ENDPOINT = "https://api.geoapify.com/v1/geocode/autocomplete";
-    private static final int DEFAULT_LIMIT = 5;
+    private static final int DEFAULT_LIMIT = 20;
     private static final int CITY_RADIUS_METERS = 15_000;
 
     private static final Map<String, String> BRAZIL_STATE_TO_UF = Map.ofEntries(
@@ -261,28 +261,42 @@ public class AddressAutocompleteService {
     }
 
     private AddressSuggestionResponse toSuggestion(Map<?, ?> properties) {
-        String formatted = firstClean(properties.get("formatted"), properties.get("address_line1"));
+        String rawFormatted = firstClean(
+                properties.get("formatted"),
+                List.of(clean(properties.get("address_line1")), clean(properties.get("address_line2"))).stream()
+                        .filter((item) -> !item.isBlank())
+                        .reduce((a, b) -> a + ", " + b)
+                        .orElse(""),
+                List.of(
+                        clean(properties.get("name")),
+                        clean(properties.get("street")),
+                        clean(properties.get("housenumber")),
+                        clean(properties.get("suburb")),
+                        clean(properties.get("city")),
+                        firstClean(properties.get("state_code"), properties.get("state")),
+                        clean(properties.get("country"))
+                ).stream().filter((item) -> !item.isBlank()).reduce((a, b) -> a + ", " + b).orElse("")
+        );
         double latitude = number(properties.get("lat"));
         double longitude = number(properties.get("lon"));
 
-        if (formatted.isBlank() || Double.isNaN(latitude) || Double.isNaN(longitude)) {
+        if (rawFormatted.isBlank() || Double.isNaN(latitude) || Double.isNaN(longitude)) {
             return null;
         }
 
-        String street = firstClean(properties.get("street"), properties.get("address_line1"));
-        String houseNumber = clean(properties.get("housenumber"));
-        String neighborhood = firstClean(properties.get("suburb"), properties.get("district"), properties.get("neighbourhood"));
+        ParsedAddressLine parsedAddressLine = parseAddressLine2(firstClean(properties.get("address_line2"), properties.get("formatted")));
+        String street = firstClean(properties.get("street"), parsedAddressLine.street(), properties.get("address_line1"));
+        String houseNumber = firstClean(properties.get("housenumber"), parsedAddressLine.houseNumber());
+        String neighborhood = firstClean(properties.get("suburb"), properties.get("district"), properties.get("neighbourhood"), parsedAddressLine.neighborhood());
         String city = firstClean(
                 properties.get("city"),
                 properties.get("town"),
-                properties.get("village"),
-                properties.get("municipality"),
-                properties.get("county"),
-                properties.get("state_district"));
+                properties.get("village"));
         String stateCode = normalizeUf(firstClean(properties.get("state_code"), properties.get("state")));
         String postcode = clean(properties.get("postcode")).replaceAll("\\D", "");
         if (postcode.length() > 8) postcode = postcode.substring(0, 8);
-        String id = firstClean(properties.get("place_id"), properties.get("placeId"), formatted + "-" + latitude + "-" + longitude);
+        String formatted = buildDisplayLabel(street, houseNumber, neighborhood, rawFormatted);
+        String id = firstClean(properties.get("place_id"), properties.get("placeId"), rawFormatted + "-" + latitude + "-" + longitude);
 
         return new AddressSuggestionResponse(
                 id,
@@ -292,7 +306,7 @@ public class AddressAutocompleteService {
                 latitude,
                 longitude,
                 buildAddressLine1(street, houseNumber, formatted),
-                buildAddressLine2(neighborhood, city, stateCode),
+                buildAddressLine2(neighborhood),
                 street,
                 houseNumber,
                 neighborhood,
@@ -383,10 +397,7 @@ public class AddressAutocompleteService {
                 normalizeForMatch(item.getCity()),
                 normalizeForMatch(raw.get("city")),
                 normalizeForMatch(raw.get("town")),
-                normalizeForMatch(raw.get("village")),
-                normalizeForMatch(raw.get("municipality")),
-                normalizeForMatch(raw.get("county")),
-                normalizeForMatch(raw.get("state_district"))
+                normalizeForMatch(raw.get("village"))
         ).stream().filter((value) -> !value.isBlank()).toList();
 
         boolean hasCityData = !cityCandidates.isEmpty();
@@ -396,7 +407,8 @@ public class AddressAutocompleteService {
         List<String> ufCandidates = List.of(
                 normalizeUf(item.getState()),
                 normalizeUf(raw.get("state_code")),
-                normalizeUf(raw.get("state"))
+                normalizeUf(raw.get("state")),
+                normalizeUf(iso3166Uf(raw.get("iso3166_2")))
         ).stream().filter((value) -> !value.isBlank()).toList();
         boolean hasStateData = !ufCandidates.isEmpty();
         boolean stateMatches = selectedUf.isBlank() || !hasStateData || ufCandidates.contains(selectedUf);
@@ -425,11 +437,49 @@ public class AddressAutocompleteService {
                 .orElse(fallback);
     }
 
-    private String buildAddressLine2(String neighborhood, String city, String state) {
-        return List.of(neighborhood, city, state).stream()
+    private String buildAddressLine2(String neighborhood) {
+        return neighborhood;
+    }
+
+    private String buildDisplayLabel(String street, String houseNumber, String neighborhood, String fallback) {
+        return List.of(street, houseNumber, neighborhood).stream()
                 .filter((item) -> !item.isBlank())
-                .reduce((a, b) -> a + " - " + b)
-                .orElse("");
+                .reduce((a, b) -> a + ", " + b)
+                .orElse(fallback);
+    }
+
+    private ParsedAddressLine parseAddressLine2(Object value) {
+        String[] parts = clean(value).split(",");
+        int selectedIndex = 0;
+        for (int index = 0; index < parts.length; index += 1) {
+            if (isStreetPart(parts[index])) {
+                selectedIndex = index;
+                break;
+            }
+        }
+        String firstPart = parts.length > selectedIndex ? parts[selectedIndex].trim() : "";
+        String neighborhood = parts.length > selectedIndex + 1 ? parts[selectedIndex + 1].trim() : "";
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("^(.+?)\\s+(\\d+[a-zA-Z]?(?:[-/]\\d+)?)$")
+                .matcher(firstPart);
+        if (matcher.matches()) {
+            return new ParsedAddressLine(matcher.group(1).trim(), matcher.group(2).trim(), neighborhood);
+        }
+        if (neighborhood.matches("^\\d+[a-zA-Z]?(?:[-/]\\d+)?$")) {
+            String nextNeighborhood = parts.length > selectedIndex + 2 ? parts[selectedIndex + 2].trim() : "";
+            return new ParsedAddressLine(firstPart, neighborhood, nextNeighborhood);
+        }
+        return new ParsedAddressLine(firstPart, "", neighborhood);
+    }
+
+    private boolean isStreetPart(String value) {
+        String normalized = normalizeForMatch(value);
+        return normalized.matches("^(r|rua|av|avenida|alameda|travessa|praca|rodovia|estrada|beco|largo)\\b.*");
+    }
+
+    private String iso3166Uf(Object value) {
+        String text = clean(value).toUpperCase(Locale.ROOT);
+        return text.startsWith("BR-") && text.length() >= 5 ? text.substring(3, 5) : "";
     }
 
     private String country() {
@@ -485,4 +535,6 @@ public class AddressAutocompleteService {
         }
         return out;
     }
+
+    private record ParsedAddressLine(String street, String houseNumber, String neighborhood) {}
 }

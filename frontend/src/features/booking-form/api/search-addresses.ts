@@ -5,7 +5,7 @@ import type { GeoapifyAddressSuggestion, GeoapifyCityContext } from "../../../ty
 const AUTOCOMPLETE_ENDPOINT = "https://api.geoapify.com/v1/geocode/autocomplete";
 const BACKEND_AUTOCOMPLETE_ENDPOINT = "/api/enderecos/autocomplete";
 const BACKEND_CITY_CONTEXT_ENDPOINT = "/api/enderecos/cidade";
-const DEFAULT_LIMIT = 5;
+const DEFAULT_LIMIT = 20;
 const CITY_RADIUS_METERS = 15_000;
 
 type GeoapifyResult = Record<string, unknown>;
@@ -140,8 +140,31 @@ function buildAddressLine1(street: string, houseNumber: string, fallback: string
   return [street, houseNumber].filter(Boolean).join(", ").trim() || fallback;
 }
 
-function buildAddressLine2(neighborhood: string, city: string, state: string): string {
-  return [neighborhood, city, state].filter(Boolean).join(" - ").trim();
+function buildAddressLine2(neighborhood: string): string {
+  return neighborhood;
+}
+
+const HOUSE_NUMBER_PATTERN = /^\d+[a-zA-Z]?(?:[-/]\d+)?$/;
+const STREET_PREFIX_PATTERN = /^(r\.?|rua|av\.?|avenida|alameda|travessa|praca|rodovia|estrada|beco|largo)\b/i;
+
+function parseAddressLine2(value?: unknown): { street: string; houseNumber: string; neighborhood: string } {
+  const parts = normalizeText(value).split(",").map((part) => part.trim()).filter(Boolean);
+  const streetPartIndex = parts.findIndex((part) => STREET_PREFIX_PATTERN.test(part) || STREET_PREFIX_PATTERN.test(normalizeForMatch(part)));
+  const selectedIndex = streetPartIndex >= 0 ? streetPartIndex : 0;
+  const streetPart = parts[selectedIndex] ?? "";
+  const numberMatch = streetPart.match(/^(.+?)\s+(\d+[a-zA-Z]?(?:[-/]\d+)?)$/);
+  const nextPart = parts[selectedIndex + 1] ?? "";
+  const nextPartIsNumber = HOUSE_NUMBER_PATTERN.test(nextPart);
+
+  return {
+    street: numberMatch ? numberMatch[1].trim() : streetPart,
+    houseNumber: numberMatch ? numberMatch[2].trim() : nextPartIsNumber ? nextPart : "",
+    neighborhood: nextPartIsNumber ? parts[selectedIndex + 2] ?? "" : nextPart,
+  };
+}
+
+function buildDisplayLabel(street: string, houseNumber: string, neighborhood: string, fallback: string): string {
+  return [street, houseNumber, neighborhood].filter(Boolean).join(", ").trim() || fallback;
 }
 
 export function extractGeoapifyResults(payload: GeoapifyAutocompleteResponse | null | undefined): GeoapifyResult[] {
@@ -160,7 +183,7 @@ function countGeoapifyResults(payload: GeoapifyAutocompleteResponse | null | und
 }
 
 export function toSuggestion(properties: GeoapifyResult): GeoapifyAddressSuggestion | null {
-  const rawLabel = firstText(
+  const rawFormatted = firstText(
     properties.formatted,
     [properties.address_line1, properties.address_line2].map(normalizeText).filter(Boolean).join(", "),
     [properties.name, properties.street, properties.housenumber, properties.suburb, properties.city, properties.state_code || properties.state, properties.country]
@@ -168,10 +191,11 @@ export function toSuggestion(properties: GeoapifyResult): GeoapifyAddressSuggest
       .filter(Boolean)
       .join(", "),
   );
-  const formatted = rawLabel;
-  const street = firstText(properties.street, properties.address_line1);
-  const houseNumber = normalizeText(properties.housenumber);
-  const neighborhood = firstText(properties.suburb, properties.district, properties.neighbourhood);
+  const parsedAddressLine2 = parseAddressLine2(firstText(properties.address_line2, properties.formatted));
+  const street = firstText(properties.street, parsedAddressLine2.street, properties.address_line1);
+  const houseNumber = firstText(properties.housenumber, parsedAddressLine2.houseNumber);
+  const neighborhood = firstText(properties.suburb, properties.district, properties.neighbourhood, parsedAddressLine2.neighborhood);
+  const formatted = buildDisplayLabel(street, houseNumber, neighborhood, rawFormatted);
   const city = firstText(properties.city, properties.town, properties.village);
   const stateCode = normalizeUf(firstText(properties.state_code, properties.state));
   const state = stateCode || normalizeText(properties.state).toUpperCase();
@@ -181,7 +205,7 @@ export function toSuggestion(properties: GeoapifyResult): GeoapifyAddressSuggest
 
   if (!formatted || Number.isNaN(latitude) || Number.isNaN(longitude)) return null;
 
-  const id = firstText(properties.place_id, properties.placeId, `${latitude}-${longitude}-${formatted || street}`);
+  const id = firstText(properties.place_id, properties.placeId, `${latitude}-${longitude}-${rawFormatted || formatted || street}`);
   const label = formatted;
 
   return {
@@ -193,14 +217,8 @@ export function toSuggestion(properties: GeoapifyResult): GeoapifyAddressSuggest
     longitude,
     lat: latitude,
     lon: longitude,
-    addressLine1: firstText(
-      buildAddressLine1(firstText(properties.street), houseNumber, ""),
-      properties.address_line1,
-      properties.name,
-      properties.street,
-      formatted,
-    ),
-    addressLine2: firstText(properties.address_line2, buildAddressLine2(neighborhood, city, state)),
+    addressLine1: buildAddressLine1(street, houseNumber, formatted),
+    addressLine2: buildAddressLine2(neighborhood),
     street,
     houseNumber,
     neighborhood,

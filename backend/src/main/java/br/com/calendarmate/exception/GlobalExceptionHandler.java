@@ -95,8 +95,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ExternalServiceException.class)
     public ResponseEntity<ApiError> external(ExternalServiceException ex, HttpServletRequest req) {
-        log.warn("External service failure at {}: {}", req.getRequestURI(), ex.getMessage());
-        return build(HttpStatus.BAD_GATEWAY, "UPSTREAM_ERROR", "Falha de comunicacao com servico externo.", req);
+        log.warn(
+                "External verification provider failure at {} code={} provider={} providerStatus={} message={}",
+                req.getRequestURI(),
+                ex.getErrorCode(),
+                ex.getProviderName() == null ? "unknown" : ex.getProviderName(),
+                ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
+                ex.getMessage());
+        return build(ex.getStatus(), ex.getErrorCode(), ex.getMessage(), req);
     }
 
     @ExceptionHandler(RestClientException.class)

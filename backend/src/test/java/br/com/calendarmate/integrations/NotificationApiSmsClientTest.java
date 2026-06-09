@@ -1,6 +1,7 @@
 package br.com.calendarmate.integrations;
 
 import br.com.calendarmate.exception.BadRequestException;
+import br.com.calendarmate.exception.ExternalServiceException;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
@@ -75,6 +76,64 @@ class NotificationApiSmsClientTest {
                 "calendar-mate.vercel.app");
 
         assertThrows(BadRequestException.class, () -> client.sendCode("+1 31995438467", "123"));
+        assertEquals(0, calls.get());
+    }
+
+    @Test
+    void mapsProviderAuthFailureToSafeErrorCode() throws Exception {
+        server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        server.createContext("/send", exchange -> respond(exchange, 401, "{\"error\":\"unauthorized\"}"));
+        server.start();
+
+        NotificationApiSmsClient client = new NotificationApiSmsClient(
+                "pingram_sk_test",
+                "http://localhost:" + server.getAddress().getPort(),
+                "calendar_mate_otp",
+                new MonthlySmsQuota(10, tempDir.resolve("sms-usage.properties").toString()),
+                "calendar-mate.vercel.app");
+
+        ExternalServiceException ex = assertThrows(ExternalServiceException.class, () -> client.sendCode("31995438467", "123"));
+        assertEquals("PROVIDER_AUTH_FAILED", ex.getErrorCode());
+        assertEquals(401, ex.getProviderStatus());
+    }
+
+    @Test
+    void mapsProviderBadRequestToSafeErrorCode() throws Exception {
+        server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        server.createContext("/send", exchange -> respond(exchange, 400, "{\"error\":\"bad request\"}"));
+        server.start();
+
+        NotificationApiSmsClient client = new NotificationApiSmsClient(
+                "pingram_sk_test",
+                "http://localhost:" + server.getAddress().getPort(),
+                "calendar_mate_otp",
+                new MonthlySmsQuota(10, tempDir.resolve("sms-usage.properties").toString()),
+                "calendar-mate.vercel.app");
+
+        ExternalServiceException ex = assertThrows(ExternalServiceException.class, () -> client.sendCode("31995438467", "123"));
+        assertEquals("PROVIDER_REJECTED_REQUEST", ex.getErrorCode());
+        assertEquals(400, ex.getProviderStatus());
+    }
+
+    @Test
+    void reportsMissingApiKeyBeforeCallingProvider() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        server.createContext("/send", exchange -> {
+            calls.incrementAndGet();
+            respond(exchange, 200, "{\"trackingId\":\"trk_test\",\"messages\":[\"ok\"]}");
+        });
+        server.start();
+
+        NotificationApiSmsClient client = new NotificationApiSmsClient(
+                "",
+                "http://localhost:" + server.getAddress().getPort(),
+                "calendar_mate_otp",
+                new MonthlySmsQuota(10, tempDir.resolve("sms-usage.properties").toString()),
+                "calendar-mate.vercel.app");
+
+        ExternalServiceException ex = assertThrows(ExternalServiceException.class, () -> client.sendCode("31995438467", "123"));
+        assertEquals("PROVIDER_CONFIG_MISSING", ex.getErrorCode());
         assertEquals(0, calls.get());
     }
 

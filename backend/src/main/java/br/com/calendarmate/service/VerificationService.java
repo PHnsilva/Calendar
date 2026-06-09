@@ -2,6 +2,7 @@ package br.com.calendarmate.service;
 
 import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.exception.BadRequestException;
+import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.exception.NotFoundException;
 import br.com.calendarmate.google.CalendarClient;
@@ -10,6 +11,7 @@ import br.com.calendarmate.model.PendingRecord;
 import br.com.calendarmate.model.Servico;
 import br.com.calendarmate.service.store.PendingStore;
 import br.com.calendarmate.service.store.VerificationStore;
+import br.com.calendarmate.util.PhoneNumberNormalizer;
 import com.google.api.services.calendar.model.Event;
 
 import java.io.IOException;
@@ -108,7 +110,7 @@ public class VerificationService {
                 props.getOtpResendAfter().toSeconds()
         );
 
-        otpDeliveryClient.sendCode(phoneDigits, sess.code);
+        sendOtp(phoneDigits, sess.code);
 
         return new StartResult(
                 sess.verificationId,
@@ -134,7 +136,7 @@ public class VerificationService {
             throw new BadRequestException("verificationId inválido");
         }
 
-        otpDeliveryClient.sendCode(sess.phoneDigits, sess.code);
+        sendOtp(sess.phoneDigits, sess.code);
 
         return new StartResult(
                 sess.verificationId,
@@ -176,7 +178,21 @@ public class VerificationService {
         store.delete(verificationId);
     }
 
+    private void sendOtp(String phone, String code) {
+        try {
+            otpDeliveryClient.sendCode(phone, code);
+        } catch (BadRequestException | ExternalServiceException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
+        }
+    }
+
     private static String normalizePhone(String phone) {
+        String normalized = PhoneNumberNormalizer.normalizeBrazilianPhone(phone);
+        if (!normalized.isBlank()) {
+            return normalized;
+        }
         String d = (phone == null) ? "" : phone.replaceAll("\\D", "");
         if (d.length() < 10 || d.length() > 11) {
             throw new BadRequestException("Telefone inválido");

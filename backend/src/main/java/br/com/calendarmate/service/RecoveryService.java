@@ -4,10 +4,12 @@ import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.dto.RecoverConfirmResponse;
 import br.com.calendarmate.dto.ServicoResponse;
 import br.com.calendarmate.exception.BadRequestException;
+import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.HistoryRecord;
 import br.com.calendarmate.service.store.HistoryStore;
 import br.com.calendarmate.service.store.VerificationStore;
+import br.com.calendarmate.util.PhoneNumberNormalizer;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -45,7 +47,7 @@ public class RecoveryService {
     }
 
     public StartResult start(String phoneRaw) {
-        String phoneDigits = normalizePhone(phoneRaw);
+        String phoneDigits = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneRaw);
         if (adminAuthService.isAdminPhone(phoneDigits)) {
             throw new BadRequestException("Use o acesso administrativo para este telefone");
         }
@@ -57,7 +59,7 @@ public class RecoveryService {
                 props.getOtpResendAfter().toSeconds()
         );
 
-        otpDeliveryClient.sendCode(phoneDigits, sess.code);
+        sendOtp(phoneDigits, sess.code);
         historyStore.append(new HistoryRecord(
                 "h_" + UUID.randomUUID(),
                 "RECOVER_START",
@@ -73,34 +75,34 @@ public class RecoveryService {
     public StartResult resend(String verificationId) {
         VerificationStore.Session sess = verificationStore.get(verificationId);
         if (sess == null) {
-            throw new BadRequestException("verificationId inválido");
+            throw new BadRequestException("verificationId invalido");
         }
         if (sess.isExpired()) {
-            throw new BadRequestException("Código expirou");
+            throw new BadRequestException("Codigo expirou");
         }
         if (!sess.canResend()) {
-            throw new BadRequestException("Aguarde para reenviar o código");
+            throw new BadRequestException("Aguarde para reenviar o codigo");
         }
 
         sess = verificationStore.refreshResend(verificationId, props.getOtpResendAfter().toSeconds());
         if (sess == null) {
-            throw new BadRequestException("verificationId inválido");
+            throw new BadRequestException("verificationId invalido");
         }
 
-        otpDeliveryClient.sendCode(sess.phoneDigits, sess.code);
+        sendOtp(sess.phoneDigits, sess.code);
         return new StartResult(sess.verificationId, Math.max(0, sess.expiresAtEpochSec - Instant.now().getEpochSecond()), props.getOtpResendAfter().toSeconds());
     }
 
     public RecoverConfirmResponse confirm(String verificationId, String code) throws IOException {
         VerificationStore.Session sess = verificationStore.get(verificationId);
         if (sess == null) {
-            throw new BadRequestException("Código inválido");
+            throw new BadRequestException("Codigo invalido");
         }
         if (sess.isExpired()) {
-            throw new BadRequestException("Código expirou");
+            throw new BadRequestException("Codigo expirou");
         }
         if (!sess.code.equals(code)) {
-            throw new BadRequestException("Código inválido");
+            throw new BadRequestException("Codigo invalido");
         }
 
         List<ServicoResponse> servicos = servicoService.confirmPendingByPhone(sess.phoneDigits);
@@ -124,16 +126,13 @@ public class RecoveryService {
         return new RecoverConfirmResponse(true, servicos);
     }
 
-    private static String normalizePhone(String phone) {
-        StringBuilder digits = new StringBuilder();
-        for (char ch : (phone == null ? "" : phone).toCharArray()) {
-            if (Character.isDigit(ch)) {
-                digits.append(ch);
-            }
+    private void sendOtp(String phone, String code) {
+        try {
+            otpDeliveryClient.sendCode(phone, code);
+        } catch (BadRequestException | ExternalServiceException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
         }
-        if (digits.length() < 10 || digits.length() > 11) {
-            throw new BadRequestException("Telefone inválido");
-        }
-        return digits.toString();
     }
 }

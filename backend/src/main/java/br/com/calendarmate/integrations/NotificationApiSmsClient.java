@@ -1,17 +1,28 @@
 package br.com.calendarmate.integrations;
 
+import br.com.calendarmate.exception.BadRequestException;
+import br.com.calendarmate.exception.ExternalServiceException;
+import br.com.calendarmate.util.PhoneNumberNormalizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 public class NotificationApiSmsClient implements OtpDeliveryClient {
+    private static final Logger log = LoggerFactory.getLogger(NotificationApiSmsClient.class);
+    private static final String SEND_PATH = "/send";
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
+    private static final int MAX_LOG_BODY_CHARS = 500;
 
     private final HttpClient httpClient;
     private final String apiKey;
-    private final String baseUrl;
+    private final URI sendUri;
     private final String notificationType;
     private final MonthlySmsQuota quota;
     private final String publicDomain;
@@ -24,7 +35,7 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
             String publicDomain) {
         this.httpClient = HttpClient.newHttpClient();
         this.apiKey = apiKey;
-        this.baseUrl = normalizeBaseUrl(baseUrl);
+        this.sendUri = resolveSendUri(baseUrl);
         this.notificationType = notificationType;
         this.quota = quota;
         this.publicDomain = cleanDomain(publicDomain);
@@ -32,9 +43,14 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
 
     @Override
     public void sendCode(String phoneDigits, String code) {
+        String normalizedPhone = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneDigits);
+        if (code == null || code.isBlank()) {
+            throw new BadRequestException("Codigo invalido");
+        }
+
         quota.acquire();
         try {
-            sendRequest(phoneDigits, code);
+            sendRequest(normalizedPhone, code);
         } catch (RuntimeException ex) {
             quota.rollback();
             throw ex;
@@ -48,20 +64,40 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
 
     private void sendRequest(String phoneDigits, String code) {
         try {
+            log.info(
+                    "Sending verification SMS providerHost={} providerPath={} phone={}",
+                    sendUri.getHost(),
+                    safePath(sendUri),
+                    maskPhone(toE164(phoneDigits)));
+
             HttpResponse<String> response = httpClient.send(
                     buildRequest(phoneDigits, code),
                     HttpResponse.BodyHandlers.ofString());
 
             validateResponse(response);
-        } catch (IOException | InterruptedException ex) {
+        } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Falha ao enviar SMS via NotificationAPI.", ex);
+            log.warn(
+                    "Verification SMS interrupted providerHost={} providerPath={} phone={}",
+                    sendUri.getHost(),
+                    safePath(sendUri),
+                    maskPhone(toE164(phoneDigits)));
+            throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
+        } catch (IOException ex) {
+            log.warn(
+                    "Verification SMS transport failure providerHost={} providerPath={} phone={} error={}",
+                    sendUri.getHost(),
+                    safePath(sendUri),
+                    maskPhone(toE164(phoneDigits)),
+                    ex.toString());
+            throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
         }
     }
 
     private HttpRequest buildRequest(String phoneDigits, String code) {
         return HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/send"))
+                .uri(sendUri)
+                .timeout(REQUEST_TIMEOUT)
                 .header("Authorization", "Bearer " + apiKey)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload(phoneDigits, code), StandardCharsets.UTF_8))
@@ -87,14 +123,21 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
 
     private void validateResponse(HttpResponse<String> response) {
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            log.info(
+                    "Verification SMS provider accepted request providerHost={} providerPath={} status={}",
+                    sendUri.getHost(),
+                    safePath(sendUri),
+                    response.statusCode());
             return;
         }
 
-        throw new IllegalStateException(
-                "NotificationAPI recusou o SMS. Status: "
-                        + response.statusCode()
-                        + ". Body: "
-                        + response.body());
+        log.warn(
+                "Verification SMS provider rejected request providerHost={} providerPath={} status={} responseBody={}",
+                sendUri.getHost(),
+                safePath(sendUri),
+                response.statusCode(),
+                sanitizeResponseBody(response.body()));
+        throw new ExternalServiceException("Falha de comunicacao com servico externo.");
     }
 
     private String message(String code) {
@@ -118,9 +161,15 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
         return value == null ? "" : value.replaceAll("\\D+", "");
     }
 
-    private String normalizeBaseUrl(String value) {
+    private URI resolveSendUri(String value) {
         String url = value == null || value.isBlank() ? "https://api.pingram.io" : value.trim();
-        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+        url = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+        URI uri = URI.create(url);
+        String path = uri.getPath() == null ? "" : uri.getPath();
+        if (path.equals(SEND_PATH) || path.endsWith(SEND_PATH)) {
+            return uri;
+        }
+        return URI.create(url + SEND_PATH);
     }
 
     private String cleanDomain(String value) {
@@ -139,5 +188,31 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
                 .replace("\"", "\\\"")
                 .replace("\r", "\\r")
                 .replace("\n", "\\n");
+    }
+
+    private String safePath(URI uri) {
+        String path = uri.getPath();
+        return path == null || path.isBlank() ? "/" : path;
+    }
+
+    private String maskPhone(String phone) {
+        String digits = digitsOnly(phone);
+        if (digits.length() <= 4) {
+            return "****";
+        }
+        return "+" + digits.substring(0, Math.min(2, digits.length())) + "******" + digits.substring(digits.length() - 4);
+    }
+
+    private String sanitizeResponseBody(String body) {
+        if (body == null || body.isBlank()) {
+            return "";
+        }
+        String sanitized = body
+                .replaceAll("(?i)bearer\\s+[A-Za-z0-9._~+/=-]+", "Bearer [redacted]")
+                .replaceAll("pingram_sk_[A-Za-z0-9._~+/=-]+", "pingram_sk_[redacted]")
+                .replaceAll("\\+?55\\d{10,11}", "+55******0000");
+        return sanitized.length() > MAX_LOG_BODY_CHARS
+                ? sanitized.substring(0, MAX_LOG_BODY_CHARS) + "...[truncated]"
+                : sanitized;
     }
 }

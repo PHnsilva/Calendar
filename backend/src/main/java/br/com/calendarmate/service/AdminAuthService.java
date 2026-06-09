@@ -236,6 +236,8 @@ public class AdminAuthService {
             otpDeliveryClient.sendCode(phone, code);
         } catch (BadRequestException ex) {
             throw ex;
+        } catch (ExternalServiceException ex) {
+            throw ex;
         } catch (RuntimeException ex) {
             throw new ExternalServiceException("Nao foi possivel enviar o codigo agora", ex);
         }

@@ -95,11 +95,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ExternalServiceException.class)
     public ResponseEntity<ApiError> external(ExternalServiceException ex, HttpServletRequest req) {
-        return build(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL_SERVICE_ERROR", ex.getMessage(), req);
+        log.warn("External service failure at {}: {}", req.getRequestURI(), ex.getMessage());
+        return build(HttpStatus.BAD_GATEWAY, "UPSTREAM_ERROR", "Falha de comunicacao com servico externo.", req);
     }
 
     @ExceptionHandler(RestClientException.class)
     public ResponseEntity<ApiError> restClient(RestClientException ex, HttpServletRequest req) {
+        log.warn("Upstream REST failure at {}: {}", req.getRequestURI(), ex.toString());
         return build(HttpStatus.BAD_GATEWAY, "UPSTREAM_ERROR", "Falha de comunicacao com servico externo.", req);
     }
 

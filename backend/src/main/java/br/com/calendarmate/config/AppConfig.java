@@ -13,14 +13,20 @@ import br.com.calendarmate.integrations.routes.RouteClient;
 import br.com.calendarmate.integrations.supabase.SupabaseClient;
 import br.com.calendarmate.service.*;
 import br.com.calendarmate.service.store.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Configuration
 public class AppConfig {
+    private static final Logger log = LoggerFactory.getLogger(AppConfig.class);
 
     @Bean
     public TokenUtil tokenUtil() {
@@ -37,9 +43,15 @@ public class AppConfig {
     @Bean
     public OtpDeliveryClient otpDeliveryClient(RestTemplate http, AppProperties props) {
         String channel = props.getVerificationChannel();
+        log.info("Verification provider selection channel={}", channel);
 
         if ("SMS".equals(channel)) {
             if (props.isSmsNotificationApiReady()) {
+                log.info(
+                        "Verification provider configured provider=NotificationAPI channel=SMS baseHostPath={} typePresent={} monthlyLimit={}",
+                        safeHostPath(props.getSmsNotificationApiBaseUrl()),
+                        !props.getSmsNotificationApiType().isBlank(),
+                        props.getSmsNotificationApiMonthlyLimit());
                 MonthlySmsQuota quota = new MonthlySmsQuota(
                         props.getSmsNotificationApiMonthlyLimit(),
                         props.getSmsNotificationApiUsageFile());
@@ -49,6 +61,17 @@ public class AppConfig {
                         props.getSmsNotificationApiType(),
                         quota,
                         props.getPublicDomain());
+            }
+
+            List<String> missing = missingSmsNotificationApiConfig(props);
+            if (!missing.isEmpty()) {
+                log.warn(
+                        "Verification provider configuration incomplete provider=NotificationAPI missing={}",
+                        String.join(",", missing));
+                return new MisconfiguredOtpDeliveryClient(
+                        "NotificationAPI",
+                        "Provedor de verificacao SMS nao configurado.",
+                        String.join(",", missing));
             }
 
             return new MisconfiguredOtpDeliveryClient(
@@ -68,10 +91,59 @@ public class AppConfig {
                         props.getWhatsappLanguage());
             }
 
-            return new DummyWhatsAppClient();
+            log.warn(
+                    "Verification provider configuration incomplete provider=MetaWhatsApp missing={}",
+                    String.join(",", missingWhatsappConfig(props)));
+            return new MisconfiguredOtpDeliveryClient(
+                    "MetaWhatsApp",
+                    "Provedor de verificacao WhatsApp nao configurado.",
+                    String.join(",", missingWhatsappConfig(props)));
         }
 
+        log.info("Verification provider configured provider=Dummy channel={}", channel);
         return new DummyWhatsAppClient();
+    }
+
+    private List<String> missingSmsNotificationApiConfig(AppProperties props) {
+        List<String> missing = new ArrayList<>();
+        if (!props.isSmsNotificationApiEnabled()) {
+            missing.add("SMS_NOTIFICATIONAPI_ENABLED");
+        }
+        if (props.getSmsNotificationApiApiKey().isBlank()) {
+            missing.add("SMS_NOTIFICATIONAPI_API_KEY");
+        }
+        if (props.getSmsNotificationApiType().isBlank()) {
+            missing.add("SMS_NOTIFICATIONAPI_TYPE");
+        }
+        return missing;
+    }
+
+    private List<String> missingWhatsappConfig(AppProperties props) {
+        List<String> missing = new ArrayList<>();
+        if (!props.isWhatsappEnabled()) {
+            missing.add("WHATSAPP_ENABLED");
+        }
+        if (props.getWhatsappToken().isBlank()) {
+            missing.add("WHATSAPP_TOKEN");
+        }
+        if (props.getWhatsappPhoneNumberId().isBlank()) {
+            missing.add("WHATSAPP_PHONE_NUMBER_ID");
+        }
+        if (props.getWhatsappTemplateName().isBlank()) {
+            missing.add("WHATSAPP_TEMPLATE_NAME");
+        }
+        return missing;
+    }
+
+    private String safeHostPath(String rawUrl) {
+        try {
+            java.net.URI uri = java.net.URI.create(rawUrl == null || rawUrl.isBlank() ? "" : rawUrl.trim());
+            String host = uri.getHost() == null ? "unknown-host" : uri.getHost();
+            String path = uri.getPath() == null || uri.getPath().isBlank() ? "/" : uri.getPath();
+            return host + path;
+        } catch (Exception ex) {
+            return "invalid-url";
+        }
     }
 
     @Bean

@@ -14,13 +14,17 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.SocketTimeoutException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MetaWhatsAppClient implements WhatsAppClient {
     private static final Logger log = LoggerFactory.getLogger(MetaWhatsAppClient.class);
+    private static final String PROVIDER_NAME = "MetaWhatsApp";
     private static final String GRAPH_HOST = "graph.facebook.com";
+    private static final String REQUEST_METHOD = "POST";
+    private static final String REQUEST_TIMEOUT_CONFIG = "RestTemplate default";
     private static final int MAX_LOG_BODY_CHARS = 500;
 
     private final RestTemplate http;
@@ -46,7 +50,7 @@ public class MetaWhatsAppClient implements WhatsAppClient {
     @Override
     public void sendCode(String phoneDigits, String code) {
         if (isBlank(token) || isBlank(phoneNumberId) || isBlank(templateName)) {
-            throw new BadRequestException("WhatsApp nao configurado (token/phoneNumberId/template)");
+            throw ExternalServiceException.providerConfigMissing(PROVIDER_NAME, "Provedor de verificacao WhatsApp nao configurado.");
         }
         if (isBlank(code)) {
             throw new BadRequestException("Codigo invalido");
@@ -83,33 +87,59 @@ public class MetaWhatsAppClient implements WhatsAppClient {
 
         try {
             log.info(
-                    "Sending verification WhatsApp providerHost={} providerPath={} phone={}",
+                    "Verification provider call starting provider={} method={} providerHost={} providerPath={} timeoutConfig={} phone={}",
+                    PROVIDER_NAME,
+                    REQUEST_METHOD,
                     GRAPH_HOST,
                     path,
+                    REQUEST_TIMEOUT_CONFIG,
                     maskPhone(providerPhone));
             ResponseEntity<String> resp = http.exchange(url, HttpMethod.POST, req, String.class);
             log.info(
-                    "Verification WhatsApp provider accepted request providerHost={} providerPath={} status={}",
+                    "Verification WhatsApp provider accepted request provider={} method={} providerHost={} providerPath={} status={}",
+                    PROVIDER_NAME,
+                    REQUEST_METHOD,
                     GRAPH_HOST,
                     path,
                     resp.getStatusCode().value());
         } catch (RestClientResponseException ex) {
             log.warn(
-                    "Verification WhatsApp provider rejected request providerHost={} providerPath={} status={} responseBody={}",
+                    "Verification WhatsApp provider rejected request provider={} method={} providerHost={} providerPath={} status={} responseBody={}",
+                    PROVIDER_NAME,
+                    REQUEST_METHOD,
                     GRAPH_HOST,
                     path,
                     ex.getRawStatusCode(),
                     sanitizeResponseBody(ex.getResponseBodyAsString()));
-            throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
+            throw mapProviderStatus(ex.getRawStatusCode(), ex);
         } catch (RestClientException ex) {
             log.warn(
-                    "Verification WhatsApp transport failure providerHost={} providerPath={} phone={} error={}",
+                    "Verification WhatsApp transport failure provider={} method={} providerHost={} providerPath={} phone={} exceptionClass={} exceptionMessage={}",
+                    PROVIDER_NAME,
+                    REQUEST_METHOD,
                     GRAPH_HOST,
                     path,
                     maskPhone(providerPhone),
-                    ex.toString());
-            throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            if (hasCause(ex, SocketTimeoutException.class)) {
+                throw ExternalServiceException.providerTimeout(PROVIDER_NAME, ex);
+            }
+            throw ExternalServiceException.upstreamFailure(PROVIDER_NAME, null, ex);
         }
+    }
+
+    private static ExternalServiceException mapProviderStatus(int providerStatus, Throwable cause) {
+        if (providerStatus == 401 || providerStatus == 403) {
+            return ExternalServiceException.providerAuthFailed(PROVIDER_NAME, providerStatus);
+        }
+        if (providerStatus == 408) {
+            return ExternalServiceException.providerTimeout(PROVIDER_NAME, cause);
+        }
+        if (providerStatus >= 400 && providerStatus < 500) {
+            return ExternalServiceException.providerRejectedRequest(PROVIDER_NAME, providerStatus);
+        }
+        return ExternalServiceException.upstreamFailure(PROVIDER_NAME, providerStatus, cause);
     }
 
     private static String toMetaPhone(String phoneDigits) {
@@ -126,7 +156,8 @@ public class MetaWhatsAppClient implements WhatsAppClient {
         if (digits.length() <= 4) {
             return "****";
         }
-        return digits.substring(0, Math.min(2, digits.length())) + "******" + digits.substring(digits.length() - 4);
+        int prefixLength = Math.min(4, digits.length() - 4);
+        return digits.substring(0, prefixLength) + "*****" + digits.substring(digits.length() - 4);
     }
 
     private static String sanitizeResponseBody(String body) {
@@ -140,5 +171,24 @@ public class MetaWhatsAppClient implements WhatsAppClient {
         return sanitized.length() > MAX_LOG_BODY_CHARS
                 ? sanitized.substring(0, MAX_LOG_BODY_CHARS) + "...[truncated]"
                 : sanitized;
+    }
+
+    private static String safeExceptionMessage(Exception ex) {
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return "";
+        }
+        return sanitizeResponseBody(message);
+    }
+
+    private static boolean hasCause(Throwable ex, Class<? extends Throwable> causeType) {
+        Throwable current = ex;
+        while (current != null) {
+            if (causeType.isInstance(current)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }

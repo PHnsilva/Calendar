@@ -11,12 +11,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 public class NotificationApiSmsClient implements OtpDeliveryClient {
     private static final Logger log = LoggerFactory.getLogger(NotificationApiSmsClient.class);
+    private static final String PROVIDER_NAME = "NotificationAPI";
     private static final String SEND_PATH = "/send";
+    private static final String REQUEST_METHOD = "POST";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
     private static final int MAX_LOG_BODY_CHARS = 500;
 
@@ -33,7 +36,9 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
             String notificationType,
             MonthlySmsQuota quota,
             String publicDomain) {
-        this.httpClient = HttpClient.newHttpClient();
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(REQUEST_TIMEOUT)
+                .build();
         this.apiKey = apiKey;
         this.sendUri = resolveSendUri(baseUrl);
         this.notificationType = notificationType;
@@ -44,6 +49,12 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
     @Override
     public void sendCode(String phoneDigits, String code) {
         String normalizedPhone = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneDigits);
+        if (apiKey == null || apiKey.isBlank()) {
+            throw ExternalServiceException.providerConfigMissing(PROVIDER_NAME, "Provedor de verificacao SMS nao configurado.");
+        }
+        if (notificationType == null || notificationType.isBlank()) {
+            throw ExternalServiceException.providerConfigMissing(PROVIDER_NAME, "Provedor de verificacao SMS nao configurado.");
+        }
         if (code == null || code.isBlank()) {
             throw new BadRequestException("Codigo invalido");
         }
@@ -65,9 +76,12 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
     private void sendRequest(String phoneDigits, String code) {
         try {
             log.info(
-                    "Sending verification SMS providerHost={} providerPath={} phone={}",
+                    "Verification provider call starting provider={} method={} providerHost={} providerPath={} timeoutSeconds={} phone={}",
+                    PROVIDER_NAME,
+                    REQUEST_METHOD,
                     sendUri.getHost(),
                     safePath(sendUri),
+                    REQUEST_TIMEOUT.toSeconds(),
                     maskPhone(toE164(phoneDigits)));
 
             HttpResponse<String> response = httpClient.send(
@@ -75,22 +89,41 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
                     HttpResponse.BodyHandlers.ofString());
 
             validateResponse(response);
+        } catch (HttpTimeoutException ex) {
+            log.warn(
+                    "Verification SMS provider timeout provider={} method={} providerHost={} providerPath={} timeoutSeconds={} phone={} exceptionClass={} exceptionMessage={}",
+                    PROVIDER_NAME,
+                    REQUEST_METHOD,
+                    sendUri.getHost(),
+                    safePath(sendUri),
+                    REQUEST_TIMEOUT.toSeconds(),
+                    maskPhone(toE164(phoneDigits)),
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            throw ExternalServiceException.providerTimeout(PROVIDER_NAME, ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             log.warn(
-                    "Verification SMS interrupted providerHost={} providerPath={} phone={}",
-                    sendUri.getHost(),
-                    safePath(sendUri),
-                    maskPhone(toE164(phoneDigits)));
-            throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
-        } catch (IOException ex) {
-            log.warn(
-                    "Verification SMS transport failure providerHost={} providerPath={} phone={} error={}",
+                    "Verification SMS interrupted provider={} method={} providerHost={} providerPath={} phone={} exceptionClass={} exceptionMessage={}",
+                    PROVIDER_NAME,
+                    REQUEST_METHOD,
                     sendUri.getHost(),
                     safePath(sendUri),
                     maskPhone(toE164(phoneDigits)),
-                    ex.toString());
-            throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            throw ExternalServiceException.upstreamFailure(PROVIDER_NAME, null, ex);
+        } catch (IOException ex) {
+            log.warn(
+                    "Verification SMS transport failure provider={} method={} providerHost={} providerPath={} phone={} exceptionClass={} exceptionMessage={}",
+                    PROVIDER_NAME,
+                    REQUEST_METHOD,
+                    sendUri.getHost(),
+                    safePath(sendUri),
+                    maskPhone(toE164(phoneDigits)),
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            throw ExternalServiceException.upstreamFailure(PROVIDER_NAME, null, ex);
         }
     }
 
@@ -124,7 +157,9 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
     private void validateResponse(HttpResponse<String> response) {
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
             log.info(
-                    "Verification SMS provider accepted request providerHost={} providerPath={} status={}",
+                    "Verification SMS provider accepted request provider={} method={} providerHost={} providerPath={} status={}",
+                    PROVIDER_NAME,
+                    REQUEST_METHOD,
                     sendUri.getHost(),
                     safePath(sendUri),
                     response.statusCode());
@@ -132,12 +167,27 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
         }
 
         log.warn(
-                "Verification SMS provider rejected request providerHost={} providerPath={} status={} responseBody={}",
+                "Verification SMS provider rejected request provider={} method={} providerHost={} providerPath={} status={} responseBody={}",
+                PROVIDER_NAME,
+                REQUEST_METHOD,
                 sendUri.getHost(),
                 safePath(sendUri),
                 response.statusCode(),
                 sanitizeResponseBody(response.body()));
-        throw new ExternalServiceException("Falha de comunicacao com servico externo.");
+        throw mapProviderStatus(response.statusCode());
+    }
+
+    private ExternalServiceException mapProviderStatus(int providerStatus) {
+        if (providerStatus == 401 || providerStatus == 403) {
+            return ExternalServiceException.providerAuthFailed(PROVIDER_NAME, providerStatus);
+        }
+        if (providerStatus == 408) {
+            return ExternalServiceException.providerTimeout(PROVIDER_NAME, null);
+        }
+        if (providerStatus >= 400 && providerStatus < 500) {
+            return ExternalServiceException.providerRejectedRequest(PROVIDER_NAME, providerStatus);
+        }
+        return ExternalServiceException.upstreamFailure(PROVIDER_NAME, providerStatus, null);
     }
 
     private String message(String code) {
@@ -200,7 +250,16 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
         if (digits.length() <= 4) {
             return "****";
         }
-        return "+" + digits.substring(0, Math.min(2, digits.length())) + "******" + digits.substring(digits.length() - 4);
+        int prefixLength = Math.min(4, digits.length() - 4);
+        return "+" + digits.substring(0, prefixLength) + "*****" + digits.substring(digits.length() - 4);
+    }
+
+    private String safeExceptionMessage(Exception ex) {
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return "";
+        }
+        return sanitizeResponseBody(message);
     }
 
     private String sanitizeResponseBody(String body) {

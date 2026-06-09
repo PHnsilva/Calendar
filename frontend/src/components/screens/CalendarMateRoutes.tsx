@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
 import heroClient from '../../assets/wireframes/landing/client-hero-composite.png';
 import heroClientMobile from '../../assets/wireframes/landing/client-hero-composite-mobile.png';
+import heroClientMobileTall from '../../assets/wireframes/landing/client-hero-composite-mobile-tall.png';
 import heroAdmin from '../../assets/wireframes/landing/admin-hero-composite.png';
 import heroAdminMobile from '../../assets/wireframes/landing/admin-hero-composite-mobile.png';
 import houseCard from '../../assets/wireframes/cards/client-house-card.png';
@@ -76,17 +77,21 @@ import { usePublicBootstrap } from '../../features/public-config/hooks/usePublic
 import {
   formatPhoneForDisplay,
   getLocalCalendarEvents,
+  getClientProfileChangedEventName,
   getLocalEventsChangedEventName,
   getManageTokens,
   getStoredAdminSession,
   getStoredAdminToken,
+  getStoredClientProfile,
   getStoredPhoneVerification,
   isStoredAdminOwner,
   clearAdminToken,
   saveLocalCalendarEvent,
+  saveClientProfile,
   saveManageToken,
   savePhoneVerification,
   saveRecoveredBookings,
+  getPhoneVerificationChangedEventName,
 } from '../../lib/storage';
 import type { AdminProviderResponse, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
@@ -107,6 +112,7 @@ import ResponsiveAsset from '../../shared/ui/ResponsiveAsset';
 type ModalKind =
   | 'create-client'
   | 'confirm-phone'
+  | 'client-profile'
   | 'client-details'
   | 'contact'
   | 'services-info'
@@ -851,12 +857,54 @@ function LandingFooter({ admin = false, setModal }: { admin?: boolean; setModal?
   );
 }
 
-function ClientLandingModalButtons({ setModal }: { setModal: (modal: ModalKind) => void }) {
+type ClientProfileSnapshot = {
+  verified: boolean;
+  name?: string;
+  phone?: string;
+  email?: string;
+};
+
+function readClientProfileSnapshot(): ClientProfileSnapshot {
+  const verification = getStoredPhoneVerification();
+  const profile = getStoredClientProfile();
+  return {
+    verified: Boolean(verification),
+    name: profile?.name,
+    phone: profile?.phone || verification?.phone,
+    email: profile?.email,
+  };
+}
+
+function useClientProfileSnapshot(): ClientProfileSnapshot {
+  const [snapshot, setSnapshot] = useState<ClientProfileSnapshot>(() => readClientProfileSnapshot());
+
+  useEffect(() => {
+    const refresh = () => setSnapshot(readClientProfileSnapshot());
+    window.addEventListener(getPhoneVerificationChangedEventName(), refresh);
+    window.addEventListener(getClientProfileChangedEventName(), refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener(getPhoneVerificationChangedEventName(), refresh);
+      window.removeEventListener(getClientProfileChangedEventName(), refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
+
+  return snapshot;
+}
+
+function ClientLandingModalButtons({ profile, setModal }: { profile: ClientProfileSnapshot; setModal: (modal: ModalKind) => void }) {
   return (
     <div className="wf-actions-grid wf-actions-grid--client">
       <ActionCard icon="calendar-create" title="Criar agendamento" color="orange" onClick={() => setModal('create-client')} />
       <ActionCard icon="calendar-clock" title="Acompanhar agendamento" color="blue" to="/meus-agendamentos" />
-      <ActionCard icon="mobile-phone" title="Confirmar telefone" color="green" onClick={() => setModal('confirm-phone')} />
+      <ActionCard
+        icon={profile.verified ? 'user' : 'mobile-phone'}
+        title={profile.verified ? 'Perfil' : 'Confirmar telefone'}
+        text={profile.verified ? (profile.name || formatPhoneForDisplay(profile.phone || '')) : undefined}
+        color="green"
+        onClick={() => setModal(profile.verified ? 'client-profile' : 'confirm-phone')}
+      />
       <ActionCard icon="chat-bubbles" title="Fale conosco" color="purple" onClick={() => setModal('contact')} />
     </div>
   );
@@ -864,10 +912,11 @@ function ClientLandingModalButtons({ setModal }: { setModal: (modal: ModalKind) 
 
 export function ClientLanding() {
   const [modal, setModal] = useState<ModalKind>(null);
+  const profile = useClientProfileSnapshot();
   useDoubleBackToLeavePage();
   return (
     <PageShell className="wf-page wf-client-landing">
-      <ClientNavbar onCreate={() => setModal('create-client')} onNotifications={() => setModal('notifications')} onConfirmPhone={() => setModal('confirm-phone')} />
+      <ClientNavbar onCreate={() => setModal('create-client')} onNotifications={() => setModal('notifications')} onConfirmPhone={() => setModal('confirm-phone')} onProfile={() => setModal('client-profile')} />
       <main className="wf-landing-main">
         <section className="wf-hero wf-hero--client wf-hero--client-final">
           <div className="wf-hero-copy wf-client-hero-copy-final">
@@ -885,11 +934,13 @@ export function ClientLanding() {
             desktopSrc={heroClient}
             mobileSrc={heroClientMobile}
             mobileBreakpoint={900}
+            smallMobileSrc={heroClientMobileTall}
+            smallMobileBreakpoint={500}
           />
           <FeatureLine />
         </section>
 
-        <ClientLandingModalButtons setModal={setModal} />
+        <ClientLandingModalButtons profile={profile} setModal={setModal} />
 
         <section className="wf-info-row" id="wf-why-use">
           <article className="wf-house-card wf-house-card--full-width">
@@ -1063,6 +1114,7 @@ function EmptyState({ title, text, action, onAction }: { title: string; text: st
 export function ClientBookings() {
   const [modal, setModal] = useState<ModalKind>(null);
   const [context, setContext] = useState<ModalContext>({});
+  const profile = useClientProfileSnapshot();
   const { bookings, isLoading, isError, hasTokens } = useClientBookingsData();
   const openDetails = (booking: BookingItem) => { setContext({ booking }); setModal('client-details'); };
   const openCreate = () => { setContext({}); setModal('create-client'); };
@@ -1071,13 +1123,13 @@ export function ClientBookings() {
     <>
       <AppointmentsPageShell
         pageClassName="wf-page wf-page--list"
-        clientNavbar={{ page: 'my', onCreate: openCreate, onNotifications: () => setModal('notifications'), onConfirmPhone: () => setModal('confirm-phone') }}
+        clientNavbar={{ page: 'my', onCreate: openCreate, onNotifications: () => setModal('notifications'), onConfirmPhone: () => setModal('confirm-phone'), onProfile: () => setModal('client-profile') }}
         mobileFilters={<FiltersBar className="wf-filters-bar--mobile" />}
         calendar={<CalendarBoard bookings={bookings} />}
       >
         <div className="wf-booking-tools">
           <button type="button" onClick={() => setModal('notifications')}><Icon name="bell-purple" /> Notificações</button>
-          <button type="button" onClick={() => setModal('confirm-phone')}><Icon name="shield-check" /> Confirmar telefone</button>
+          <button type="button" onClick={() => setModal(profile.verified ? 'client-profile' : 'confirm-phone')}><Icon name={profile.verified ? 'user' : 'shield-check'} /> {profile.verified ? 'Perfil' : 'Confirmar telefone'}</button>
         </div>
         <FiltersBar className="wf-filters-bar--desktop" />
         <div className="wf-booking-stack">
@@ -1545,6 +1597,7 @@ function CalendarMateModal({
     'wf-modal',
     modal === 'create-client' && 'wf-modal--create',
     modal === 'confirm-phone' && 'wf-modal--confirm',
+    modal === 'client-profile' && 'wf-modal--profile',
     modal === 'client-details' && 'wf-modal--details',
     modal === 'contact' && 'wf-modal--contact',
     modal === 'services-info' && 'wf-modal--services-info',
@@ -1562,6 +1615,7 @@ function CalendarMateModal({
     <ModalShell open={Boolean(modal)} dataModal={modal} className={modalClass} onClose={closeModal} closeIcon={<Icon name="close" />}>
         {modal === 'create-client' ? <CreateBookingModal onClose={closeModal} /> : null}
         {modal === 'confirm-phone' ? <ConfirmPhoneModal onClose={closeModal} /> : null}
+        {modal === 'client-profile' ? <ClientProfileModal onClose={closeModal} /> : null}
         {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={closeModal} /> : null}
         {modal === 'contact' ? <ContactModal onClose={closeModal} /> : null}
         {modal === 'services-info' ? <ServicesInfoModal /> : null}
@@ -1734,6 +1788,8 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   const selectedCity = allowedCities.includes(city) ? city : defaultCity;
   const bookingDurationMinutes = getBookingDurationMinutesByCity(bootstrap, selectedCity);
   const createBookingMutation = useCreateBooking();
+  const storedProfile = useMemo(() => getStoredClientProfile(), []);
+  const profileHasReusableData = Boolean(storedProfile?.name || storedProfile?.phone || storedProfile?.email);
   const monthAvailability = useAvailableMonthDates(monthStart, true, selectedCity, slotMinutes, bookingDurationMinutes, maxFutureMonthsAhead);
   const availableDateOptions = useMemo(
     () => monthAvailability.availableDates.map((date) => ({ value: date, label: formatDateOptionLabel(date) })),
@@ -1762,6 +1818,15 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
       setSelectedEndTime('');
     }
   }, [availableSlots, selectedTime]);
+
+  const handleUseProfileData = () => {
+    if (!storedProfile) return;
+    if (storedProfile.name) setFullName(storedProfile.name);
+    if (storedProfile.phone) setPhone(formatPhoneInput(storedProfile.phone));
+    if (storedProfile.email) setEmail(storedProfile.email);
+    setFieldErrors((current) => ({ ...current, fullName: undefined, phone: undefined, email: undefined }));
+    setBackendError('');
+  };
 
   const handleCityChange = (value: string) => {
     setCity(value);
@@ -1859,6 +1924,11 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
         clientLongitude: selectedAddress.lon ?? selectedAddress.longitude,
       });
 
+      saveClientProfile({
+        name: cleanFormText(fullName),
+        phone: phoneDigits,
+        email: cleanFormText(email),
+      });
       saveManageToken(response.manageToken, response.servico.eventId);
       saveLocalCalendarEvent(mapCreatedServicoToCalendarEvent(response.servico));
       await Promise.all([
@@ -1875,6 +1945,10 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   return (
     <>
       <ModalTitle icon="calendar-modal-blue" title="Criar agendamento" text="Preencha seus dados e informe onde e quando o serviço será realizado." />
+      <div className="wf-profile-prefill-row">
+        <span><Icon name="user" /> {profileHasReusableData ? 'Dados de perfil disponíveis' : 'Nenhum dado de perfil salvo'}</span>
+        <button type="button" onClick={handleUseProfileData} disabled={!profileHasReusableData}>Usar dados do perfil</button>
+      </div>
       <div className="wf-create-booking-form wf-create-booking-form--wireframe">
         <ModalField className="wf-span-2" label="Nome completo" icon="user" placeholder="Ex.: Pedro Silva" required value={fullName} onChange={setFullName} error={fieldErrors.fullName} />
         <ModalField className="wf-span-2" label="Telefone" icon="phone" placeholder="(31) 99999-9999 ou 31 3333-4444" required value={phone} inputMode="tel" onChange={(value) => setPhone(formatPhoneInput(value))} error={fieldErrors.phone} />
@@ -1952,10 +2026,11 @@ function isAdminUnauthorized(error: unknown): boolean {
 
 function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
   const stored = getStoredPhoneVerification();
+  const storedProfile = getStoredClientProfile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState(stored ? formatPhoneForDisplay(stored.phone) : '');
+  const [name, setName] = useState(storedProfile?.name ?? '');
+  const [phone, setPhone] = useState(stored ? formatPhoneForDisplay(stored.phone) : storedProfile?.phone ? formatPhoneForDisplay(storedProfile.phone) : '');
   const [code, setCode] = useState('');
   const [flow, setFlow] = useState<GeneralAuthFlow | null>(null);
   const [loading, setLoading] = useState(false);
@@ -2079,8 +2154,14 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
         setError('Código inválido ou expirado.');
         return;
       }
+      const recoveredProfileSource = response.servicos.find((servico) => servico.clientEmail || servico.clientFirstName || servico.clientLastName);
+      const recoveredName = cleanFormText([recoveredProfileSource?.clientFirstName, recoveredProfileSource?.clientLastName].filter(Boolean).join(' '));
+      const recoveredEmail = cleanFormText(recoveredProfileSource?.clientEmail ?? '');
       saveRecoveredBookings(response.servicos);
-      savePhoneVerification(normalizedPhone, response.servicos.length);
+      savePhoneVerification(normalizedPhone, response.servicos.length, {
+        name: cleanFormText(name) || recoveredName || storedProfile?.name,
+        email: recoveredEmail || storedProfile?.email,
+      });
       await queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
       setMessage('Telefone confirmado com sucesso.');
       onClose();
@@ -2148,6 +2229,47 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
         </div>
       </section>
     </div>
+  );
+}
+
+function ClientProfileModal({ onClose }: { onClose: () => void }) {
+  const verification = getStoredPhoneVerification();
+  const profile = getStoredClientProfile();
+  const name = profile?.name || 'Nome não informado';
+  const phone = profile?.phone || verification?.phone || '';
+  const email = profile?.email || '';
+
+  return (
+    <>
+      <ModalTitle icon="user" title="Perfil" text="Dados salvos para agilizar seus próximos agendamentos." />
+      <section className="wf-client-profile-modal">
+        <div className="wf-client-profile-modal__hero">
+          <Avatar name={name} large />
+          <div>
+            <strong>{name}</strong>
+            <small>{verification ? 'Telefone confirmado' : 'Telefone ainda não confirmado'}</small>
+          </div>
+        </div>
+        <dl className="wf-client-profile-modal__details">
+          <div>
+            <dt><Icon name="user" /> Nome</dt>
+            <dd>{name}</dd>
+          </div>
+          <div>
+            <dt><Icon name="phone" /> Telefone</dt>
+            <dd>{phone ? formatPhoneForDisplay(phone) : 'Telefone não informado'}</dd>
+          </div>
+          <div>
+            <dt><Icon name="mail" /> E-mail</dt>
+            <dd>{email || 'E-mail ainda não salvo'}</dd>
+          </div>
+        </dl>
+        {!email ? (
+          <p className="wf-client-profile-modal__hint"><Icon name="mail" /> O e-mail será salvo automaticamente quando você criar um agendamento.</p>
+        ) : null}
+      </section>
+      <ModalActions primary="Fechar" primaryIcon="check" onPrimary={onClose} />
+    </>
   );
 }
 
@@ -2851,6 +2973,6 @@ function BudgetModal({ booking, onClose }: { booking?: BookingItem; onClose: () 
   );
 }
 
-function ModalActions({ primary, secondary, primaryIcon = 'plus', onPrimary, onSecondary, disabledPrimary = false }: { primary: string; secondary: string; primaryIcon?: string; onPrimary?: () => void; onSecondary?: () => void; disabledPrimary?: boolean }) {
-  return <footer className="wf-modal-actions"><button type="button" className="wf-ghost-btn" onClick={onSecondary}>{secondary}</button><button type="button" className="wf-primary-cta wf-primary-cta--modal" onClick={onPrimary} disabled={disabledPrimary}>{primary} <Icon name={primaryIcon} /></button></footer>;
+function ModalActions({ primary, secondary, primaryIcon = 'plus', onPrimary, onSecondary, disabledPrimary = false }: { primary: string; secondary?: string; primaryIcon?: string; onPrimary?: () => void; onSecondary?: () => void; disabledPrimary?: boolean }) {
+  return <footer className="wf-modal-actions">{secondary ? <button type="button" className="wf-ghost-btn" onClick={onSecondary}>{secondary}</button> : null}<button type="button" className="wf-primary-cta wf-primary-cta--modal" onClick={onPrimary} disabled={disabledPrimary}>{primary} <Icon name={primaryIcon} /></button></footer>;
 }

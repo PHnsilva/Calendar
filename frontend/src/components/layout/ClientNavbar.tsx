@@ -1,6 +1,13 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import BaseNavbar, { NavbarButton, NavbarIcon, type NavbarIconName } from './BaseNavbar';
 import NavbarMenu from '../../shared/ui/NavbarMenu';
+import {
+  formatPhoneForDisplay,
+  getClientProfileChangedEventName,
+  getPhoneVerificationChangedEventName,
+  getStoredClientProfile,
+  getStoredPhoneVerification,
+} from '../../lib/storage';
 
 const CLIENT_BOOKINGS_PATH = '/meus-agendamentos';
 
@@ -10,7 +17,14 @@ type ClientNavbarProps = {
   onConfirmPhone?: () => void;
   onCreate?: () => void;
   onNotifications?: () => void;
+  onProfile?: () => void;
   page?: ClientNavbarPage;
+};
+
+type ClientNavbarSnapshot = {
+  isVerified: boolean;
+  label: string;
+  summary?: string;
 };
 
 type ProfileMenuItem = {
@@ -24,21 +38,55 @@ type ProfileMenuItem = {
 type ClientProfileMenuProps = {
   compact?: boolean;
   labelContent?: ReactNode;
-  onConfirmPhone?: () => void;
   onCreate?: () => void;
   onNotifications?: () => void;
+  onProfileAction: () => void;
   page: ClientNavbarPage;
+  profileLabel: string;
   triggerClassName?: string;
   triggerVariant?: 'blue' | 'orange' | 'ghost';
 };
 
+function readClientNavbarSnapshot(): ClientNavbarSnapshot {
+  const verification = getStoredPhoneVerification();
+  const profile = getStoredClientProfile();
+  const isVerified = Boolean(verification);
+  const firstName = profile?.name?.split(/\s+/)[0];
+  const phone = profile?.phone || verification?.phone;
+
+  return {
+    isVerified,
+    label: isVerified ? 'Perfil' : 'Cliente',
+    summary: firstName || (phone ? formatPhoneForDisplay(phone) : undefined),
+  };
+}
+
+function useClientNavbarSnapshot(): ClientNavbarSnapshot {
+  const [snapshot, setSnapshot] = useState<ClientNavbarSnapshot>(() => readClientNavbarSnapshot());
+
+  useEffect(() => {
+    const refresh = () => setSnapshot(readClientNavbarSnapshot());
+    window.addEventListener(getPhoneVerificationChangedEventName(), refresh);
+    window.addEventListener(getClientProfileChangedEventName(), refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener(getPhoneVerificationChangedEventName(), refresh);
+      window.removeEventListener(getClientProfileChangedEventName(), refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
+
+  return snapshot;
+}
+
 function ClientProfileMenu({
   compact = false,
   labelContent,
-  onConfirmPhone,
   onCreate,
   onNotifications,
+  onProfileAction,
   page,
+  profileLabel,
   triggerClassName,
   triggerVariant = 'blue',
 }: ClientProfileMenuProps) {
@@ -49,7 +97,7 @@ function ClientProfileMenu({
   const menuItems: ProfileMenuItem[] = [
     navItem,
     { action: 'notifications', icon: 'bell', label: 'Notificações', onClick: onNotifications },
-    { action: 'profile', icon: 'user', label: page === 'my' ? 'Perfil' : 'Confirmar telefone', onClick: onConfirmPhone },
+    { action: 'profile', icon: 'user', label: profileLabel, onClick: onProfileAction },
     { action: 'create', icon: 'plus', label: 'Novo agendamento', onClick: onCreate },
   ];
 
@@ -65,7 +113,7 @@ function ClientProfileMenu({
           className={['wf-client-profile-trigger', triggerClassName].filter(Boolean).join(' ')}
           variant={triggerVariant}
         >
-          {labelContent ?? <><NavbarIcon name="user" /> <span>Cliente</span> <NavbarIcon name="chevron" /></>}
+          {labelContent ?? <><NavbarIcon name="user" /> <span>{profileLabel}</span> <NavbarIcon name="chevron" /></>}
         </NavbarButton>
       )}
     >
@@ -111,19 +159,28 @@ function ClientProfileMenu({
   );
 }
 
-export default function ClientNavbar({ onConfirmPhone, onCreate, onNotifications, page = 'home' }: ClientNavbarProps) {
+export default function ClientNavbar({ onConfirmPhone, onCreate, onNotifications, onProfile, page = 'home' }: ClientNavbarProps) {
   const isHome = page === 'home';
+  const snapshot = useClientNavbarSnapshot();
+  const profileLabel = snapshot.isVerified ? 'Perfil' : 'Confirmar telefone';
+  const handleProfileAction = () => {
+    if (snapshot.isVerified) {
+      onProfile?.();
+      return;
+    }
+    onConfirmPhone?.();
+  };
 
   const desktopActions = isHome ? (
     <>
       <NavbarButton to={CLIENT_BOOKINGS_PATH}><NavbarIcon name="calendar" /> <span>Agendamentos</span></NavbarButton>
-      <ClientProfileMenu page={page} onConfirmPhone={onConfirmPhone} onCreate={onCreate} onNotifications={onNotifications} />
+      <ClientProfileMenu page={page} profileLabel={profileLabel} onProfileAction={handleProfileAction} onCreate={onCreate} onNotifications={onNotifications} />
       <NavbarButton variant="orange" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
     </>
   ) : (
     <>
       <NavbarButton to="/"><NavbarIcon name="home" /> <span>Início</span></NavbarButton>
-      <ClientProfileMenu page={page} onConfirmPhone={onConfirmPhone} onCreate={onCreate} onNotifications={onNotifications} />
+      <ClientProfileMenu page={page} profileLabel={profileLabel} onProfileAction={handleProfileAction} onCreate={onCreate} onNotifications={onNotifications} />
       <NavbarButton variant="orange" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
     </>
   );
@@ -156,19 +213,20 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onNotifications
       <NavbarButton
         compact
         className="wf-client-mobile-user"
-        onClick={onConfirmPhone}
-        ariaLabel={isHome ? 'Confirmar telefone' : 'Abrir perfil'}
-        title={isHome ? 'Confirmar telefone' : 'Perfil'}
+        onClick={handleProfileAction}
+        ariaLabel={profileLabel}
+        title={snapshot.summary ? `${profileLabel}: ${snapshot.summary}` : profileLabel}
       >
         <NavbarIcon name="user" />
       </NavbarButton>
       <ClientProfileMenu
         compact
         page={page}
+        profileLabel={profileLabel}
         labelContent={<NavbarIcon name="menu" />}
         triggerClassName="wf-client-more-options-trigger"
         triggerVariant="orange"
-        onConfirmPhone={onConfirmPhone}
+        onProfileAction={handleProfileAction}
         onCreate={onCreate}
         onNotifications={onNotifications}
       />

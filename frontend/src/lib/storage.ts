@@ -15,12 +15,25 @@ const GEOAPIFY_AUTOCOMPLETE_DISABLED_KEY = "calendar.geoapifyAutocomplete.disabl
 
 const PHONE_VERIFICATION_KEY = "calendar.phoneVerification";
 const PHONE_VERIFICATION_CHANGED_EVENT = "calendar:phone-verification-changed";
+const CLIENT_PROFILE_KEY = "calendar.clientProfile";
+const CLIENT_PROFILE_CHANGED_EVENT = "calendar:client-profile-changed";
 
 export type StoredPhoneVerification = {
   phone: string;
   verifiedAt: string;
   recoveredCount?: number;
 };
+
+export type StoredClientProfile = {
+  name?: string;
+  phone?: string;
+  email?: string;
+  updatedAt: string;
+  phoneVerifiedAt?: string;
+  recoveredCount?: number;
+};
+
+type ClientProfilePatch = Partial<Omit<StoredClientProfile, "updatedAt">>;
 
 export type StoredAdminSession = AdminMeResponse & {
   sessionToken: string;
@@ -71,6 +84,22 @@ function dispatchPhoneVerificationChanged(): void {
   window.dispatchEvent(new CustomEvent(PHONE_VERIFICATION_CHANGED_EVENT));
 }
 
+function dispatchClientProfileChanged(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(CLIENT_PROFILE_CHANGED_EVENT));
+}
+
+function cleanOptionalText(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim().replace(/\s+/g, " ");
+  return normalized || undefined;
+}
+
+function cleanOptionalEmail(value: unknown): string | undefined {
+  const normalized = cleanOptionalText(value)?.toLowerCase();
+  return normalized && normalized.includes("@") ? normalized : normalized;
+}
+
 export function normalizeBrazilianPhone(value: string): string {
   return normalizePhone(value);
 }
@@ -105,17 +134,28 @@ export function hasStoredPhoneVerification(): boolean {
   return Boolean(getStoredPhoneVerification());
 }
 
-export function savePhoneVerification(phone: string, recoveredCount?: number): StoredPhoneVerification | null {
+export function savePhoneVerification(
+  phone: string,
+  recoveredCount?: number,
+  profilePatch: Omit<ClientProfilePatch, "phone" | "phoneVerifiedAt" | "recoveredCount"> = {},
+): StoredPhoneVerification | null {
   const normalizedPhone = normalizeBrazilianPhone(phone);
   if (!isValidBrazilianPhone(normalizedPhone)) return null;
 
+  const verifiedAt = new Date().toISOString();
   const verification: StoredPhoneVerification = {
     phone: normalizedPhone,
-    verifiedAt: new Date().toISOString(),
+    verifiedAt,
     recoveredCount,
   };
 
   writeJson(PHONE_VERIFICATION_KEY, verification);
+  saveClientProfile({
+    ...profilePatch,
+    phone: normalizedPhone,
+    phoneVerifiedAt: verifiedAt,
+    recoveredCount,
+  });
   dispatchPhoneVerificationChanged();
   return verification;
 }
@@ -127,6 +167,54 @@ export function clearPhoneVerification(): void {
 
 export function getPhoneVerificationChangedEventName(): string {
   return PHONE_VERIFICATION_CHANGED_EVENT;
+}
+
+export function getClientProfileChangedEventName(): string {
+  return CLIENT_PROFILE_CHANGED_EVENT;
+}
+
+export function getStoredClientProfile(): StoredClientProfile | null {
+  const profile = readJson<StoredClientProfile | null>(CLIENT_PROFILE_KEY, null);
+  if (!profile) return null;
+
+  const name = cleanOptionalText(profile.name);
+  const email = cleanOptionalEmail(profile.email);
+  const phone = profile.phone ? normalizeBrazilianPhone(profile.phone) : undefined;
+  const validPhone = phone && isValidBrazilianPhone(phone) ? phone : undefined;
+
+  if (!name && !validPhone && !email) return null;
+
+  return {
+    ...profile,
+    ...(name ? { name } : {}),
+    ...(validPhone ? { phone: validPhone } : {}),
+    ...(email ? { email } : {}),
+  };
+}
+
+export function saveClientProfile(patch: ClientProfilePatch): StoredClientProfile | null {
+  const current = getStoredClientProfile();
+  const phone = patch.phone ? normalizeBrazilianPhone(patch.phone) : current?.phone;
+  const validPhone = phone && isValidBrazilianPhone(phone) ? phone : undefined;
+  const name = cleanOptionalText(patch.name) ?? current?.name;
+  const email = cleanOptionalEmail(patch.email) ?? current?.email;
+  const phoneVerifiedAt = patch.phoneVerifiedAt ?? current?.phoneVerifiedAt;
+  const recoveredCount = patch.recoveredCount ?? current?.recoveredCount;
+
+  if (!name && !validPhone && !email) return current;
+
+  const profile: StoredClientProfile = {
+    ...(name ? { name } : {}),
+    ...(validPhone ? { phone: validPhone } : {}),
+    ...(email ? { email } : {}),
+    ...(phoneVerifiedAt ? { phoneVerifiedAt } : {}),
+    ...(typeof recoveredCount === "number" ? { recoveredCount } : {}),
+    updatedAt: new Date().toISOString(),
+  };
+
+  writeJson(CLIENT_PROFILE_KEY, profile);
+  dispatchClientProfileChanged();
+  return profile;
 }
 
 

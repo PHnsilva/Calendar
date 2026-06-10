@@ -248,6 +248,15 @@ public class AdminAuthService {
         try {
             log.info("Admin auth dependency call phase=admin_user_lookup phone={}", maskedPhone);
             return adminUserStore.findActiveByPhone(phone);
+        } catch (ExternalServiceException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase=admin_user_lookup phone={} code={} dependency={} status={} message={}",
+                    maskedPhone,
+                    ex.getErrorCode(),
+                    ex.getProviderName() == null ? "admin_user_store" : ex.getProviderName(),
+                    ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
+                    safeExceptionMessage(ex));
+            throw ex;
         } catch (RuntimeException ex) {
             log.warn(
                     "Admin auth dependency failure phase=admin_user_lookup phone={} exceptionClass={} exceptionMessage={}",
@@ -267,6 +276,15 @@ public class AdminAuthService {
                     props.getOtpTtl().toSeconds(),
                     props.getOtpResendAfter().toSeconds()
             );
+        } catch (ExternalServiceException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase=verification_session_create phone={} code={} dependency={} status={} message={}",
+                    maskedPhone,
+                    ex.getErrorCode(),
+                    ex.getProviderName() == null ? "verification_store" : ex.getProviderName(),
+                    ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
+                    safeExceptionMessage(ex));
+            throw ex;
         } catch (RuntimeException ex) {
             log.warn(
                     "Admin auth dependency failure phase=verification_session_create phone={} exceptionClass={} exceptionMessage={}",

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -37,7 +38,29 @@ public class AppConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        int connectTimeoutMs = positiveIntEnv("HTTP_CONNECT_TIMEOUT_MS", 5000);
+        int readTimeoutMs = positiveIntEnv("HTTP_READ_TIMEOUT_MS", 15000);
+
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(connectTimeoutMs);
+        factory.setReadTimeout(readTimeoutMs);
+
+        log.info("HTTP client configured connectTimeoutMs={} readTimeoutMs={}", connectTimeoutMs, readTimeoutMs);
+        return new RestTemplate(factory);
+    }
+
+    private int positiveIntEnv(String name, int fallback) {
+        String raw = System.getenv(name);
+        if (raw == null || raw.isBlank()) {
+            return fallback;
+        }
+        try {
+            int value = Integer.parseInt(raw.trim());
+            return value > 0 ? value : fallback;
+        } catch (NumberFormatException ex) {
+            log.warn("Ignoring invalid integer environment variable name={} value=invalid", name);
+            return fallback;
+        }
     }
 
     @Bean

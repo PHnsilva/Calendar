@@ -10,7 +10,12 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.ConnectException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.net.UnknownHostException;
+import javax.net.ssl.SSLException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -197,20 +202,18 @@ public class SupabaseClient {
                     sanitizeResponseBody(ex.getResponseBodyAsString()));
             throw mapSupabaseStatus(ex);
         } catch (ResourceAccessException ex) {
+            ExternalServiceException mapped = mapResourceAccessException(ex);
+            Throwable root = rootCause(ex);
             log.warn(
-                    "Supabase request timeout/network failure operation={} table={} host={} exceptionClass={} exceptionMessage={}",
+                    "Supabase network failure operation={} table={} host={} errorCode={} exceptionClass={} rootCauseClass={} exceptionMessage={}",
                     operation,
                     table,
                     safeHost(),
+                    mapped.getErrorCode(),
                     ex.getClass().getSimpleName(),
-                    sanitizeResponseBody(ex.getMessage()));
-            throw new ExternalServiceException(
-                    HttpStatus.GATEWAY_TIMEOUT,
-                    "SUPABASE_TIMEOUT",
-                    "Tempo esgotado ao consultar Supabase.",
-                    PROVIDER_NAME,
-                    null,
-                    ex);
+                    root == null ? "unknown" : root.getClass().getSimpleName(),
+                    sanitizeResponseBody(root == null ? ex.getMessage() : root.getMessage()));
+            throw mapped;
         } catch (RestClientException ex) {
             log.warn(
                     "Supabase REST failure operation={} table={} host={} exceptionClass={} exceptionMessage={}",
@@ -234,6 +237,76 @@ public class SupabaseClient {
             runnable.run();
             return null;
         });
+    }
+
+    private ExternalServiceException mapResourceAccessException(ResourceAccessException ex) {
+        Throwable root = rootCause(ex);
+
+        if (hasCause(ex, SocketTimeoutException.class)) {
+            return new ExternalServiceException(
+                    HttpStatus.GATEWAY_TIMEOUT,
+                    "SUPABASE_TIMEOUT",
+                    "Tempo esgotado ao consultar Supabase.",
+                    PROVIDER_NAME,
+                    null,
+                    ex);
+        }
+        if (hasCause(ex, UnknownHostException.class)) {
+            return new ExternalServiceException(
+                    HttpStatus.BAD_GATEWAY,
+                    "SUPABASE_DNS_FAILED",
+                    "Nao foi possivel resolver o host do Supabase.",
+                    PROVIDER_NAME,
+                    null,
+                    ex);
+        }
+        if (hasCause(ex, SSLException.class)) {
+            return new ExternalServiceException(
+                    HttpStatus.BAD_GATEWAY,
+                    "SUPABASE_SSL_FAILED",
+                    "Falha SSL ao consultar Supabase.",
+                    PROVIDER_NAME,
+                    null,
+                    ex);
+        }
+        if (hasCause(ex, ConnectException.class) || hasCause(ex, SocketException.class)) {
+            return new ExternalServiceException(
+                    HttpStatus.BAD_GATEWAY,
+                    "SUPABASE_CONNECTION_FAILED",
+                    "Falha de conexao ao consultar Supabase.",
+                    PROVIDER_NAME,
+                    null,
+                    ex);
+        }
+
+        return new ExternalServiceException(
+                HttpStatus.BAD_GATEWAY,
+                "SUPABASE_NETWORK_ERROR",
+                "Falha de rede ao consultar Supabase.",
+                PROVIDER_NAME,
+                null,
+                ex);
+    }
+
+    private static boolean hasCause(Throwable ex, Class<? extends Throwable> type) {
+        Throwable current = ex;
+        while (current != null) {
+            if (type.isInstance(current)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private static Throwable rootCause(Throwable ex) {
+        Throwable current = ex;
+        Throwable previous = null;
+        while (current != null && current != previous) {
+            previous = current;
+            current = current.getCause();
+        }
+        return previous == null ? ex : previous;
     }
 
     private ExternalServiceException mapSupabaseStatus(HttpStatusCodeException ex) {

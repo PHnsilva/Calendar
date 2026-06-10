@@ -19,9 +19,11 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,9 +43,11 @@ public class AppConfig {
         int connectTimeoutMs = positiveIntEnv("HTTP_CONNECT_TIMEOUT_MS", 5000);
         int readTimeoutMs = positiveIntEnv("HTTP_READ_TIMEOUT_MS", 15000);
 
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(connectTimeoutMs);
-        factory.setReadTimeout(readTimeoutMs);
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(connectTimeoutMs))
+                .build();
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(client);
+        factory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
 
         log.info("HTTP client configured connectTimeoutMs={} readTimeoutMs={}", connectTimeoutMs, readTimeoutMs);
         return new RestTemplate(factory);

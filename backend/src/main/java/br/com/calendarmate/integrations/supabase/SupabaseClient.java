@@ -11,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.ConnectException;
+import java.net.ProtocolException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -269,6 +270,15 @@ public class SupabaseClient {
                     null,
                     ex);
         }
+        if (isUnsupportedHttpMethod(ex)) {
+            return new ExternalServiceException(
+                    HttpStatus.BAD_GATEWAY,
+                    "SUPABASE_HTTP_CLIENT_UNSUPPORTED_METHOD",
+                    "Cliente HTTP nao suporta o metodo exigido pelo Supabase.",
+                    PROVIDER_NAME,
+                    null,
+                    ex);
+        }
         if (hasCause(ex, ConnectException.class) || hasCause(ex, SocketException.class)) {
             return new ExternalServiceException(
                     HttpStatus.BAD_GATEWAY,
@@ -286,6 +296,19 @@ public class SupabaseClient {
                 PROVIDER_NAME,
                 null,
                 ex);
+    }
+
+    private static boolean isUnsupportedHttpMethod(Throwable ex) {
+        Throwable current = ex;
+        while (current != null) {
+            if (current instanceof ProtocolException
+                    && current.getMessage() != null
+                    && current.getMessage().toLowerCase().contains("invalid http method")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private static boolean hasCause(Throwable ex, Class<? extends Throwable> type) {

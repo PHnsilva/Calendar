@@ -1,6 +1,7 @@
 package br.com.calendarmate.util;
 
 import br.com.calendarmate.exception.BadRequestException;
+import br.com.calendarmate.exception.InvalidPhoneException;
 
 public final class PhoneNumberNormalizer {
     private PhoneNumberNormalizer() {
@@ -12,7 +13,7 @@ public final class PhoneNumberNormalizer {
             digits = digits.substring(2);
         }
         if (digits.length() < 10 || digits.length() > 11) {
-            throw new BadRequestException("Telefone invalido");
+            throw new InvalidPhoneException("Telefone invalido");
         }
         return digits;
     }

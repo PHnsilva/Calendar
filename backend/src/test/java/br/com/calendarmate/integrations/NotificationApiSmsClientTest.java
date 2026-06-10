@@ -46,16 +46,16 @@ class NotificationApiSmsClientTest {
         server.start();
 
         NotificationApiSmsClient client = new NotificationApiSmsClient(
-                "pingram_sk_test",
+                "test-api-key",
                 "http://localhost:" + server.getAddress().getPort() + "/send",
                 "calendar_mate_otp",
                 new MonthlySmsQuota(10, tempDir.resolve("sms-usage.properties").toString()),
                 "calendar-mate.vercel.app");
 
-        client.sendCode("+55 (31) 99543-8467", "123");
+        client.sendCode("+55 (11) 98765-4321", "123");
 
         assertEquals("/send", requestedPath.get());
-        assertTrue(requestBody.get().contains("\"number\": \"+5531995438467\""));
+        assertTrue(requestBody.get().contains("\"number\": \"+5511987654321\""));
     }
 
     @Test
@@ -69,13 +69,13 @@ class NotificationApiSmsClientTest {
         server.start();
 
         NotificationApiSmsClient client = new NotificationApiSmsClient(
-                "pingram_sk_test",
+                "test-api-key",
                 "http://localhost:" + server.getAddress().getPort(),
                 "calendar_mate_otp",
                 new MonthlySmsQuota(10, tempDir.resolve("sms-usage.properties").toString()),
                 "calendar-mate.vercel.app");
 
-        assertThrows(BadRequestException.class, () -> client.sendCode("+1 31995438467", "123"));
+        assertThrows(BadRequestException.class, () -> client.sendCode("+1 11987654321", "123"));
         assertEquals(0, calls.get());
     }
 
@@ -86,13 +86,13 @@ class NotificationApiSmsClientTest {
         server.start();
 
         NotificationApiSmsClient client = new NotificationApiSmsClient(
-                "pingram_sk_test",
+                "test-api-key",
                 "http://localhost:" + server.getAddress().getPort(),
                 "calendar_mate_otp",
                 new MonthlySmsQuota(10, tempDir.resolve("sms-usage.properties").toString()),
                 "calendar-mate.vercel.app");
 
-        ExternalServiceException ex = assertThrows(ExternalServiceException.class, () -> client.sendCode("31995438467", "123"));
+        ExternalServiceException ex = assertThrows(ExternalServiceException.class, () -> client.sendCode("11987654321", "123"));
         assertEquals("PROVIDER_AUTH_FAILED", ex.getErrorCode());
         assertEquals(401, ex.getProviderStatus());
     }
@@ -104,13 +104,13 @@ class NotificationApiSmsClientTest {
         server.start();
 
         NotificationApiSmsClient client = new NotificationApiSmsClient(
-                "pingram_sk_test",
+                "test-api-key",
                 "http://localhost:" + server.getAddress().getPort(),
                 "calendar_mate_otp",
                 new MonthlySmsQuota(10, tempDir.resolve("sms-usage.properties").toString()),
                 "calendar-mate.vercel.app");
 
-        ExternalServiceException ex = assertThrows(ExternalServiceException.class, () -> client.sendCode("31995438467", "123"));
+        ExternalServiceException ex = assertThrows(ExternalServiceException.class, () -> client.sendCode("11987654321", "123"));
         assertEquals("PROVIDER_REJECTED_REQUEST", ex.getErrorCode());
         assertEquals(400, ex.getProviderStatus());
     }
@@ -132,7 +132,7 @@ class NotificationApiSmsClientTest {
                 new MonthlySmsQuota(10, tempDir.resolve("sms-usage.properties").toString()),
                 "calendar-mate.vercel.app");
 
-        ExternalServiceException ex = assertThrows(ExternalServiceException.class, () -> client.sendCode("31995438467", "123"));
+        ExternalServiceException ex = assertThrows(ExternalServiceException.class, () -> client.sendCode("11987654321", "123"));
         assertEquals("PROVIDER_CONFIG_MISSING", ex.getErrorCode());
         assertEquals(0, calls.get());
     }

@@ -12,8 +12,6 @@ import java.util.stream.Collectors;
 
 @Configuration
 public class AppProperties {
-    private static final String DEFAULT_ADMIN_USERS = "31995438467|SG Admin|OWNER";
-
     @Value("${app.zone:America/Sao_Paulo}")
     private String zone;
 
@@ -316,7 +314,7 @@ public class AppProperties {
     public Duration getAdminSessionTtl() { return Duration.ofDays(Math.max(1, Math.min(adminSessionTtlDays, 30))); }
     public String getAdminUsersCsv() {
         String value = adminUsersCsv == null ? "" : adminUsersCsv.trim();
-        return value.isBlank() ? DEFAULT_ADMIN_USERS : value;
+        return value;
     }
     public int getAdminBookingActivePastDays() { return Math.max(0, Math.min(adminBookingActivePastDays, 90)); }
     public int getAdminBookingMaxFutureMonthsAhead() { return Math.max(1, Math.min(adminBookingMaxFutureMonthsAhead, 24)); }

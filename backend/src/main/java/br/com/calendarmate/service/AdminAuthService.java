@@ -16,6 +16,8 @@ import br.com.calendarmate.service.store.AdminSessionStore;
 import br.com.calendarmate.service.store.AdminUserStore;
 import br.com.calendarmate.service.store.VerificationStore;
 import br.com.calendarmate.util.PhoneNumberNormalizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class AdminAuthService {
+    private static final Logger log = LoggerFactory.getLogger(AdminAuthService.class);
     private static final String SCOPE_PREFIX = "admin:";
 
     private final AdminUserStore adminUserStore;
@@ -50,17 +53,15 @@ public class AdminAuthService {
 
     public AdminAuthStartResponse start(String phoneRaw) {
         String phone = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneRaw);
-        AdminUser user = adminUserStore.findActiveByPhone(phone);
+        String maskedPhone = maskBrazilianPhone(phone);
+        log.info("Admin auth start requested phone={}", maskedPhone);
+
+        AdminUser user = findActiveAdminByPhone(phone, maskedPhone);
         if (user == null) {
             throw new ForbiddenException("Telefone administrativo nao autorizado");
         }
 
-        VerificationStore.Session session = verificationStore.create(
-                SCOPE_PREFIX + user.getId(),
-                phone,
-                props.getOtpTtl().toSeconds(),
-                props.getOtpResendAfter().toSeconds()
-        );
+        VerificationStore.Session session = createVerificationSession(user, phone, maskedPhone);
         sendOtp(phone, session.code);
         return new AdminAuthStartResponse(
                 session.verificationId,
@@ -168,7 +169,7 @@ public class AdminAuthService {
 
     public boolean isAdminPhone(String phoneRaw) {
         String phone = PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(phoneRaw);
-        return !phone.isBlank() && adminUserStore.findActiveByPhone(phone) != null;
+        return !phone.isBlank() && findActiveAdminByPhone(phone, maskBrazilianPhone(phone)) != null;
     }
 
     public List<AdminProviderResponse> listProviders(AdminPrincipal principal) {
@@ -241,5 +242,61 @@ public class AdminAuthService {
         } catch (RuntimeException ex) {
             throw new ExternalServiceException("Nao foi possivel enviar o codigo agora", ex);
         }
+    }
+
+    private AdminUser findActiveAdminByPhone(String phone, String maskedPhone) {
+        try {
+            log.info("Admin auth dependency call phase=admin_user_lookup phone={}", maskedPhone);
+            return adminUserStore.findActiveByPhone(phone);
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase=admin_user_lookup phone={} exceptionClass={} exceptionMessage={}",
+                    maskedPhone,
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            throw ExternalServiceException.authDependencyUnavailable("admin_user_store", ex);
+        }
+    }
+
+    private VerificationStore.Session createVerificationSession(AdminUser user, String phone, String maskedPhone) {
+        try {
+            log.info("Admin auth dependency call phase=verification_session_create phone={}", maskedPhone);
+            return verificationStore.create(
+                    SCOPE_PREFIX + user.getId(),
+                    phone,
+                    props.getOtpTtl().toSeconds(),
+                    props.getOtpResendAfter().toSeconds()
+            );
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase=verification_session_create phone={} exceptionClass={} exceptionMessage={}",
+                    maskedPhone,
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            throw ExternalServiceException.authDependencyUnavailable("verification_store", ex);
+        }
+    }
+
+    private static String maskBrazilianPhone(String phoneDigits) {
+        String digits = PhoneNumberNormalizer.digitsOnly(phoneDigits);
+        if (digits.length() == 10 || digits.length() == 11) {
+            digits = "55" + digits;
+        }
+        if (digits.length() <= 4) {
+            return "****";
+        }
+        int prefixLength = Math.min(4, digits.length() - 4);
+        return "+" + digits.substring(0, prefixLength) + "*****" + digits.substring(digits.length() - 4);
+    }
+
+    private static String safeExceptionMessage(Exception ex) {
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return "";
+        }
+        return message
+                .replaceAll("(?i)bearer\\s+[A-Za-z0-9._~+/=-]+", "Bearer [redacted]")
+                .replaceAll("(?i)(apikey|api_key|token|authorization)=([^&\\s]+)", "$1=[redacted]")
+                .replaceAll("\\+?55\\d{10,11}", "+55*****0000");
     }
 }

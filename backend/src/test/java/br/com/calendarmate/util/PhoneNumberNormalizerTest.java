@@ -9,18 +9,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PhoneNumberNormalizerTest {
     @Test
     void canonicalizesSupportedAdminPhoneFormats() {
-        String canonical = "31995438467";
+        String canonical = "11987654321";
 
-        assertEquals(canonical, PhoneNumberNormalizer.normalizeBrazilianPhone("31995438467"));
-        assertEquals(canonical, PhoneNumberNormalizer.normalizeBrazilianPhone("31 99543-8467"));
-        assertEquals(canonical, PhoneNumberNormalizer.normalizeBrazilianPhone("(31) 99543-8467"));
-        assertEquals(canonical, PhoneNumberNormalizer.normalizeBrazilianPhone("+55 31 99543-8467"));
-        assertEquals(canonical, PhoneNumberNormalizer.normalizeBrazilianPhone("5531995438467"));
+        assertEquals(canonical, PhoneNumberNormalizer.normalizeBrazilianPhone("11987654321"));
+        assertEquals(canonical, PhoneNumberNormalizer.normalizeBrazilianPhone("11 98765-4321"));
+        assertEquals(canonical, PhoneNumberNormalizer.normalizeBrazilianPhone("(11) 98765-4321"));
+        assertEquals(canonical, PhoneNumberNormalizer.normalizeBrazilianPhone("+55 11 98765-4321"));
+        assertEquals(canonical, PhoneNumberNormalizer.normalizeBrazilianPhone("5511987654321"));
     }
 
     @Test
     void rejectsInvalidPhoneFormats() {
         assertThrows(BadRequestException.class, () -> PhoneNumberNormalizer.normalizeBrazilianPhone("12345"));
-        assertThrows(BadRequestException.class, () -> PhoneNumberNormalizer.normalizeBrazilianPhone("+1 31995438467"));
+        assertThrows(BadRequestException.class, () -> PhoneNumberNormalizer.normalizeBrazilianPhone("+1 11987654321"));
     }
 }

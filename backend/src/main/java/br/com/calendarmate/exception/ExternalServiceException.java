@@ -9,11 +9,11 @@ public class ExternalServiceException extends RuntimeException {
     private final Integer providerStatus;
 
     public ExternalServiceException(String msg) {
-        this(HttpStatus.BAD_GATEWAY, "UPSTREAM_ERROR", msg, null, null, null);
+        this(HttpStatus.BAD_GATEWAY, "PROVIDER_UNAVAILABLE", msg, null, null, null);
     }
 
     public ExternalServiceException(String msg, Throwable cause) {
-        this(HttpStatus.BAD_GATEWAY, "UPSTREAM_ERROR", msg, null, null, cause);
+        this(HttpStatus.BAD_GATEWAY, "PROVIDER_UNAVAILABLE", msg, null, null, cause);
     }
 
     public ExternalServiceException(
@@ -73,10 +73,20 @@ public class ExternalServiceException extends RuntimeException {
     public static ExternalServiceException upstreamFailure(String providerName, Integer providerStatus, Throwable cause) {
         return new ExternalServiceException(
                 HttpStatus.BAD_GATEWAY,
-                "UPSTREAM_ERROR",
-                "Falha de comunicacao com servico externo.",
+                "PROVIDER_UNAVAILABLE",
+                "Provedor de verificacao indisponivel.",
                 providerName,
                 providerStatus,
+                cause);
+    }
+
+    public static ExternalServiceException authDependencyUnavailable(String dependencyName, Throwable cause) {
+        return new ExternalServiceException(
+                HttpStatus.BAD_GATEWAY,
+                "AUTH_DEPENDENCY_UNAVAILABLE",
+                "Falha ao consultar dependencia de autenticacao.",
+                dependencyName,
+                null,
                 cause);
     }
 

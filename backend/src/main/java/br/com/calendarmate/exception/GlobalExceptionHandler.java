@@ -59,6 +59,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), req);
     }
 
+    @ExceptionHandler(InvalidPhoneException.class)
+    public ResponseEntity<ApiError> invalidPhone(InvalidPhoneException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "INVALID_PHONE", ex.getMessage(), req);
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiError> constraint(ConstraintViolationException ex, HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Dados invalidos.", req);
@@ -81,6 +86,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> validation(MethodArgumentNotValidException ex, HttpServletRequest req) {
+        boolean phoneError = ex.getBindingResult().getFieldErrors().stream()
+                .anyMatch(err -> "phone".equals(err.getField()));
+        if (phoneError) {
+            return build(HttpStatus.BAD_REQUEST, "INVALID_PHONE", "Telefone invalido", req);
+        }
         String first = ex.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(err -> err.getField() + ": " + err.getDefaultMessage())
@@ -107,7 +117,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RestClientException.class)
     public ResponseEntity<ApiError> restClient(RestClientException ex, HttpServletRequest req) {
-        log.warn("Upstream REST failure at {}: {}", req.getRequestURI(), ex.toString());
+        log.warn(
+                "Upstream REST failure at {} exceptionClass={} exceptionMessage={}",
+                req.getRequestURI(),
+                ex.getClass().getSimpleName(),
+                safeExceptionMessage(ex));
+        if (req.getRequestURI() != null && req.getRequestURI().startsWith("/api/admin/auth")) {
+            return build(HttpStatus.BAD_GATEWAY, "AUTH_DEPENDENCY_UNAVAILABLE", "Falha ao consultar dependencia de autenticacao.", req);
+        }
         return build(HttpStatus.BAD_GATEWAY, "UPSTREAM_ERROR", "Falha de comunicacao com servico externo.", req);
     }
 
@@ -115,5 +132,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> generic(Exception ex, HttpServletRequest req) {
         log.error("Unexpected error at {}", req.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Erro inesperado.", req);
+    }
+
+    private String safeExceptionMessage(Exception ex) {
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return "";
+        }
+        return message
+                .replaceAll("(?i)bearer\\s+[A-Za-z0-9._~+/=-]+", "Bearer [redacted]")
+                .replaceAll("(?i)(apikey|api_key|token|authorization)=([^&\\s]+)", "$1=[redacted]")
+                .replaceAll("(?i)(apikey|authorization):\\s*\\[[^\\]]+]", "$1: [redacted]")
+                .replaceAll("(?i)(phone_digits=eq\\.)\\+?55\\d{10,11}", "$1+55*****0000")
+                .replaceAll("\\+?55\\d{10,11}", "+55*****0000");
     }
 }

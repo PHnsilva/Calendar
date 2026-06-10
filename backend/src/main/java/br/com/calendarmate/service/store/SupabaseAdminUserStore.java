@@ -119,8 +119,20 @@ public class SupabaseAdminUserStore implements AdminUserStore {
             row.put("active", user.isActive());
             sb.upsert(table, List.of(row), "id");
         } catch (Exception ex) {
-            log.warn("Could not seed configured admin user {}", user.getPhoneDigits(), ex);
+            log.warn("Could not seed configured admin user phone={}", maskPhone(user.getPhoneDigits()), ex);
         }
+    }
+
+    private static String maskPhone(String phoneDigits) {
+        String digits = PhoneNumberNormalizer.digitsOnly(phoneDigits);
+        if (digits.length() == 10 || digits.length() == 11) {
+            digits = "55" + digits;
+        }
+        if (digits.length() <= 4) {
+            return "****";
+        }
+        int prefixLength = Math.min(4, digits.length() - 4);
+        return "+" + digits.substring(0, prefixLength) + "*****" + digits.substring(digits.length() - 4);
     }
 
     private static String str(Object value) {

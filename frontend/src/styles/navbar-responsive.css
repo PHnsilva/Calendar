@@ -407,3 +407,93 @@
     max-width: 150px !important;
   }
 }
+
+/* 2026-06-12 desktop client navbar collision fix.
+   Keeps mobile rules untouched and prevents button overlap from 901px upward. */
+@media (min-width: 901px) {
+  .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  .wf-navbar.wf-navbar--client.wf-header {
+    width: min(1540px, calc(100vw - clamp(48px, 5vw, 96px))) !important;
+    grid-template-columns: minmax(220px, clamp(240px, 22vw, 380px)) minmax(0, 1fr) !important;
+    gap: clamp(14px, 1.6vw, 28px) !important;
+    overflow: visible !important;
+  }
+
+  .wf-navbar--client .wf-header-actions {
+    display: grid !important;
+    grid-template-columns: minmax(160px, 1fr) minmax(156px, .92fr) minmax(154px, .86fr) !important;
+    width: min(100%, clamp(560px, 55vw, 760px)) !important;
+    justify-self: end !important;
+    align-items: center !important;
+    gap: clamp(10px, 1vw, 18px) !important;
+    min-width: 0 !important;
+  }
+
+  .wf-navbar--client .wf-header-actions > * {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .wf-navbar--client .wf-top-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: clamp(52px, 4vw, 66px) !important;
+    padding-inline: clamp(12px, 1.15vw, 22px) !important;
+    border-radius: clamp(12px, 1vw, 15px) !important;
+    border: 1px solid rgba(255, 255, 255, .32) !important;
+    box-shadow:
+      0 12px 26px rgba(3, 34, 150, .18),
+      inset 0 1px 0 rgba(255, 255, 255, .28) !important;
+    outline: 1px solid rgba(4, 91, 245, .08) !important;
+  }
+
+  .wf-navbar--client .wf-top-btn--orange {
+    border-color: rgba(255, 120, 40, .45) !important;
+    box-shadow:
+      0 12px 26px rgba(221, 45, 0, .20),
+      inset 0 1px 0 rgba(255, 255, 255, .34) !important;
+    outline-color: rgba(255, 75, 11, .13) !important;
+  }
+
+  .wf-navbar--client .wf-top-btn span {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1120px) {
+  .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  .wf-navbar.wf-navbar--client.wf-header {
+    width: calc(100vw - 32px) !important;
+    grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .wf-navbar--client .wf-header-actions {
+    grid-template-columns: minmax(130px, 1fr) minmax(130px, 1fr) minmax(130px, .92fr) !important;
+    width: min(100%, 610px) !important;
+    gap: 8px !important;
+  }
+
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: clamp(58px, 6.2vw, 74px) !important;
+    max-width: 220px !important;
+  }
+
+  .wf-navbar--client .wf-top-btn {
+    min-height: 48px !important;
+    padding-inline: 9px !important;
+    font-size: clamp(11px, 1.35vw, 14px) !important;
+    gap: 6px !important;
+  }
+
+  .wf-navbar--client .wf-top-btn .wf-icon {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+  }
+}

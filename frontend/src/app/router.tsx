@@ -1,4 +1,6 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
+import SitePreparationPage from "../components/screens/SitePreparationPage";
+import { isSiteHoldingPageEnabled } from "../lib/holding-mode";
 import PublicLayout from "../layouts/PublicLayout";
 import AdminLayout from "../layouts/AdminLayout";
 import HomePage from "../pages/home/HomePage";
@@ -11,7 +13,9 @@ import NotFoundPage from "../pages/shared/NotFoundPage";
 import ForbiddenPage from "../pages/shared/ForbiddenPage";
 import ServerErrorPage from "../pages/shared/ServerErrorPage";
 
-const router = createBrowserRouter([
+const router = createBrowserRouter(isSiteHoldingPageEnabled() ? [
+  { path: "*", element: <SitePreparationPage /> },
+] : [
   {
     path: "/",
     element: <PublicLayout />,

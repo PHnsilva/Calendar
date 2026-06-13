@@ -3,6 +3,10 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
 import heroClient from '../../assets/wireframes/landing/client-hero-composite.png';
+import heroClientDesktop1200 from '../../assets/wireframes/landing/client-hero-composite-1200.png';
+import heroClientDesktop1600 from '../../assets/wireframes/landing/client-hero-composite-1600.png';
+import heroClientDesktop2200 from '../../assets/wireframes/landing/client-hero-composite-2200.png';
+import heroClientDesktop3000 from '../../assets/wireframes/landing/client-hero-composite-3000.png';
 import heroClientMobile from '../../assets/wireframes/landing/client-hero-composite-mobile.png';
 import heroClientMobileTall from '../../assets/wireframes/landing/client-hero-composite-mobile-tall.png';
 import heroAdmin from '../../assets/wireframes/landing/admin-hero-composite.png';
@@ -108,6 +112,13 @@ import { buildMailtoUrl } from '../../lib/mailto';
 import ModalShell from '../../shared/ui/ModalShell';
 import PageTitle from '../../shared/ui/PageTitle';
 import ResponsiveAsset from '../../shared/ui/ResponsiveAsset';
+const clientHeroDesktopSrcSet = [
+  `${heroClientDesktop1200} 1200w`,
+  `${heroClientDesktop1600} 1600w`,
+  `${heroClientDesktop2200} 2200w`,
+  `${heroClientDesktop3000} 3000w`,
+].join(', ');
+
 
 type ModalKind =
   | 'create-client'
@@ -896,16 +907,16 @@ function useClientProfileSnapshot(): ClientProfileSnapshot {
 function ClientLandingModalButtons({ profile, setModal }: { profile: ClientProfileSnapshot; setModal: (modal: ModalKind) => void }) {
   return (
     <div className="wf-actions-grid wf-actions-grid--client">
-      <ActionCard icon="calendar-create" title="Criar agendamento" color="orange" onClick={() => setModal('create-client')} />
-      <ActionCard icon="calendar-clock" title="Acompanhar agendamento" color="blue" to="/meus-agendamentos" />
+      <ActionCard icon="calendar-create" title="Criar agendamento" text="Escolha o serviço, data e horário ideal para você." color="orange" onClick={() => setModal('create-client')} />
+      <ActionCard icon="calendar-clock" title="Acompanhar agendamento" text="Veja os detalhes e o status do seu agendamento." color="blue" to="/meus-agendamentos" />
       <ActionCard
         icon={profile.verified ? 'user' : 'mobile-phone'}
         title={profile.verified ? 'Perfil' : 'Confirmar telefone'}
-        text={profile.verified ? (profile.name || formatPhoneForDisplay(profile.phone || '')) : undefined}
+        text={profile.verified ? (profile.name || formatPhoneForDisplay(profile.phone || '')) : 'Confirme seu número no dia do atendimento.'}
         color="green"
         onClick={() => setModal(profile.verified ? 'client-profile' : 'confirm-phone')}
       />
-      <ActionCard icon="chat-bubbles" title="Fale conosco" color="purple" onClick={() => setModal('contact')} />
+      <ActionCard icon="chat-bubbles" title="Fale conosco" text="Dúvidas ou suporte? Estamos aqui para ajudar." color="purple" onClick={() => setModal('contact')} />
     </div>
   );
 }
@@ -922,7 +933,8 @@ export function ClientLanding() {
           <div className="wf-hero-copy wf-client-hero-copy-final">
             <Badge icon="calendar" color="orange">Simples, rápido e sem complicações</Badge>
             <h1>Organize seus agendamentos e pequenos reparos com <span>facilidade.</span></h1>
-            
+            <p>Crie seu agendamento sem precisar fazer login.<br />No dia, confirme seu número de telefone e pronto!</p>
+
             <div className="wf-hero-buttons">
               <button type="button" className="wf-primary-cta" onClick={() => setModal('create-client')}><Icon name="calendar" /> Criar agendamento</button>
               <button type="button" className="wf-secondary-cta" onClick={() => setModal('services-info')}><span className="wf-play"><Icon name="play" /></span> Como funciona?</button>
@@ -931,7 +943,9 @@ export function ClientLanding() {
           <ResponsiveAsset
             alt="Prestador de pequenos reparos"
             className="wf-media-frame wf-media-frame--hero wf-hero-visual wf-hero-visual--client wf-client-hero-visual-final"
-            desktopSrc={heroClient}
+            desktopSrc={heroClientDesktop1600}
+            desktopSrcSet={clientHeroDesktopSrcSet}
+            sizes="(min-width: 901px) min(56vw, 900px), 100vw"
             mobileSrc={heroClientMobile}
             mobileBreakpoint={900}
             smallMobileSrc={heroClientMobileTall}
@@ -943,10 +957,20 @@ export function ClientLanding() {
         <ClientLandingModalButtons profile={profile} setModal={setModal} />
 
         <section className="wf-info-row" id="wf-why-use">
-          <article className="wf-house-card wf-house-card--full-width">
+          <article className="wf-house-card">
             <img src={houseCard} alt="Casa atendida" />
             <div>
               <h2>Agende quando e onde estiver</h2>
+              <p>Do computador ou do celular, organize seus atendimentos de forma rápida e segura, 24 horas por dia.</p>
+            </div>
+          </article>
+          <article className="wf-why-card">
+            <h2>Por que usar o SG Agendamentos?</h2>
+            <div className="wf-mini-features">
+              <span><Icon name="benefit-practicality" /><strong>Mais praticidade</strong><small>Tudo online, sem burocracia.</small></span>
+              <span><Icon name="benefit-security" /><strong>Mais segurança</strong><small>Confirmação por telefone no dia.</small></span>
+              <span><Icon name="benefit-speed" /><strong>Mais rapidez</strong><small>Agende em poucos cliques.</small></span>
+              <span><Icon name="benefit-follow" /><strong>Acompanhamento</strong><small>Acompanhe o status do seu pedido.</small></span>
             </div>
           </article>
         </section>

@@ -6,10 +6,12 @@ type ResponsiveAssetProps = {
   children?: ReactNode;
   className?: string;
   desktopSrc: string;
+  desktopSrcSet?: string;
   imageClassName?: string;
   mobileBreakpoint?: number;
   mobileSrc?: string;
   pictureClassName?: string;
+  sizes?: string;
   smallMobileBreakpoint?: number;
   smallMobileSrc?: string;
 };
@@ -23,10 +25,12 @@ export function ResponsiveAsset({
   children,
   className,
   desktopSrc,
+  desktopSrcSet,
   imageClassName,
   mobileBreakpoint = 767,
   mobileSrc,
   pictureClassName,
+  sizes,
   smallMobileBreakpoint = 500,
   smallMobileSrc,
 }: ResponsiveAssetProps) {
@@ -35,7 +39,7 @@ export function ResponsiveAsset({
       <picture className={cx(styles.picture, pictureClassName)}>
         {smallMobileSrc ? <source media={`(max-width: ${smallMobileBreakpoint}px)`} srcSet={smallMobileSrc} /> : null}
         {mobileSrc ? <source media={`(max-width: ${mobileBreakpoint}px)`} srcSet={mobileSrc} /> : null}
-        <img className={cx(styles.image, imageClassName)} src={desktopSrc} alt={alt} />
+        <img className={cx(styles.image, imageClassName)} src={desktopSrc} srcSet={desktopSrcSet} sizes={sizes} alt={alt} />
       </picture>
       {children}
     </div>

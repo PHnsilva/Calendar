@@ -1028,6 +1028,8 @@ function CalendarBoard({ bookings = [], admin = false }: { bookings?: BookingIte
     };
   }), [visibleCities]);
   const monthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(toLocalDate(displayMonthStart));
+  const monthNameLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(toLocalDate(displayMonthStart));
+  const monthChipLabel = monthNameLabel.charAt(0).toUpperCase() + monthNameLabel.slice(1);
   const canShiftBack = displayMonthStart > currentAllowedMonth;
   const canShiftForward = displayMonthStart < nextAllowedMonth;
 
@@ -1046,9 +1048,15 @@ function CalendarBoard({ bookings = [], admin = false }: { bookings?: BookingIte
           <p>Visualize, organize e acompanhe os atendimentos.</p>
         </div>
         <div className="wf-month-pills">
-          <button type="button" className="wf-month-pill wf-month-pill--arrow" onClick={() => shift(-1)} disabled={!canShiftBack} aria-label="Mês anterior">‹</button>
-          <span className="wf-month-pill wf-month-pill--label">{monthLabel}</span>
-          <button type="button" className="wf-month-pill wf-month-pill--arrow" onClick={() => shift(1)} disabled={!canShiftForward} aria-label="Próximo mês">›</button>
+          <button type="button" className="wf-month-pill wf-month-pill--arrow wf-month-pill--mobile" onClick={() => shift(-1)} disabled={!canShiftBack} aria-label="Mês anterior">‹</button>
+          <span className="wf-month-pill wf-month-pill--label wf-month-pill--mobile">{monthLabel}</span>
+          <button type="button" className="wf-month-pill wf-month-pill--arrow wf-month-pill--mobile" onClick={() => shift(1)} disabled={!canShiftForward} aria-label="Próximo mês">›</button>
+          <button type="button" className="wf-month-pill wf-month-pill--current wf-month-pill--desktop" onClick={() => setMonthStart(currentAllowedMonth)} disabled={!canShiftBack}>
+            Mês Atual
+          </button>
+          <button type="button" className="wf-month-pill wf-month-pill--label wf-month-pill--desktop" onClick={() => shift(1)} disabled={!canShiftForward}>
+            {monthChipLabel}
+          </button>
         </div>
       </div>
       <SupportedCitiesPanel admin={admin} cities={supportedCities} panelIcon={cityPanelIcon} />

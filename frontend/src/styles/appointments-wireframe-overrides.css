@@ -5324,7 +5324,7 @@ body {
     line-height: 1.08 !important;
   }
 }
-\n/* 2026-06-05: remove word splitting in landing action-card titles */
+/* 2026-06-05: remove word splitting in landing action-card titles */
 @media (min-width: 320px) and (max-width: 900px) {
   .wf-client-landing .wf-actions-grid--client .wf-action-card__body,
   .wf-client-landing .wf-actions-grid--client .wf-action-card__body strong {
@@ -6415,5 +6415,435 @@ body {
   .wf-modal--confirm .wf-modal-close .wf-icon {
     width: 28px !important;
     height: 28px !important;
+  }
+}
+
+/* 2026-06-13: client appointments desktop wireframe from 901px to 2500px. */
+@media (min-width: 901px) {
+  .wf-page--list {
+    --wf-bookings-desktop-max: 1680px !important;
+    overflow-x: clip !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    width: min(var(--wf-bookings-desktop-max), calc(100vw - clamp(28px, 4vw, 72px))) !important;
+    max-width: var(--wf-bookings-desktop-max) !important;
+    min-height: clamp(72px, 5.5vw, 94px) !important;
+    margin: 0 auto !important;
+    display: grid !important;
+    grid-template-columns: minmax(190px, clamp(210px, 20vw, 340px)) minmax(0, 1fr) !important;
+    gap: clamp(10px, 1.3vw, 24px) !important;
+    padding: clamp(7px, .8vw, 12px) clamp(10px, 1.4vw, 24px) !important;
+    overflow: visible !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    display: none !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-header-actions,
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, max-content) !important;
+    width: auto !important;
+    justify-self: end !important;
+    align-items: center !important;
+    gap: clamp(8px, .9vw, 16px) !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-header-actions > * {
+    width: auto !important;
+    min-width: 0 !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > span:not(.wf-icon) {
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-logo img {
+    height: clamp(56px, 4.4vw, 82px) !important;
+    max-width: clamp(175px, 16vw, 300px) !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn {
+    width: auto !important;
+    min-height: clamp(42px, 3vw, 52px) !important;
+    padding-inline: clamp(12px, 1vw, 18px) !important;
+    border-radius: 12px !important;
+    font-size: clamp(11px, .82vw, 14px) !important;
+    white-space: nowrap !important;
+  }
+
+  .wf-page--list > .wf-two-column--bookings {
+    width: min(var(--wf-bookings-desktop-max), calc(100vw - clamp(28px, 4vw, 72px))) !important;
+    max-width: var(--wf-bookings-desktop-max) !important;
+    height: calc(100dvh - clamp(96px, 7.5vw, 128px)) !important;
+    max-height: calc(100dvh - clamp(96px, 7.5vw, 128px)) !important;
+    margin: 0 auto clamp(18px, 1.5vw, 28px) !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(360px, 45.5%) minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: clamp(14px, 1.5vw, 28px) !important;
+    overflow: hidden !important;
+  }
+
+  .wf-page--list > .wf-two-column--bookings > .wf-calendar-panel,
+  .wf-page--list > .wf-two-column--bookings > .wf-booking-list-panel {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: none !important;
+  }
+
+  .wf-page--list > .wf-two-column--bookings > .wf-calendar-panel {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: clamp(16px, 1.8vw, 34px) !important;
+  }
+
+  .wf-page--list > .wf-two-column--bookings > .wf-booking-list-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: clamp(12px, 1.2vw, 20px) !important;
+    border: 1px solid var(--wf-card-border) !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    box-shadow: var(--wf-card-shadow-soft) !important;
+    overflow: hidden !important;
+  }
+
+  .wf-page--list .wf-filters-bar--desktop {
+    display: grid !important;
+    margin-bottom: clamp(12px, 1vw, 18px) !important;
+  }
+
+  .wf-page--list .wf-filters-bar--mobile {
+    display: none !important;
+  }
+
+  .wf-page--list .wf-booking-tools {
+    display: none !important;
+  }
+
+  .wf-page--list .wf-booking-list-panel > .wf-booking-stack {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: grid !important;
+    align-content: start !important;
+    gap: clamp(12px, 1vw, 18px) !important;
+    padding-right: 6px !important;
+    scrollbar-width: thin;
+  }
+
+  .wf-page--list .wf-section-title--calendar {
+    display: grid !important;
+    grid-template-columns: clamp(54px, 4.6vw, 74px) minmax(0, 1fr) !important;
+    gap: 8px 14px !important;
+    align-items: center !important;
+    margin-bottom: clamp(14px, 1.7vw, 24px) !important;
+  }
+
+  .wf-page--list .wf-section-title--calendar h1 {
+    font-size: clamp(34px, 3.1vw, 56px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  .wf-page--list .wf-section-title--calendar p {
+    font-size: clamp(12px, .95vw, 16px) !important;
+  }
+
+  .wf-page--list .wf-section-title--calendar .wf-month-pills {
+    grid-column: 2 !important;
+    width: min(100%, 330px) !important;
+    justify-content: flex-start !important;
+    margin: 2px 0 0 !important;
+  }
+
+  .wf-page--list .wf-month-pill {
+    min-height: clamp(34px, 2.8vw, 44px) !important;
+    font-size: clamp(11px, .86vw, 14px) !important;
+  }
+
+  .wf-page--list .wf-month-pill--arrow {
+    width: clamp(34px, 2.8vw, 44px) !important;
+    min-width: clamp(34px, 2.8vw, 44px) !important;
+  }
+
+  .wf-page--list .wf-month-pill--label {
+    min-width: clamp(150px, 13vw, 220px) !important;
+    padding-inline: clamp(12px, 1.2vw, 24px) !important;
+  }
+
+  .wf-page--list .wf-city-box {
+    grid-template-columns: clamp(54px, 5vw, 88px) minmax(0, 1fr) !important;
+    gap: clamp(8px, 1vw, 14px) !important;
+    padding: clamp(10px, 1vw, 14px) !important;
+    margin-bottom: clamp(14px, 1.4vw, 22px) !important;
+  }
+
+  .wf-page--list .wf-city-box__media {
+    display: inline-flex !important;
+    width: clamp(54px, 5vw, 88px) !important;
+    min-width: clamp(54px, 5vw, 88px) !important;
+    height: clamp(46px, 4.4vw, 68px) !important;
+  }
+
+  .wf-page--list .wf-city-box h3 {
+    font-size: clamp(14px, 1.05vw, 18px) !important;
+    margin-bottom: clamp(8px, .8vw, 12px) !important;
+  }
+
+  .wf-page--list .wf-city-box__list {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: clamp(5px, .6vw, 8px) !important;
+  }
+
+  .wf-page--list .wf-city-pill {
+    min-height: clamp(34px, 2.7vw, 44px) !important;
+    padding-inline: clamp(5px, .65vw, 10px) !important;
+    gap: 6px !important;
+    font-size: clamp(10px, .76vw, 14px) !important;
+  }
+
+  .wf-page--list .wf-city-pill img {
+    width: clamp(18px, 1.8vw, 30px) !important;
+    min-width: clamp(18px, 1.8vw, 30px) !important;
+    height: clamp(18px, 1.8vw, 30px) !important;
+  }
+
+  .wf-page--list .wf-calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    overflow: hidden !important;
+  }
+
+  .wf-page--list .wf-calendar-grid > strong {
+    font-size: clamp(10px, .84vw, 14px) !important;
+    padding: clamp(8px, .8vw, 12px) 4px !important;
+  }
+
+  .wf-page--list .wf-calendar-day {
+    min-height: clamp(58px, 6.1vw, 98px) !important;
+    padding: clamp(7px, .9vw, 15px) !important;
+    font-size: clamp(14px, 1.15vw, 20px) !important;
+  }
+
+  .wf-page--list .wf-calendar-day.is-selected b {
+    width: clamp(34px, 3.2vw, 54px) !important;
+    height: clamp(34px, 3.2vw, 54px) !important;
+  }
+
+  .wf-page--list .wf-filters-bar {
+    grid-template-columns: auto minmax(0, 1fr) clamp(42px, 3vw, 48px) !important;
+    gap: clamp(8px, .8vw, 12px) !important;
+    align-items: center !important;
+  }
+
+  .wf-page--list .wf-filter-tabs {
+    grid-column: auto !important;
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+  }
+
+  .wf-page--list .wf-filter-tabs button {
+    min-width: clamp(62px, 5vw, 82px) !important;
+    min-height: clamp(36px, 2.8vw, 44px) !important;
+    padding-inline: clamp(8px, .8vw, 14px) !important;
+    font-size: clamp(11px, .82vw, 14px) !important;
+  }
+
+  .wf-page--list .wf-search {
+    min-height: clamp(38px, 3vw, 48px) !important;
+    padding-inline: clamp(10px, .9vw, 14px) !important;
+  }
+
+  .wf-page--list .wf-filter-btn {
+    width: clamp(40px, 3vw, 48px) !important;
+    min-width: clamp(40px, 3vw, 48px) !important;
+    min-height: clamp(40px, 3vw, 48px) !important;
+  }
+}
+
+@media (min-width: 1800px) {
+  .wf-page--list {
+    --wf-bookings-desktop-max: 1840px !important;
+  }
+}
+
+@media (min-width: 2240px) {
+  .wf-page--list {
+    --wf-bookings-desktop-max: 2140px !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1199px) {
+  .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    grid-template-columns: minmax(165px, 220px) minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-header-actions,
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    grid-template-columns: repeat(3, max-content) !important;
+    width: auto !important;
+    gap: 7px !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-logo img {
+    height: clamp(52px, 6vw, 68px) !important;
+    max-width: 210px !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn {
+    min-height: 44px !important;
+    padding-inline: 8px !important;
+    font-size: clamp(10.5px, 1.2vw, 13px) !important;
+    gap: 5px !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon {
+    width: 17px !important;
+    min-width: 17px !important;
+    height: 17px !important;
+  }
+
+  .wf-page--list > .wf-two-column--bookings {
+    grid-template-columns: minmax(345px, 45%) minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .wf-page--list .wf-section-title--calendar {
+    grid-template-columns: 54px minmax(0, 1fr) !important;
+  }
+
+  .wf-page--list .wf-section-title--calendar h1 {
+    font-size: clamp(31px, 3.7vw, 40px) !important;
+  }
+
+  .wf-page--list .wf-city-box {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .wf-page--list .wf-city-box__media {
+    display: none !important;
+  }
+
+  .wf-page--list .wf-city-pill span {
+    font-size: clamp(8.4px, .92vw, 11px) !important;
+  }
+
+  .wf-page--list .wf-filters-bar {
+    grid-template-columns: minmax(0, 1fr) 42px !important;
+  }
+
+  .wf-page--list .wf-filter-tabs {
+    grid-column: 1 / -1 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+}
+
+/* 2026-06-14: compact desktop navbar and clean booking-card separation. */
+@media (min-width: 901px) {
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-header-actions,
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    display: flex !important;
+    width: max-content !important;
+    min-width: max-content !important;
+    justify-self: end !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: clamp(8px, .75vw, 14px) !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-profile-menu-wrap {
+    container-type: normal !important;
+    container-name: none !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
+    max-width: none !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn,
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: clamp(40px, 2.8vw, 50px) !important;
+    padding-inline: clamp(12px, .9vw, 18px) !important;
+    font-size: clamp(11px, .76vw, 14px) !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn > span:not(.wf-icon),
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > span:not(.wf-icon) {
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  .wf-page--list .wf-booking-list-panel > .wf-booking-stack {
+    gap: clamp(18px, 1.4vw, 26px) !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1040px) {
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-header-actions,
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: 380px !important;
+    min-width: 380px !important;
+    gap: 6px !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn {
+    min-height: 40px !important;
+    padding-inline: 10px !important;
+    font-size: 11px !important;
+    gap: 5px !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn--orange {
+    width: 48px !important;
+    min-width: 48px !important;
+    padding-inline: 0 !important;
+  }
+
+  .wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn--orange > span:not(.wf-icon) {
+    display: none !important;
+  }
+}
+
+/* 2026-06-14: desktop appointments calendar header readability. */
+@media (min-width: 901px) {
+  .wf-page--list .wf-calendar-grid > .wf-calendar-weekday {
+    min-width: 0 !important;
+    min-height: clamp(28px, 2.1vw, 38px) !important;
+    padding: clamp(8px, .7vw, 12px) 2px !important;
+    display: grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+    color: #072aa4 !important;
+    font-size: clamp(11px, .78vw, 14px) !important;
+    line-height: 1.1 !important;
+    font-weight: 900 !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
   }
 }

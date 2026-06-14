@@ -957,3 +957,413 @@
   .metaText b { font-size: 7.2px !important; }
   .metaText small { font-size: 6.9px !important; }
 }
+
+@media (min-width: 901px) and (max-width: 1199px) {
+  .root {
+    grid-template-columns: clamp(86px, 9vw, 104px) minmax(0, 1fr) !important;
+    border-radius: 16px !important;
+  }
+
+  .dateTile {
+    padding: 14px 8px !important;
+    gap: 4px !important;
+  }
+
+  .dateTile small,
+  .dateTile span {
+    font-size: clamp(12px, 1.25vw, 15px) !important;
+  }
+
+  .dateTile strong {
+    font-size: clamp(42px, 4.8vw, 54px) !important;
+    letter-spacing: -1px !important;
+  }
+
+  .dateTile em {
+    margin-top: 8px !important;
+    font-size: clamp(11px, 1.12vw, 13px) !important;
+  }
+
+  .content {
+    padding: 14px 14px 13px !important;
+  }
+
+  .headerRow {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 10px 14px !important;
+  }
+
+  .customer {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  .provider {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  .statusBox {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+  }
+
+  .customer h2 {
+    margin-bottom: 7px !important;
+    font-size: clamp(19px, 2vw, 23px) !important;
+  }
+
+  .provider strong {
+    margin-bottom: 6px !important;
+    font-size: clamp(12px, 1.12vw, 14px) !important;
+  }
+
+  .infoLine,
+  .providerPhone {
+    margin-block: 4px !important;
+    font-size: clamp(11px, 1.08vw, 13px) !important;
+  }
+
+  .statusBox :global(.wf-badge) {
+    min-height: 32px !important;
+    padding-inline: 10px !important;
+    gap: 6px !important;
+    font-size: clamp(10.5px, 1vw, 12px) !important;
+  }
+
+  .actions {
+    margin: 14px 0 12px !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .action {
+    min-height: 36px !important;
+    padding-inline: 6px !important;
+    gap: 5px !important;
+    font-size: clamp(9.6px, .95vw, 11.5px) !important;
+  }
+
+  .action :global(.wf-icon),
+  .action :global(.wf-icon--image) {
+    width: 14px !important;
+    min-width: 14px !important;
+    height: 14px !important;
+  }
+
+  .meta {
+    padding-top: 12px !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .metaColumn {
+    padding: 0 10px !important;
+    gap: 9px !important;
+  }
+
+  .metaItem {
+    grid-template-columns: 16px minmax(0, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  .metaIcon :global(.wf-icon),
+  .metaIcon :global(.wf-icon--image) {
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+  }
+
+  .metaText b {
+    font-size: clamp(9.5px, .9vw, 11px) !important;
+  }
+
+  .metaText small {
+    font-size: clamp(9.2px, .86vw, 10.5px) !important;
+  }
+}
+
+/* Desktop contract: keep appointment cards in the wireframe layout from 901px up. */
+@media (min-width: 901px) {
+  .root {
+    grid-template-columns: clamp(92px, 7.4vw, 128px) minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .dateTile {
+    align-self: stretch !important;
+    min-height: 0 !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: clamp(4px, .42vw, 6px) !important;
+    padding: clamp(14px, 1.2vw, 18px) clamp(7px, .7vw, 11px) !important;
+    text-align: center !important;
+  }
+
+  .dateTile small,
+  .dateTile span {
+    font-size: clamp(12px, .82vw, 18px) !important;
+  }
+
+  .dateTile strong {
+    font-size: clamp(42px, 3.3vw, 64px) !important;
+    line-height: .86 !important;
+    letter-spacing: -1px !important;
+  }
+
+  .dateTile em {
+    justify-self: auto !important;
+    margin-top: clamp(6px, .6vw, 10px) !important;
+    font-size: clamp(11px, .78vw, 16px) !important;
+    white-space: nowrap !important;
+  }
+
+  .dateTile em :global(.wf-icon),
+  .dateTile em :global(.wf-icon--image) {
+    width: clamp(14px, 1vw, 18px) !important;
+    min-width: clamp(14px, 1vw, 18px) !important;
+    height: clamp(14px, 1vw, 18px) !important;
+  }
+
+  .content {
+    padding: clamp(14px, 1.2vw, 20px) !important;
+  }
+
+  .headerRow {
+    grid-template-columns: minmax(0, 1fr) minmax(150px, .58fr) auto !important;
+    gap: clamp(10px, 1.2vw, 22px) !important;
+  }
+
+  .customer {
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+
+  .provider {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    display: block !important;
+    padding-top: 0 !important;
+    border-top: 0 !important;
+  }
+
+  .statusBox {
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+
+  .customer h2 {
+    margin-bottom: clamp(6px, .7vw, 10px) !important;
+    font-size: clamp(18px, 1.35vw, 26px) !important;
+    line-height: 1.06 !important;
+  }
+
+  .infoLine,
+  .providerPhone {
+    font-size: clamp(11px, .82vw, 15px) !important;
+  }
+
+  .provider strong {
+    margin-bottom: clamp(6px, .7vw, 10px) !important;
+    font-size: clamp(12px, .9vw, 16px) !important;
+    white-space: normal !important;
+  }
+
+  .providerPhone {
+    margin: -2px 0 0 clamp(22px, 1.6vw, 27px) !important;
+    white-space: normal !important;
+  }
+
+  .statusBox :global(.wf-badge) {
+    min-height: clamp(32px, 2.4vw, 38px) !important;
+    padding-inline: clamp(10px, .9vw, 16px) !important;
+    font-size: clamp(10px, .78vw, 14px) !important;
+  }
+
+  .actions {
+    margin: clamp(14px, 1.2vw, 18px) 0 clamp(12px, 1vw, 14px) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: clamp(5px, .7vw, 14px) !important;
+  }
+
+  .action {
+    min-height: clamp(36px, 2.6vw, 42px) !important;
+    padding-inline: clamp(5px, .7vw, 12px) !important;
+    gap: clamp(4px, .45vw, 8px) !important;
+    font-size: clamp(9.4px, .76vw, 15px) !important;
+    white-space: nowrap !important;
+  }
+
+  .action :global(.wf-icon),
+  .action :global(.wf-icon--image) {
+    width: clamp(12px, .95vw, 18px) !important;
+    min-width: clamp(12px, .95vw, 18px) !important;
+    height: clamp(12px, .95vw, 18px) !important;
+  }
+
+  .meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    padding-top: clamp(12px, .95vw, 14px) !important;
+  }
+
+  .metaColumn,
+  .metaColumn:first-child,
+  .metaColumn:last-child {
+    display: grid !important;
+    padding: 0 clamp(8px, 1.1vw, 24px) !important;
+    border-left: 1px solid #dce3f1 !important;
+    gap: clamp(8px, .8vw, 12px) !important;
+  }
+
+  .metaColumn:first-child {
+    padding-left: 0 !important;
+    border-left: 0 !important;
+  }
+
+  .metaColumn:last-child {
+    padding-right: 0 !important;
+  }
+
+  .metaItem {
+    grid-template-columns: clamp(14px, 1vw, 22px) minmax(0, 1fr) !important;
+    gap: clamp(5px, .55vw, 9px) !important;
+  }
+
+  .metaIcon :global(.wf-icon),
+  .metaIcon :global(.wf-icon--image) {
+    width: clamp(14px, 1vw, 21px) !important;
+    min-width: clamp(14px, 1vw, 21px) !important;
+    height: clamp(14px, 1vw, 21px) !important;
+  }
+
+  .metaText b {
+    margin-bottom: 2px !important;
+    font-size: clamp(9px, .72vw, 13px) !important;
+  }
+
+  .metaText small {
+    font-size: clamp(8.6px, .68vw, 13px) !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1199px) {
+  .root {
+    grid-template-columns: clamp(74px, 8.7vw, 96px) minmax(0, 1fr) !important;
+    border-radius: 16px !important;
+  }
+
+  .content {
+    padding: 12px !important;
+  }
+
+  .headerRow {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 8px 10px !important;
+  }
+
+  .provider {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  .statusBox {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  .dateTile {
+    padding: 12px 6px !important;
+  }
+
+  .dateTile small,
+  .dateTile span {
+    font-size: clamp(10px, 1.05vw, 13px) !important;
+  }
+
+  .dateTile strong {
+    font-size: clamp(32px, 4.2vw, 46px) !important;
+  }
+
+  .dateTile em {
+    font-size: clamp(9px, .95vw, 11px) !important;
+    gap: 4px !important;
+  }
+
+  .customer h2 {
+    font-size: clamp(17px, 2vw, 21px) !important;
+  }
+
+  .infoLine,
+  .providerPhone,
+  .provider strong {
+    font-size: clamp(9.8px, 1.08vw, 12px) !important;
+  }
+
+  .statusBox :global(.wf-badge) {
+    min-height: 29px !important;
+    padding-inline: 8px !important;
+    gap: 5px !important;
+    font-size: 9.4px !important;
+  }
+
+  .actions {
+    margin: 12px 0 10px !important;
+    gap: 5px !important;
+  }
+
+  .action {
+    min-height: 34px !important;
+    padding-inline: 4px !important;
+    gap: 3px !important;
+    font-size: clamp(8px, .9vw, 10px) !important;
+  }
+
+  .action :global(.wf-icon),
+  .action :global(.wf-icon--image) {
+    width: 11px !important;
+    min-width: 11px !important;
+    height: 11px !important;
+  }
+
+  .metaColumn,
+  .metaColumn:first-child,
+  .metaColumn:last-child {
+    padding: 0 7px !important;
+    gap: 7px !important;
+  }
+
+  .metaColumn:first-child {
+    padding-left: 0 !important;
+  }
+
+  .metaColumn:last-child {
+    padding-right: 0 !important;
+  }
+
+  .metaItem {
+    grid-template-columns: 13px minmax(0, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  .metaIcon :global(.wf-icon),
+  .metaIcon :global(.wf-icon--image) {
+    width: 13px !important;
+    min-width: 13px !important;
+    height: 13px !important;
+  }
+
+  .metaText b {
+    font-size: clamp(7.8px, .84vw, 9.5px) !important;
+  }
+
+  .metaText small {
+    font-size: clamp(7.4px, .8vw, 9px) !important;
+  }
+}

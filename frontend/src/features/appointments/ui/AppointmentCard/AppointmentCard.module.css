@@ -1250,18 +1250,33 @@
   }
 
   .meta {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    border-top: 1px solid rgba(3, 88, 255, .14) !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 0 !important;
-    padding-top: clamp(12px, .95vw, 14px) !important;
+    align-items: start !important;
+    padding-top: clamp(10px, .85vw, 14px) !important;
+    background: transparent !important;
+    overflow: visible !important;
   }
 
   .metaColumn,
   .metaColumn:first-child,
   .metaColumn:last-child {
     display: grid !important;
-    padding: 0 clamp(8px, 1.1vw, 24px) !important;
-    border-left: 1px solid #dce3f1 !important;
-    gap: clamp(8px, .8vw, 12px) !important;
+    grid-template-rows: none !important;
+    grid-auto-rows: max-content !important;
+    align-content: start !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 clamp(8px, .95vw, 18px) !important;
+    border-left: 1px solid rgba(6, 19, 111, .12) !important;
+    background: transparent !important;
+    gap: clamp(7px, .62vw, 10px) !important;
+    overflow: visible !important;
   }
 
   .metaColumn:first-child {
@@ -1274,24 +1289,40 @@
   }
 
   .metaItem {
-    grid-template-columns: clamp(14px, 1vw, 22px) minmax(0, 1fr) !important;
-    gap: clamp(5px, .55vw, 9px) !important;
+    grid-template-columns: clamp(14px, .9vw, 18px) minmax(0, 1fr) !important;
+    align-items: start !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    gap: clamp(5px, .45vw, 8px) !important;
+    overflow: visible !important;
   }
 
   .metaIcon :global(.wf-icon),
   .metaIcon :global(.wf-icon--image) {
-    width: clamp(14px, 1vw, 21px) !important;
-    min-width: clamp(14px, 1vw, 21px) !important;
-    height: clamp(14px, 1vw, 21px) !important;
+    width: clamp(14px, .9vw, 18px) !important;
+    min-width: clamp(14px, .9vw, 18px) !important;
+    height: clamp(14px, .9vw, 18px) !important;
   }
 
   .metaText b {
     margin-bottom: 2px !important;
-    font-size: clamp(9px, .72vw, 13px) !important;
+    color: #06136f !important;
+    font-size: clamp(9px, .64vw, 12px) !important;
+    line-height: 1.08 !important;
+    font-weight: 900 !important;
+    letter-spacing: 0 !important;
+    overflow-wrap: break-word !important;
   }
 
   .metaText small {
-    font-size: clamp(8.6px, .68vw, 13px) !important;
+    color: #25336f !important;
+    font-size: clamp(8.8px, .62vw, 12px) !important;
+    line-height: 1.18 !important;
+    font-weight: 720 !important;
+    overflow-wrap: break-word !important;
   }
 }
 
@@ -1378,8 +1409,8 @@
   .metaColumn,
   .metaColumn:first-child,
   .metaColumn:last-child {
-    padding: 0 7px !important;
-    gap: 7px !important;
+    padding: 0 6px !important;
+    gap: 6px !important;
   }
 
   .metaColumn:first-child {
@@ -1391,22 +1422,22 @@
   }
 
   .metaItem {
-    grid-template-columns: 13px minmax(0, 1fr) !important;
+    grid-template-columns: 12px minmax(0, 1fr) !important;
     gap: 4px !important;
   }
 
   .metaIcon :global(.wf-icon),
   .metaIcon :global(.wf-icon--image) {
-    width: 13px !important;
-    min-width: 13px !important;
-    height: 13px !important;
+    width: 12px !important;
+    min-width: 12px !important;
+    height: 12px !important;
   }
 
   .metaText b {
-    font-size: clamp(7.8px, .84vw, 9.5px) !important;
+    font-size: clamp(8.2px, .84vw, 9.4px) !important;
   }
 
   .metaText small {
-    font-size: clamp(7.4px, .8vw, 9px) !important;
+    font-size: clamp(8px, .78vw, 9px) !important;
   }
 }

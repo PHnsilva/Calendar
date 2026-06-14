@@ -6542,7 +6542,9 @@ body {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     display: grid !important;
+    grid-auto-rows: max-content !important;
     align-content: start !important;
+    align-items: start !important;
     gap: clamp(12px, 1vw, 18px) !important;
     padding-right: 6px !important;
     scrollbar-width: thin;

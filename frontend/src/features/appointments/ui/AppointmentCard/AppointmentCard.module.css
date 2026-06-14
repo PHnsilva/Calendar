@@ -1088,9 +1088,11 @@
   .root {
     grid-template-columns: clamp(92px, 7.4vw, 128px) minmax(0, 1fr) !important;
     align-items: stretch !important;
-    min-height: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     margin: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   .dateTile {
@@ -1104,6 +1106,8 @@
     gap: clamp(4px, .42vw, 6px) !important;
     padding: clamp(14px, 1.2vw, 18px) clamp(7px, .7vw, 11px) !important;
     text-align: center !important;
+    border-radius: 19px 0 0 19px !important;
+    overflow: hidden !important;
   }
 
   .dateTile small,
@@ -1132,11 +1136,16 @@
   }
 
   .content {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
     padding: clamp(14px, 1.2vw, 20px) !important;
+    overflow: visible !important;
   }
 
   .headerRow {
     grid-template-columns: minmax(0, 1fr) minmax(150px, .58fr) auto !important;
+    grid-auto-rows: auto !important;
     gap: clamp(10px, 1.2vw, 22px) !important;
   }
 
@@ -1162,11 +1171,32 @@
     margin-bottom: clamp(6px, .7vw, 10px) !important;
     font-size: clamp(18px, 1.35vw, 26px) !important;
     line-height: 1.06 !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    white-space: normal !important;
   }
 
   .infoLine,
   .providerPhone {
     font-size: clamp(11px, .82vw, 15px) !important;
+    overflow: visible !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    white-space: normal !important;
+  }
+
+  .infoLine span,
+  .providerPhone,
+  .metaText,
+  .metaText b,
+  .metaText small {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    white-space: normal !important;
   }
 
   .provider strong {
@@ -1194,10 +1224,22 @@
 
   .action {
     min-height: clamp(36px, 2.6vw, 42px) !important;
+    height: auto !important;
     padding-inline: clamp(5px, .7vw, 12px) !important;
     gap: clamp(4px, .45vw, 8px) !important;
     font-size: clamp(9.4px, .76vw, 15px) !important;
-    white-space: nowrap !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-align: center !important;
+  }
+
+  .action span {
+    min-width: 0 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
   }
 
   .action :global(.wf-icon),
@@ -1280,6 +1322,7 @@
 
   .dateTile {
     padding: 12px 6px !important;
+    border-radius: 15px 0 0 15px !important;
   }
 
   .dateTile small,

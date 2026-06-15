@@ -21,6 +21,13 @@ import contactInstagramIcon from '../../assets/wireframes/icons/contact-instagra
 import contactPhoneIcon from '../../assets/wireframes/icons/contact-phone.png';
 import contactEmailIcon from '../../assets/wireframes/icons/contact-email.png';
 import footerSecurityIcon from '../../assets/wireframes/icons/footer-security-shield.png';
+import servicePinturaCard from '../../assets/images/landing-carousel/01-servicos-de-pintor.png';
+import serviceMontagemCard from '../../assets/images/landing-carousel/02-montagem-e-instalacao.png';
+import servicePedreiroCard from '../../assets/images/landing-carousel/03-servicos-de-pedreiro.png';
+import serviceDroneCard from '../../assets/images/landing-carousel/04-filmagem-com-drone.png';
+import serviceHidraulicaCard from '../../assets/images/landing-carousel/05-hidraulica.png';
+import serviceEletricaCard from '../../assets/images/landing-carousel/06-eletrica-basica.png';
+import serviceJardinagemCard from '../../assets/images/landing-carousel/07-jardinagem.png';
 import adminAppointmentsIcon from '../../assets/wireframes/icons/admin-appointments-clipboard.png';
 import adminBlocksIcon from '../../assets/wireframes/icons/admin-blocks-lock.png';
 import adminHistoryIcon from '../../assets/wireframes/icons/admin-history-clock.png';
@@ -809,16 +816,6 @@ function ActionCard({ icon, title, text, color, onClick, to }: { icon: string; t
   return <button type="button" className={cx('wf-action-card', `wf-action-card--${color}`)} onClick={onClick}>{content}</button>;
 }
 
-function FeatureLine() {
-  return (
-    <div className="wf-feature-line">
-      <span><Icon name="shield" /> Seguro e confiável</span>
-      <span><Icon name="lock" /> Seus dados protegidos</span>
-      <span><Icon name="check" /> Confirmação apenas por telefone</span>
-    </div>
-  );
-}
-
 function HeroVisual({ type, className }: { type: 'client' | 'admin'; className?: string }) {
   const desktop = type === 'admin' ? heroAdmin : heroClient;
   const mobile = type === 'admin' ? heroAdminMobile : heroClientMobile;
@@ -921,6 +918,102 @@ function ClientLandingModalButtons({ profile, setModal }: { profile: ClientProfi
   );
 }
 
+type ServiceShowcaseItem = {
+  title: string;
+  alt: string;
+  image: string;
+};
+
+const SERVICE_SHOWCASE_INTERVAL_MS = 4600;
+
+const SERVICE_SHOWCASE_ITEMS: ServiceShowcaseItem[] = [
+  {
+    title: 'Serviços de pintor',
+    alt: 'Card do serviço de pintura',
+    image: servicePinturaCard,
+  },
+  {
+    title: 'Montagem e instalação',
+    alt: 'Card do serviço de montagem e instalação',
+    image: serviceMontagemCard,
+  },
+  {
+    title: 'Serviços de pedreiro',
+    alt: 'Card do serviço de pedreiro',
+    image: servicePedreiroCard,
+  },
+  {
+    title: 'Filmagem com drone',
+    alt: 'Card do serviço de filmagem com drone',
+    image: serviceDroneCard,
+  },
+  {
+    title: 'Hidráulica',
+    alt: 'Card do serviço de hidráulica',
+    image: serviceHidraulicaCard,
+  },
+  {
+    title: 'Elétrica básica',
+    alt: 'Card do serviço de elétrica básica',
+    image: serviceEletricaCard,
+  },
+  {
+    title: 'Jardinagem',
+    alt: 'Card do serviço de jardinagem',
+    image: serviceJardinagemCard,
+  },
+];
+
+function ServiceShowcaseCarousel() {
+  const [index, setIndex] = useState(0);
+  const item = SERVICE_SHOWCASE_ITEMS[index];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setIndex((current) => (current + 1) % SERVICE_SHOWCASE_ITEMS.length);
+    }, SERVICE_SHOWCASE_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return (
+    <article
+      className="wf-services-showcase"
+      aria-roledescription="carousel"
+      aria-label="Carrossel de serviços prestados"
+    >
+      <div className="wf-services-showcase__viewport">
+        <img
+          key={item.image}
+          className="wf-services-showcase__image"
+          src={item.image}
+          alt={item.alt}
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+        />
+
+        <div className="wf-services-showcase__overlay">
+          <div className="wf-services-showcase__dots" role="tablist" aria-label="Indicadores do carrossel">
+            {SERVICE_SHOWCASE_ITEMS.map((service, serviceIndex) => (
+              <button
+                key={service.title}
+                type="button"
+                className={cx('wf-services-showcase__dot', serviceIndex === index && 'is-active')}
+                aria-label={`Ir para ${service.title}`}
+                aria-pressed={serviceIndex === index}
+                onClick={() => setIndex(serviceIndex)}
+              >
+                <span className="sr-only">{service.title}</span>
+              </button>
+            ))}
+          </div>
+          <span className="wf-services-showcase__counter">{index + 1} / {SERVICE_SHOWCASE_ITEMS.length}</span>
+        </div>
+      </div>
+    </article>
+  );
+}
 export function ClientLanding() {
   const [modal, setModal] = useState<ModalKind>(null);
   const profile = useClientProfileSnapshot();
@@ -951,7 +1044,6 @@ export function ClientLanding() {
             smallMobileSrc={heroClientMobileTall}
             smallMobileBreakpoint={500}
           />
-          <FeatureLine />
         </section>
 
         <ClientLandingModalButtons profile={profile} setModal={setModal} />
@@ -964,15 +1056,7 @@ export function ClientLanding() {
               <p>Do computador ou do celular, organize seus atendimentos de forma rápida e segura, 24 horas por dia.</p>
             </div>
           </article>
-          <article className="wf-why-card">
-            <h2>Por que usar o SG Agendamentos?</h2>
-            <div className="wf-mini-features">
-              <span><Icon name="benefit-practicality" /><strong>Mais praticidade</strong><small>Tudo online, sem burocracia.</small></span>
-              <span><Icon name="benefit-security" /><strong>Mais segurança</strong><small>Confirmação por telefone no dia.</small></span>
-              <span><Icon name="benefit-speed" /><strong>Mais rapidez</strong><small>Agende em poucos cliques.</small></span>
-              <span><Icon name="benefit-follow" /><strong>Acompanhamento</strong><small>Acompanhe o status do seu pedido.</small></span>
-            </div>
-          </article>
+          <ServiceShowcaseCarousel />
         </section>
         <LandingFooter setModal={setModal} />
       </main>

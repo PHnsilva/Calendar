@@ -7013,3 +7013,151 @@ body {
     display: none !important;
   }
 }
+
+/* 2026-06-15 final services carousel: use the user-approved PNG cards as-is,
+   keep sizing responsive, and render interactive indicators in code only. */
+.wf-client-landing #wf-why-use.wf-info-row,
+.wf-client-landing .wf-info-row#wf-why-use {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 20px !important;
+  align-items: start !important;
+}
+
+.wf-client-landing .wf-info-row > .wf-services-showcase {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.wf-services-showcase {
+  position: relative !important;
+}
+
+.wf-services-showcase__viewport {
+  position: relative !important;
+  width: 100% !important;
+  display: block !important;
+  overflow: hidden !important;
+  border-radius: 18px !important;
+  line-height: 0 !important;
+}
+
+.wf-services-showcase__image {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  user-select: none !important;
+}
+
+.wf-services-showcase__overlay {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: clamp(10px, 1.2vw, 18px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+  padding: 0 clamp(14px, 2vw, 26px) !important;
+}
+
+.wf-services-showcase__dots {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: clamp(6px, .75vw, 10px) !important;
+  pointer-events: auto !important;
+}
+
+.wf-services-showcase__dot {
+  position: relative !important;
+  width: clamp(8px, .75vw, 10px) !important;
+  height: clamp(8px, .75vw, 10px) !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .22) !important;
+  overflow: hidden !important;
+}
+
+.wf-services-showcase__dot.is-active {
+  width: clamp(40px, 4.8vw, 58px) !important;
+  background: rgba(255, 255, 255, 0.32) !important;
+}
+
+.wf-services-showcase__dot.is-active::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 0 !important;
+  border-radius: inherit !important;
+  background: #ffffff !important;
+  animation: wf-services-dot-progress 4600ms linear forwards !important;
+}
+
+.wf-services-showcase__counter {
+  position: absolute !important;
+  right: clamp(14px, 2vw, 26px) !important;
+  bottom: clamp(1px, .15vw, 2px) !important;
+  color: #ffffff !important;
+  font-size: clamp(14px, 1.15vw, 18px) !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .35) !important;
+  white-space: nowrap !important;
+}
+
+@keyframes wf-services-dot-progress {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@media (min-width: 901px) {
+  .wf-client-landing #wf-why-use.wf-info-row,
+  .wf-client-landing .wf-info-row#wf-why-use {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 24px !important;
+  }
+
+  .wf-client-landing .wf-house-card {
+    min-height: 0 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .wf-services-showcase__overlay {
+    bottom: clamp(8px, 2.6vw, 14px) !important;
+    padding: 0 clamp(10px, 3vw, 16px) !important;
+  }
+
+  .wf-services-showcase__counter {
+    right: clamp(10px, 3vw, 16px) !important;
+    font-size: clamp(12px, 3.3vw, 16px) !important;
+  }
+}
+
+@media (max-width: 540px) {
+  .wf-services-showcase__dot {
+    width: 8px !important;
+    height: 8px !important;
+  }
+
+  .wf-services-showcase__dot.is-active {
+    width: 34px !important;
+  }
+
+  .wf-services-showcase__dots {
+    gap: 6px !important;
+  }
+}

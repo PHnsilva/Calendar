@@ -14,6 +14,7 @@ import org.springframework.web.client.ResourceAccessException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AdminAuthServiceTest {
@@ -32,6 +33,18 @@ class AdminAuthServiceTest {
 
         assertEquals("AUTH_DEPENDENCY_UNAVAILABLE", ex.getErrorCode());
         assertEquals("admin_user_store", ex.getProviderName());
+    }
+
+    @Test
+    void bestEffortAdminPhoneLookupDoesNotBlockClientFlowsWhenStoreFails() {
+        AdminAuthService service = new AdminAuthService(
+                new FailingAdminUserStore(),
+                new NoopAdminSessionStore(),
+                new NoopVerificationStore(),
+                new FailingOtpDeliveryClient(),
+                new AppProperties());
+
+        assertFalse(service.isAdminPhoneBestEffort("+55 31 99999-9999"));
     }
 
     private static class FailingAdminUserStore implements AdminUserStore {

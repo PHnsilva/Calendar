@@ -9,6 +9,7 @@ import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ConflictException;
 import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.exception.NotFoundException;
+import br.com.calendarmate.exception.ReservedAdminPhoneException;
 import br.com.calendarmate.google.CalendarClient;
 import br.com.calendarmate.model.PendingRecord;
 import br.com.calendarmate.model.Servico;
@@ -18,6 +19,7 @@ import br.com.calendarmate.model.AdminUser;
 import br.com.calendarmate.service.store.BookingHistoryStore;
 import br.com.calendarmate.service.store.PendingStore;
 import br.com.calendarmate.util.LocationNormalizer;
+import br.com.calendarmate.util.PhoneNumberNormalizer;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
@@ -76,8 +78,8 @@ public class ServicoService {
         String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
 
         String phoneDigits = normalizePhone(req.getClientPhone());
-        if (adminAuthService.isAdminPhone(phoneDigits)) {
-            throw new ForbiddenException("Telefone reservado para acesso administrativo");
+        if (adminAuthService.isAdminPhoneBestEffort(phoneDigits)) {
+            throw new ReservedAdminPhoneException("Use o acesso administrativo para este telefone.");
         }
 
         cleanupExpiredPendings();
@@ -138,9 +140,20 @@ public class ServicoService {
 
         String token = tokenUtil.generate(created.getId(), req.getClientEmail());
 
-        VerificationService.StartResult otp = verificationService.start(
-                token,
-                phoneDigits);
+        VerificationService.StartResult otp;
+        try {
+            otp = verificationService.start(
+                    token,
+                    phoneDigits);
+        } catch (IOException | RuntimeException ex) {
+            pendingStore.deleteByEventId(created.getId());
+            try {
+                calendar.deleteEvent(created.getId());
+            } catch (IOException cleanupEx) {
+                ex.addSuppressed(cleanupEx);
+            }
+            throw ex;
+        }
 
         ServicoResponse servico = mapEventToResponse(created);
         servico.setStatus("PENDING_PHONE");
@@ -642,8 +655,8 @@ public class ServicoService {
         validateAdminBusyWindow(existing, start, end);
 
         String phoneDigits = normalizePhone(req.getClientPhone());
-        if (adminAuthService.isAdminPhone(phoneDigits)) {
-            throw new ForbiddenException("Telefone reservado para acesso administrativo");
+        if (adminAuthService.isAdminPhoneBestEffort(phoneDigits)) {
+            throw new ReservedAdminPhoneException("Use o acesso administrativo para este telefone.");
         }
 
         Map<String, String> ext0 = privateExt(existing);
@@ -941,11 +954,7 @@ public class ServicoService {
     }
 
     private String normalizePhone(String phone) {
-        String d = (phone == null) ? "" : phone.replaceAll("\\D", "");
-        if (d.length() < 10 || d.length() > 11) {
-            throw new BadRequestException("clientPhone inválido");
-        }
-        return d;
+        return PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phone);
     }
 
     private Map<String, String> privateExt(Event e) {

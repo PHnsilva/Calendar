@@ -44,6 +44,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.FORBIDDEN, "FORBIDDEN", ex.getMessage(), req);
     }
 
+    @ExceptionHandler(ReservedAdminPhoneException.class)
+    public ResponseEntity<ApiError> reservedAdminPhone(ReservedAdminPhoneException ex, HttpServletRequest req) {
+        return build(HttpStatus.FORBIDDEN, "RESERVED_ADMIN_PHONE", ex.getMessage(), req);
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiError> notFound(NotFoundException ex, HttpServletRequest req) {
         return build(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage(), req);
@@ -62,6 +67,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidPhoneException.class)
     public ResponseEntity<ApiError> invalidPhone(InvalidPhoneException ex, HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, "INVALID_PHONE", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(NotMobilePhoneException.class)
+    public ResponseEntity<ApiError> notMobilePhone(NotMobilePhoneException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "NOT_MOBILE_PHONE", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(SmsQuotaExceededException.class)
+    public ResponseEntity<ApiError> smsQuotaExceeded(SmsQuotaExceededException ex, HttpServletRequest req) {
+        return build(HttpStatus.TOO_MANY_REQUESTS, "SMS_QUOTA_EXCEEDED", ex.getMessage(), req);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

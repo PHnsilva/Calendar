@@ -5,6 +5,7 @@ import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.exception.NotFoundException;
+import br.com.calendarmate.exception.ReservedAdminPhoneException;
 import br.com.calendarmate.google.CalendarClient;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.PendingRecord;
@@ -13,6 +14,8 @@ import br.com.calendarmate.service.store.PendingStore;
 import br.com.calendarmate.service.store.VerificationStore;
 import br.com.calendarmate.util.PhoneNumberNormalizer;
 import com.google.api.services.calendar.model.Event;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -20,6 +23,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class VerificationService {
+    private static final Logger log = LoggerFactory.getLogger(VerificationService.class);
 
     public record StartResult(
             String verificationId,
@@ -77,8 +81,9 @@ public class VerificationService {
         }
 
         String phoneDigits = normalizePhone(phoneRaw);
-        if (adminAuthService.isAdminPhone(phoneDigits)) {
-            throw new ForbiddenException("Telefone reservado para acesso administrativo");
+        String maskedPhone = PhoneNumberNormalizer.maskBrazilianPhone(phoneDigits);
+        if (adminAuthService.isAdminPhoneBestEffort(phoneDigits)) {
+            throw new ReservedAdminPhoneException("Use o acesso administrativo para este telefone.");
         }
 
         Servico s = fromEvent(ev);
@@ -110,7 +115,14 @@ public class VerificationService {
                 props.getOtpResendAfter().toSeconds()
         );
 
-        sendOtp(phoneDigits, sess.code);
+        try {
+            sendOtp(phoneDigits, sess.code);
+        } catch (RuntimeException ex) {
+            store.delete(sess.verificationId);
+            pendingStore.deleteByEventId(eventId);
+            throw ex;
+        }
+        log.info("Verification flow started flow=client_booking phone={} verificationId={}", maskedPhone, sess.verificationId);
 
         return new StartResult(
                 sess.verificationId,
@@ -137,6 +149,7 @@ public class VerificationService {
         }
 
         sendOtp(sess.phoneDigits, sess.code);
+        log.info("Verification flow resend flow=client_booking phone={} verificationId={}", PhoneNumberNormalizer.maskBrazilianPhone(sess.phoneDigits), sess.verificationId);
 
         return new StartResult(
                 sess.verificationId,
@@ -189,15 +202,7 @@ public class VerificationService {
     }
 
     private static String normalizePhone(String phone) {
-        String normalized = PhoneNumberNormalizer.normalizeBrazilianPhone(phone);
-        if (!normalized.isBlank()) {
-            return normalized;
-        }
-        String d = (phone == null) ? "" : phone.replaceAll("\\D", "");
-        if (d.length() < 10 || d.length() > 11) {
-            throw new BadRequestException("Telefone inválido");
-        }
-        return d;
+        return PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phone);
     }
 
     private static Map<String, String> privateExt(Event e) {

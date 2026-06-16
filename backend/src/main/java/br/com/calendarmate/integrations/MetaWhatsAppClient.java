@@ -56,7 +56,7 @@ public class MetaWhatsAppClient implements WhatsAppClient {
             throw new BadRequestException("Codigo invalido");
         }
 
-        String normalizedPhone = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneDigits);
+        String normalizedPhone = PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phoneDigits);
         String providerPhone = toMetaPhone(normalizedPhone);
         String path = "/v21.0/" + phoneNumberId + "/messages";
         String url = "https://" + GRAPH_HOST + path;
@@ -167,6 +167,7 @@ public class MetaWhatsAppClient implements WhatsAppClient {
         String sanitized = body
                 .replaceAll("(?i)bearer\\s+[A-Za-z0-9._~+/=-]+", "Bearer [redacted]")
                 .replaceAll("EA[A-Za-z0-9._~+/=-]{20,}", "EA[redacted]")
+                .replaceAll("(?i)(\"text\"\\s*:\\s*\").*?(\")", "$1[redacted]$2")
                 .replaceAll("\\+?55\\d{10,11}", "55******0000");
         return sanitized.length() > MAX_LOG_BODY_CHARS
                 ? sanitized.substring(0, MAX_LOG_BODY_CHARS) + "...[truncated]"

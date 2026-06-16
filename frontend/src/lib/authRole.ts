@@ -11,8 +11,12 @@ export const adminPhoneConfigSource = configuredAdminPhones
   ? 'VITE_ADMIN_AUTH_PHONES/VITE_ADMIN_PHONES'
   : 'backend-admin-auth';
 
+export function digitsOnly(value: string): string {
+  return value.replace(/\D/g, '');
+}
+
 export function normalizePhone(value: string): string {
-  let digits = value.replace(/\D/g, '');
+  let digits = digitsOnly(value);
 
   while (digits.length > 11 && digits.startsWith('00')) {
     digits = digits.slice(2);
@@ -26,12 +30,25 @@ export function normalizePhone(value: string): string {
     digits = digits.slice(1);
   }
 
-  return digits.slice(0, 11);
+  return digits;
 }
 
 export function isValidPhone(value: string): boolean {
   const digits = normalizePhone(value);
   return digits.length === 10 || digits.length === 11;
+}
+
+export function isValidMobilePhone(value: string): boolean {
+  const digits = normalizePhone(value);
+  return digits.length === 11 && digits[2] === '9';
+}
+
+export function formatPhoneInput(value: string): string {
+  const digits = normalizePhone(value);
+  if (digits.length > 11) return value;
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
 const adminPhoneSet = new Set(

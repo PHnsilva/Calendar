@@ -4,6 +4,7 @@ import { confirmRecovery, resendRecovery } from "../api/confirm-recovery";
 import { startRecovery } from "../api/start-recovery";
 import type { RecoverConfirmResponse } from "../../../types/api";
 import { saveRecoveredBookings } from "../../../lib/storage";
+import { formatPhoneInput, isValidMobilePhone, normalizePhone } from "../../../lib/authRole";
 
 type Step = "start" | "confirm" | "success";
 
@@ -16,9 +17,12 @@ export function useRecoveryFlow() {
   const [recovered, setRecovered] = useState<RecoverConfirmResponse | null>(null);
   const [step, setStep] = useState<Step>("start");
 
+  const normalizedPhone = normalizePhone(phone);
+
   const startMutation = useMutation({
-    mutationFn: () => startRecovery(phone),
+    mutationFn: () => startRecovery(normalizedPhone),
     onSuccess: (response) => {
+      setPhone(formatPhoneInput(normalizedPhone));
       setVerificationId(response.verificationId);
       setExpiresIn(response.expiresInSeconds);
       setResendAfter(response.resendAfterSeconds);
@@ -56,7 +60,7 @@ export function useRecoveryFlow() {
     return () => window.clearTimeout(timer);
   }, [step, expiresIn, resendAfter]);
 
-  const canStart = phone.replace(/\D/g, "").length >= 10 && !startMutation.isPending;
+  const canStart = isValidMobilePhone(phone) && !startMutation.isPending;
   const canConfirm = code.trim().length === 3 && expiresIn > 0 && !confirmMutation.isPending;
   const canResend = resendAfter <= 0 && expiresIn > 0 && !resendMutation.isPending;
 
@@ -69,7 +73,7 @@ export function useRecoveryFlow() {
   return {
     step,
     phone,
-    setPhone,
+    setPhone: (value: string) => setPhone(formatPhoneInput(value)),
     code,
     setCode,
     recovered,

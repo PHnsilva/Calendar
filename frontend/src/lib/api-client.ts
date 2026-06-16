@@ -3,12 +3,17 @@ import { resolveApiBaseUrl } from "./env";
 export class ApiError extends Error {
   status: number;
   payload: unknown;
+  code: string;
 
   constructor(message: string, status: number, payload: unknown) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.payload = payload;
+    this.code =
+      typeof payload === "object" && payload !== null && "error" in payload
+        ? String((payload as { error?: unknown }).error ?? "")
+        : "";
   }
 }
 

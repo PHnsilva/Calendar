@@ -14,7 +14,7 @@ export function RecoveryStartModal({ phone, setPhone, onStart, disabled, isLoadi
       <p>Informe o telefone usado no agendamento. Vamos enviar um código para listar seus atendimentos e restaurar o acesso neste navegador.</p>
       <label>
         <span>Telefone</span>
-        <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(31) 99999-9999" />
+        <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(31) 99999-9999" inputMode="tel" />
       </label>
       {error ? <p className="recovery-card__error">{error.message}</p> : null}
       <button type="button" className="primary-action" onClick={onStart} disabled={disabled}>

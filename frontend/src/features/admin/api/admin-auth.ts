@@ -1,4 +1,5 @@
 import { apiGet, apiPost } from "../../../lib/api-client";
+import { normalizePhone } from "../../../lib/authRole";
 import { getStoredAdminToken, saveAdminSession } from "../../../lib/storage";
 import type {
   AdminAuthConfirmResponse,
@@ -8,7 +9,7 @@ import type {
 } from "../../../types/api";
 
 export function startAdminLogin(phone: string) {
-  return apiPost<AdminAuthStartResponse>("/api/admin/auth/start", { phone });
+  return apiPost<AdminAuthStartResponse>("/api/admin/auth/start", { phone: normalizePhone(phone) });
 }
 
 export function resendAdminLogin(verificationId: string) {

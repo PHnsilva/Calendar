@@ -171,6 +171,7 @@ type BookingItem = {
 
 type ModalContext = {
   booking?: BookingItem;
+  createDate?: string;
 };
 
 type BudgetDraftItem = {
@@ -383,7 +384,7 @@ function getMonthGrid(monthStart: string) {
   const reference = toLocalDate(monthStart);
   const first = new Date(reference.getFullYear(), reference.getMonth(), 1);
   const gridStart = new Date(reference.getFullYear(), reference.getMonth(), 1 - first.getDay());
-  return Array.from({ length: 42 }, (_, index) => {
+  return Array.from({ length: 35 }, (_, index) => {
     const cursor = new Date(gridStart);
     cursor.setDate(gridStart.getDate() + index);
     const iso = toIsoDate(cursor);
@@ -682,6 +683,10 @@ function Icon({ name }: { name: string }) {
     plus: <svg {...common}><circle cx="32" cy="32" r="27" fill="currentColor"/><path d="M32 19v26M19 32h26" stroke="#fff" strokeWidth="5" strokeLinecap="round"/></svg>,
     play: <svg {...common}><circle cx="32" cy="32" r="27" fill="#ff1d16"/><path d="M27 21 46 32 27 43V21Z" fill="#fff"/></svg>,
     'arrow-right': <svg {...common}><path d="M13 32h36" {...line}/><path d="m37 20 12 12-12 12" {...line}/></svg>,
+    'send-outline': <svg {...common}><path d="M9 31.5 55 10 43 54 31.5 41.5 20 47 23.5 35 9 31.5Z" {...line}/><path d="M24 35 55 10M31.5 41.5 40 31" {...line}/></svg>,
+    'info-circle': <svg {...common}><circle cx="32" cy="32" r="24" {...line}/><path d="M32 29v15" {...line}/><path d="M32 20h.01" {...line}/></svg>,
+    'user-blue-solid': <svg {...common}><circle cx="32" cy="21" r="9" fill="#07135d"/><path d="M13 56c3.4-12 9.7-18 19-18s15.6 6 19 18" fill="#07135d"/></svg>,
+    'phone-blue-outline': <svg {...common}><path d="M22 13 29 25l-5 5c4 8 10 14 18 18l5-5 12 7c1.3.8 1.8 2.3 1.3 3.8-1.4 4.4-5.1 6.7-9.7 6.7C27.2 60.5 3.5 36.8 3.5 13.4c0-4.6 2.3-8.3 6.7-9.7 1.5-.5 3 .1 3.8 1.3l8 8Z" stroke="#07135d" strokeWidth="4.3" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     send: <svg {...common}><defs><linearGradient id={`${uid}-send`} x1="8" y1="12" x2="56" y2="52"><stop stopColor="#ff8a33"/><stop offset="1" stopColor="#ff4b0b"/></linearGradient></defs><path d="M8 31.5 55 10 43 54 31.5 41.5 20 47 23.5 35 8 31.5Z" fill={`url(#${uid}-send)`}/><path d="M24 35 55 10M31.5 41.5 40 31" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" opacity=".96"/></svg>,
     shield: <svg {...common}><path d="M32 8 53 16.5v14.8c0 13.1-8.6 21.2-21 25.1-12.4-3.9-21-12-21-25.1V16.5L32 8Z" {...line}/><path d="m22 32 7 7 15-17" {...line}/></svg>,
     'shield-check': <svg {...common}>
@@ -850,6 +855,10 @@ function LandingFooter({ admin = false, setModal }: { admin?: boolean; setModal?
 
   return (
     <footer className="wf-footer wf-footer--client-final">
+      <div className="wf-footer-brand">
+        <LogoMark compact />
+      </div>
+      <p className="wf-footer-platform-copy">A plataforma completa para agendar seus atendimentos e pequenos reparos com praticidade e segurança.</p>
       <div className="wf-footer-privacy-card">
         <Icon name="footer-security" />
         <strong>Seus dados protegidos<br />com total privacidade</strong>
@@ -904,16 +913,15 @@ function useClientProfileSnapshot(): ClientProfileSnapshot {
 function ClientLandingModalButtons({ profile, setModal }: { profile: ClientProfileSnapshot; setModal: (modal: ModalKind) => void }) {
   return (
     <div className="wf-actions-grid wf-actions-grid--client">
-      <ActionCard icon="calendar-create" title="Criar agendamento" text="Escolha o serviço, data e horário ideal para você." color="orange" onClick={() => setModal('create-client')} />
-      <ActionCard icon="calendar-clock" title="Acompanhar agendamento" text="Veja os detalhes e o status do seu agendamento." color="blue" to="/meus-agendamentos" />
+      <ActionCard icon="calendar-create" title="Criar agendamento" color="orange" onClick={() => setModal('create-client')} />
+      <ActionCard icon="calendar-clock" title="Acompanhar agendamento" color="blue" to="/meus-agendamentos" />
       <ActionCard
         icon={profile.verified ? 'user' : 'mobile-phone'}
         title={profile.verified ? 'Perfil' : 'Confirmar telefone'}
-        text={profile.verified ? (profile.name || formatPhoneForDisplay(profile.phone || '')) : 'Confirme seu número no dia do atendimento.'}
         color="green"
         onClick={() => setModal(profile.verified ? 'client-profile' : 'confirm-phone')}
       />
-      <ActionCard icon="chat-bubbles" title="Fale conosco" text="Dúvidas ou suporte? Estamos aqui para ajudar." color="purple" onClick={() => setModal('contact')} />
+      <ActionCard icon="chat-bubbles" title="Fale conosco" color="purple" onClick={() => setModal('contact')} />
     </div>
   );
 }
@@ -1014,6 +1022,7 @@ function ServiceShowcaseCarousel() {
     </article>
   );
 }
+
 export function ClientLanding() {
   const [modal, setModal] = useState<ModalKind>(null);
   const profile = useClientProfileSnapshot();
@@ -1065,7 +1074,7 @@ export function ClientLanding() {
   );
 }
 
-function CalendarBoard({ bookings = [], admin = false }: { bookings?: BookingItem[]; admin?: boolean }) {
+function CalendarBoard({ bookings = [], admin = false, onCreate }: { bookings?: BookingItem[]; admin?: boolean; onCreate?: (date?: string) => void }) {
   const [monthStart, setMonthStart] = useState(startOfMonth());
   const { data: bootstrap } = usePublicBootstrap(true);
   const days = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
@@ -1081,6 +1090,21 @@ function CalendarBoard({ bookings = [], admin = false }: { bookings?: BookingIte
       : monthStart;
   const grid = useMemo(() => getMonthGrid(displayMonthStart), [displayMonthStart]);
   const maxAllowedDate = endOfMonth(nextAllowedMonth);
+  const calendarCity = getDefaultCity(bootstrap);
+  const calendarSlotMinutes = getSlotMinutes(bootstrap);
+  const calendarDurationMinutes = getBookingDurationMinutesByCity(bootstrap, calendarCity);
+  const monthAvailability = useAvailableMonthDates(
+    displayMonthStart,
+    true,
+    calendarCity,
+    calendarSlotMinutes,
+    calendarDurationMinutes,
+    maxFutureMonthsAhead,
+  );
+  const availableCalendarDates = useMemo(
+    () => new Set(monthAvailability.availableDates),
+    [monthAvailability.availableDates],
+  );
   const unavailableDates = useMemo(
     () => new Set(build4x4UnavailableDates(displayMonthStart, bootstrap?.schedule?.cycleStart)),
     [bootstrap?.schedule?.cycleStart, displayMonthStart],
@@ -1155,18 +1179,38 @@ function CalendarBoard({ bookings = [], admin = false }: { bookings?: BookingIte
         ))}
         {grid.map((item) => {
           const dayBookings = bookingsByDate.get(item.iso) ?? [];
-          const isUnavailable = unavailableDates.has(item.iso);
           const isPast = item.iso < today;
           const isOutsideWindow = item.iso > maxAllowedDate;
+          const lacksAvailableSlots = item.isCurrentMonth
+            && !isPast
+            && !isOutsideWindow
+            && !monthAvailability.isLoading
+            && availableCalendarDates.size > 0
+            && !availableCalendarDates.has(item.iso);
+          const isUnavailable = unavailableDates.has(item.iso) || lacksAvailableSlots;
+          const canCreateOnDate = Boolean(onCreate) && item.isCurrentMonth && !isPast && !isOutsideWindow && !isUnavailable;
           return (
-            <div key={item.iso} className={cx('wf-calendar-day', item.iso === today && !isUnavailable && 'is-selected', (!item.isCurrentMonth || isPast || isOutsideWindow) && 'is-muted', isUnavailable && 'is-unavailable', item.isWeekend && 'is-weekend')}>
+            <div
+              key={item.iso}
+              className={cx('wf-calendar-day', item.iso === today && !isUnavailable && 'is-selected', (!item.isCurrentMonth || isPast || isOutsideWindow) && 'is-muted', isUnavailable && 'is-unavailable', canCreateOnDate && 'is-clickable', dayBookings.length > 0 && 'has-bookings')}
+              role={canCreateOnDate ? 'button' : undefined}
+              tabIndex={canCreateOnDate ? 0 : undefined}
+              aria-label={canCreateOnDate ? `Criar agendamento em ${item.day}` : undefined}
+              onClick={canCreateOnDate ? () => onCreate?.(item.iso) : undefined}
+              onKeyDown={canCreateOnDate ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onCreate?.(item.iso);
+                }
+              } : undefined}
+            >
               <b>{item.day}</b>
-              {dayBookings.length ? <span className="wf-dots">{dayBookings.slice(0, 3).map((booking) => <i key={booking.id} />)}</span> : null}
+              {dayBookings.length ? <span className="wf-dots">{dayBookings.slice(0, 4).map((booking) => <i key={booking.id} />)}</span> : null}
             </div>
           );
         })}
       </div>
-      {admin ? null : <small className="wf-calendar-note">Status considerados como Confirmado por padrão.</small>}
+      
     </section>
   );
 }
@@ -1233,7 +1277,7 @@ export function ClientBookings() {
   const profile = useClientProfileSnapshot();
   const { bookings, isLoading, isError, hasTokens } = useClientBookingsData();
   const openDetails = (booking: BookingItem) => { setContext({ booking }); setModal('client-details'); };
-  const openCreate = () => { setContext({}); setModal('create-client'); };
+  const openCreate = (date?: string) => { setContext(date ? { createDate: date } : {}); setModal('create-client'); };
 
   return (
     <>
@@ -1241,7 +1285,7 @@ export function ClientBookings() {
         pageClassName="wf-page wf-page--list"
         clientNavbar={{ page: 'my', onCreate: openCreate, onNotifications: () => setModal('notifications'), onConfirmPhone: () => setModal('confirm-phone'), onProfile: () => setModal('client-profile') }}
         mobileFilters={<FiltersBar className="wf-filters-bar--mobile" />}
-        calendar={<CalendarBoard bookings={bookings} />}
+        calendar={<CalendarBoard bookings={bookings} onCreate={openCreate} />}
       >
         <div className="wf-booking-tools">
           <button type="button" onClick={() => setModal('notifications')}><Icon name="bell-purple" /> Notificações</button>
@@ -1426,7 +1470,7 @@ export function AdminDashboard() {
   const [modal, setModal] = useState<ModalKind>(null);
   const [context, setContext] = useState<ModalContext>({});
   const [importedFinanceDashboard, setImportedFinanceDashboard] = useState<FinancialDashboardDTO | null>(null);
-  const openCreate = () => { setContext({}); setModal('create-client'); };
+  const openCreate = (date?: string) => { setContext(date ? { createDate: date } : {}); setModal('create-client'); };
   const session = getStoredAdminSession();
   const owner = session?.role === 'OWNER';
   const effectiveView = !owner && (view === 'extrato' || view === 'bloqueios') ? 'agendamentos' : view;
@@ -1477,12 +1521,16 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
   };
   const openAssign = (booking: BookingItem) => { setContext({ booking }); setModal('assign-provider'); };
   const openEdit = (booking: BookingItem) => { setContext({ booking }); setModal('edit-admin'); };
+  const openCreate = (date?: string) => {
+    setContext(date ? { createDate: date } : {});
+    setModal('create-client');
+  };
 
   return (
     <AppointmentsPageShell
       admin
       mobileFilters={<FiltersBar admin canAssign={owner} className="wf-filters-bar--mobile" />}
-      calendar={<CalendarBoard bookings={bookings} admin />}
+      calendar={<CalendarBoard bookings={bookings} admin onCreate={openCreate} />}
     >
       <FiltersBar admin canAssign={owner} className="wf-filters-bar--desktop" />
       <div className="wf-booking-stack wf-booking-stack--admin">
@@ -1729,7 +1777,7 @@ function CalendarMateModal({
 
   return (
     <ModalShell open={Boolean(modal)} dataModal={modal} className={modalClass} onClose={closeModal} closeIcon={<Icon name="close" />}>
-        {modal === 'create-client' ? <CreateBookingModal onClose={closeModal} /> : null}
+        {modal === 'create-client' ? <CreateBookingModal initialDate={context.createDate} onClose={closeModal} /> : null}
         {modal === 'confirm-phone' ? <ConfirmPhoneModal onClose={closeModal} /> : null}
         {modal === 'client-profile' ? <ClientProfileModal onClose={closeModal} /> : null}
         {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={closeModal} /> : null}
@@ -1819,16 +1867,16 @@ function CitySelectField({
   onSelect: (city: string) => void;
 }) {
   const selectedStyle = resolveSupportedCityStyle(selectedCity, 0);
-  const closeCityPicker = useModalBrowserBack(open, 'city-picker', () => onOpenChange(false));
+  const closeCityPicker = useCallback(() => onOpenChange(false), [onOpenChange]);
   return (
-    <div className="wf-modal-field wf-city-select-field">
+    <div className="wf-modal-field wf-city-select-field wf-create-city-field">
       <span className="wf-field-label">Cidade<em>*</em></span>
-      <button type="button" className={cx('wf-city-select-launcher', `wf-city-select-launcher--${selectedStyle.color}`)} onClick={() => onOpenChange(true)}>
+      <button type="button" className={cx('wf-city-select-launcher', `wf-city-select-launcher--${selectedStyle.color}`)} onMouseDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onOpenChange(true); }}>
         <Icon name={cityIconName(selectedCity)} />
         <span>{selectedCity}</span>
       </button>
       {open ? (
-        <div className="wf-city-submodal-backdrop" onMouseDown={closeCityPicker}>
+        <div className="wf-city-submodal-backdrop" onMouseDown={(event) => { event.stopPropagation(); closeCityPicker(); }}>
           <div className="wf-city-submodal" role="dialog" aria-modal="true" aria-labelledby="wf-city-submodal-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="wf-city-submodal__header">
               <strong id="wf-city-submodal-title">Selecione sua cidade</strong>
@@ -1842,7 +1890,9 @@ function CitySelectField({
                     key={city}
                     type="button"
                     className={cx('wf-city-submodal__button', `wf-city-submodal__button--${style.color}`, selectedCity === city && 'is-active')}
-                    onClick={() => {
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
                       onSelect(city);
                       closeCityPicker();
                     }}
@@ -1875,7 +1925,7 @@ type CreateBookingField =
 
 type CreateBookingErrors = Partial<Record<CreateBookingField, string>>;
 
-function CreateBookingModal({ onClose }: { onClose: () => void }) {
+function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: string; onClose: () => void }) {
   const queryClient = useQueryClient();
   const { data: bootstrap } = usePublicBootstrap(true);
   const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
@@ -1893,7 +1943,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
   const [complement, setComplement] = useState('');
   const [referencePoint, setReferencePoint] = useState('');
   const [notes, setNotes] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedEndTime, setSelectedEndTime] = useState('');
   const [monthStart] = useState(() => startOfMonth());
@@ -2066,9 +2116,9 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
         <button type="button" onClick={handleUseProfileData} disabled={!profileHasReusableData}>Usar dados do perfil</button>
       </div>
       <div className="wf-create-booking-form wf-create-booking-form--wireframe">
-        <ModalField className="wf-span-2" label="Nome completo" icon="user" placeholder="Ex.: Pedro Silva" required value={fullName} onChange={setFullName} error={fieldErrors.fullName} />
-        <ModalField className="wf-span-2" label="Telefone" icon="phone" placeholder="(31) 99999-9999 ou 31 3333-4444" required value={phone} inputMode="tel" onChange={(value) => setPhone(formatPhoneInput(value))} error={fieldErrors.phone} />
-        <ModalField className="wf-span-2" label="E-mail" icon="mail" placeholder="voce@email.com" required value={email} type="email" onChange={setEmail} error={fieldErrors.email} />
+        <ModalField className="wf-create-field wf-create-field--name" label="Nome completo" icon="user" placeholder="Digite seu nome completo" required value={fullName} onChange={setFullName} error={fieldErrors.fullName} />
+        <ModalField className="wf-create-field wf-create-field--phone" label="Telefone" icon="phone" placeholder="(11) 99999-9999" required value={phone} inputMode="tel" onChange={(value) => setPhone(formatPhoneInput(value))} error={fieldErrors.phone} />
+        <ModalField className="wf-create-field wf-create-field--email" label="E-mail" icon="mail" placeholder="seu@email.com" required value={email} type="email" onChange={setEmail} error={fieldErrors.email} />
         <CitySelectField selectedCity={selectedCity} cities={allowedCities} open={cityPickerOpen} onOpenChange={setCityPickerOpen} onSelect={handleCityChange} />
         {fieldErrors.city ? <small className="wf-field-error wf-span-2">{fieldErrors.city}</small> : null}
         <div className={cx('wf-create-address-row wf-span-2', needsManualHouseNumber && 'wf-create-address-row--with-number')}>
@@ -2077,6 +2127,7 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
             <span className="wf-input-shell wf-input-shell--address">
               <Icon name="map" />
               <AddressAutocompleteField value={addressInput} selectedCity={selectedCity} selectedState={defaultState} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
+              <button type="button" className="wf-address-search-button" onMouseDown={(event) => event.preventDefault()}>Buscar endereço</button>
             </span>
             {fieldErrors.address ? <small className="wf-field-error">{fieldErrors.address}</small> : null}
           </label>
@@ -2084,12 +2135,12 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
             <ModalField className="wf-create-number-field" label="Número" icon="home" placeholder="123 ou S/N" required value={houseNumber} inputMode="text" onChange={setHouseNumber} error={fieldErrors.number} />
           ) : null}
         </div>
-        <ModalField className="wf-span-2" label="Complemento (opcional)" icon="edit" placeholder="Apto, bloco ou fundos" value={complement} onChange={setComplement} />
+        <ModalField className="wf-span-2 wf-create-field--complement" label="Complemento (opcional)" icon="edit" placeholder="Ex.: Apto 101, Bloco B, Fundos" value={complement} onChange={setComplement} />
         <div className="wf-span-2 wf-choice-block">
           <strong>Escolha a data<em>*</em></strong>
           {monthAvailability.isLoading ? <small className="wf-choice-helper">Carregando dias disponíveis...</small> : null}
           {!monthAvailability.isLoading && availableDateOptions.length === 0 ? <small className="wf-choice-helper">Nenhum dia com horário disponível neste mês.</small> : null}
-          <div className="wf-date-options wf-date-options--scroll">{availableDateOptions.map((date) => <button className={activeSelectedDate === date.value ? 'is-active' : ''} type="button" key={date.value} onClick={() => { setSelectedDate(date.value); setSelectedTime(''); setSelectedEndTime(''); }}>{date.label}</button>)}</div>
+          <div className="wf-date-options wf-date-options--scroll">{availableDateOptions.map((date) => <button className={activeSelectedDate === date.value ? 'is-active' : ''} type="button" key={date.value} onClick={() => { setSelectedDate(date.value); setSelectedTime(''); setSelectedEndTime(''); }}>{date.label}</button>)}<button type="button" className="wf-date-next-button" aria-label="Mais datas"><Icon name="arrow-right" /></button></div>
           {fieldErrors.date ? <small className="wf-field-error">{fieldErrors.date}</small> : null}
         </div>
         <div className="wf-span-2 wf-choice-block">
@@ -2100,9 +2151,9 @@ function CreateBookingModal({ onClose }: { onClose: () => void }) {
           <div className="wf-time-options wf-time-options--scroll">{availableSlots.map((slot) => <button className={selectedTime === slot.startTime ? 'is-active' : ''} type="button" key={`${slot.date}-${slot.startTime}`} onClick={() => { setSelectedTime(slot.startTime); setSelectedEndTime(slot.endTime); }}>{slot.startTime}</button>)}</div>
           {fieldErrors.time ? <small className="wf-field-error">{fieldErrors.time}</small> : null}
         </div>
-        <ModalField className="wf-span-2" label="Ponto de referência (opcional)" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
-        <label className="wf-modal-field wf-span-2">
-          <span className="wf-field-label">Observação<em>*</em></span>
+        <ModalField className="wf-create-field wf-create-field--reference" label="Ponto de referência (opcional)" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
+        <label className="wf-modal-field wf-create-field wf-create-field--notes">
+          <span className="wf-field-label">Observações<em>*</em></span>
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
@@ -2296,16 +2347,32 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
       </header>
       <div className="wf-confirm-page__hero">
         <Icon name="confirm-phone-security" />
+        <div className="wf-confirm-page__benefits" aria-hidden="true">
+          <article className="wf-confirm-page__benefit wf-confirm-page__benefit--safe">
+            <span><Icon name="shield" /></span>
+            <div>
+              <strong>Seguro e confiável</strong>
+              <small>Seus dados ficam protegidos do início ao fim.</small>
+            </div>
+          </article>
+          <article className="wf-confirm-page__benefit wf-confirm-page__benefit--sms">
+            <span><Icon name="chat" /></span>
+            <div>
+              <strong>Verificação por SMS</strong>
+              <small>Enviaremos um código para confirmar seu número.</small>
+            </div>
+          </article>
+        </div>
       </div>
       <section className="wf-confirm-page__card">
-        <div className="wf-confirm-page__badge"><Icon name="shield-check" /></div>
+        <div className="wf-confirm-page__badge"><Icon name="lock" /></div>
         <div className="wf-confirm-page__header">
-          <h1>Confirme seu número</h1>
-          <p>Precisamos confirmar seu telefone para garantir a segurança da sua conta e liberar seus agendamentos.</p>
+          <h1>Confirmar número</h1>
+          <p>Confirme seu número de telefone para validar seu perfil e permitir agendamentos.</p>
         </div>
         <div className="wf-confirm-page__form">
-          <ModalField className="wf-full-label" label="Nome completo" icon="user" value={name} onChange={setName} placeholder="Digite seu nome completo" />
-          <ModalField className="wf-full-label" label="Telefone" icon="phone" value={phone} onChange={(value) => { setPhone(value); setFlow(null); setCode(''); }} placeholder="(11) 99999-9999" />
+          <ModalField className="wf-full-label" label="Nome completo" icon="user-blue-solid" value={name} onChange={setName} placeholder="Digite seu nome completo" />
+          <ModalField className="wf-full-label" label="Telefone" icon="phone-blue-outline" value={phone} onChange={(value) => { setPhone(value); setFlow(null); setCode(''); }} placeholder="(11) 99999-9999" inputMode="tel" />
           <div className="wf-confirm-code-panel">
             <strong className="wf-confirm-code-panel__label">Código de verificação</strong>
             <div className="wf-confirm-code-panel__content">
@@ -2324,7 +2391,7 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
                 ))}
               </div>
               <button type="button" className="wf-confirm-send-code" onClick={flow ? handleResendCode : handleSendCode} disabled={flow ? loading : !canSendCode}>
-                <Icon name="send" />
+                <Icon name="send-outline" />
                 <span>
                   <strong>{flow ? 'Reenviar código' : 'Enviar código'}</strong>
                   <small>Enviaremos um código por SMS para o número informado.</small>
@@ -2332,13 +2399,14 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
               </button>
             </div>
           </div>
+          <p className="wf-confirm-code-note"><Icon name="info-circle" /> Enviaremos um código por SMS para o número informado.</p>
           {flow ? <p className={cx('wf-auth-role-note', flow.role === 'admin' && 'wf-auth-role-note--admin')}>{flow.role === 'admin' ? 'Acesso administrativo detectado.' : 'Acesso de cliente detectado.'}</p> : null}
           {message ? <p className="wf-auth-feedback wf-auth-feedback--success">{message}</p> : null}
           {error ? <p className="wf-auth-feedback wf-auth-feedback--error">{error}</p> : null}
           <div className="wf-confirm-page__actions">
             <button type="button" className="wf-confirm-page__primary" onClick={handleConfirm} disabled={!canConfirm}>
-              <Icon name="lock-green" />
-              <span>{loading ? 'Validando...' : flow?.role === 'admin' ? 'Entrar como admin' : 'Confirmar'}</span>
+              <Icon name="lock" />
+              <span>{loading ? 'Validando...' : flow?.role === 'admin' ? 'Entrar como admin' : 'Confirmar número'}</span>
             </button>
             <button type="button" className="wf-confirm-page__secondary" onClick={onClose}>Cancelar</button>
           </div>
@@ -2477,7 +2545,7 @@ function ContactModal({ onClose }: { onClose: () => void }) {
         <ContactOption icon="contact-phone" title="Telefone" text={`Ligue para ${supportPhoneDisplay}.`} color="blue" onClick={openSupportPhone} />
         <ContactOption icon="contact-email" title="E-mail" text={supportEmail} color="orange" onClick={openSupportEmail} />
       </div>
-      <p className="wf-modal-footnote"><Icon name="lock" /> Atendimento rápido, seguro e confiável.</p>
+      
     </>
   );
 }

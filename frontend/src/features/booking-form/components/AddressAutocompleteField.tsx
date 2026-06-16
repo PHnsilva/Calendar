@@ -21,7 +21,7 @@ export default function AddressAutocompleteField({
   const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
   const blurTimeoutRef = useRef<number | null>(null);
-  const debugEnabled = Boolean(import.meta.env.DEV && import.meta.env.MODE !== "test");
+  const debugEnabled = false;
   const { suggestions, isLoading, error, debug } = useAddressSuggestions(value, selectedCity, selectedState, Boolean(selectedCity), isFocused);
 
   const keepSearchOpen = () => {
@@ -145,11 +145,6 @@ export default function AddressAutocompleteField({
       />
 
       {shouldShowPanel ? createPortal(panel, document.body) : null}
-      {debugEnabled ? (
-        <small className="booking-address-autocomplete__debug">
-          Geoapify debug: raw={debug?.rawResultsCount ?? 0}, normalized={debug?.normalizedSuggestionCount ?? 0}, filtered={debug?.filteredSuggestionCount ?? 0}, state={suggestions.length}, open={shouldShowPanel ? "true" : "false"}
-        </small>
-      ) : null}
     </div>
   );
 }

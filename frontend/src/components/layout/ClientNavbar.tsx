@@ -91,7 +91,7 @@ function ClientProfileMenu({
   triggerVariant = 'blue',
 }: ClientProfileMenuProps) {
   const navItem: ProfileMenuItem = page === 'my'
-    ? { action: 'home', icon: 'home', label: 'Início', to: '/' }
+    ? { action: 'home', icon: 'home', label: 'Página inicial', to: '/' }
     : { action: 'bookings', icon: 'calendar', label: 'Agendamentos', to: CLIENT_BOOKINGS_PATH };
 
   const menuItems: ProfileMenuItem[] = [
@@ -162,7 +162,7 @@ function ClientProfileMenu({
 export default function ClientNavbar({ onConfirmPhone, onCreate, onNotifications, onProfile, page = 'home' }: ClientNavbarProps) {
   const isHome = page === 'home';
   const snapshot = useClientNavbarSnapshot();
-  const profileLabel = snapshot.isVerified ? 'Perfil' : 'Confirmar telefone';
+  const profileLabel = snapshot.isVerified ? 'Perfil' : (isHome ? 'Olá! Visitante' : 'Cliente');
   const handleProfileAction = () => {
     if (snapshot.isVerified) {
       onProfile?.();
@@ -175,13 +175,13 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onNotifications
     <>
       <NavbarButton to={CLIENT_BOOKINGS_PATH}><NavbarIcon name="calendar" /> <span>Agendamentos</span></NavbarButton>
       <ClientProfileMenu page={page} profileLabel={profileLabel} onProfileAction={handleProfileAction} onCreate={onCreate} onNotifications={onNotifications} />
-      <NavbarButton variant="orange" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
+      <NavbarButton variant="orange" onClick={onCreate}><NavbarIcon name="plus" /> <span>Novo agendamento</span></NavbarButton>
     </>
   ) : (
     <>
-      <NavbarButton to="/"><NavbarIcon name="home" /> <span>Início</span></NavbarButton>
+      <NavbarButton to="/"><NavbarIcon name="home" /> <span>Página inicial</span></NavbarButton>
       <ClientProfileMenu page={page} profileLabel={profileLabel} onProfileAction={handleProfileAction} onCreate={onCreate} onNotifications={onNotifications} />
-      <NavbarButton variant="orange" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
+      <NavbarButton variant="orange" onClick={onCreate}><NavbarIcon name="plus" /> <span>Novo agendamento</span></NavbarButton>
     </>
   );
 
@@ -201,7 +201,7 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onNotifications
       to="/"
       className="wf-client-mobile-nav"
       ariaLabel="Ir para início"
-      title="Início"
+      title="Página inicial"
     >
       <NavbarIcon name="home" />
     </NavbarButton>

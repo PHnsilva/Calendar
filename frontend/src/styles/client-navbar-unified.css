@@ -1,0 +1,395 @@
+/*
+  Final client navbar contract.
+  ClientNavbar/BaseNavbar is reused on LandingPage and Agendamentos; this file is imported last
+  so page-specific landing/list overrides cannot resize the same component differently.
+*/
+
+@media (min-width: 901px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    --wf-client-nav-logo-col: minmax(280px, 1fr) !important;
+    --wf-client-nav-actions-width: clamp(440px, 37vw, 600px) !important;
+    --wf-client-nav-gap: clamp(16px, 2vw, 34px) !important;
+    width: min(1540px, calc(100vw - clamp(40px, 5vw, 96px))) !important;
+    max-width: 1540px !important;
+    min-height: clamp(78px, 5.8vw, 112px) !important;
+    height: auto !important;
+    margin-inline: auto !important;
+    padding: clamp(6px, .8vw, 14px) 0 !important;
+    display: grid !important;
+    grid-template-columns: var(--wf-client-nav-logo-col) var(--wf-client-nav-actions-width) !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    gap: var(--wf-client-nav-gap) !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-navbar__logo,
+  html body .wf-navbar.wf-navbar--client .wf-logo,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__logo,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-logo,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-logo,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-logo {
+    justify-self: start !important;
+    align-self: center !important;
+    width: min(100%, clamp(260px, 28vw, 460px)) !important;
+    max-width: min(100%, clamp(260px, 28vw, 460px)) !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo img,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    display: block !important;
+    width: auto !important;
+    height: clamp(76px, 5.9vw, 112px) !important;
+    max-width: min(100%, clamp(260px, 28vw, 460px)) !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+    margin: 0 !important;
+    transform: none !important;
+    flex: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-navbar__nav,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
+  html body .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__nav,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    display: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page--list .wf-navbar.wf-navbar--client .wf-header-actions {
+    width: var(--wf-client-nav-actions-width) !important;
+    max-width: var(--wf-client-nav-actions-width) !important;
+    min-width: 0 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    gap: clamp(7px, .75vw, 12px) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  html body .wf-navbar.wf-navbar--client .wf-profile-menu-wrap,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-profile-menu-wrap,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-header-actions > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: clamp(38px, 2.4vw, 46px) !important;
+    height: clamp(38px, 2.4vw, 46px) !important;
+    padding: 0 clamp(8px, .75vw, 13px) !important;
+    border-radius: clamp(9px, .75vw, 12px) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: clamp(5px, .45vw, 7px) !important;
+    font-size: clamp(10.5px, .68vw, 13px) !important;
+    font-weight: 850 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    box-shadow: 0 7px 16px rgba(3, 34, 150, .13) !important;
+    border: 1px solid rgba(255, 255, 255, .24) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn span:not(.wf-icon),
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn span:not(.wf-icon),
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn span:not(.wf-icon),
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn span:not(.wf-icon) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon {
+    width: clamp(14px, .9vw, 18px) !important;
+    min-width: clamp(14px, .9vw, 18px) !important;
+    height: clamp(14px, .9vw, 18px) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--orange .wf-icon--plus,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn--orange .wf-icon--plus {
+    width: clamp(16px, 1vw, 20px) !important;
+    min-width: clamp(16px, 1vw, 20px) !important;
+    height: clamp(16px, 1vw, 20px) !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1120px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    --wf-client-nav-actions-width: clamp(360px, 43vw, 470px) !important;
+    width: calc(100vw - 28px) !important;
+    grid-template-columns: minmax(230px, 1fr) var(--wf-client-nav-actions-width) !important;
+    gap: 10px !important;
+    min-height: clamp(72px, 7.4vw, 92px) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo img,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: clamp(68px, 7vw, 88px) !important;
+    max-width: min(100%, 300px) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn {
+    min-height: 36px !important;
+    height: 36px !important;
+    padding-inline: 6px !important;
+    font-size: clamp(9.5px, .95vw, 11.5px) !important;
+    gap: 4px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon {
+    width: 14px !important;
+    min-width: 14px !important;
+    height: 14px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    --wf-client-nav-pad-x: clamp(8px, 3vw, 14px) !important;
+    --wf-client-nav-gap: clamp(4px, 1.5vw, 8px) !important;
+    --wf-client-nav-btn: clamp(36px, 10.2vw, 44px) !important;
+    --wf-client-nav-actions: calc((var(--wf-client-nav-btn) * 3) + (var(--wf-client-nav-gap) * 2)) !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: clamp(56px, 15vw, 74px) !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    padding: clamp(6px, 2vw, 9px) var(--wf-client-nav-pad-x) !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, calc(100vw - (var(--wf-client-nav-pad-x) * 2) - var(--wf-client-nav-actions) - var(--wf-client-nav-gap))) var(--wf-client-nav-actions) !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    column-gap: var(--wf-client-nav-gap) !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-navbar__nav,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__nav,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-header-actions {
+    display: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-navbar__logo,
+  html body .wf-navbar.wf-navbar--client .wf-logo,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__logo,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-logo,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-logo,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-logo {
+    justify-self: start !important;
+    align-self: center !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo img,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    display: block !important;
+    width: auto !important;
+    height: clamp(52px, 15.2vw, 70px) !important;
+    max-width: min(100%, clamp(132px, 45vw, 220px)) !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    justify-self: end !important;
+    align-self: center !important;
+    width: var(--wf-client-nav-actions) !important;
+    min-width: var(--wf-client-nav-actions) !important;
+    max-width: var(--wf-client-nav-actions) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, var(--wf-client-nav-btn)) !important;
+    align-items: center !important;
+    justify-content: end !important;
+    gap: var(--wf-client-nav-gap) !important;
+    flex: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-mobile-actions > *,
+  html body .wf-navbar.wf-navbar--client .wf-profile-menu-wrap,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-mobile-actions > *,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-profile-menu-wrap,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-mobile-actions > *,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-mobile-actions > * {
+    width: var(--wf-client-nav-btn) !important;
+    min-width: var(--wf-client-nav-btn) !important;
+    max-width: var(--wf-client-nav-btn) !important;
+    height: var(--wf-client-nav-btn) !important;
+    min-height: var(--wf-client-nav-btn) !important;
+    flex: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user,
+  html body .wf-navbar.wf-navbar--client .wf-client-more-options-trigger,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-user,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-more-options-trigger,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn--compact {
+    width: var(--wf-client-nav-btn) !important;
+    min-width: var(--wf-client-nav-btn) !important;
+    max-width: var(--wf-client-nav-btn) !important;
+    height: var(--wf-client-nav-btn) !important;
+    min-height: var(--wf-client-nav-btn) !important;
+    max-height: var(--wf-client-nav-btn) !important;
+    padding: 0 !important;
+    border-radius: clamp(9px, 2.6vw, 12px) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 6px 14px rgba(3, 34, 150, .13) !important;
+    flex: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon,
+  html body .navbar.wf-navbar--client .wf-client-more-options-trigger .wf-icon,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn--compact .wf-icon,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn--compact .wf-icon,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn--compact .wf-icon {
+    width: clamp(18px, 4.9vw, 23px) !important;
+    min-width: clamp(18px, 4.9vw, 23px) !important;
+    height: clamp(18px, 4.9vw, 23px) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger span:not(.wf-icon),
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger .wf-icon--chevron,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-trigger span:not(.wf-icon),
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-trigger .wf-icon--chevron {
+    display: none !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    --wf-client-nav-pad-x: 7px !important;
+    --wf-client-nav-gap: 4px !important;
+    --wf-client-nav-btn: 36px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo img,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-page.wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  html body .wf-page.wf-page--list .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    max-width: min(100%, 150px) !important;
+  }
+}

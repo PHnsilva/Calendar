@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type InputHTMLAttributes, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type InputHTMLAttributes, type PointerEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
@@ -539,6 +539,16 @@ function openSupportEmail() {
   window.location.href = `mailto:${supportEmail}`;
 }
 
+async function copySupportEmail() {
+  try {
+    if (!navigator.clipboard?.writeText) return false;
+    await navigator.clipboard.writeText(supportEmail);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function openWhatsApp(phone?: string) {
   const digits = (phone ?? '').replace(/\D/g, '');
   if (!digits) {
@@ -788,6 +798,9 @@ function Icon({ name }: { name: string }) {
     chevron: <svg {...common}><path d="m20 26 12 12 12-12" {...line}/></svg>,
     whatsapp: <svg {...common}><defs><linearGradient id={`${uid}-wa`} x1="10" y1="8" x2="55" y2="56"><stop stopColor="#28d66b"/><stop offset="1" stopColor="#0aa64b"/></linearGradient></defs><circle cx="32" cy="32" r="27" fill={`url(#${uid}-wa)`}/><path d="M19 47.5 22 38a18 18 0 1 1 6.4 5.9L19 47.5Z" fill="#fff"/><path d="M27.8 23.8c.6-1.4 1.3-1.6 2.4-1.5h1.4c.5 0 1 .2 1.3.9.4 1 1.4 3.7 1.5 4.1.2.4.2.8-.1 1.2-.4.7-1 1.5-1.6 2-.4.4-.5.7-.2 1.2 1.1 1.8 2.6 3.4 4.3 4.6 1.5 1 2.3 1.3 2.9.7.7-.7 1.5-1.8 1.9-2.3.4-.5.8-.6 1.5-.4l4 1.9c.7.4.8.7.7 1.1-.2 1.6-1.5 3.5-3.2 4.1-1.9.7-5.1.3-9.2-2.2-5.6-3.4-9.1-8.4-9.8-12.3-.4-1.6.1-2.5 1.2-3.1Z" fill="#0aa64b"/></svg>,
     instagram: <svg {...common}><defs><linearGradient id={`${uid}-ig`} x1="9" y1="55" x2="55" y2="9"><stop stopColor="#ffbd2e"/><stop offset=".35" stopColor="#ff2f6d"/><stop offset=".68" stopColor="#a42cff"/><stop offset="1" stopColor="#2864ff"/></linearGradient></defs><rect x="7" y="7" width="50" height="50" rx="15" fill={`url(#${uid}-ig)`}/><rect x="18" y="18" width="28" height="28" rx="8" stroke="#fff" strokeWidth="4"/><circle cx="32" cy="32" r="8" stroke="#fff" strokeWidth="4"/><circle cx="43" cy="21" r="3" fill="#fff"/></svg>,
+    'footer-whatsapp-social': <svg {...common}><rect x="7" y="7" width="50" height="50" rx="13" fill="currentColor"/><path d="M20.5 47 23 39.5A17.5 17.5 0 1 1 29.7 43L20.5 47Z" fill="#fff"/><path d="M28.2 23.4c.5-1.2 1.1-1.4 2.1-1.3h1.2c.5 0 .9.2 1.2.8.3.8 1.2 3.2 1.3 3.6.2.4.2.7-.1 1.1-.3.6-.9 1.2-1.4 1.7-.4.4-.4.6-.1 1.1 1 1.6 2.3 3.1 3.9 4.1 1.4.9 2 1.1 2.6.5.6-.6 1.3-1.5 1.7-2 .3-.4.7-.5 1.3-.3l3.5 1.6c.6.3.7.6.6 1-.2 1.4-1.3 3.1-2.8 3.6-1.7.6-4.5.3-8-1.9-4.9-3-8.1-7.5-8.7-10.9-.3-1.4.1-2.2 1-2.8Z" fill="currentColor"/></svg>,
+    'footer-instagram-social': <svg {...common}><rect x="7" y="7" width="50" height="50" rx="13" fill="currentColor"/><rect x="18.2" y="18.2" width="27.6" height="27.6" rx="8.2" stroke="#fff" strokeWidth="4"/><circle cx="32" cy="32" r="7.4" stroke="#fff" strokeWidth="4"/><circle cx="42.4" cy="21.6" r="3" fill="#fff"/></svg>,
+    'footer-email-social': <svg {...common}><rect x="7" y="7" width="50" height="50" rx="13" fill="currentColor"/><rect x="17" y="20" width="30" height="24" rx="3.8" fill="#fff"/><path d="M18.5 22.5 32 33.5l13.5-11" fill="none" stroke="currentColor" strokeWidth="3.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M19 42 29 32.2M45 42 35 32.2" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     'file-upload': <svg {...common}><defs><linearGradient id={`${uid}-file`} x1="13" y1="8" x2="52" y2="56"><stop stopColor="#8f71ff"/><stop offset="1" stopColor="#6d2ee8"/></linearGradient></defs><path d="M18 8h25l9 10v38H18V8Z" fill="#f4efff" stroke={`url(#${uid}-file)`} strokeWidth="4" strokeLinejoin="round"/><path d="M43 9v11h9" stroke="#6d2ee8" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><path d="M31 44V28M23 36l8-8 8 8" stroke="#6d2ee8" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><path d="M41 41h7M45 37v8" stroke="#0358ff" strokeWidth="3.2" strokeLinecap="round"/></svg>,
     'file-check': <svg {...common}><defs><linearGradient id={`${uid}-fcheck`} x1="13" y1="8" x2="52" y2="56"><stop stopColor="#5be18f"/><stop offset="1" stopColor="#09a64b"/></linearGradient></defs><path d="M18 8h25l9 10v38H18V8Z" fill="#edfff5" stroke={`url(#${uid}-fcheck)`} strokeWidth="4" strokeLinejoin="round"/><path d="M43 9v11h9" stroke="#09a64b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="45" cy="45" r="9" fill="#09a64b"/><path d="m40.5 45 3 3.2 6.2-7.2" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     paperclip: <svg {...common}><path d="M24 36 39 21a9 9 0 0 1 13 13L31 55a14 14 0 0 1-20-20l22-22a8 8 0 0 1 12 12L24 46a4 4 0 0 1-6-6l20-20" {...line}/></svg>,
@@ -835,10 +848,77 @@ function HeroVisual({ type, className }: { type: 'client' | 'admin'; className?:
   );
 }
 
+type FooterRedirectTarget = {
+  label: string;
+  title: string;
+  description: string;
+  url: string;
+  method: 'external' | 'email';
+  icon: string;
+};
+
 function LandingFooter({ admin = false, setModal }: { admin?: boolean; setModal?: (modal: ModalKind) => void }) {
+  const [emailCopied, setEmailCopied] = useState(false);
+  const [redirectTarget, setRedirectTarget] = useState<FooterRedirectTarget | null>(null);
   const openServices = () => setModal?.('services-info');
   const openHelp = () => setModal?.('help-contact');
   const openContact = () => setModal?.('contact');
+
+  const requestRedirect = (target: FooterRedirectTarget) => {
+    setRedirectTarget(target);
+  };
+
+  const closeRedirectModal = () => {
+    setRedirectTarget(null);
+  };
+
+  const confirmRedirect = () => {
+    if (!redirectTarget) return;
+    const target = redirectTarget;
+    setRedirectTarget(null);
+    if (target.method === 'email') {
+      window.location.href = target.url;
+      return;
+    }
+    openExternal(target.url);
+  };
+
+  const requestInstagramRedirect = () => requestRedirect({
+    label: 'Instagram',
+    title: 'Abrir Instagram?',
+    description: 'Você será redirecionado para o perfil oficial da SG Pequenos Reparos em uma nova aba.',
+    url: supportInstagramUrl,
+    method: 'external',
+    icon: 'footer-instagram-social',
+  });
+
+  const requestWhatsAppRedirect = () => requestRedirect({
+    label: 'WhatsApp',
+    title: 'Abrir WhatsApp?',
+    description: 'Você será redirecionado para iniciar uma conversa com a SG Pequenos Reparos.',
+    url: supportWhatsAppUrl,
+    method: 'external',
+    icon: 'footer-whatsapp-social',
+  });
+
+  const requestEmailRedirect = () => requestRedirect({
+    label: 'E-mail',
+    title: 'Abrir e-mail?',
+    description: `Seu aplicativo de e-mail será aberto para enviar uma mensagem para ${supportEmail}.`,
+    url: `mailto:${supportEmail}`,
+    method: 'email',
+    icon: 'footer-email-social',
+  });
+
+  const handleCopyEmail = async () => {
+    const copied = await copySupportEmail();
+    if (!copied) {
+      requestEmailRedirect();
+      return;
+    }
+    setEmailCopied(true);
+    window.setTimeout(() => setEmailCopied(false), 1800);
+  };
 
   if (admin) {
     return (
@@ -854,23 +934,88 @@ function LandingFooter({ admin = false, setModal }: { admin?: boolean; setModal?
   }
 
   return (
-    <footer className="wf-footer wf-footer--client-final">
-      <div className="wf-footer-brand">
-        <LogoMark compact />
-      </div>
-      <p className="wf-footer-platform-copy">A plataforma completa para agendar seus atendimentos e pequenos reparos com praticidade e segurança.</p>
-      <div className="wf-footer-privacy-card">
-        <Icon name="footer-security" />
-        <strong>Seus dados protegidos<br />com total privacidade</strong>
-        <p>A plataforma completa para agendar<br />seus atendimentos</p>
-        <Icon name="lock" />
-      </div>
-      <nav className="wf-footer-links" aria-label="Links institucionais">
-        <button type="button" onClick={openServices}>Sobre o serviço</button>
-        <button type="button" onClick={openHelp}>Precisa de ajuda?</button>
-        <button type="button" onClick={openContact}>Contato</button>
-      </nav>
-    </footer>
+    <>
+      <footer className="wf-footer wf-footer--client-final wf-footer--client-social">
+        <div className="wf-footer-brand">
+          <LogoMark compact />
+        </div>
+
+        <nav className="wf-footer-links" aria-label="Links institucionais">
+          <button type="button" onClick={openServices}>Sobre o serviço</button>
+          <button type="button" onClick={openHelp}>Perguntas frequentes</button>
+          <button type="button" onClick={openContact}>Contato</button>
+        </nav>
+
+        <section className="wf-footer-social" aria-label="Redes sociais e contato">
+          <span className="wf-footer-social__title">Redes sociais</span>
+          <div className="wf-footer-social__icons">
+            <button
+              type="button"
+              className="wf-footer-social__icon wf-footer-social__icon--instagram"
+              aria-label="Abrir Instagram da SG Pequenos Reparos"
+              onClick={requestInstagramRedirect}
+            >
+              <Icon name="footer-instagram-social" />
+            </button>
+            <button
+              type="button"
+              className="wf-footer-social__icon wf-footer-social__icon--whatsapp"
+              aria-label="Abrir WhatsApp da SG Pequenos Reparos"
+              onClick={requestWhatsAppRedirect}
+            >
+              <Icon name="footer-whatsapp-social" />
+            </button>
+            <button
+              type="button"
+              className="wf-footer-social__icon wf-footer-social__icon--email wf-footer-social__icon--email-mobile"
+              aria-label="Enviar e-mail para a SG Pequenos Reparos"
+              onClick={requestEmailRedirect}
+            >
+              <Icon name="footer-email-social" />
+            </button>
+          </div>
+          <div className="wf-footer-email-card" aria-label="E-mail de contato">
+            <button
+              type="button"
+              className="wf-footer-email-card__mail"
+              aria-label="Enviar e-mail para a SG Pequenos Reparos"
+              onClick={requestEmailRedirect}
+            >
+              <Icon name="footer-email-social" />
+            </button>
+            <span className="wf-footer-email-card__address">{supportEmail}</span>
+            <button type="button" className="wf-footer-email-card__copy" onClick={handleCopyEmail}>
+              {emailCopied ? 'Copiado' : 'Copiar'}
+            </button>
+          </div>
+        </section>
+      </footer>
+
+      {redirectTarget ? (
+        <div className="wf-footer-redirect" role="presentation" onClick={closeRedirectModal}>
+          <section
+            className={cx('wf-footer-redirect__dialog', `wf-footer-redirect__dialog--${redirectTarget.method}`)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="wf-footer-redirect-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={cx('wf-footer-redirect__icon', `wf-footer-redirect__icon--${redirectTarget.label.toLowerCase()}`)}>
+              <Icon name={redirectTarget.icon} />
+            </div>
+            <div className="wf-footer-redirect__content">
+              <span className="wf-footer-redirect__eyebrow">Redirecionamento externo</span>
+              <h2 id="wf-footer-redirect-title">{redirectTarget.title}</h2>
+              <p>{redirectTarget.description}</p>
+            </div>
+            <div className="wf-footer-redirect__actions">
+              <button type="button" className="wf-footer-redirect__cancel" onClick={closeRedirectModal}>Cancelar</button>
+              <button type="button" className="wf-footer-redirect__confirm" onClick={confirmRedirect}>Continuar</button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </>
   );
 }
 
@@ -974,32 +1119,127 @@ const SERVICE_SHOWCASE_ITEMS: ServiceShowcaseItem[] = [
 
 function ServiceShowcaseCarousel() {
   const [index, setIndex] = useState(0);
-  const item = SERVICE_SHOWCASE_ITEMS[index];
+  const [progressKey, setProgressKey] = useState(0);
+  const carouselRef = useRef<HTMLElement | null>(null);
+  const pointerStartRef = useRef<{ x: number; pointerId: number } | null>(null);
+
+  const resetProgress = useCallback(() => {
+    carouselRef.current?.style.setProperty('--wf-carousel-progress', '0', 'important');
+    setProgressKey((current) => current + 1);
+  }, []);
+
+  const goTo = useCallback((nextIndex: number) => {
+    setIndex(((nextIndex % SERVICE_SHOWCASE_ITEMS.length) + SERVICE_SHOWCASE_ITEMS.length) % SERVICE_SHOWCASE_ITEMS.length);
+    resetProgress();
+  }, [resetProgress]);
+
+  const goPrev = useCallback(() => {
+    setIndex((current) => (current - 1 + SERVICE_SHOWCASE_ITEMS.length) % SERVICE_SHOWCASE_ITEMS.length);
+    resetProgress();
+  }, [resetProgress]);
+
+  const goNext = useCallback(() => {
+    setIndex((current) => (current + 1) % SERVICE_SHOWCASE_ITEMS.length);
+    resetProgress();
+  }, [resetProgress]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setIndex((current) => (current + 1) % SERVICE_SHOWCASE_ITEMS.length);
-    }, SERVICE_SHOWCASE_INTERVAL_MS);
-
-    return () => window.clearInterval(timer);
+    SERVICE_SHOWCASE_ITEMS.forEach((service) => {
+      const image = new Image();
+      image.src = service.image;
+    });
   }, []);
+
+  useEffect(() => {
+    let animationFrame = 0;
+    const startedAt = window.performance.now();
+
+    const updateProgress = (now: number) => {
+      const ratio = Math.min(1, (now - startedAt) / SERVICE_SHOWCASE_INTERVAL_MS);
+      carouselRef.current?.style.setProperty('--wf-carousel-progress', ratio.toFixed(4), 'important');
+
+      if (ratio < 1) {
+        animationFrame = window.requestAnimationFrame(updateProgress);
+      }
+    };
+
+    carouselRef.current?.style.setProperty('--wf-carousel-progress', '0', 'important');
+    animationFrame = window.requestAnimationFrame(updateProgress);
+
+    const timer = window.setTimeout(goNext, SERVICE_SHOWCASE_INTERVAL_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [goNext, index, progressKey]);
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    pointerStartRef.current = { x: event.clientX, pointerId: event.pointerId };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const start = pointerStartRef.current;
+    pointerStartRef.current = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+
+    if (!start) return;
+
+    const deltaX = event.clientX - start.x;
+    if (Math.abs(deltaX) >= 38) {
+      if (deltaX > 0) {
+        goPrev();
+        return;
+      }
+
+      goNext();
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const relativeX = event.clientX - bounds.left;
+
+    if (relativeX <= bounds.width * 0.34) {
+      goPrev();
+      return;
+    }
+
+    if (relativeX >= bounds.width * 0.66) {
+      goNext();
+    }
+  };
+
+  const handlePointerCancel = (event: PointerEvent<HTMLDivElement>) => {
+    pointerStartRef.current = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+  };
 
   return (
     <article
+      ref={carouselRef}
       className="wf-services-showcase"
       aria-roledescription="carousel"
       aria-label="Carrossel de serviços prestados"
     >
-      <div className="wf-services-showcase__viewport">
-        <img
-          key={item.image}
-          className="wf-services-showcase__image"
-          src={item.image}
-          alt={item.alt}
-          loading="lazy"
-          decoding="async"
-          draggable={false}
-        />
+      <div
+        className="wf-services-showcase__viewport"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+      >
+        {SERVICE_SHOWCASE_ITEMS.map((service, serviceIndex) => (
+          <img
+            key={service.image}
+            className={cx('wf-services-showcase__image', serviceIndex === index && 'is-active')}
+            src={service.image}
+            alt={service.alt}
+            loading={serviceIndex === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+            draggable={false}
+            aria-hidden={serviceIndex !== index}
+          />
+        ))}
 
         <div className="wf-services-showcase__overlay">
           <div className="wf-services-showcase__dots" role="tablist" aria-label="Indicadores do carrossel">
@@ -1010,8 +1250,13 @@ function ServiceShowcaseCarousel() {
                 className={cx('wf-services-showcase__dot', serviceIndex === index && 'is-active')}
                 aria-label={`Ir para ${service.title}`}
                 aria-pressed={serviceIndex === index}
-                onClick={() => setIndex(serviceIndex)}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={() => goTo(serviceIndex)}
               >
+                <span
+                  className="wf-services-showcase__dot-progress"
+                  aria-hidden="true"
+                />
                 <span className="sr-only">{service.title}</span>
               </button>
             ))}

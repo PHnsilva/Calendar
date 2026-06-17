@@ -1,5 +1,6 @@
 package br.com.calendarmate.controller;
 
+import br.com.calendarmate.booking.application.GetAvailableSlotsUseCase;
 import br.com.calendarmate.dto.AdminAssignProviderRequest;
 import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
@@ -26,11 +27,17 @@ public class ServicoController {
     private final ServicoService service;
     private final TokenUtil tokenUtil;
     private final AdminAuthService adminAuthService;
+    private final GetAvailableSlotsUseCase getAvailableSlotsUseCase;
 
-    public ServicoController(ServicoService service, TokenUtil tokenUtil, AdminAuthService adminAuthService) {
+    public ServicoController(
+            ServicoService service,
+            TokenUtil tokenUtil,
+            AdminAuthService adminAuthService,
+            GetAvailableSlotsUseCase getAvailableSlotsUseCase) {
         this.service = service;
         this.tokenUtil = tokenUtil;
         this.adminAuthService = adminAuthService;
+        this.getAvailableSlotsUseCase = getAvailableSlotsUseCase;
     }
 
     // PUBLIC
@@ -133,6 +140,6 @@ public class ServicoController {
             @RequestParam(required = false) String city,
             @RequestParam(defaultValue = "60") int slotMinutes) throws IOException {
 
-        return ResponseEntity.ok(service.getAvailableSlots(date, city, slotMinutes));
+        return ResponseEntity.ok(getAvailableSlotsUseCase.execute(date, city, slotMinutes));
     }
 }

@@ -32,7 +32,7 @@ public class VerificationController {
 
     @PostMapping("/start")
     public VerifyStartResponse start(@Valid @RequestBody VerifyStartRequest req) throws IOException {
-        VerificationService.StartResult r = startVerificationUseCase.execute(req.getToken(), req.getPhone());
+        StartVerificationUseCase.Result r = startVerificationUseCase.execute(req.getToken(), req.getPhone());
         return new VerifyStartResponse(
                 r.verificationId(),
                 r.expiresInSeconds(),

@@ -14,6 +14,8 @@ import br.com.calendarmate.integrations.routes.RouteClient;
 import br.com.calendarmate.integrations.supabase.SupabaseClient;
 import br.com.calendarmate.service.*;
 import br.com.calendarmate.service.store.*;
+import br.com.calendarmate.verification.application.ConfirmVerificationUseCase;
+import br.com.calendarmate.verification.application.StartVerificationUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -322,21 +324,17 @@ public class AppConfig {
 
     @Bean
     public VerificationService verificationService(
-            CalendarClient calendarClient,
-            TokenUtil tokenUtil,
             VerificationStore verificationStore,
-            PendingStore pendingStore,
+            StartVerificationUseCase startVerificationUseCase,
+            ConfirmVerificationUseCase confirmVerificationUseCase,
             OtpDeliveryClient otpDeliveryClient,
-            AppProperties props,
-            AdminAuthService adminAuthService) {
+            AppProperties props) {
         return new VerificationService(
-                calendarClient,
-                tokenUtil,
+                startVerificationUseCase,
+                confirmVerificationUseCase,
                 verificationStore,
-                pendingStore,
                 otpDeliveryClient,
-                props,
-                adminAuthService);
+                props);
     }
 
     @Bean

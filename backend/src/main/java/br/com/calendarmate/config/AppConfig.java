@@ -1,6 +1,7 @@
 package br.com.calendarmate.config;
 
 import br.com.calendarmate.google.CalendarClient;
+import br.com.calendarmate.booking.application.GetAvailableSlotsUseCase;
 import br.com.calendarmate.integrations.DummyWhatsAppClient;
 import br.com.calendarmate.integrations.MetaWhatsAppClient;
 import br.com.calendarmate.integrations.MisconfiguredOtpDeliveryClient;
@@ -305,7 +306,8 @@ public class AppConfig {
             AppProperties props,
             AvailabilityPolicyService availabilityPolicyService,
             AdminAuthService adminAuthService,
-            BookingHistoryStore bookingHistoryStore) {
+            BookingHistoryStore bookingHistoryStore,
+            GetAvailableSlotsUseCase getAvailableSlotsUseCase) {
         return new ServicoService(
                 calendarClient,
                 tokenUtil,
@@ -314,7 +316,8 @@ public class AppConfig {
                 props,
                 availabilityPolicyService,
                 adminAuthService,
-                bookingHistoryStore);
+                bookingHistoryStore,
+                getAvailableSlotsUseCase);
     }
 
     @Bean

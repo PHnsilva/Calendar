@@ -1,5 +1,6 @@
 package br.com.calendarmate.service;
 
+import br.com.calendarmate.booking.application.GetAvailableSlotsUseCase;
 import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
@@ -13,7 +14,6 @@ import br.com.calendarmate.exception.ReservedAdminPhoneException;
 import br.com.calendarmate.google.CalendarClient;
 import br.com.calendarmate.model.PendingRecord;
 import br.com.calendarmate.model.Servico;
-import br.com.calendarmate.model.TimeWindow;
 import br.com.calendarmate.model.AdminPrincipal;
 import br.com.calendarmate.model.AdminUser;
 import br.com.calendarmate.service.store.BookingHistoryStore;
@@ -40,6 +40,7 @@ public class ServicoService {
     private final PendingStore pendingStore;
     private final AdminAuthService adminAuthService;
     private final BookingHistoryStore bookingHistoryStore;
+    private final GetAvailableSlotsUseCase getAvailableSlotsUseCase;
 
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
     private static final Set<Integer> ALLOWED_MINUTES = Set.of(0);
@@ -61,6 +62,28 @@ public class ServicoService {
             AvailabilityPolicyService availabilityPolicyService,
             AdminAuthService adminAuthService,
             BookingHistoryStore bookingHistoryStore) {
+        this(
+                calendar,
+                tokenUtil,
+                verificationService,
+                pendingStore,
+                props,
+                availabilityPolicyService,
+                adminAuthService,
+                bookingHistoryStore,
+                new GetAvailableSlotsUseCase(calendar, pendingStore, props, availabilityPolicyService));
+    }
+
+    public ServicoService(
+            CalendarClient calendar,
+            TokenUtil tokenUtil,
+            VerificationService verificationService,
+            PendingStore pendingStore,
+            AppProperties props,
+            AvailabilityPolicyService availabilityPolicyService,
+            AdminAuthService adminAuthService,
+            BookingHistoryStore bookingHistoryStore,
+            GetAvailableSlotsUseCase getAvailableSlotsUseCase) {
         this.calendar = calendar;
         this.tokenUtil = tokenUtil;
         this.verificationService = verificationService;
@@ -69,6 +92,7 @@ public class ServicoService {
         this.availabilityPolicyService = availabilityPolicyService;
         this.adminAuthService = adminAuthService;
         this.bookingHistoryStore = bookingHistoryStore;
+        this.getAvailableSlotsUseCase = getAvailableSlotsUseCase;
     }
 
     public ServicoCreateResponse create(ServicoRequest req) throws IOException {
@@ -702,71 +726,7 @@ public class ServicoService {
     }
 
     public List<AvailableSlotResponse> getAvailableSlots(LocalDate date, String city, int slotMinutes) throws IOException {
-        validateDateWindow(date);
-
-        if (slotMinutes != props.getBookingSlotMinutes()) {
-            throw new BadRequestException("slotMinutes deve ser 60");
-        }
-
-        cleanupExpiredPendings();
-
-        List<TimeWindow> allowedWindows = availabilityPolicyService.resolveAllowedWindows(date);
-        if (allowedWindows.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        int blockDurationMinutes = props.getBookingDurationMinutesForCity(city);
-        ZonedDateTime dayStart = ZonedDateTime.of(date, props.getWorkStart(), ZONE);
-        ZonedDateTime dayEnd = ZonedDateTime.of(date, props.getWorkEnd(), ZONE);
-
-        DateTime timeMin = new DateTime(Date.from(dayStart.toInstant()));
-        DateTime timeMax = new DateTime(Date.from(dayEnd.toInstant()));
-
-        List<TimePeriod> busy = calendar.freeBusy(timeMin, timeMax);
-        if (busy == null) {
-            busy = Collections.emptyList();
-        }
-
-        List<AvailableSlotResponse> slots = new ArrayList<>();
-        ZonedDateTime current = dayStart;
-
-        while (!current.plusMinutes(slotMinutes).isAfter(dayEnd)) {
-            BookingWindow window = resolveBookingWindow(date, current.toLocalTime(), city);
-            Instant slotStart = window.blockStart();
-            Instant slotEnd = window.blockEnd();
-
-            TimeWindow requested = new TimeWindow(slotStart, slotEnd);
-            if (!isInsideAllowedWindows(requested, allowedWindows)) {
-                current = current.plusMinutes(slotMinutes);
-                continue;
-            }
-
-            boolean conflict = false;
-            for (TimePeriod tp : busy) {
-                if (tp.getStart() == null || tp.getEnd() == null)
-                    continue;
-
-                Instant busyStart = Instant.ofEpochMilli(tp.getStart().getValue());
-                Instant busyEnd = Instant.ofEpochMilli(tp.getEnd().getValue());
-
-                if (!(slotEnd.compareTo(busyStart) <= 0 || slotStart.compareTo(busyEnd) >= 0)) {
-                    conflict = true;
-                    break;
-                }
-            }
-
-            if (!conflict) {
-                slots.add(new AvailableSlotResponse(
-                        date.toString(),
-                        current.toLocalTime().toString(),
-                        ZonedDateTime.ofInstant(window.appointmentEnd(), ZONE).toLocalTime().toString(),
-                        blockDurationMinutes));
-            }
-
-            current = current.plusMinutes(slotMinutes);
-        }
-
-        return slots;
+        return getAvailableSlotsUseCase.execute(date, city, slotMinutes);
     }
 
     private BookingWindow resolveBookingWindow(LocalDate date, LocalTime appointmentTime, String city) {
@@ -822,15 +782,6 @@ public class ServicoService {
             return fromExt;
         }
         return event == null || event.getDescription() == null ? "" : event.getDescription().trim();
-    }
-
-    private boolean isInsideAllowedWindows(TimeWindow requested, List<TimeWindow> allowedWindows) {
-        for (TimeWindow allowed : allowedWindows) {
-            if (allowed.contains(requested)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void validateTime(LocalTime time) {

@@ -1,21 +1,32 @@
 package br.com.calendarmate.service;
 
 import br.com.calendarmate.config.AppProperties;
+import br.com.calendarmate.dto.AdminAuthConfirmResponse;
 import br.com.calendarmate.exception.ExternalServiceException;
+import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
+import br.com.calendarmate.model.AdminPrincipal;
+import br.com.calendarmate.model.AdminRole;
 import br.com.calendarmate.model.AdminSession;
 import br.com.calendarmate.model.AdminUser;
 import br.com.calendarmate.service.store.AdminSessionStore;
 import br.com.calendarmate.service.store.AdminUserStore;
+import br.com.calendarmate.service.store.InMemoryAdminSessionStore;
+import br.com.calendarmate.service.store.InMemoryAdminUserStore;
+import br.com.calendarmate.service.store.InMemoryVerificationStore;
 import br.com.calendarmate.service.store.VerificationStore;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.ResourceAccessException;
 
+import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AdminAuthServiceTest {
     @Test
@@ -45,6 +56,54 @@ class AdminAuthServiceTest {
                 new AppProperties());
 
         assertFalse(service.isAdminPhoneBestEffort("+55 31 99999-9999"));
+    }
+
+    @Test
+    void confirmCreatesAdminSessionThatRequireAccepts() {
+        InMemoryAdminUserStore userStore = new InMemoryAdminUserStore("+55 31 99999-9999|Owner|OWNER");
+        InMemoryAdminSessionStore sessionStore = new InMemoryAdminSessionStore();
+        InMemoryVerificationStore verificationStore = new InMemoryVerificationStore();
+        RecordingOtpDeliveryClient otpDeliveryClient = new RecordingOtpDeliveryClient();
+        AdminAuthService service = new AdminAuthService(
+                userStore,
+                sessionStore,
+                verificationStore,
+                otpDeliveryClient,
+                new TestAppProperties());
+
+        String verificationId = service.start("+55 31 99999-9999").getVerificationId();
+        VerificationStore.Session otp = verificationStore.get(verificationId);
+
+        AdminAuthConfirmResponse confirmed = service.confirm(verificationId, otp.code);
+
+        assertNotNull(confirmed.getSessionToken());
+        assertTrue(confirmed.getSessionToken().startsWith("adm_"));
+        assertEquals("OWNER", confirmed.getAdmin().getRole());
+        assertNull(verificationStore.get(verificationId));
+
+        AdminPrincipal principal = service.require(confirmed.getSessionToken());
+        assertTrue(principal.isOwner());
+        assertEquals("Owner", principal.getName());
+    }
+
+    @Test
+    void providerCannotListProvidersButOwnerCan() {
+        InMemoryAdminUserStore userStore = new InMemoryAdminUserStore(
+                "+55 31 99999-9999|Owner|OWNER;+55 31 98888-8888|Provider|PROVIDER");
+        AdminAuthService service = new AdminAuthService(
+                userStore,
+                new InMemoryAdminSessionStore(),
+                new InMemoryVerificationStore(),
+                new RecordingOtpDeliveryClient(),
+                new TestAppProperties());
+        AdminPrincipal owner = new AdminPrincipal(userStore.findActiveByPhone("31999999999"), null);
+        AdminPrincipal provider = new AdminPrincipal(userStore.findActiveByPhone("31988888888"), null);
+
+        assertThrows(ForbiddenException.class, () -> service.listProviders(provider));
+        assertEquals(2, service.listProviders(owner).size());
+        assertTrue(owner.permissions().contains("ASSIGN_PROVIDER"));
+        assertFalse(provider.permissions().contains("ASSIGN_PROVIDER"));
+        assertEquals(AdminRole.PROVIDER, provider.getRole());
     }
 
     private static class FailingAdminUserStore implements AdminUserStore {
@@ -117,6 +176,29 @@ class AdminAuthServiceTest {
         @Override
         public void sendCode(String phoneDigits, String code) {
             throw new AssertionError("OTP provider should not be called");
+        }
+    }
+
+    private static class RecordingOtpDeliveryClient implements OtpDeliveryClient {
+        private String lastPhoneDigits;
+        private String lastCode;
+
+        @Override
+        public void sendCode(String phoneDigits, String code) {
+            lastPhoneDigits = phoneDigits;
+            lastCode = code;
+        }
+    }
+
+    private static class TestAppProperties extends AppProperties {
+        @Override
+        public Duration getOtpTtl() {
+            return Duration.ofMinutes(5);
+        }
+
+        @Override
+        public Duration getOtpResendAfter() {
+            return Duration.ZERO;
         }
     }
 }

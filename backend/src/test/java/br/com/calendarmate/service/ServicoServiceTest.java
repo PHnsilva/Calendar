@@ -1,12 +1,16 @@
 package br.com.calendarmate.service;
 
 import br.com.calendarmate.config.AppProperties;
+import br.com.calendarmate.dto.AvailabilityBlockCreateRequest;
+import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoRequest;
+import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.google.DummyCalendarClient;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.AdminSession;
 import br.com.calendarmate.model.AdminUser;
+import br.com.calendarmate.model.Servico;
 import br.com.calendarmate.service.store.AdminSessionStore;
 import br.com.calendarmate.service.store.AdminUserStore;
 import br.com.calendarmate.service.store.InMemoryBookingHistoryStore;
@@ -18,12 +22,16 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -67,6 +75,113 @@ class ServicoServiceTest {
                 "31999999999").isEmpty());
     }
 
+    @Test
+    void availableSlotsReturnOpenSlotsForAvailableDate() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        LocalDate date = nextAvailableDate(calendar, props);
+
+        List<AvailableSlotResponse> slots = service.getAvailableSlots(date, "Itabirito", props.getBookingSlotMinutes());
+
+        assertFalse(slots.isEmpty());
+        assertTrue(slots.stream().allMatch(slot -> date.toString().equals(slot.getDate())));
+        assertTrue(slots.stream().allMatch(slot -> slot.getStartTime().endsWith(":00")));
+        assertTrue(slots.stream().allMatch(slot -> slot.getDurationMinutes() == props.getBookingSlotMinutes()));
+    }
+
+    @Test
+    void availableSlotsRejectPastDate() {
+        AppProperties props = new AppProperties();
+        ServicoService service = serviceWith(new DummyCalendarClient(), props);
+
+        BadRequestException ex = assertThrows(
+                BadRequestException.class,
+                () -> service.getAvailableSlots(LocalDate.now(ZONE).minusDays(1), "Itabirito", props.getBookingSlotMinutes()));
+
+        assertTrue(ex.getMessage().contains("passado"));
+    }
+
+    @Test
+    void createRejectsNonHourlyTimeBeforeCreatingCalendarEvent() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        ServicoRequest request = validRequest(nextAvailableDate(calendar, props));
+        request.setTime(LocalTime.of(10, 30));
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> service.create(request));
+
+        assertTrue(ex.getMessage().contains("Minutos"));
+        assertTrue(calendar.listBookingEvents(
+                new DateTime(Date.from(LocalDate.now(ZONE).minusDays(1).atStartOfDay(ZONE).toInstant())),
+                new DateTime(Date.from(LocalDate.now(ZONE).plusMonths(2).atStartOfDay(ZONE).toInstant()))).isEmpty());
+    }
+
+    @Test
+    void availableSlotsExcludeOccupiedCalendarWindow() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        LocalDate date = nextAvailableDate(calendar, props);
+        AvailableSlotResponse occupiedSlot = service.getAvailableSlots(date, "Itabirito", props.getBookingSlotMinutes()).get(0);
+
+        calendar.createEvent(confirmedBooking(date, LocalTime.parse(occupiedSlot.getStartTime())));
+
+        List<AvailableSlotResponse> remaining = service.getAvailableSlots(date, "Itabirito", props.getBookingSlotMinutes());
+
+        assertFalse(remaining.stream().anyMatch(slot -> occupiedSlot.getStartTime().equals(slot.getStartTime())));
+    }
+
+    @Test
+    void availabilityBlockRemovesBlockedSlotFromAvailableSlots() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        AvailabilityBlockService blocks = new AvailabilityBlockService(
+                calendar,
+                props,
+                new AdminBookingOpsService(calendar, new InMemoryPendingStore(), props));
+        LocalDate date = nextAvailableDate(calendar, props);
+        AvailableSlotResponse blockedSlot = service.getAvailableSlots(date, "Itabirito", props.getBookingSlotMinutes()).get(0);
+        LocalDateTime blockedStart = LocalDateTime.of(date, LocalTime.parse(blockedSlot.getStartTime()));
+
+        AvailabilityBlockCreateRequest request = new AvailabilityBlockCreateRequest();
+        request.setMode("BLOCK");
+        request.setType("SLOT");
+        request.setStartAt(blockedStart);
+        request.setEndAt(blockedStart.plusMinutes(props.getBookingSlotMinutes()));
+        request.setReason("Manutencao interna");
+
+        assertEquals("BLOCK", blocks.create(request).getMode());
+
+        List<AvailableSlotResponse> remaining = service.getAvailableSlots(date, "Itabirito", props.getBookingSlotMinutes());
+        assertFalse(remaining.stream().anyMatch(slot -> blockedSlot.getStartTime().equals(slot.getStartTime())));
+    }
+
+    private static ServicoService serviceWith(DummyCalendarClient calendar, AppProperties props) {
+        TokenUtil tokenUtil = new TokenUtil("test-secret", 600);
+        InMemoryPendingStore pendingStore = new InMemoryPendingStore();
+        AdminAuthService adminAuthService = adminAuthServiceWithoutAdmins();
+        VerificationService verificationService = new VerificationService(
+                calendar,
+                tokenUtil,
+                new TrackingVerificationStore(),
+                pendingStore,
+                new NoopOtpDeliveryClient(),
+                props,
+                adminAuthService);
+        return new ServicoService(
+                calendar,
+                tokenUtil,
+                verificationService,
+                pendingStore,
+                props,
+                new AvailabilityPolicyService(calendar, props),
+                adminAuthService,
+                new InMemoryBookingHistoryStore());
+    }
+
     private static LocalDate nextAvailableDate(DummyCalendarClient calendar, AppProperties props) throws IOException {
         AvailabilityPolicyService policy = new AvailabilityPolicyService(calendar, props);
         LocalDate today = LocalDate.now(ZONE);
@@ -99,6 +214,30 @@ class ServicoServiceTest {
         req.setClientCity("Itabirito");
         req.setClientState("MG");
         return req;
+    }
+
+    private static Servico confirmedBooking(LocalDate date, LocalTime time) {
+        ZonedDateTime start = ZonedDateTime.of(date, time, ZONE);
+        Servico servico = new Servico();
+        servico.setTitle("Visita tecnica");
+        servico.setDescription("Atendimento confirmado para ocupar agenda");
+        servico.setServiceNotes("Atendimento confirmado para ocupar agenda");
+        servico.setStart(start.toInstant());
+        servico.setEnd(start.plusHours(1).toInstant());
+        servico.setAppointmentStart(start.toInstant());
+        servico.setAppointmentEnd(start.plusHours(1).toInstant());
+        servico.setStatus("CONFIRMED");
+        servico.setClientFirstName("Maria");
+        servico.setClientLastName("Souza");
+        servico.setClientEmail("maria@example.com");
+        servico.setClientPhone("31988888888");
+        servico.setClientCep("35450000");
+        servico.setClientStreet("Rua Um");
+        servico.setClientNeighborhood("Centro");
+        servico.setClientNumber("10");
+        servico.setClientCity("Itabirito");
+        servico.setClientState("MG");
+        return servico;
     }
 
     private static AdminAuthService adminAuthServiceWithoutAdmins() {

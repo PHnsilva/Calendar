@@ -3,12 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
 import heroClient from '../../assets/wireframes/landing/client-hero-composite.png';
-import heroClientDesktop1200 from '../../assets/wireframes/landing/client-hero-composite-1200.png';
-import heroClientDesktop1600 from '../../assets/wireframes/landing/client-hero-composite-1600.png';
-import heroClientDesktop2200 from '../../assets/wireframes/landing/client-hero-composite-2200.png';
-import heroClientDesktop3000 from '../../assets/wireframes/landing/client-hero-composite-3000.png';
 import heroClientMobile from '../../assets/wireframes/landing/client-hero-composite-mobile.png';
-import heroClientMobileTall from '../../assets/wireframes/landing/client-hero-composite-mobile-tall.png';
 import heroAdmin from '../../assets/wireframes/landing/admin-hero-composite.png';
 import heroAdminMobile from '../../assets/wireframes/landing/admin-hero-composite-mobile.png';
 import houseCard from '../../assets/wireframes/cards/client-house-card.png';
@@ -65,7 +60,6 @@ import emailIllustrationAsset from '../../assets/wireframes/modals/email-illustr
 import { FinancialStatementPanel } from '../admin/FinancialStatementPanel';
 import { HistoryPanel } from '../admin/HistoryPanel';
 import AdminNavbar, { type AdminNavView } from '../layout/AdminNavbar';
-import ClientNavbar from '../layout/ClientNavbar';
 import { PageShell, SvgWrapper } from '../layout/ResponsivePrimitives';
 import AppointmentCard from '../../features/appointments/ui/AppointmentCard';
 import AppointmentsPageShell from '../../features/appointments/ui/AppointmentsPageShell';
@@ -119,12 +113,10 @@ import { buildMailtoUrl } from '../../lib/mailto';
 import ModalShell from '../../shared/ui/ModalShell';
 import PageTitle from '../../shared/ui/PageTitle';
 import ResponsiveAsset from '../../shared/ui/ResponsiveAsset';
-const clientHeroDesktopSrcSet = [
-  `${heroClientDesktop1200} 1200w`,
-  `${heroClientDesktop1600} 1600w`,
-  `${heroClientDesktop2200} 2200w`,
-  `${heroClientDesktop3000} 3000w`,
-].join(', ');
+import ClientFooter from '../../widgets/client-footer';
+import LandingHero from '../../widgets/landing-hero';
+import PublicNavbar from '../../widgets/public-navbar';
+import ServiceCarousel from '../../widgets/service-carousel';
 
 
 type ModalKind =
@@ -1117,7 +1109,7 @@ const SERVICE_SHOWCASE_ITEMS: ServiceShowcaseItem[] = [
   },
 ];
 
-function ServiceShowcaseCarousel() {
+export function ServiceShowcaseCarousel() {
   const [index, setIndex] = useState(0);
   const [progressKey, setProgressKey] = useState(0);
   const carouselRef = useRef<HTMLElement | null>(null);
@@ -1274,31 +1266,20 @@ export function ClientLanding() {
   useDoubleBackToLeavePage();
   return (
     <PageShell className="wf-page wf-client-landing">
-      <ClientNavbar onCreate={() => setModal('create-client')} onNotifications={() => setModal('notifications')} onConfirmPhone={() => setModal('confirm-phone')} onProfile={() => setModal('client-profile')} />
+      <PublicNavbar onCreate={() => setModal('create-client')} onNotifications={() => setModal('notifications')} onConfirmPhone={() => setModal('confirm-phone')} onProfile={() => setModal('client-profile')} />
       <main className="wf-landing-main">
-        <section className="wf-hero wf-hero--client wf-hero--client-final">
-          <div className="wf-hero-copy wf-client-hero-copy-final">
-            <Badge icon="calendar" color="orange">Simples, rápido e sem complicações</Badge>
-            <h1>Organize seus agendamentos e pequenos reparos com <span>facilidade.</span></h1>
-            <p>Crie seu agendamento sem precisar fazer login.<br />No dia, confirme seu número de telefone e pronto!</p>
-
-            <div className="wf-hero-buttons">
-              <button type="button" className="wf-primary-cta" onClick={() => setModal('create-client')}><Icon name="calendar" /> Criar agendamento</button>
-              <button type="button" className="wf-secondary-cta" onClick={() => setModal('services-info')}><span className="wf-play"><Icon name="play" /></span> Como funciona?</button>
-            </div>
-          </div>
-          <ResponsiveAsset
-            alt="Prestador de pequenos reparos"
-            className="wf-media-frame wf-media-frame--hero wf-hero-visual wf-hero-visual--client wf-client-hero-visual-final"
-            desktopSrc={heroClientDesktop1600}
-            desktopSrcSet={clientHeroDesktopSrcSet}
-            sizes="(min-width: 901px) min(56vw, 900px), 100vw"
-            mobileSrc={heroClientMobile}
-            mobileBreakpoint={900}
-            smallMobileSrc={heroClientMobileTall}
-            smallMobileBreakpoint={500}
-          />
-        </section>
+        <LandingHero
+          badge={<Badge icon="calendar" color="orange">Simples, rápido e sem complicações</Badge>}
+          description={<>Crie seu agendamento sem precisar fazer login.<br />No dia, confirme seu número de telefone e pronto!</>}
+          highlight="facilidade."
+          onPrimaryAction={() => setModal('create-client')}
+          onSecondaryAction={() => setModal('services-info')}
+          primaryIcon={<Icon name="calendar" />}
+          primaryLabel="Criar agendamento"
+          secondaryIcon={<span className="wf-play"><Icon name="play" /></span>}
+          secondaryLabel="Como funciona?"
+          title="Organize seus agendamentos e pequenos reparos com"
+        />
 
         <ClientLandingModalButtons profile={profile} setModal={setModal} />
 
@@ -1310,9 +1291,20 @@ export function ClientLanding() {
               <p>Do computador ou do celular, organize seus atendimentos de forma rápida e segura, 24 horas por dia.</p>
             </div>
           </article>
-          <ServiceShowcaseCarousel />
+          <ServiceCarousel />
         </section>
-        <LandingFooter setModal={setModal} />
+        <ClientFooter
+          brand={<LogoMark compact />}
+          copySupportEmail={copySupportEmail}
+          onContact={() => setModal('contact')}
+          onHelp={() => setModal('help-contact')}
+          onServices={() => setModal('services-info')}
+          openExternal={openExternal}
+          renderIcon={(name) => <Icon name={name} />}
+          supportEmail={supportEmail}
+          supportInstagramUrl={supportInstagramUrl}
+          supportWhatsAppUrl={supportWhatsAppUrl}
+        />
       </main>
       <CalendarMateModal modal={modal} onClose={() => setModal(null)} />
     </PageShell>

@@ -2,7 +2,7 @@ import { Navigate, type RouteObject } from "react-router-dom";
 import SitePreparationPage from "../../components/screens/SitePreparationPage";
 import PublicLayout from "../../layouts/PublicLayout";
 import AdminLayout from "../../layouts/AdminLayout";
-import HomePage from "../../pages/home/HomePage";
+import LandingPage from "../../pages/landing/LandingPage";
 import MyBookingsPage from "../../pages/my/MyBookingsPage";
 import RecoverPage from "../../pages/recover/RecoverPage";
 import AdminGatePage from "../../pages/admin/AdminGatePage";
@@ -22,7 +22,7 @@ const applicationRoutes: RouteObject[] = [
     path: "/",
     element: <PublicLayout />,
     children: [
-      { index: true, element: <HomePage /> },
+      { index: true, element: <LandingPage /> },
       { path: "meus-agendamentos", element: <MyBookingsPage /> },
       { path: "my", element: <Navigate to="/meus-agendamentos" replace /> },
       { path: "recover", element: <RecoverPage /> },

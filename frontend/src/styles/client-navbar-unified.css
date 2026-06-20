@@ -393,3 +393,41 @@
     max-width: min(100%, 150px) !important;
   }
 }
+
+/* Final mobile navbar safety: older responsive files hide every span inside the
+   profile action on very small screens, which also hides the SVG wrapper. Hide
+   only textual labels and keep the profile icon visible from 320px upward. */
+@media (max-width: 900px) {
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
+  html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
+  html body .wf-page--list .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon--chevron,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon--chevron {
+    display: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon,
+  html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon,
+  html body .wf-page--list .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: clamp(19px, 5vw, 24px) !important;
+    min-width: clamp(19px, 5vw, 24px) !important;
+    height: clamp(19px, 5vw, 24px) !important;
+    min-height: clamp(19px, 5vw, 24px) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon svg,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon svg,
+  html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon svg,
+  html body .wf-page--list .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon svg {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}

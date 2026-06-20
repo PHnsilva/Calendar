@@ -592,3 +592,360 @@
     width: min(100%, clamp(390px, 53vw, 590px)) !important;
   }
 }
+
+/* 2026-06-20 wireframe replication pass for desktop landing.
+   Aligns the hero, makes the action cards overlap the hero image, and restores
+   the GPS dotted detail in the house card for 900px–2500px. */
+@media (min-width: 901px) {
+  html body .wf-client-landing .wf-landing-main {
+    width: min(1660px, calc(100vw - clamp(32px, 4.5vw, 88px))) !important;
+    max-width: 1660px !important;
+    margin-inline: auto !important;
+    padding: 0 0 clamp(16px, 1.6vw, 28px) !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final,
+  html body .wf-client-landing .wf-hero--client {
+    position: relative !important;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: minmax(330px, 40.5%) minmax(0, 59.5%) !important;
+    align-items: start !important;
+    column-gap: clamp(14px, 2vw, 36px) !important;
+    min-height: clamp(360px, 29vw, 520px) !important;
+    margin: 0 !important;
+    padding: clamp(10px, .8vw, 16px) 0 clamp(70px, 5.2vw, 96px) !important;
+    overflow: visible !important;
+    z-index: 1 !important;
+  }
+
+  html body .wf-client-landing .wf-client-hero-copy-final,
+  html body .wf-client-landing .wf-hero-copy {
+    width: 100% !important;
+    max-width: clamp(390px, 35vw, 560px) !important;
+    justify-self: start !important;
+    align-self: start !important;
+    position: relative !important;
+    z-index: 4 !important;
+  }
+
+  html body .wf-client-landing .wf-badge,
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-copy-final > .wf-badge {
+    min-height: clamp(36px, 2.45vw, 48px) !important;
+    max-width: min(100%, 455px) !important;
+    padding: 0 clamp(12px, 1vw, 18px) !important;
+    gap: clamp(8px, .75vw, 12px) !important;
+    border-radius: 12px !important;
+    font-size: clamp(13px, 1vw, 18px) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+  }
+
+  html body .wf-client-landing .wf-badge .wf-icon {
+    width: clamp(18px, 1.25vw, 24px) !important;
+    min-width: clamp(18px, 1.25vw, 24px) !important;
+    height: clamp(18px, 1.25vw, 24px) !important;
+  }
+
+  html body .wf-client-landing .wf-hero h1,
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-copy-final > h1 {
+    max-width: 100% !important;
+    margin: clamp(14px, 1.8vw, 28px) 0 clamp(10px, 1.1vw, 18px) !important;
+    font-size: clamp(40px, 4vw, 68px) !important;
+    line-height: 1.08 !important;
+    letter-spacing: -.045em !important;
+  }
+
+  html body .wf-client-landing .wf-hero p,
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-copy-final > p {
+    max-width: clamp(360px, 32vw, 520px) !important;
+    margin: 0 0 clamp(14px, 1.5vw, 24px) !important;
+    font-size: clamp(15px, 1.2vw, 22px) !important;
+    line-height: 1.38 !important;
+  }
+
+  html body .wf-client-landing .wf-hero-buttons,
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-copy-final > .wf-hero-buttons {
+    width: min(100%, clamp(390px, 33vw, 550px)) !important;
+    max-width: clamp(390px, 33vw, 550px) !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) !important;
+    gap: clamp(12px, 1.1vw, 20px) !important;
+    align-items: stretch !important;
+  }
+
+  html body .wf-client-landing .wf-primary-cta,
+  html body .wf-client-landing .wf-secondary-cta,
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final .wf-primary-cta,
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final .wf-secondary-cta {
+    min-height: clamp(52px, 3.9vw, 76px) !important;
+    padding-inline: clamp(16px, 1.35vw, 26px) !important;
+    border-radius: clamp(11px, .8vw, 16px) !important;
+    font-size: clamp(14px, 1.05vw, 20px) !important;
+    gap: clamp(9px, .8vw, 14px) !important;
+    white-space: nowrap !important;
+  }
+
+  html body .wf-client-landing .wf-primary-cta > .wf-icon,
+  html body .wf-client-landing .wf-secondary-cta > .wf-icon,
+  html body .wf-client-landing .wf-secondary-cta .wf-play {
+    width: clamp(24px, 1.8vw, 34px) !important;
+    min-width: clamp(24px, 1.8vw, 34px) !important;
+    height: clamp(24px, 1.8vw, 34px) !important;
+  }
+
+  html body .wf-client-landing .wf-hero-visual--client,
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    align-self: start !important;
+    justify-self: end !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: flex-start !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+
+  html body .wf-client-landing .wf-hero-visual--client picture,
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final picture {
+    width: min(100%, clamp(560px, 58vw, 1040px)) !important;
+    max-width: none !important;
+    margin: clamp(-8px, -.45vw, 0px) 0 0 auto !important;
+    display: block !important;
+  }
+
+  html body .wf-client-landing .wf-hero-visual--client img,
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: clamp(360px, 33vw, 600px) !important;
+    max-width: none !important;
+    object-fit: contain !important;
+    object-position: right top !important;
+    display: block !important;
+  }
+
+  html body .wf-client-landing .wf-actions-grid--client {
+    position: relative !important;
+    z-index: 8 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: clamp(14px, 1.35vw, 28px) !important;
+    width: 100% !important;
+    margin: clamp(-88px, -4.9vw, -54px) 0 0 !important;
+    padding: 0 !important;
+    align-items: stretch !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-client-landing .wf-action-card {
+    min-height: clamp(86px, 7.1vw, 118px) !important;
+    grid-template-columns: clamp(52px, 4.7vw, 78px) minmax(0, 1fr) 0 !important;
+    gap: clamp(10px, 1vw, 18px) !important;
+    padding: clamp(14px, 1.25vw, 22px) clamp(16px, 1.45vw, 28px) !important;
+    border-radius: clamp(13px, .9vw, 18px) !important;
+    box-shadow: 0 14px 38px rgba(7, 19, 93, .10) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  html body .wf-client-landing .wf-action-card__icon,
+  html body .wf-client-landing .wf-action-card__icon .wf-icon,
+  html body .wf-client-landing .wf-action-card__icon .wf-icon--image {
+    width: clamp(50px, 4.4vw, 74px) !important;
+    height: clamp(50px, 4.4vw, 74px) !important;
+  }
+
+  html body .wf-client-landing .wf-action-card strong {
+    font-size: clamp(13px, 1.15vw, 20px) !important;
+    line-height: 1.08 !important;
+    margin: 0 !important;
+  }
+
+  html body .wf-client-landing .wf-action-card small,
+  html body .wf-client-landing .wf-action-card__arrow {
+    display: none !important;
+  }
+
+  html body .wf-client-landing .wf-info-row#wf-why-use,
+  html body .wf-client-landing #wf-why-use.wf-info-row {
+    position: relative !important;
+    z-index: 2 !important;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 44%) minmax(0, 56%) !important;
+    gap: clamp(14px, 1.45vw, 26px) !important;
+    align-items: stretch !important;
+    margin: clamp(16px, 1.6vw, 30px) 0 0 !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-house-card {
+    position: relative !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: clamp(150px, 11vw, 210px) !important;
+    display: grid !important;
+    grid-template-columns: minmax(160px, 42%) minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: clamp(18px, 1.5vw, 28px) !important;
+    padding: clamp(16px, 1.4vw, 24px) clamp(22px, 1.9vw, 36px) !important;
+    border: 1px solid #d8e1f0 !important;
+    border-radius: clamp(13px, .9vw, 18px) !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-house-card::after {
+    content: "" !important;
+    position: absolute !important;
+    right: clamp(18px, 2.6vw, 52px) !important;
+    bottom: clamp(14px, 1.4vw, 28px) !important;
+    width: clamp(68px, 7vw, 120px) !important;
+    height: clamp(40px, 4.5vw, 78px) !important;
+    background-image: url("data:image/svg+xml,%3Csvg width='128' height='82' viewBox='0 0 128 82' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 66C29 49 48 56 69 39C82 28 92 17 108 19' stroke='%23b40824' stroke-width='3.2' stroke-linecap='round' stroke-dasharray='3 9'/%3E%3Cpath d='M108 3C98.4 3 91 10.4 91 20c0 12.4 17 31.5 17 31.5S125 32.4 125 20C125 10.4 117.6 3 108 3Z' fill='%23b40824'/%3E%3Ccircle cx='108' cy='20' r='6.3' fill='white'/%3E%3Ccircle cx='108' cy='20' r='2.7' fill='%23b40824'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    background-position: center !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-house-card img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: clamp(108px, 8.5vw, 160px) !important;
+    object-fit: contain !important;
+    object-position: center left !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-house-card > div {
+    min-width: 0 !important;
+    position: relative !important;
+    z-index: 1 !important;
+    padding-right: clamp(48px, 8vw, 132px) !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-house-card h2 {
+    margin: 0 0 clamp(8px, .8vw, 14px) !important;
+    font-size: clamp(19px, 1.55vw, 29px) !important;
+    line-height: 1.08 !important;
+    letter-spacing: -.03em !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-house-card p {
+    max-width: 520px !important;
+    margin: 0 !important;
+    font-size: clamp(13px, 1.02vw, 18px) !important;
+    line-height: 1.35 !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-services-showcase,
+  html body .wf-client-landing .wf-services-showcase {
+    width: 100% !important;
+    min-width: 0 !important;
+    align-self: stretch !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: stretch !important;
+  }
+
+  html body .wf-client-landing .wf-services-showcase__viewport {
+    height: 100% !important;
+    min-height: clamp(150px, 11vw, 210px) !important;
+    aspect-ratio: auto !important;
+    border-radius: clamp(13px, .9vw, 18px) !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1180px) {
+  html body .wf-client-landing .wf-landing-main {
+    width: calc(100vw - clamp(24px, 3vw, 44px)) !important;
+  }
+
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final,
+  html body .wf-client-landing .wf-hero--client {
+    grid-template-columns: minmax(310px, 43%) minmax(0, 57%) !important;
+    min-height: clamp(330px, 34vw, 430px) !important;
+    padding-bottom: clamp(62px, 6vw, 84px) !important;
+  }
+
+  html body .wf-client-landing .wf-hero h1 {
+    font-size: clamp(34px, 4vw, 47px) !important;
+  }
+
+  html body .wf-client-landing .wf-hero p {
+    font-size: clamp(13px, 1.45vw, 16px) !important;
+  }
+
+  html body .wf-client-landing .wf-hero-buttons {
+    max-width: 100% !important;
+    gap: 10px !important;
+  }
+
+  html body .wf-client-landing .wf-primary-cta,
+  html body .wf-client-landing .wf-secondary-cta {
+    min-height: 48px !important;
+    padding-inline: 12px !important;
+    font-size: clamp(12px, 1.3vw, 15px) !important;
+  }
+
+  html body .wf-client-landing .wf-hero-visual--client picture {
+    width: min(100%, clamp(420px, 54vw, 610px)) !important;
+  }
+
+  html body .wf-client-landing .wf-hero-visual--client img {
+    max-height: clamp(300px, 33vw, 420px) !important;
+  }
+
+  html body .wf-client-landing .wf-actions-grid--client {
+    gap: 10px !important;
+    margin-top: clamp(-72px, -5.5vw, -46px) !important;
+  }
+
+  html body .wf-client-landing .wf-action-card {
+    min-height: 74px !important;
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    padding: 10px 12px !important;
+  }
+
+  html body .wf-client-landing .wf-action-card__icon,
+  html body .wf-client-landing .wf-action-card__icon .wf-icon,
+  html body .wf-client-landing .wf-action-card__icon .wf-icon--image {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  html body .wf-client-landing .wf-action-card strong {
+    font-size: clamp(11px, 1.25vw, 14px) !important;
+  }
+
+  html body .wf-client-landing .wf-info-row#wf-why-use,
+  html body .wf-client-landing #wf-why-use.wf-info-row {
+    grid-template-columns: minmax(0, 45%) minmax(0, 55%) !important;
+    gap: 12px !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-house-card {
+    grid-template-columns: minmax(120px, 39%) minmax(0, 1fr) !important;
+    padding: 12px 14px !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-house-card > div {
+    padding-right: clamp(28px, 6vw, 80px) !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-house-card h2 {
+    font-size: clamp(16px, 1.8vw, 21px) !important;
+  }
+
+  html body .wf-client-landing #wf-why-use > .wf-house-card p {
+    font-size: clamp(11px, 1.2vw, 14px) !important;
+  }
+}

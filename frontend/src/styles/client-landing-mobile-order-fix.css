@@ -219,7 +219,7 @@
     max-width: 148px !important;
   }
 
-  .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-mobile-user span,
+  .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
   .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon--chevron {
     display: none !important;
   }
@@ -248,22 +248,7 @@
   }
 }
 
-@media (max-width: 900px) {
-  .wf-client-landing .wf-footer.wf-footer--client-final .wf-footer-links button:nth-child(2) {
-    font-size: 0 !important;
-  }
-
-  .wf-client-landing .wf-footer.wf-footer--client-final .wf-footer-links button:nth-child(2)::after {
-    content: "Perguntas frequentes" !important;
-    display: block !important;
-    color: #003bd9 !important;
-    font-size: clamp(11px, 3.1vw, 15px) !important;
-    font-weight: 650 !important;
-    line-height: 1.12 !important;
-    text-align: center !important;
-  }
-}
-
+/* Removed duplicated mobile footer label generated with ::after. The real button text is used. */
 /* Carousel interaction and progress feedback. */
 .wf-services-showcase__viewport {
   cursor: grab !important;
@@ -450,7 +435,7 @@
     max-width: 148px !important;
   }
 
-  .wf-navbar.wf-navbar--client .wf-client-mobile-user span,
+  .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
   .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon--chevron {
     display: none !important;
   }
@@ -1348,7 +1333,7 @@
     max-width: min(100%, 148px) !important;
   }
 
-  .wf-navbar.wf-navbar--client .wf-client-mobile-user span,
+  .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
   .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon--chevron {
     display: none !important;
   }

@@ -23,20 +23,43 @@ public class AddressAutocompleteController {
     @GetMapping("/autocomplete")
     public List<AddressSuggestionResponse> autocomplete(
             @RequestParam String text,
-            @RequestParam(required = false, defaultValue = "") String city,
-            @RequestParam(required = false, defaultValue = "MG") String state,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String cidade,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String uf,
+            @RequestParam(required = false) String estado,
             @RequestParam(required = false, defaultValue = "") String cityPlaceId,
             @RequestParam(required = false) Double cityLat,
             @RequestParam(required = false) Double cityLon
     ) {
-        return addressAutocompleteService.search(text, city, state, cityPlaceId, cityLat, cityLon);
+        return addressAutocompleteService.search(
+                text,
+                firstNonBlank(city, cidade),
+                firstNonBlank(state, uf, estado, "MG"),
+                cityPlaceId,
+                cityLat,
+                cityLon);
     }
 
     @GetMapping("/cidade")
     public AddressCityContextResponse resolveCity(
-            @RequestParam String city,
-            @RequestParam(required = false, defaultValue = "MG") String state
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String cidade,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String uf,
+            @RequestParam(required = false) String estado
     ) {
-        return addressAutocompleteService.resolveCity(city, state);
+        return addressAutocompleteService.resolveCity(
+                firstNonBlank(city, cidade),
+                firstNonBlank(state, uf, estado, "MG"));
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.trim().isBlank()) {
+                return value.trim();
+            }
+        }
+        return "";
     }
 }

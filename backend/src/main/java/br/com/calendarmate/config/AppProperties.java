@@ -75,6 +75,27 @@ public class AppProperties {
     @Value("${app.admin.booking.maxFutureMonthsAhead:${ADMIN_BOOKING_MAX_FUTURE_MONTHS_AHEAD:6}}")
     private int adminBookingMaxFutureMonthsAhead;
 
+    @Value("${app.debug.otpCode:${DEBUG_OTP_CODE:false}}")
+    private boolean debugOtpCode;
+
+    @Value("${app.debug.devAdminEnabled:${DEBUG_ADMIN_ENABLED:true}}")
+    private boolean debugDevAdminEnabled;
+
+    @Value("${app.debug.devAdminPhone:${DEBUG_ADMIN_PHONE:31995438467}}")
+    private String debugDevAdminPhone;
+
+    @Value("${app.debug.devAdminName:${DEBUG_ADMIN_NAME:Admin Debug}}")
+    private String debugDevAdminName;
+
+    @Value("${app.debug.devAdminRole:${DEBUG_ADMIN_ROLE:OWNER}}")
+    private String debugDevAdminRole;
+
+    @Value("${spring.profiles.active:${SPRING_PROFILES_ACTIVE:}}")
+    private String springProfilesActive;
+
+    @Value("${app.env:${APP_ENV:}}")
+    private String appEnv;
+
     @Value("${frontend.url:${FRONTEND_URL:}}")
     private String frontendUrl;
 
@@ -314,7 +335,14 @@ public class AppProperties {
     public Duration getAdminSessionTtl() { return Duration.ofDays(Math.max(1, Math.min(adminSessionTtlDays, 30))); }
     public String getAdminUsersCsv() {
         String value = adminUsersCsv == null ? "" : adminUsersCsv.trim();
-        return value;
+        String debugEntry = buildDebugAdminSeedEntry();
+        if (debugEntry.isBlank()) {
+            return value;
+        }
+        if (value.isBlank()) {
+            return debugEntry;
+        }
+        return value + ";" + debugEntry;
     }
     public int getAdminBookingActivePastDays() { return Math.max(0, Math.min(adminBookingActivePastDays, 90)); }
     public int getAdminBookingMaxFutureMonthsAhead() { return Math.max(1, Math.min(adminBookingMaxFutureMonthsAhead, 24)); }
@@ -393,5 +421,47 @@ public class AppProperties {
     private String cleanOrDefault(String value, String fallback) {
         String cleaned = clean(value);
         return cleaned.isBlank() ? fallback : cleaned;
+    }
+
+    public boolean isOtpDebugLoggingEnabled() {
+        return debugOtpCode && isLocalDebugProfile();
+    }
+
+    private String buildDebugAdminSeedEntry() {
+        if (!debugDevAdminEnabled || !isLocalDebugProfile()) {
+            return "";
+        }
+        String phone = clean(debugDevAdminPhone);
+        if (phone.isBlank()) {
+            return "";
+        }
+        String name = cleanOrDefault(debugDevAdminName, "Admin Debug");
+        String role = cleanOrDefault(debugDevAdminRole, "OWNER").toUpperCase(Locale.ROOT);
+        return phone + "|" + name + "|" + role;
+    }
+
+    private boolean isLocalDebugProfile() {
+        String merged = (clean(springProfilesActive) + "," + clean(appEnv)).toLowerCase(Locale.ROOT);
+        boolean profileMatch = !merged.isBlank() && Arrays.stream(merged.split("[,;\\s]+"))
+                .map(String::trim)
+                .filter(token -> !token.isBlank())
+                .anyMatch(token -> token.equals("local") || token.equals("dev") || token.equals("development") || token.equals("test"));
+        if (profileMatch) {
+            return true;
+        }
+        return isDefaultLocalDebugConfiguration();
+    }
+
+    private boolean isDefaultLocalDebugConfiguration() {
+        boolean dummyVerification = "DUMMY".equalsIgnoreCase(getVerificationChannel());
+        boolean frontendLooksLocal = getFrontendUrl().isBlank()
+                || containsLocalhost(getFrontendUrl())
+                || containsLocalhost(getPublicDomain());
+        return dummyVerification && frontendLooksLocal && !isSupabaseEnabled();
+    }
+
+    private boolean containsLocalhost(String value) {
+        String normalized = clean(value).toLowerCase(Locale.ROOT);
+        return normalized.contains("localhost") || normalized.contains("127.0.0.1");
     }
 }

@@ -22,6 +22,8 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.TimePeriod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.*;
@@ -29,6 +31,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ServicoService {
+    private static final Logger log = LoggerFactory.getLogger(ServicoService.class);
 
     private final CalendarClient calendar;
     private final TokenUtil tokenUtil;
@@ -689,6 +692,7 @@ public class ServicoService {
     }
 
     public List<AvailableSlotResponse> getAvailableSlots(LocalDate date, String city, int slotMinutes) throws IOException {
+        log.info("Availability request date={} city={} slotMinutes={}", date, normalizeLogValue(city), slotMinutes);
         validateDateWindow(date);
 
         if (slotMinutes != props.getBookingSlotMinutes()) {
@@ -753,7 +757,15 @@ public class ServicoService {
             current = current.plusMinutes(slotMinutes);
         }
 
+        log.info("Availability resolved date={} city={} slotMinutes={} slots={}", date, normalizeLogValue(city), slotMinutes, slots.size());
         return slots;
+    }
+
+    private static String normalizeLogValue(String value) {
+        if (value == null || value.isBlank()) {
+            return "all";
+        }
+        return value.trim();
     }
 
     private BookingWindow resolveBookingWindow(LocalDate date, LocalTime appointmentTime, String city) {

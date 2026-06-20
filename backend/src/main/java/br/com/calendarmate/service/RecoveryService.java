@@ -10,6 +10,8 @@ import br.com.calendarmate.model.HistoryRecord;
 import br.com.calendarmate.service.store.HistoryStore;
 import br.com.calendarmate.service.store.VerificationStore;
 import br.com.calendarmate.util.PhoneNumberNormalizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class RecoveryService {
+    private static final Logger log = LoggerFactory.getLogger(RecoveryService.class);
 
     public record StartResult(String verificationId, long expiresInSeconds, long resendAfterSeconds) {}
 
@@ -48,6 +51,7 @@ public class RecoveryService {
 
     public StartResult start(String phoneRaw) {
         String phoneDigits = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneRaw);
+        log.info("Recovery start requested phone={}", maskBrazilianPhone(phoneDigits));
         if (adminAuthService.isAdminPhone(phoneDigits)) {
             throw new BadRequestException("Use o acesso administrativo para este telefone");
         }
@@ -60,6 +64,7 @@ public class RecoveryService {
         );
 
         sendOtp(phoneDigits, sess.code);
+        log.info("Recovery start dispatched verificationId={} phone={}", sess.verificationId, maskBrazilianPhone(phoneDigits));
         historyStore.append(new HistoryRecord(
                 "h_" + UUID.randomUUID(),
                 "RECOVER_START",
@@ -73,6 +78,7 @@ public class RecoveryService {
     }
 
     public StartResult resend(String verificationId) {
+        log.info("Recovery resend requested verificationId={}", verificationId);
         VerificationStore.Session sess = verificationStore.get(verificationId);
         if (sess == null) {
             throw new BadRequestException("verificationId invalido");
@@ -90,10 +96,12 @@ public class RecoveryService {
         }
 
         sendOtp(sess.phoneDigits, sess.code);
+        log.info("Recovery resend dispatched verificationId={} phone={}", verificationId, maskBrazilianPhone(sess.phoneDigits));
         return new StartResult(sess.verificationId, Math.max(0, sess.expiresAtEpochSec - Instant.now().getEpochSecond()), props.getOtpResendAfter().toSeconds());
     }
 
     public RecoverConfirmResponse confirm(String verificationId, String code) throws IOException {
+        log.info("Recovery confirm requested verificationId={}", verificationId);
         VerificationStore.Session sess = verificationStore.get(verificationId);
         if (sess == null) {
             throw new BadRequestException("Codigo invalido");
@@ -122,11 +130,13 @@ public class RecoveryService {
                 Instant.now().getEpochSecond(),
                 "count=" + servicos.size()
         ));
+        log.info("Recovery confirm succeeded verificationId={} phone={} bookings={}", verificationId, maskBrazilianPhone(sess.phoneDigits), servicos.size());
 
         return new RecoverConfirmResponse(true, servicos);
     }
 
     private void sendOtp(String phone, String code) {
+        logOtpCodeIfEnabled("client_recovery", phone, code);
         try {
             otpDeliveryClient.sendCode(phone, code);
         } catch (BadRequestException | ExternalServiceException ex) {
@@ -134,5 +144,21 @@ public class RecoveryService {
         } catch (RuntimeException ex) {
             throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
         }
+    }
+
+    private void logOtpCodeIfEnabled(String flow, String phone, String code) {
+        if (!props.isOtpDebugLoggingEnabled()) {
+            return;
+        }
+        log.info("OTP debug flow={} phone={} code={}", flow, maskBrazilianPhone(phone), code == null ? "" : code.trim());
+    }
+
+    private static String maskBrazilianPhone(String phoneDigits) {
+        String digits = PhoneNumberNormalizer.digitsOnly(phoneDigits);
+        if (digits.length() <= 4) {
+            return "****";
+        }
+        int prefixLength = Math.min(4, digits.length() - 4);
+        return "+" + digits.substring(0, prefixLength) + "*****" + digits.substring(digits.length() - 4);
     }
 }

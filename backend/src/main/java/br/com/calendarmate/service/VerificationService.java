@@ -13,6 +13,8 @@ import br.com.calendarmate.service.store.PendingStore;
 import br.com.calendarmate.service.store.VerificationStore;
 import br.com.calendarmate.util.PhoneNumberNormalizer;
 import com.google.api.services.calendar.model.Event;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -20,6 +22,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class VerificationService {
+    private static final Logger log = LoggerFactory.getLogger(VerificationService.class);
 
     public record StartResult(
             String verificationId,
@@ -77,6 +80,7 @@ public class VerificationService {
         }
 
         String phoneDigits = normalizePhone(phoneRaw);
+        log.info("Verification start requested eventId={} phone={}", eventId, maskBrazilianPhone(phoneDigits));
         if (adminAuthService.isAdminPhone(phoneDigits)) {
             throw new ForbiddenException("Telefone reservado para acesso administrativo");
         }
@@ -111,6 +115,7 @@ public class VerificationService {
         );
 
         sendOtp(phoneDigits, sess.code);
+        log.info("Verification start dispatched eventId={} verificationId={} phone={}", eventId, sess.verificationId, maskBrazilianPhone(phoneDigits));
 
         return new StartResult(
                 sess.verificationId,
@@ -120,6 +125,7 @@ public class VerificationService {
     }
 
     public StartResult resend(String verificationId) {
+        log.info("Verification resend requested verificationId={}", verificationId);
         VerificationStore.Session sess = store.get(verificationId);
         if (sess == null) {
             throw new BadRequestException("verificationId inválido");
@@ -137,6 +143,7 @@ public class VerificationService {
         }
 
         sendOtp(sess.phoneDigits, sess.code);
+        log.info("Verification resend dispatched verificationId={} phone={}", verificationId, maskBrazilianPhone(sess.phoneDigits));
 
         return new StartResult(
                 sess.verificationId,
@@ -146,6 +153,7 @@ public class VerificationService {
     }
 
     public void confirm(String verificationId, String code) throws IOException {
+        log.info("Verification confirm requested verificationId={}", verificationId);
         VerificationStore.Session sess = store.get(verificationId);
         if (sess == null) {
             throw new BadRequestException("Código inválido");
@@ -176,9 +184,11 @@ public class VerificationService {
 
         pendingStore.deleteByEventId(sess.scopeId);
         store.delete(verificationId);
+        log.info("Verification confirm succeeded verificationId={} eventId={}", verificationId, sess.scopeId);
     }
 
     private void sendOtp(String phone, String code) {
+        logOtpCodeIfEnabled("client_verify", phone, code);
         try {
             otpDeliveryClient.sendCode(phone, code);
         } catch (BadRequestException | ExternalServiceException ex) {
@@ -186,6 +196,13 @@ public class VerificationService {
         } catch (RuntimeException ex) {
             throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
         }
+    }
+
+    private void logOtpCodeIfEnabled(String flow, String phone, String code) {
+        if (!props.isOtpDebugLoggingEnabled()) {
+            return;
+        }
+        log.info("OTP debug flow={} phone={} code={}", flow, maskBrazilianPhone(phone), code == null ? "" : code.trim());
     }
 
     private static String normalizePhone(String phone) {
@@ -198,6 +215,15 @@ public class VerificationService {
             throw new BadRequestException("Telefone inválido");
         }
         return d;
+    }
+
+    private static String maskBrazilianPhone(String phoneDigits) {
+        String digits = PhoneNumberNormalizer.digitsOnly(phoneDigits);
+        if (digits.length() <= 4) {
+            return "****";
+        }
+        int prefixLength = Math.min(4, digits.length() - 4);
+        return "+" + digits.substring(0, prefixLength) + "*****" + digits.substring(digits.length() - 4);
     }
 
     private static Map<String, String> privateExt(Event e) {

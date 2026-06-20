@@ -71,6 +71,7 @@ public class AdminAuthService {
     }
 
     public AdminAuthStartResponse resend(String verificationId) {
+        log.info("Admin auth resend requested verificationId={}", verificationId);
         VerificationStore.Session session = verificationStore.get(verificationId);
         if (session == null || !session.scopeId.startsWith(SCOPE_PREFIX)) {
             throw new BadRequestException("verificationId invalido");
@@ -88,6 +89,7 @@ public class AdminAuthService {
         }
 
         sendOtp(session.phoneDigits, session.code);
+        log.info("Admin auth resend dispatched verificationId={} phone={}", verificationId, maskBrazilianPhone(session.phoneDigits));
         return new AdminAuthStartResponse(
                 session.verificationId,
                 Math.max(0, session.expiresAtEpochSec - Instant.now().getEpochSecond()),
@@ -96,6 +98,7 @@ public class AdminAuthService {
     }
 
     public AdminAuthConfirmResponse confirm(String verificationId, String code) {
+        log.info("Admin auth confirm requested verificationId={}", verificationId);
         VerificationStore.Session otp = verificationStore.get(verificationId);
         if (otp == null || !otp.scopeId.startsWith(SCOPE_PREFIX)) {
             throw new BadRequestException("Codigo invalido");
@@ -127,6 +130,7 @@ public class AdminAuthService {
         adminSessionStore.save(session);
         adminUserStore.updateLastLogin(user.getId(), now);
         verificationStore.delete(verificationId);
+        log.info("Admin auth confirm succeeded verificationId={} adminId={}", verificationId, user.getId());
 
         AdminAuthConfirmResponse out = new AdminAuthConfirmResponse();
         out.setSessionToken(rawToken);
@@ -233,6 +237,7 @@ public class AdminAuthService {
     }
 
     private void sendOtp(String phone, String code) {
+        logOtpCodeIfEnabled("admin_auth", phone, code);
         try {
             otpDeliveryClient.sendCode(phone, code);
         } catch (BadRequestException ex) {
@@ -242,6 +247,13 @@ public class AdminAuthService {
         } catch (RuntimeException ex) {
             throw new ExternalServiceException("Nao foi possivel enviar o codigo agora", ex);
         }
+    }
+
+    private void logOtpCodeIfEnabled(String flow, String phone, String code) {
+        if (!props.isOtpDebugLoggingEnabled()) {
+            return;
+        }
+        log.info("OTP debug flow={} phone={} code={}", flow, maskBrazilianPhone(phone), code == null ? "" : code.trim());
     }
 
     private AdminUser findActiveAdminByPhone(String phone, String maskedPhone) {

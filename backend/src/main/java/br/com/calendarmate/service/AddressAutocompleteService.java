@@ -4,6 +4,7 @@ import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.dto.AddressCityContextResponse;
 import br.com.calendarmate.dto.AddressSuggestionResponse;
 import br.com.calendarmate.exception.BadRequestException;
+import br.com.calendarmate.exception.DetailedBadRequestException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
@@ -82,17 +83,31 @@ public class AddressAutocompleteService {
         String query = clean(text);
         if (query.length() < 3) return List.of();
 
+        String normalizedState = validateAndNormalizeState(state, "state");
+
         String apiKey = props.getGeoapifyApiKey();
         if (apiKey.isBlank()) {
-            throw new BadRequestException("Autocomplete de endereco nao configurado no backend.");
+            throw new DetailedBadRequestException(
+                    "ADDRESS_AUTOCOMPLETE_UNAVAILABLE",
+                    "Autocomplete de endereço não está disponível nesta configuração local.",
+                    "address",
+                    Map.of(
+                            "provider", "geoapify",
+                            "autocompleteReady", false));
         }
 
-        AddressCityContextResponse cityContext = providedCityContext(city, state, cityPlaceId, cityLat, cityLon);
+        AddressCityContextResponse cityContext = providedCityContext(city, normalizedState, cityPlaceId, cityLat, cityLon);
         if (!hasFilterConstraint(cityContext)) {
-            cityContext = resolveCity(city, state);
+            cityContext = resolveCity(city, normalizedState);
         }
         if (!hasFilterConstraint(cityContext)) {
-            throw new BadRequestException("Nao foi possivel restringir o autocomplete para a cidade selecionada.");
+            throw new DetailedBadRequestException(
+                    "ADDRESS_CITY_CONTEXT_UNRESOLVED",
+                    "Não foi possível validar a cidade selecionada para restringir o autocomplete.",
+                    "city",
+                    Map.of(
+                            "city", clean(city),
+                            "state", normalizedState));
         }
 
         try {
@@ -133,32 +148,45 @@ public class AddressAutocompleteService {
     public AddressCityContextResponse resolveCity(String city, String state) {
         String cleanCity = clean(city);
         if (cleanCity.isBlank()) {
-            throw new BadRequestException("Cidade e obrigatoria para resolver o autocomplete.");
+            throw new DetailedBadRequestException(
+                    "ADDRESS_CITY_REQUIRED",
+                    "Cidade é obrigatória para validar o contexto do endereço.",
+                    "city",
+                    Map.of("city", cleanCity));
         }
+        String normalizedState = validateAndNormalizeState(state, "state");
 
         String apiKey = props.getGeoapifyApiKey();
         if (apiKey.isBlank()) {
-            throw new BadRequestException("Autocomplete de endereco nao configurado no backend.");
+            return unresolvedCityContext(cleanCity, normalizedState, "backend-geoapify-not-configured");
         }
 
-        String cacheKey = normalizeForMatch(cleanCity) + "|" + normalizeUf(state);
+        String cacheKey = normalizeForMatch(cleanCity) + "|" + normalizedState;
         AddressCityContextResponse cached = cityCache.get(cacheKey);
         if (cached != null) {
             return cached;
         }
 
-        URI uri = buildCityUri(cleanCity, state, apiKey);
+        URI uri = buildCityUri(cleanCity, normalizedState, apiKey);
 
         try {
             ResponseEntity<Map> response = http.exchange(uri, HttpMethod.GET, null, Map.class);
             Map<String, Object> body = response.getBody();
             if (body == null) {
-                throw new BadRequestException("Geoapify nao retornou dados para a cidade selecionada.");
+                throw new DetailedBadRequestException(
+                        "ADDRESS_CITY_NOT_FOUND",
+                        "Não foi possível localizar a cidade selecionada.",
+                        "city",
+                        Map.of("city", cleanCity, "state", normalizedState));
             }
 
-            AddressCityContextResponse resolved = pickMatchingCity(extractResults(body), cleanCity, state);
+            AddressCityContextResponse resolved = pickMatchingCity(extractResults(body), cleanCity, normalizedState);
             if (!hasFilterConstraint(resolved)) {
-                throw new BadRequestException("Geoapify nao retornou place_id ou coordenadas para a cidade selecionada.");
+                throw new DetailedBadRequestException(
+                        "ADDRESS_CITY_CONTEXT_UNRESOLVED",
+                        "Não foi possível validar a cidade selecionada para restringir o autocomplete.",
+                        "city",
+                        Map.of("city", cleanCity, "state", normalizedState));
             }
 
             cityCache.put(cacheKey, resolved);
@@ -594,6 +622,36 @@ public class AddressAutocompleteService {
         String text = clean(value).toUpperCase(Locale.ROOT);
         if (text.matches("^[A-Z]{2}$")) return text;
         return BRAZIL_STATE_TO_UF.getOrDefault(normalizeForMatch(value), "");
+    }
+
+    private String validateAndNormalizeState(String state, String field) {
+        String cleanState = clean(state);
+        if (cleanState.isBlank()) {
+            return "";
+        }
+
+        String normalized = normalizeUf(cleanState);
+        if (!normalized.isBlank()) {
+            return normalized;
+        }
+
+        throw new DetailedBadRequestException(
+                "ADDRESS_STATE_INVALID",
+                "Estado inválido. Use a UF, como MG, ou o nome completo do estado.",
+                field,
+                Map.of("state", cleanState));
+    }
+
+    private AddressCityContextResponse unresolvedCityContext(String city, String state, String reason) {
+        return new AddressCityContextResponse(
+                clean(city),
+                clean(state),
+                "",
+                null,
+                null,
+                Map.of(
+                        "autocompleteReady", false,
+                        "reason", reason));
     }
 
     private double number(Object value) {

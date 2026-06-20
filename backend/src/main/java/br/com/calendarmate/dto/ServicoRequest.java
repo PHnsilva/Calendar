@@ -36,8 +36,7 @@ public class ServicoRequest {
     @NotBlank
     private String clientPhone;
 
-    @NotBlank
-    @Pattern(regexp = "^\\d{8}$", message = "CEP deve ter 8 dígitos (somente números)")
+    @Pattern(regexp = "^$|^\\d{8}$", message = "CEP deve ter 8 dígitos (somente números)")
     private String clientCep;
 
     @NotBlank

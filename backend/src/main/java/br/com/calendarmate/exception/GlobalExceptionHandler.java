@@ -20,9 +20,13 @@ public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private ResponseEntity<ApiError> build(HttpStatus status, String code, String msg, HttpServletRequest req) {
+        return build(status, code, msg, req, null, null);
+    }
+
+    private ResponseEntity<ApiError> build(HttpStatus status, String code, String msg, HttpServletRequest req, String field, Object details) {
         return ResponseEntity
                 .status(status)
-                .body(new ApiError(status.value(), code, msg, req.getRequestURI()));
+                .body(new ApiError(status.value(), code, msg, req.getRequestURI(), field, details));
     }
 
     @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
@@ -56,6 +60,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiError> badRequest(BadRequestException ex, HttpServletRequest req) {
+        if (ex instanceof DetailedBadRequestException detailed) {
+            return build(HttpStatus.BAD_REQUEST, detailed.getCode(), detailed.getMessage(), req, detailed.getField(), detailed.getDetails());
+        }
         return build(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), req);
     }
 

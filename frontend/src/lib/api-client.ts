@@ -4,16 +4,27 @@ export class ApiError extends Error {
   status: number;
   payload: unknown;
   code: string;
+  method: string;
+  url: string;
 
-  constructor(message: string, status: number, payload: unknown) {
+  constructor(
+    message: string,
+    status: number,
+    payload: unknown,
+    request: { method?: string; url?: string; code?: string } = {},
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.payload = payload;
-    this.code =
-      typeof payload === "object" && payload !== null && "error" in payload
-        ? String((payload as { error?: unknown }).error ?? "")
-        : "";
+    this.code = request.code
+      ?? (
+        typeof payload === "object" && payload !== null && "error" in payload
+          ? String((payload as { error?: unknown }).error ?? "")
+          : ""
+      );
+    this.method = request.method ?? "";
+    this.url = request.url ?? "";
   }
 }
 
@@ -51,32 +62,61 @@ async function parseResponse(response: Response) {
   }
 }
 
+function isDevelopmentMode(): boolean {
+  return typeof import.meta !== "undefined" && Boolean(import.meta.env?.DEV);
+}
+
+function logApiFailure(method: string, url: string, status: number | string, payload: unknown) {
+  if (!isDevelopmentMode()) return;
+  console.error("[api]", {
+    method,
+    url,
+    status,
+    payload: payload ?? null,
+  });
+}
+
 export async function apiClient<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, headers, query, adminToken, ...rest } = options;
+  const method = String(rest.method ?? "GET").toUpperCase();
+  const url = buildUrl(path, query);
 
-  const response = await fetch(buildUrl(path, query), {
-    ...rest,
-    headers: {
-      Accept: "application/json",
-      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-      ...(adminToken ? { "X-ADMIN-SESSION": adminToken } : {}),
-      ...headers,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...rest,
+      method,
+      headers: {
+        Accept: "application/json",
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...(adminToken ? { "X-ADMIN-SESSION": adminToken } : {}),
+        ...headers,
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch (error) {
+    const isTimeout = typeof error === "object" && error !== null && "name" in error && (error as { name?: unknown }).name === "AbortError";
+    const message = isTimeout
+      ? "A requisição demorou mais do que o esperado. Tente novamente."
+      : "Nao foi possivel conectar ao servico agora.";
+    const status = isTimeout ? 408 : 0;
+    const code = isTimeout ? "TIMEOUT_ERROR" : "NETWORK_ERROR";
+    logApiFailure(method, url, code, error);
+    throw new ApiError(message, status, null, { method, url, code });
+  }
 
   const payload = await parseResponse(response);
 
   if (!response.ok) {
-    const fallbackMessage = `Erro ${response.status} ao comunicar com o backend.`;
+    const fallbackMessage = `Nao foi possivel concluir esta acao agora (erro ${response.status}).`;
     const message =
       typeof payload === "string"
         ? payload
         : typeof payload === "object" && payload !== null && "message" in payload
           ? String((payload as { message?: unknown }).message ?? fallbackMessage)
           : fallbackMessage;
-
-    throw new ApiError(message, response.status, payload);
+    logApiFailure(method, url, response.status, payload);
+    throw new ApiError(message, response.status, payload, { method, url });
   }
 
   return payload as T;

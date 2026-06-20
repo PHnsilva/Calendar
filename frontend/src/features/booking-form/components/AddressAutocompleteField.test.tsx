@@ -13,6 +13,46 @@ beforeEach(() => {
 });
 
 describe("AddressAutocompleteField", () => {
+  it("does not resolve city context until the user actually starts typing an address", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { default: AddressAutocompleteField } = await import("./AddressAutocompleteField");
+
+    function Harness() {
+      const [value, setValue] = useState("");
+      return (
+        <AddressAutocompleteField
+          value={value}
+          selectedCity="Itabirito"
+          selectedState="MG"
+          onChange={setValue}
+          onSelectSuggestion={() => {}}
+        />
+      );
+    }
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness />
+      </QueryClientProvider>,
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const input = screen.getByPlaceholderText(/cidade selecionada: Itabirito\/MG/i);
+    await userEvent.click(input);
+    await userEvent.type(input, "ru");
+
+    await waitFor(() => {
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
   it("renders valid suggestions from the selected city and selects one", async () => {
     const selected: AddressSuggestion[] = [];
     const fetchMock = vi.fn()

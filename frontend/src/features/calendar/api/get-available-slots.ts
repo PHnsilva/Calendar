@@ -1,4 +1,5 @@
-import { apiClient } from "../../../lib/api-client";
+import { ApiError, apiClient } from "../../../lib/api-client";
+import { getAvailabilityErrorMessage } from "../../../lib/api-error-messages";
 import type { CalendarSlot } from "../types";
 
 type AvailableSlotLike =
@@ -82,14 +83,26 @@ function normalizeSlot(slot: AvailableSlotLike, date: string, durationMinutes: n
 }
 
 export async function getAvailableSlots(date: string, city = "", slotMinutes = 60, durationMinutes = slotMinutes): Promise<CalendarSlot[]> {
-  const response = await apiClient<AvailableResponseLike | null>("/api/servicos/available", {
-    method: "GET",
-    query: {
-      date,
-      city: city.trim() || undefined,
-      slotMinutes,
-    },
-  });
+  let response: AvailableResponseLike | null;
+  try {
+    response = await apiClient<AvailableResponseLike | null>("/api/servicos/available", {
+      method: "GET",
+      query: {
+        date,
+        city: city.trim() || undefined,
+        slotMinutes,
+      },
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(getAvailabilityErrorMessage(error), error.status, error.payload, {
+        code: error.code,
+        method: error.method,
+        url: error.url,
+      });
+    }
+    throw error;
+  }
 
   return toSlotArray(response)
     .map((slot) => normalizeSlot(slot, date, durationMinutes))

@@ -16,6 +16,13 @@ type GeoapifyAutocompleteResponse = {
   features?: { properties?: GeoapifyResult }[];
 };
 
+type BackendAddressErrorPayload = {
+  error?: string;
+  message?: string;
+  field?: string;
+  details?: Record<string, unknown> | null;
+};
+
 export type GeoapifyAddressSearchDebug = {
   inputValue: string;
   selectedCityName: string;
@@ -127,6 +134,32 @@ function normalizeUf(value?: unknown): string {
   const text = normalizeText(value).toUpperCase();
   if (/^[A-Z]{2}$/.test(text)) return text;
   return BRAZIL_STATE_TO_UF[normalizeForMatch(value)] ?? "";
+}
+
+function mapBackendAddressError(error: ApiError, fallback: string): Error {
+  const payload = (typeof error.payload === "object" && error.payload !== null ? error.payload : null) as BackendAddressErrorPayload | null;
+  const field = payload?.field ?? "";
+  const code = error.code || payload?.error || "";
+
+  if (error.status === 0) {
+    return new Error("Nao foi possivel conectar ao servico de enderecos.");
+  }
+  if (error.status === 404) {
+    return new Error("A busca de enderecos nao esta disponivel agora.");
+  }
+  if (code === "ADDRESS_STATE_INVALID" || field === "state") {
+    return new Error("Estado invalido para a busca de endereco. Use a UF, como MG.");
+  }
+  if (code === "ADDRESS_CITY_REQUIRED" || code === "ADDRESS_CITY_NOT_FOUND" || field === "city") {
+    return new Error(payload?.message || "Cidade invalida para a busca de endereco.");
+  }
+  if (code === "ADDRESS_AUTOCOMPLETE_UNAVAILABLE") {
+    return new Error("A busca automatica de endereco nao esta disponivel agora. Preencha rua, bairro e numero manualmente.");
+  }
+  if (error.status >= 500) {
+    return new Error("A busca de enderecos esta temporariamente indisponivel.");
+  }
+  return new Error(payload?.message || error.message || fallback);
 }
 
 function firstText(...values: unknown[]): string {
@@ -503,7 +536,7 @@ async function resolveCityThroughBackend(cityName: string, state?: string): Prom
       },
     });
   } catch (error) {
-    if (error instanceof ApiError) throw error;
+    if (error instanceof ApiError) throw mapBackendAddressError(error, "Nao foi possivel resolver a cidade para o autocomplete de endereco.");
     throw new Error("Nao foi possivel resolver a cidade para o autocomplete de endereco.");
   }
 }
@@ -666,7 +699,7 @@ async function searchAddressesThroughBackend(query: string, cityContext: Geoapif
     });
     return filtered;
   } catch (error) {
-    if (error instanceof ApiError) throw error;
+    if (error instanceof ApiError) throw mapBackendAddressError(error, "Nao foi possivel conectar ao backend de autocomplete de endereco.");
     throw new Error("Nao foi possivel conectar ao backend de autocomplete de endereco.");
   }
 }

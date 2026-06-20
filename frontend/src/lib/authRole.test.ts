@@ -9,6 +9,10 @@ describe('phone normalization', () => {
     expect(isValidMobilePhone('+55 31 99999-9999')).toBe(true);
   });
 
+  it('formats 10-digit landlines without forcing a mobile mask', () => {
+    expect(formatPhoneInput('3133334444')).toBe('(31) 3333-4444');
+  });
+
   it('does not silently transform foreign or long numbers into Brazilian mobiles', () => {
     expect(normalizePhone('+1 31999999999')).toBe('131999999999');
     expect(isValidMobilePhone('+1 31999999999')).toBe(false);

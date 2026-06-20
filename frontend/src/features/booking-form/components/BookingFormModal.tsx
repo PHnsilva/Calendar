@@ -427,7 +427,7 @@ export default function BookingFormModal({
   );
 
   const confirmedUnavailable = Boolean(confirmedDate && (confirmedDate < todayIso || confirmedDate > maxDate || disabledDateSet.has(confirmedDate)));
-  const { data: availableSlots = [], isLoading: isLoadingSlots, error: slotsError } = useAvailableSlots(
+  const { data: availableSlots = [], isLoading: isLoadingSlots, error: slotsError, refetch: refetchAvailableSlots } = useAvailableSlots(
     effectiveDate,
     effectiveCity,
     slotMinutes,
@@ -740,8 +740,8 @@ export default function BookingFormModal({
                 <div className="booking-day-picker__month-label">{monthTitle}</div>
                 {monthAvailability.isLoading ? <div className="booking-preview-modal__empty"><strong>Carregando dias disponiveis...</strong></div> : null}
                 {monthAvailability.hasError ? (
-                  <AlertNotice variant="warning" title="Falha ao carregar dias" compact>
-                    <p>Confira a conexao e tente novamente.</p>
+                  <AlertNotice variant="warning" title="Falha ao carregar dias" compact actionLabel="Tentar novamente" onAction={() => void monthAvailability.refetch()}>
+                    <p>{monthAvailability.error instanceof Error ? monthAvailability.error.message : 'Confira a conexao com o backend e tente novamente.'}</p>
                   </AlertNotice>
                 ) : null}
                 <div className="booking-day-picker__weekdays">
@@ -837,7 +837,7 @@ export default function BookingFormModal({
                   ) : null}
                   {isLoadingSlots ? <div className="booking-preview-modal__empty"><strong>Carregando horários...</strong></div> : null}
                   {slotsError ? (
-                    <AlertNotice variant="danger" title="Falha ao carregar horários" compact>
+                    <AlertNotice variant="danger" title="Falha ao carregar horários" compact actionLabel="Tentar novamente" onAction={() => void refetchAvailableSlots()}>
                       <p>{slotsError.message}</p>
                     </AlertNotice>
                   ) : null}

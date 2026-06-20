@@ -1,6 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { queryKeys } from "../../../lib/query-keys";
 import { isBookableDateInMonth, toIsoDate } from "../../../lib/dates";
+import { ApiError } from "../../../lib/api-client";
 import { getAvailableSlots } from "../api/get-available-slots";
 
 function shiftMonthStart(monthStart: string, delta: number): string {
@@ -22,6 +23,13 @@ function getDateRange(monthStart: string, monthsAhead: number): string[] {
   return Array.from({ length: safeMonthsAhead + 1 }, (_, index) => getMonthDates(shiftMonthStart(monthStart, index))).flat();
 }
 
+function shouldRetryRequest(failureCount: number, error: unknown): boolean {
+  if (failureCount >= 1) return false;
+  if (!(error instanceof ApiError)) return true;
+  if ([400, 401, 403, 404, 409, 422].includes(error.status)) return false;
+  return true;
+}
+
 export function useAvailableMonthDates(
   monthStart: string,
   enabled: boolean,
@@ -38,7 +46,7 @@ export function useAvailableMonthDates(
       queryFn: () => getAvailableSlots(date, city, slotMinutes, durationMinutes),
       enabled: enabled && isBookableDateInMonth(date, monthStart, monthsAhead),
       staleTime: 30_000,
-      retry: 1,
+      retry: shouldRetryRequest,
     })),
   });
 
@@ -47,12 +55,16 @@ export function useAvailableMonthDates(
     return (queries[index]?.data?.length ?? 0) > 0;
   });
   const hasError = queries.some((query) => query.isError);
+  const error = queries.find((query) => query.error)?.error ?? null;
   const isLoading = queries.some((query) => query.isLoading || query.isFetching);
+  const refetch = () => Promise.all(queries.map((query) => query.refetch()));
 
   return {
     monthDates,
     availableDates,
     hasError,
+    error,
     isLoading,
+    refetch,
   };
 }

@@ -13,7 +13,6 @@ type AdminNavbarProps = {
   onEmailClick?: () => void;
   onMobileAdminClick?: () => void;
   onMobileMenu?: () => void;
-  onNotificationsClick?: () => void;
   onView?: (view: AdminNavView) => void;
   owner?: boolean;
 };
@@ -26,7 +25,7 @@ type AdminTab = {
 };
 
 type ProfileMenuItem = {
-  action: 'notifications' | 'email' | 'budget' | 'logout';
+  action: 'email' | 'budget' | 'logout';
   icon: NavbarIconName;
   label: string;
   onClick?: () => void;
@@ -37,12 +36,14 @@ const adminTabs: AdminTab[] = [
   { key: 'agendamentos', label: 'Agendamentos', icon: 'calendar' },
   { key: 'bloqueios', label: 'Bloqueios', icon: 'lock', ownerOnly: true },
   { key: 'historico', label: 'Histórico', icon: 'clock' },
-  { key: 'extrato', label: 'Extrato', icon: 'chart', ownerOnly: true },
+  { key: 'extrato', label: 'Comissões', icon: 'chart', ownerOnly: true },
 ];
 
 function getAdminGreeting(adminName?: string): string {
-  const name = adminName?.trim() || 'Admin';
-  return name.toLowerCase().startsWith('olá') ? name : `Olá, ${name}`;
+  const normalized = adminName?.trim() || 'Admin';
+  const sanitized = normalized.replace(/^olá,\s*/i, '').trim();
+  const firstName = sanitized.split(/\s+/)[0] || 'Admin';
+  return `Olá, ${firstName}`;
 }
 
 function AdminProfileMenu({
@@ -52,7 +53,6 @@ function AdminProfileMenu({
   onBudgetClick,
   onEmailClick,
   onLogout,
-  onNotificationsClick,
 }: {
   compact?: boolean;
   greeting: string;
@@ -60,10 +60,8 @@ function AdminProfileMenu({
   onBudgetClick?: () => void;
   onEmailClick?: () => void;
   onLogout?: () => void;
-  onNotificationsClick?: () => void;
 }) {
   const menuItems: ProfileMenuItem[] = [
-    { action: 'notifications', icon: 'bell', label: 'Notificações', onClick: onNotificationsClick },
     { action: 'email', icon: 'mail', label: 'Email', onClick: onEmailClick },
     { action: 'budget', icon: 'budget', label: 'Orçamento', onClick: onBudgetClick },
     { action: 'logout', icon: 'user', label: 'Sair', onClick: onLogout, danger: true },
@@ -115,7 +113,6 @@ export default function AdminNavbar({
   onEmailClick,
   onMobileAdminClick,
   onMobileMenu,
-  onNotificationsClick,
   onView,
   owner = false,
 }: AdminNavbarProps) {
@@ -125,12 +122,13 @@ export default function AdminNavbar({
 
   const desktopActions = (
     <>
+      <NavbarButton variant="ghost" onClick={openEmail}><NavbarIcon name="mail" /> <span>Email</span></NavbarButton>
+      <NavbarButton variant="ghost" onClick={onBudgetClick}><NavbarIcon name="budget" /> <span>Orçamento</span></NavbarButton>
       <AdminProfileMenu
         greeting={greeting}
         onBudgetClick={onBudgetClick}
         onEmailClick={openEmail}
         onLogout={onAdminClick}
-        onNotificationsClick={onNotificationsClick}
       />
       <NavbarButton variant="orange" onClick={onCreate}><span>Novo agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
     </>
@@ -145,7 +143,6 @@ export default function AdminNavbar({
         onBudgetClick={onBudgetClick}
         onEmailClick={openEmail}
         onLogout={onMobileAdminClick ?? onAdminClick}
-        onNotificationsClick={onNotificationsClick}
       />
       <NavbarButton variant="orange" compact onClick={onCreate ?? onMobileMenu} ariaLabel="Novo agendamento" title="Novo agendamento">
         <NavbarIcon name="plus" />

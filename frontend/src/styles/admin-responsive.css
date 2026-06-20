@@ -1300,6 +1300,14 @@
     grid-template-columns: 1fr;
   }
 
+  .admin-pix-modal__body {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-pix-modal__actions {
+    grid-template-columns: 1fr;
+  }
+
   .wf-booking-tools {
     justify-content: stretch;
   }

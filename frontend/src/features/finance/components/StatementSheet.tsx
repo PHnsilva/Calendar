@@ -121,7 +121,7 @@ export default function StatementSheet({ open, onClose, bookings = [] }: Stateme
           {!statementQuery.isLoading && groupedEntries.length === 0 ? (
             <div className="timeline-card timeline-card--empty">
               <strong>Sem lançamentos</strong>
-              <span>Nenhum item retornado pelo backend.</span>
+              <span>Nenhuma movimentacao encontrada.</span>
             </div>
           ) : null}
 

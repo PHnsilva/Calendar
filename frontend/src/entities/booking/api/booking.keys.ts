@@ -18,6 +18,7 @@ export const bookingKeys = {
   details: () => [...bookingKeys.all, "detail"] as const,
   detail: (manageToken: string) => [...bookingKeys.details(), manageToken.trim()] as const,
   lists: () => [...bookingKeys.all, "list"] as const,
-  mine: (manageTokens: readonly string[]) => [...bookingKeys.lists(), "mine", normalizeTokenSet(manageTokens)] as const,
+  // Legacy mutations invalidate this root; keep it stable during incremental migration.
+  mine: (manageTokens: readonly string[]) => ["my-bookings", normalizeTokenSet(manageTokens)] as const,
   admin: (filters: BookingAdminFilters = {}) => [...bookingKeys.lists(), "admin", normalizeAdminFilters(filters)] as const,
 };

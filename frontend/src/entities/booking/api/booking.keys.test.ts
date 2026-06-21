@@ -4,9 +4,7 @@ import { bookingKeys } from "./booking.keys";
 describe("bookingKeys", () => {
   it("normalizes token sets so equivalent booking lists share a key", () => {
     expect(bookingKeys.mine([" token-b ", "token-a", "token-b", ""])).toEqual([
-      "bookings",
-      "list",
-      "mine",
+      "my-bookings",
       ["token-a", "token-b"],
     ]);
   });

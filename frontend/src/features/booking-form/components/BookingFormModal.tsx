@@ -838,7 +838,7 @@ export default function BookingFormModal({
                   {isLoadingSlots ? <div className="booking-preview-modal__empty"><strong>Carregando horários...</strong></div> : null}
                   {slotsError ? (
                     <AlertNotice variant="danger" title="Falha ao carregar horários" compact actionLabel="Tentar novamente" onAction={() => void refetchAvailableSlots()}>
-                      <p>{slotsError.message}</p>
+                      <p>{slotsError instanceof Error ? slotsError.message : "Não foi possível carregar os horários."}</p>
                     </AlertNotice>
                   ) : null}
                   {!isLoadingSlots && availableSlots.length === 0 ? (

@@ -219,7 +219,7 @@
     max-width: 148px !important;
   }
 
-  .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
+  .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-mobile-user span,
   .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon--chevron {
     display: none !important;
   }
@@ -248,7 +248,7 @@
   }
 }
 
-/* Removed duplicated mobile footer label generated with ::after. The real button text is used. */
+
 /* Carousel interaction and progress feedback. */
 .wf-services-showcase__viewport {
   cursor: grab !important;
@@ -435,7 +435,7 @@
     max-width: 148px !important;
   }
 
-  .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
+  .wf-navbar.wf-navbar--client .wf-client-mobile-user span,
   .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon--chevron {
     display: none !important;
   }
@@ -1333,7 +1333,7 @@
     max-width: min(100%, 148px) !important;
   }
 
-  .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
+  .wf-navbar.wf-navbar--client .wf-client-mobile-user span,
   .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-icon--chevron {
     display: none !important;
   }

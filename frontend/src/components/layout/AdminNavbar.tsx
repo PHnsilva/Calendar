@@ -13,6 +13,7 @@ type AdminNavbarProps = {
   onEmailClick?: () => void;
   onMobileAdminClick?: () => void;
   onMobileMenu?: () => void;
+  onNotificationsClick?: () => void;
   onView?: (view: AdminNavView) => void;
   owner?: boolean;
 };

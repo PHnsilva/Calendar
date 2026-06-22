@@ -5,6 +5,7 @@ import styles from "./AppointmentsPageShell.module.css";
 type ClientNavbarConfig = {
   onConfirmPhone?: () => void;
   onCreate?: () => void;
+  onNotifications?: () => void;
   onProfile?: () => void;
   page?: "home" | "my";
 };

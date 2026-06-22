@@ -16,6 +16,7 @@ type ClientNavbarPage = 'home' | 'my';
 type ClientNavbarProps = {
   onConfirmPhone?: () => void;
   onCreate?: () => void;
+  onNotifications?: () => void;
   onProfile?: () => void;
   page?: ClientNavbarPage;
 };
@@ -27,7 +28,7 @@ type ClientNavbarSnapshot = {
 };
 
 type ProfileMenuItem = {
-  action: 'home' | 'bookings' | 'profile' | 'create';
+  action: 'notifications' | 'home' | 'bookings' | 'profile' | 'create';
   icon: NavbarIconName;
   label: string;
   onClick?: () => void;
@@ -38,6 +39,7 @@ type ClientProfileMenuProps = {
   compact?: boolean;
   labelContent?: ReactNode;
   onCreate?: () => void;
+  onNotifications?: () => void;
   onProfileAction: () => void;
   page: ClientNavbarPage;
   profileLabel: string;
@@ -81,6 +83,7 @@ function ClientProfileMenu({
   compact = false,
   labelContent,
   onCreate,
+  onNotifications,
   onProfileAction,
   page,
   profileLabel,
@@ -89,12 +92,13 @@ function ClientProfileMenu({
 }: ClientProfileMenuProps) {
   const navItem: ProfileMenuItem = page === 'my'
     ? { action: 'home', icon: 'home', label: 'Página inicial', to: '/' }
-    : { action: 'bookings', icon: 'calendar', label: 'Agendamentos', to: CLIENT_BOOKINGS_PATH };
+    : { action: 'bookings', icon: 'calendar', label: 'Meus agendamentos', to: CLIENT_BOOKINGS_PATH };
 
   const menuItems: ProfileMenuItem[] = [
     navItem,
+    { action: 'notifications', icon: 'bell', label: 'Notificações', onClick: onNotifications },
     { action: 'profile', icon: 'user', label: profileLabel, onClick: onProfileAction },
-    { action: 'create', icon: 'plus', label: 'Novo agendamento', onClick: onCreate },
+    { action: 'create', icon: 'plus', label: 'Criar agendamento', onClick: onCreate },
   ];
 
   return (
@@ -155,7 +159,7 @@ function ClientProfileMenu({
   );
 }
 
-export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page = 'home' }: ClientNavbarProps) {
+export default function ClientNavbar({ onConfirmPhone, onCreate, onNotifications, onProfile, page = 'home' }: ClientNavbarProps) {
   const isHome = page === 'home';
   const snapshot = useClientNavbarSnapshot();
   const profileLabel = snapshot.isVerified ? 'Perfil' : (isHome ? 'Olá! Visitante' : 'Cliente');
@@ -169,15 +173,15 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
 
   const desktopActions = isHome ? (
     <>
-      <NavbarButton to={CLIENT_BOOKINGS_PATH}><NavbarIcon name="calendar" /> <span>Agendamentos</span></NavbarButton>
-      <ClientProfileMenu page={page} profileLabel={profileLabel} onProfileAction={handleProfileAction} onCreate={onCreate} />
-      <NavbarButton variant="orange" onClick={onCreate}><NavbarIcon name="plus" /> <span>Novo agendamento</span></NavbarButton>
+      <NavbarButton to={CLIENT_BOOKINGS_PATH}><NavbarIcon name="calendar" /> <span>Meus agendamentos</span></NavbarButton>
+      <ClientProfileMenu page={page} profileLabel={profileLabel} onProfileAction={handleProfileAction} onCreate={onCreate} onNotifications={onNotifications} />
+      <NavbarButton variant="orange" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
     </>
   ) : (
     <>
       <NavbarButton to="/"><NavbarIcon name="home" /> <span>Página inicial</span></NavbarButton>
-      <ClientProfileMenu page={page} profileLabel={profileLabel} onProfileAction={handleProfileAction} onCreate={onCreate} />
-      <NavbarButton variant="orange" onClick={onCreate}><NavbarIcon name="plus" /> <span>Novo agendamento</span></NavbarButton>
+      <ClientProfileMenu page={page} profileLabel={profileLabel} onProfileAction={handleProfileAction} onCreate={onCreate} onNotifications={onNotifications} />
+      <NavbarButton variant="orange" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
     </>
   );
 
@@ -224,6 +228,7 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
         triggerVariant="orange"
         onProfileAction={handleProfileAction}
         onCreate={onCreate}
+        onNotifications={onNotifications}
       />
     </>
   );

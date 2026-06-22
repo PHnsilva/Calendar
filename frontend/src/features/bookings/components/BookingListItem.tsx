@@ -1,5 +1,5 @@
 import { BookingStatusBadge } from "./BookingStatusBadge";
-import { mapBookingStatus } from "../../../entities/booking";
+import { mapBookingDto, type Booking } from "../../../entities/booking";
 import { formatDateTime } from "../../../lib/dates";
 import type { ServicoResponse } from "../../../types/api";
 
@@ -9,19 +9,33 @@ type BookingListItemProps = {
   onSelect: (booking: ServicoResponse) => void;
 };
 
+type BookingListItemDisplayProps = {
+  booking: Booking;
+};
+
+function BookingListItemDisplay({ booking }: BookingListItemDisplayProps) {
+  return (
+    <>
+      <div className="my-bookings__item-top">
+        <strong>{booking.serviceType}</strong>
+        <BookingStatusBadge status={booking.status} />
+      </div>
+      <span>{formatDateTime(booking.startsAt)}</span>
+      <small>{booking.client.address.formatted}</small>
+    </>
+  );
+}
+
 export function BookingListItem({ booking, isActive, onSelect }: BookingListItemProps) {
+  const displayBooking = mapBookingDto(booking);
+
   return (
     <button
       type="button"
       className={["my-bookings__item", isActive ? "my-bookings__item--active" : ""].filter(Boolean).join(" ")}
       onClick={() => onSelect(booking)}
     >
-      <div className="my-bookings__item-top">
-        <strong>{booking.serviceType}</strong>
-        <BookingStatusBadge status={mapBookingStatus(booking.status)} />
-      </div>
-      <span>{formatDateTime(booking.start)}</span>
-      <small>{booking.clientAddressLine || `${booking.clientStreet}, ${booking.clientNumber}`}</small>
+      <BookingListItemDisplay booking={displayBooking} />
     </button>
   );
 }

@@ -1,12 +1,11 @@
 import { BookingStatusBadge } from "./BookingStatusBadge";
-import { mapBookingDto, type Booking } from "../../../entities/booking";
+import type { Booking } from "../../../entities/booking";
 import { formatDateTime } from "../../../lib/dates";
-import type { ServicoResponse } from "../../../types/api";
 
 type BookingListItemProps = {
-  booking: ServicoResponse;
+  booking: Booking;
   isActive: boolean;
-  onSelect: (booking: ServicoResponse) => void;
+  onSelect: () => void;
 };
 
 type BookingListItemDisplayProps = {
@@ -27,15 +26,13 @@ function BookingListItemDisplay({ booking }: BookingListItemDisplayProps) {
 }
 
 export function BookingListItem({ booking, isActive, onSelect }: BookingListItemProps) {
-  const displayBooking = mapBookingDto(booking);
-
   return (
     <button
       type="button"
       className={["my-bookings__item", isActive ? "my-bookings__item--active" : ""].filter(Boolean).join(" ")}
-      onClick={() => onSelect(booking)}
+      onClick={onSelect}
     >
-      <BookingListItemDisplay booking={displayBooking} />
+      <BookingListItemDisplay booking={booking} />
     </button>
   );
 }

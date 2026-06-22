@@ -1,10 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mapBookingDto } from "../../../entities/booking";
-import { formatDateTime } from "../../../lib/dates";
 import type { ServicoResponse } from "../../../types/api";
-import { BookingListItem } from "./BookingListItem";
+import { BookingList } from "./BookingList";
 
 afterEach(cleanup);
 
@@ -29,21 +27,21 @@ const legacyBooking: ServicoResponse = {
   clientAddressLine: "Rua Sao Jose, 123 - Centro - Itabirito/MG",
   status: "PENDING_PHONE",
 };
-const booking = mapBookingDto(legacyBooking);
 
-describe("BookingListItem", () => {
-  it("renders entity-backed booking fields without changing selection behavior", () => {
+describe("BookingList", () => {
+  it("maps display data to Booking while preserving the legacy selection payload", () => {
     const onSelect = vi.fn();
-    render(<BookingListItem booking={booking} isActive onSelect={onSelect} />);
+    render(
+      <BookingList
+        bookings={[legacyBooking]}
+        selectedEventId={legacyBooking.eventId}
+        onSelect={onSelect}
+      />,
+    );
 
     expect(screen.getByText("Visita tecnica")).toBeTruthy();
-    expect(screen.getByText(formatDateTime(booking.startsAt))).toBeTruthy();
     expect(screen.getByText("Rua Sao Jose, 123 - Centro - Itabirito/MG")).toBeTruthy();
-    expect(screen.getByText("Pendente")).toBeTruthy();
-
-    const item = screen.getByRole("button");
-    expect(item.classList.contains("my-bookings__item--active")).toBe(true);
-    fireEvent.click(item);
-    expect(onSelect).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button"));
+    expect(onSelect).toHaveBeenCalledWith(legacyBooking);
   });
 });

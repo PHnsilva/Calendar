@@ -1,3 +1,4 @@
+import { mapBookingDto } from "../../../entities/booking";
 import type { ServicoResponse } from "../../../types/api";
 import { BookingListItem } from "./BookingListItem";
 
@@ -14,14 +15,17 @@ export function BookingList({ bookings, selectedEventId, onSelect }: BookingList
 
   return (
     <div className="my-bookings__list">
-      {bookings.map((booking) => (
-        <BookingListItem
-          key={booking.eventId}
-          booking={booking}
-          isActive={booking.eventId === selectedEventId}
-          onSelect={onSelect}
-        />
-      ))}
+      {bookings.map((legacyBooking) => {
+        const booking = mapBookingDto(legacyBooking);
+        return (
+          <BookingListItem
+            key={booking.id}
+            booking={booking}
+            isActive={booking.id === selectedEventId}
+            onSelect={() => onSelect(legacyBooking)}
+          />
+        );
+      })}
     </div>
   );
 }

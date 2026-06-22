@@ -480,7 +480,10 @@ function useClientBookingsData() {
     return () => window.removeEventListener('storage', refresh);
   }, []);
 
-  const remoteBookings = useMemo(() => (query.data ?? []).map(bookingFromServico), [query.data]);
+  const remoteBookings = useMemo(
+    () => (query.data ?? []).map(({ legacy }, index) => bookingFromServico(legacy, index)),
+    [query.data],
+  );
   const merged = useMemo(() => {
     const map = new Map<string, BookingItem>();
     [...remoteBookings, ...localBookings].forEach((item) => map.set(item.id, item));

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { mapBookingDto } from "../../../entities/booking";
 import type { ServicoResponse } from "../../../types/api";
 import { BookingList } from "./BookingList";
 
@@ -29,11 +30,13 @@ const legacyBooking: ServicoResponse = {
 };
 
 describe("BookingList", () => {
-  it("maps display data to Booking while preserving the legacy selection payload", () => {
+  it("renders the preserved model while returning the legacy selection payload", () => {
     const onSelect = vi.fn();
+    const model = mapBookingDto(legacyBooking);
+    const legacySelection = { ...legacyBooking, serviceType: "Legacy selection payload" };
     render(
       <BookingList
-        bookings={[legacyBooking]}
+        bookings={[{ model, legacy: legacySelection }]}
         selectedEventId={legacyBooking.eventId}
         onSelect={onSelect}
       />,
@@ -41,7 +44,8 @@ describe("BookingList", () => {
 
     expect(screen.getByText("Visita tecnica")).toBeTruthy();
     expect(screen.getByText("Rua Sao Jose, 123 - Centro - Itabirito/MG")).toBeTruthy();
+    expect(screen.queryByText("Legacy selection payload")).toBeNull();
     fireEvent.click(screen.getByRole("button"));
-    expect(onSelect).toHaveBeenCalledWith(legacyBooking);
+    expect(onSelect).toHaveBeenCalledWith(legacySelection);
   });
 });

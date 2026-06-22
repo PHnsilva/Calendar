@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { bookingKeys, type Booking } from "../../../entities/booking";
 import { getMyBookings } from "../api/get-my-bookings";
-import type { ServicoResponse } from "../../../types/api";
 import { toLegacyBookingResponse } from "../adapters/to-legacy-booking-response";
+import type { BookingListEntry } from "../types";
 
 function mergeBookings(items: Booking[][]): Booking[] {
   const map = new Map<string, Booking>();
@@ -19,7 +19,7 @@ function mergeBookings(items: Booking[][]): Booking[] {
 export function useMyBookings(tokens: string[]) {
   const uniqueTokens = [...new Set(tokens.map((token) => token.trim()).filter(Boolean))].sort();
 
-  return useQuery<ServicoResponse[]>({
+  return useQuery<BookingListEntry[]>({
     queryKey: bookingKeys.mine(uniqueTokens),
     enabled: uniqueTokens.length > 0,
     queryFn: async () => {
@@ -27,7 +27,10 @@ export function useMyBookings(tokens: string[]) {
       const fulfilled = results
         .filter((result): result is PromiseFulfilledResult<Booking[]> => result.status === "fulfilled")
         .map((result) => result.value);
-      return mergeBookings(fulfilled).map(toLegacyBookingResponse);
+      return mergeBookings(fulfilled).map((model) => ({
+        model,
+        legacy: toLegacyBookingResponse(model),
+      }));
     },
     retry: 0,
   });

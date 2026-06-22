@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { mapBookingStatus } from "../../../entities/booking";
 import type { ServicoRequest, ServicoResponse } from "../../../types/api";
 import { formatDateTime, isWithinTwoHours } from "../../../lib/dates";
 import { resolveManageToken } from "../../../lib/storage";
@@ -65,7 +66,7 @@ export function BookingDetailCard({ booking }: BookingDetailCardProps) {
           <h2>{booking.serviceType}</h2>
           <p>{formatDateTime(booking.start)}</p>
         </div>
-        <BookingStatusBadge status={booking.status} />
+        <BookingStatusBadge status={mapBookingStatus(booking.status)} />
       </div>
 
       {lockedByTime ? <p className="booking-detail__notice">Alterações só podem ser feitas com pelo menos 2 horas de antecedência.</p> : null}

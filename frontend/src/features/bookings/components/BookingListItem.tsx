@@ -1,4 +1,5 @@
 import { BookingStatusBadge } from "./BookingStatusBadge";
+import { mapBookingStatus } from "../../../entities/booking";
 import { formatDateTime } from "../../../lib/dates";
 import type { ServicoResponse } from "../../../types/api";
 
@@ -17,7 +18,7 @@ export function BookingListItem({ booking, isActive, onSelect }: BookingListItem
     >
       <div className="my-bookings__item-top">
         <strong>{booking.serviceType}</strong>
-        <BookingStatusBadge status={booking.status} />
+        <BookingStatusBadge status={mapBookingStatus(booking.status)} />
       </div>
       <span>{formatDateTime(booking.start)}</span>
       <small>{booking.clientAddressLine || `${booking.clientStreet}, ${booking.clientNumber}`}</small>

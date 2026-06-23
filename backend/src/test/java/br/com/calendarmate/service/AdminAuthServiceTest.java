@@ -106,6 +106,35 @@ class AdminAuthServiceTest {
         assertEquals(AdminRole.PROVIDER, provider.getRole());
     }
 
+    @Test
+    void requireOwnerAcceptsOwnerSessionAndRejectsProviderSession() {
+        InMemoryAdminUserStore userStore = new InMemoryAdminUserStore(
+                "+55 31 99999-9999|Owner|OWNER;+55 31 98888-8888|Provider|PROVIDER");
+        InMemoryAdminSessionStore sessionStore = new InMemoryAdminSessionStore();
+        InMemoryVerificationStore verificationStore = new InMemoryVerificationStore();
+        AdminAuthService service = new AdminAuthService(
+                userStore,
+                sessionStore,
+                verificationStore,
+                new RecordingOtpDeliveryClient(),
+                new TestAppProperties());
+
+        String ownerToken = confirmToken(service, verificationStore, "+55 31 99999-9999");
+        String providerToken = confirmToken(service, verificationStore, "+55 31 98888-8888");
+
+        assertTrue(service.requireOwner(ownerToken).isOwner());
+        assertThrows(ForbiddenException.class, () -> service.requireOwner(providerToken));
+    }
+
+    private static String confirmToken(
+            AdminAuthService service,
+            InMemoryVerificationStore verificationStore,
+            String phone) {
+        String verificationId = service.start(phone).getVerificationId();
+        VerificationStore.Session otp = verificationStore.get(verificationId);
+        return service.confirm(verificationId, otp.code).getSessionToken();
+    }
+
     private static class FailingAdminUserStore implements AdminUserStore {
         @Override
         public AdminUser findActiveByPhone(String phoneDigits) {

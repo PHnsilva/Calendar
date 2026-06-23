@@ -6,8 +6,11 @@ import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ExternalServiceException;
+import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.google.DummyCalendarClient;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
+import br.com.calendarmate.model.AdminPrincipal;
+import br.com.calendarmate.model.AdminRole;
 import br.com.calendarmate.model.AdminSession;
 import br.com.calendarmate.model.AdminUser;
 import br.com.calendarmate.model.Servico;
@@ -17,6 +20,7 @@ import br.com.calendarmate.service.store.InMemoryBookingHistoryStore;
 import br.com.calendarmate.service.store.InMemoryPendingStore;
 import br.com.calendarmate.service.store.VerificationStore;
 import com.google.api.client.util.DateTime;
+import com.google.api.services.calendar.model.Event;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -31,6 +35,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -159,6 +164,25 @@ class ServicoServiceTest {
         assertFalse(remaining.stream().anyMatch(slot -> blockedSlot.getStartTime().equals(slot.getStartTime())));
     }
 
+    @Test
+    void providerCanReadAndAccessOnlyAssignedActiveBookingsWhileOwnerCanAccessAll() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        LocalDate date = LocalDate.now(ZONE).plusDays(1);
+        Event assigned = calendar.createEvent(confirmedBooking(date, LocalTime.of(9, 0), "provider-1"));
+        Event unassigned = calendar.createEvent(confirmedBooking(date, LocalTime.of(10, 0), "provider-2"));
+        AdminPrincipal owner = principal("owner-1", AdminRole.OWNER);
+        AdminPrincipal provider = principal("provider-1", AdminRole.PROVIDER);
+
+        assertEquals(2, service.listAllAdmin(owner, date, date, null, null).size());
+        assertEquals(1, service.listAllAdmin(provider, date, date, null, null).size());
+        assertEquals(assigned.getId(), service.listAllAdmin(provider, date, date, null, null).get(0).getEventId());
+        assertDoesNotThrow(() -> service.requireActiveAdminAccess(assigned.getId(), provider));
+        assertThrows(ForbiddenException.class, () -> service.requireActiveAdminAccess(unassigned.getId(), provider));
+        assertDoesNotThrow(() -> service.requireActiveAdminAccess(unassigned.getId(), owner));
+    }
+
     private static ServicoService serviceWith(DummyCalendarClient calendar, AppProperties props) {
         TokenUtil tokenUtil = new TokenUtil("test-secret", 600);
         InMemoryPendingStore pendingStore = new InMemoryPendingStore();
@@ -217,6 +241,10 @@ class ServicoServiceTest {
     }
 
     private static Servico confirmedBooking(LocalDate date, LocalTime time) {
+        return confirmedBooking(date, time, null);
+    }
+
+    private static Servico confirmedBooking(LocalDate date, LocalTime time, String assignedProviderId) {
         ZonedDateTime start = ZonedDateTime.of(date, time, ZONE);
         Servico servico = new Servico();
         servico.setTitle("Visita tecnica");
@@ -237,7 +265,12 @@ class ServicoServiceTest {
         servico.setClientNumber("10");
         servico.setClientCity("Itabirito");
         servico.setClientState("MG");
+        servico.setAssignedProviderId(assignedProviderId);
         return servico;
+    }
+
+    private static AdminPrincipal principal(String id, AdminRole role) {
+        return new AdminPrincipal(new AdminUser(id, "31999999999", id, role, true, 0, 0), null);
     }
 
     private static AdminAuthService adminAuthServiceWithoutAdmins() {

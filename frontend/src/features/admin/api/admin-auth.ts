@@ -1,12 +1,13 @@
 import { apiGet, apiPost } from "../../../lib/api-client";
 import { normalizePhone } from "../../../lib/authRole";
-import { getStoredAdminToken, saveAdminSession } from "../../../lib/storage";
+import { saveAdminSession } from "../../../lib/storage";
 import type {
   AdminAuthConfirmResponse,
   AdminAuthStartResponse,
   AdminMeResponse,
   AdminProviderResponse,
 } from "../../../types/api";
+import { requireAdminSessionToken } from "./admin-session";
 
 export function startAdminLogin(phone: string) {
   return apiPost<AdminAuthStartResponse>("/api/admin/auth/start", { phone: normalizePhone(phone) });
@@ -28,13 +29,9 @@ export async function confirmAdminLogin(verificationId: string, code: string) {
 }
 
 export function getAdminMe() {
-  const adminToken = getStoredAdminToken();
-  if (!adminToken) throw new Error("Admin session missing");
-  return apiGet<AdminMeResponse>("/api/admin/auth/me", { adminToken });
+  return apiGet<AdminMeResponse>("/api/admin/auth/me", { adminToken: requireAdminSessionToken() });
 }
 
 export function listAdminProviders() {
-  const adminToken = getStoredAdminToken();
-  if (!adminToken) throw new Error("Admin session missing");
-  return apiGet<AdminProviderResponse[]>("/api/admin/auth/providers", { adminToken });
+  return apiGet<AdminProviderResponse[]>("/api/admin/auth/providers", { adminToken: requireAdminSessionToken() });
 }

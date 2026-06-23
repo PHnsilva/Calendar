@@ -63,7 +63,6 @@ import emailIllustrationAsset from '../../assets/wireframes/modals/email-illustr
 import { FinancialStatementPanel } from '../admin/FinancialStatementPanel';
 import { HistoryPanel } from '../admin/HistoryPanel';
 import AdminNavbar, { type AdminNavView } from '../layout/AdminNavbar';
-import ClientNavbar from '../layout/ClientNavbar';
 import { PageShell, SvgWrapper } from '../layout/ResponsivePrimitives';
 import AppointmentCard from '../../features/appointments/ui/AppointmentCard';
 import AppointmentsPageShell from '../../features/appointments/ui/AppointmentsPageShell';
@@ -119,6 +118,8 @@ import PageTitle from '../../shared/ui/PageTitle';
 import ResponsiveAsset from '../../shared/ui/ResponsiveAsset';
 import ClientFooter from '../../widgets/client-footer';
 import LandingHero from '../../widgets/landing-hero';
+import PublicNavbar from '../../widgets/public-navbar';
+import ServiceCarousel from '../../widgets/service-carousel';
 
 
 type ModalKind =
@@ -482,7 +483,10 @@ function useClientBookingsData() {
     return () => window.removeEventListener('storage', refresh);
   }, []);
 
-  const remoteBookings = useMemo(() => (query.data ?? []).map(bookingFromServico), [query.data]);
+  const remoteBookings = useMemo(
+    () => (query.data ?? []).map(({ legacy }, index) => bookingFromServico(legacy, index)),
+    [query.data],
+  );
   const merged = useMemo(() => {
     const map = new Map<string, BookingItem>();
     [...remoteBookings, ...localBookings].forEach((item) => map.set(item.id, item));
@@ -1268,7 +1272,7 @@ export function ClientLanding() {
   useDoubleBackToLeavePage();
   return (
     <PageShell className="wf-page wf-client-landing">
-      <ClientNavbar onCreate={() => setModal('create-client')} onNotifications={() => setModal('notifications')} onConfirmPhone={() => setModal('confirm-phone')} onProfile={() => setModal('client-profile')} />
+      <PublicNavbar onCreate={() => setModal('create-client')} onNotifications={() => setModal('notifications')} onConfirmPhone={() => setModal('confirm-phone')} onProfile={() => setModal('client-profile')} />
       <main className="wf-landing-main">
         <LandingHero
           badge={<Badge icon="calendar" color="orange">Simples, rápido e sem complicações</Badge>}
@@ -1294,7 +1298,7 @@ export function ClientLanding() {
               <p>Do computador ou do celular, organize seus atendimentos de forma rápida e segura, 24 horas por dia.</p>
             </div>
           </article>
-          <ServiceShowcaseCarousel />
+          <ServiceCarousel />
         </section>
         <ClientFooter
           brand={<LogoMark compact />}

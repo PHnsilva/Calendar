@@ -1,0 +1,112 @@
+.root {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--cm-radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 800;
+  gap: var(--cm-space-2);
+  justify-content: center;
+  line-height: 1.15;
+  min-height: 44px;
+  min-width: 0;
+  text-decoration: none;
+  transition:
+    background-color var(--cm-duration-fast) var(--cm-ease-standard),
+    border-color var(--cm-duration-fast) var(--cm-ease-standard),
+    box-shadow var(--cm-duration-fast) var(--cm-ease-standard),
+    color var(--cm-duration-fast) var(--cm-ease-standard),
+    transform var(--cm-duration-fast) var(--cm-ease-standard);
+  user-select: none;
+}
+
+.root:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.root:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--cm-color-blue) 26%, transparent);
+  outline-offset: 2px;
+}
+
+.root:disabled,
+.root[data-loading="true"] {
+  cursor: not-allowed;
+  opacity: 0.68;
+  transform: none;
+}
+
+.sm {
+  border-radius: var(--cm-radius-sm);
+  font-size: 0.875rem;
+  min-height: 36px;
+  padding: 0 var(--cm-space-3);
+}
+
+.md {
+  font-size: 0.95rem;
+  padding: 0 var(--cm-space-4);
+}
+
+.lg {
+  font-size: 1rem;
+  min-height: 48px;
+  padding: 0 var(--cm-space-5);
+}
+
+.primary {
+  background: var(--cm-color-blue);
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(3, 88, 255, 0.18);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--cm-color-blue-strong);
+}
+
+.secondary {
+  background: var(--cm-color-surface);
+  border-color: var(--cm-color-border-strong);
+  color: var(--cm-color-text);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--cm-color-surface-soft);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--cm-color-text-soft);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--cm-color-surface-soft);
+  color: var(--cm-color-text);
+}
+
+.danger {
+  background: var(--cm-color-danger);
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(217, 41, 34, 0.18);
+}
+
+.danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cm-color-danger) 86%, #000000);
+}
+
+.label,
+.icon {
+  min-width: 0;
+}
+
+.label {
+  overflow-wrap: break-word;
+}
+
+.icon {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+}

@@ -48,7 +48,7 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
 
     @Override
     public void sendCode(String phoneDigits, String code) {
-        String normalizedPhone = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneDigits);
+        String normalizedPhone = PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phoneDigits);
         if (apiKey == null || apiKey.isBlank()) {
             throw ExternalServiceException.providerConfigMissing(PROVIDER_NAME, "Provedor de verificacao SMS nao configurado.");
         }
@@ -199,12 +199,7 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
     }
 
     private String toE164(String phoneDigits) {
-        if (phoneDigits != null && phoneDigits.trim().startsWith("+")) {
-            return phoneDigits.trim();
-        }
-
-        String digits = digitsOnly(phoneDigits);
-        return digits.startsWith("55") ? "+" + digits : "+55" + digits;
+        return PhoneNumberNormalizer.toE164(phoneDigits);
     }
 
     private String digitsOnly(String value) {
@@ -269,6 +264,8 @@ public class NotificationApiSmsClient implements OtpDeliveryClient {
         String sanitized = body
                 .replaceAll("(?i)bearer\\s+[A-Za-z0-9._~+/=-]+", "Bearer [redacted]")
                 .replaceAll("pingram_sk_[A-Za-z0-9._~+/=-]+", "pingram_sk_[redacted]")
+                .replaceAll("(?i)(\"message\"\\s*:\\s*\").*?(\")", "$1[redacted]$2")
+                .replaceAll("(?i)(codigo|código)\\s+CalendarMate\\s+(e|é)\\s*:?\\s*\\d{3}", "$1 CalendarMate $2: [redacted]")
                 .replaceAll("\\+?55\\d{10,11}", "+55******0000");
         return sanitized.length() > MAX_LOG_BODY_CHARS
                 ? sanitized.substring(0, MAX_LOG_BODY_CHARS) + "...[truncated]"

@@ -1,0 +1,29 @@
+.root {
+  animation: spin 780ms linear infinite;
+  border: 2px solid color-mix(in srgb, var(--cm-color-blue) 18%, transparent);
+  border-radius: var(--cm-radius-pill);
+  border-top-color: var(--cm-color-blue);
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.sm {
+  height: 16px;
+  width: 16px;
+}
+
+.md {
+  height: 22px;
+  width: 22px;
+}
+
+.lg {
+  height: 32px;
+  width: 32px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

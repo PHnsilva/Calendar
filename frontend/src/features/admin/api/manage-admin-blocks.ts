@@ -1,6 +1,6 @@
 import { apiDelete, apiGet, apiPost } from '../../../lib/api-client';
-import { getStoredAdminToken } from '../../../lib/storage';
 import type { AvailabilityBlockPreviewResponse, AvailabilityBlockResponse } from '../../../types/api';
+import { requireAdminSessionToken } from './admin-session';
 
 export type AdminBlockMode = 'full-day' | 'specific-hours';
 
@@ -43,14 +43,6 @@ export type AdminBlockListFilters = {
   type?: string;
   reason?: string;
 };
-
-function getAdminTokenOrThrow() {
-  const adminToken = getStoredAdminToken();
-  if (!adminToken) {
-    throw new Error('Token administrativo ausente.');
-  }
-  return adminToken;
-}
 
 function addMinutes(time: string, minutesToAdd: number): string {
   const [hours, minutes] = time.split(':').map(Number);
@@ -99,7 +91,7 @@ function buildPayloads(entry: AdminBlockEntry, mode: AdminBlockMode, slotMinutes
 }
 
 export async function previewAdminBlocks({ entries, mode, slotMinutes = 60, reason }: PreviewAdminBlocksInput): Promise<AdminBlockPreviewItem[]> {
-  const adminToken = getAdminTokenOrThrow();
+  const adminToken = requireAdminSessionToken();
   const normalizedEntries = normalizeEntries(entries);
   const payloads: DayPayloadItem[] = normalizedEntries.flatMap((entry) => buildPayloads(entry, mode, slotMinutes, reason));
 
@@ -115,7 +107,7 @@ export async function previewAdminBlocks({ entries, mode, slotMinutes = 60, reas
 }
 
 export async function createAdminBlocks({ entries, mode, slotMinutes = 60, reason, cancelConflictingBookings = false }: CreateAdminBlocksInput): Promise<AvailabilityBlockResponse[]> {
-  const adminToken = getAdminTokenOrThrow();
+  const adminToken = requireAdminSessionToken();
   const normalizedEntries = normalizeEntries(entries);
 
   if (normalizedEntries.length === 0) {
@@ -143,7 +135,7 @@ export async function createAdminBlocks({ entries, mode, slotMinutes = 60, reaso
 }
 
 export async function listAdminBlocks(filters: AdminBlockListFilters = {}): Promise<AvailabilityBlockResponse[]> {
-  const adminToken = getAdminTokenOrThrow();
+  const adminToken = requireAdminSessionToken();
   return apiGet<AvailabilityBlockResponse[]>('/api/admin/availability-blocks', {
     adminToken,
     query: filters,
@@ -151,6 +143,6 @@ export async function listAdminBlocks(filters: AdminBlockListFilters = {}): Prom
 }
 
 export async function deleteAdminBlock(blockId: string): Promise<void> {
-  const adminToken = getAdminTokenOrThrow();
+  const adminToken = requireAdminSessionToken();
   await apiDelete<void>(`/api/admin/availability-blocks/${blockId}`, { adminToken });
 }

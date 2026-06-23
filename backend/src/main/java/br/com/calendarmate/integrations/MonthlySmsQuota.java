@@ -1,6 +1,6 @@
 package br.com.calendarmate.integrations;
 
-import br.com.calendarmate.exception.ConflictException;
+import br.com.calendarmate.exception.SmsQuotaExceededException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,7 +23,7 @@ public class MonthlySmsQuota {
     public synchronized void acquire() {
         Usage usage = loadCurrentUsage();
         if (usage.count() >= limit) {
-            throw new ConflictException("Limite mensal de SMS atingido. Novos envios foram bloqueados para evitar custos.");
+            throw new SmsQuotaExceededException("Limite mensal de SMS atingido. Novos envios foram bloqueados para evitar custos.");
         }
         save(new Usage(currentMonth(), usage.count() + 1));
     }

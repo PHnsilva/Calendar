@@ -1,0 +1,84 @@
+.root {
+  display: grid;
+  gap: var(--cm-space-2);
+  min-width: 0;
+  width: 100%;
+}
+
+.label {
+  color: var(--cm-color-text);
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.control {
+  background: var(--cm-color-surface);
+  border: 1px solid var(--cm-color-border-strong);
+  border-radius: var(--cm-radius-md);
+  color: var(--cm-color-text);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.3;
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 var(--cm-space-4);
+  transition:
+    background-color var(--cm-duration-fast) var(--cm-ease-standard),
+    border-color var(--cm-duration-fast) var(--cm-ease-standard),
+    box-shadow var(--cm-duration-fast) var(--cm-ease-standard);
+  width: 100%;
+}
+
+.control::placeholder {
+  color: var(--cm-color-text-muted);
+}
+
+.control:hover:not(:disabled) {
+  border-color: var(--cm-color-blue);
+}
+
+.control:focus {
+  border-color: var(--cm-color-blue);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cm-color-blue) 13%, transparent);
+  outline: none;
+}
+
+.control:disabled {
+  background: var(--cm-color-surface-soft);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.invalid {
+  border-color: var(--cm-color-danger);
+}
+
+.hint,
+.error {
+  font-size: 0.84rem;
+  line-height: 1.35;
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.hint {
+  color: var(--cm-color-text-muted);
+}
+
+.error {
+  color: var(--cm-color-danger);
+  font-weight: 700;
+}
+
+.visuallyHidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}

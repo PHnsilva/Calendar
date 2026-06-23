@@ -5,6 +5,7 @@ import br.com.calendarmate.dto.RecoverConfirmResponse;
 import br.com.calendarmate.dto.ServicoResponse;
 import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ExternalServiceException;
+import br.com.calendarmate.exception.ReservedAdminPhoneException;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.HistoryRecord;
 import br.com.calendarmate.service.store.HistoryStore;
@@ -50,10 +51,10 @@ public class RecoveryService {
     }
 
     public StartResult start(String phoneRaw) {
-        String phoneDigits = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneRaw);
-        log.info("Recovery start requested phone={}", maskBrazilianPhone(phoneDigits));
-        if (adminAuthService.isAdminPhone(phoneDigits)) {
-            throw new BadRequestException("Use o acesso administrativo para este telefone");
+        String phoneDigits = PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phoneRaw);
+        String maskedPhone = PhoneNumberNormalizer.maskBrazilianPhone(phoneDigits);
+        if (adminAuthService.isAdminPhoneBestEffort(phoneDigits)) {
+            throw new ReservedAdminPhoneException("Use o acesso administrativo para este telefone.");
         }
 
         VerificationStore.Session sess = verificationStore.create(
@@ -63,8 +64,13 @@ public class RecoveryService {
                 props.getOtpResendAfter().toSeconds()
         );
 
-        sendOtp(phoneDigits, sess.code);
-        log.info("Recovery start dispatched verificationId={} phone={}", sess.verificationId, maskBrazilianPhone(phoneDigits));
+        try {
+            sendOtp(phoneDigits, sess.code);
+        } catch (RuntimeException ex) {
+            verificationStore.delete(sess.verificationId);
+            throw ex;
+        }
+        log.info("Verification flow started flow=client_recovery phone={} verificationId={}", maskedPhone, sess.verificationId);
         historyStore.append(new HistoryRecord(
                 "h_" + UUID.randomUUID(),
                 "RECOVER_START",
@@ -78,7 +84,6 @@ public class RecoveryService {
     }
 
     public StartResult resend(String verificationId) {
-        log.info("Recovery resend requested verificationId={}", verificationId);
         VerificationStore.Session sess = verificationStore.get(verificationId);
         if (sess == null) {
             throw new BadRequestException("verificationId invalido");
@@ -96,12 +101,11 @@ public class RecoveryService {
         }
 
         sendOtp(sess.phoneDigits, sess.code);
-        log.info("Recovery resend dispatched verificationId={} phone={}", verificationId, maskBrazilianPhone(sess.phoneDigits));
+        log.info("Verification flow resend flow=client_recovery phone={} verificationId={}", PhoneNumberNormalizer.maskBrazilianPhone(sess.phoneDigits), sess.verificationId);
         return new StartResult(sess.verificationId, Math.max(0, sess.expiresAtEpochSec - Instant.now().getEpochSecond()), props.getOtpResendAfter().toSeconds());
     }
 
     public RecoverConfirmResponse confirm(String verificationId, String code) throws IOException {
-        log.info("Recovery confirm requested verificationId={}", verificationId);
         VerificationStore.Session sess = verificationStore.get(verificationId);
         if (sess == null) {
             throw new BadRequestException("Codigo invalido");
@@ -130,7 +134,6 @@ public class RecoveryService {
                 Instant.now().getEpochSecond(),
                 "count=" + servicos.size()
         ));
-        log.info("Recovery confirm succeeded verificationId={} phone={} bookings={}", verificationId, maskBrazilianPhone(sess.phoneDigits), servicos.size());
 
         return new RecoverConfirmResponse(true, servicos);
     }
@@ -150,15 +153,10 @@ public class RecoveryService {
         if (!props.isOtpDebugLoggingEnabled()) {
             return;
         }
-        log.info("OTP debug flow={} phone={} code={}", flow, maskBrazilianPhone(phone), code == null ? "" : code.trim());
-    }
-
-    private static String maskBrazilianPhone(String phoneDigits) {
-        String digits = PhoneNumberNormalizer.digitsOnly(phoneDigits);
-        if (digits.length() <= 4) {
-            return "****";
-        }
-        int prefixLength = Math.min(4, digits.length() - 4);
-        return "+" + digits.substring(0, prefixLength) + "*****" + digits.substring(digits.length() - 4);
+        log.info(
+                "OTP debug flow={} phone={} code={}",
+                flow,
+                PhoneNumberNormalizer.maskBrazilianPhone(phone),
+                code == null ? "" : code.trim());
     }
 }

@@ -52,8 +52,8 @@ public class AdminAuthService {
     }
 
     public AdminAuthStartResponse start(String phoneRaw) {
-        String phone = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneRaw);
-        String maskedPhone = maskBrazilianPhone(phone);
+        String phone = PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phoneRaw);
+        String maskedPhone = PhoneNumberNormalizer.maskBrazilianPhone(phone);
         log.info("Admin auth start requested phone={}", maskedPhone);
 
         AdminUser user = findActiveAdminByPhone(phone, maskedPhone);
@@ -62,7 +62,13 @@ public class AdminAuthService {
         }
 
         VerificationStore.Session session = createVerificationSession(user, phone, maskedPhone);
-        sendOtp(phone, session.code);
+        try {
+            sendOtp(phone, session.code);
+        } catch (RuntimeException ex) {
+            verificationStore.delete(session.verificationId);
+            throw ex;
+        }
+        log.info("Verification flow started flow=admin_login phone={} verificationId={}", maskedPhone, session.verificationId);
         return new AdminAuthStartResponse(
                 session.verificationId,
                 props.getOtpTtl().toSeconds(),
@@ -71,7 +77,6 @@ public class AdminAuthService {
     }
 
     public AdminAuthStartResponse resend(String verificationId) {
-        log.info("Admin auth resend requested verificationId={}", verificationId);
         VerificationStore.Session session = verificationStore.get(verificationId);
         if (session == null || !session.scopeId.startsWith(SCOPE_PREFIX)) {
             throw new BadRequestException("verificationId invalido");
@@ -89,7 +94,7 @@ public class AdminAuthService {
         }
 
         sendOtp(session.phoneDigits, session.code);
-        log.info("Admin auth resend dispatched verificationId={} phone={}", verificationId, maskBrazilianPhone(session.phoneDigits));
+        log.info("Verification flow resend flow=admin_login phone={} verificationId={}", PhoneNumberNormalizer.maskBrazilianPhone(session.phoneDigits), session.verificationId);
         return new AdminAuthStartResponse(
                 session.verificationId,
                 Math.max(0, session.expiresAtEpochSec - Instant.now().getEpochSecond()),
@@ -98,7 +103,6 @@ public class AdminAuthService {
     }
 
     public AdminAuthConfirmResponse confirm(String verificationId, String code) {
-        log.info("Admin auth confirm requested verificationId={}", verificationId);
         VerificationStore.Session otp = verificationStore.get(verificationId);
         if (otp == null || !otp.scopeId.startsWith(SCOPE_PREFIX)) {
             throw new BadRequestException("Codigo invalido");
@@ -130,7 +134,6 @@ public class AdminAuthService {
         adminSessionStore.save(session);
         adminUserStore.updateLastLogin(user.getId(), now);
         verificationStore.delete(verificationId);
-        log.info("Admin auth confirm succeeded verificationId={} adminId={}", verificationId, user.getId());
 
         AdminAuthConfirmResponse out = new AdminAuthConfirmResponse();
         out.setSessionToken(rawToken);
@@ -173,7 +176,33 @@ public class AdminAuthService {
 
     public boolean isAdminPhone(String phoneRaw) {
         String phone = PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(phoneRaw);
-        return !phone.isBlank() && findActiveAdminByPhone(phone, maskBrazilianPhone(phone)) != null;
+        return !phone.isBlank() && findActiveAdminByPhone(phone, PhoneNumberNormalizer.maskBrazilianPhone(phone)) != null;
+    }
+
+    public boolean isAdminPhoneBestEffort(String phoneRaw) {
+        String phone = PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(phoneRaw);
+        if (phone.isBlank()) {
+            return false;
+        }
+        String maskedPhone = PhoneNumberNormalizer.maskBrazilianPhone(phone);
+        try {
+            return findActiveAdminByPhone(phone, maskedPhone) != null;
+        } catch (ExternalServiceException ex) {
+            log.warn(
+                    "Admin phone best-effort lookup skipped phone={} code={} dependency={} status={}",
+                    maskedPhone,
+                    ex.getErrorCode(),
+                    ex.getProviderName() == null ? "admin_user_store" : ex.getProviderName(),
+                    ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus());
+            return false;
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Admin phone best-effort lookup skipped phone={} exceptionClass={} exceptionMessage={}",
+                    maskedPhone,
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            return false;
+        }
     }
 
     public List<AdminProviderResponse> listProviders(AdminPrincipal principal) {
@@ -253,7 +282,11 @@ public class AdminAuthService {
         if (!props.isOtpDebugLoggingEnabled()) {
             return;
         }
-        log.info("OTP debug flow={} phone={} code={}", flow, maskBrazilianPhone(phone), code == null ? "" : code.trim());
+        log.info(
+                "OTP debug flow={} phone={} code={}",
+                flow,
+                PhoneNumberNormalizer.maskBrazilianPhone(phone),
+                code == null ? "" : code.trim());
     }
 
     private AdminUser findActiveAdminByPhone(String phone, String maskedPhone) {
@@ -305,18 +338,6 @@ public class AdminAuthService {
                     safeExceptionMessage(ex));
             throw ExternalServiceException.authDependencyUnavailable("verification_store", ex);
         }
-    }
-
-    private static String maskBrazilianPhone(String phoneDigits) {
-        String digits = PhoneNumberNormalizer.digitsOnly(phoneDigits);
-        if (digits.length() == 10 || digits.length() == 11) {
-            digits = "55" + digits;
-        }
-        if (digits.length() <= 4) {
-            return "****";
-        }
-        int prefixLength = Math.min(4, digits.length() - 4);
-        return "+" + digits.substring(0, prefixLength) + "*****" + digits.substring(digits.length() - 4);
     }
 
     private static String safeExceptionMessage(Exception ex) {

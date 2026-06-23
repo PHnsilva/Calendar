@@ -442,12 +442,13 @@ public class AppProperties {
 
     private boolean isLocalDebugProfile() {
         String merged = (clean(springProfilesActive) + "," + clean(appEnv)).toLowerCase(Locale.ROOT);
-        boolean profileMatch = !merged.isBlank() && Arrays.stream(merged.split("[,;\\s]+"))
+        List<String> profiles = Arrays.stream(merged.split("[,;\\s]+"))
                 .map(String::trim)
                 .filter(token -> !token.isBlank())
-                .anyMatch(token -> token.equals("local") || token.equals("dev") || token.equals("development") || token.equals("test"));
-        if (profileMatch) {
-            return true;
+                .toList();
+        if (!profiles.isEmpty()) {
+            return profiles.stream()
+                    .anyMatch(token -> token.equals("local") || token.equals("dev") || token.equals("development") || token.equals("test"));
         }
         return isDefaultLocalDebugConfiguration();
     }

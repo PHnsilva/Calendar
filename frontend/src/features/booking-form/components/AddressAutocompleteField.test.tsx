@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import type { AddressSuggestion } from "../hooks/useAddressSuggestions";
 
@@ -10,6 +10,10 @@ beforeEach(() => {
   vi.resetModules();
   vi.stubEnv("VITE_GEOAPIFY_PUBLIC_KEY", "public-test-key");
   vi.unstubAllGlobals();
+});
+
+afterEach(() => {
+  cleanup();
 });
 
 describe("AddressAutocompleteField", () => {
@@ -44,7 +48,7 @@ describe("AddressAutocompleteField", () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
 
-    const input = screen.getByPlaceholderText(/cidade selecionada: Itabirito\/MG/i);
+    const input = screen.getByRole("textbox");
     await userEvent.click(input);
     await userEvent.type(input, "ru");
 
@@ -142,7 +146,7 @@ describe("AddressAutocompleteField", () => {
         <Harness />
       </QueryClientProvider>,
     );
-    const input = screen.getByPlaceholderText(/cidade selecionada: Itabirito\/MG/i) as HTMLInputElement;
+    const input = screen.getByRole("textbox") as HTMLInputElement;
 
     await userEvent.click(input);
     await userEvent.type(input, "rua");

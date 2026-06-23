@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { mapBookingStatus } from "../../../entities/booking";
-import type { ServicoRequest, ServicoResponse } from "../../../types/api";
+import type { Booking } from "../../../entities/booking";
+import type { ServicoRequest } from "../../../types/api";
 import { formatDateTime, isWithinTwoHours } from "../../../lib/dates";
 import { resolveManageToken } from "../../../lib/storage";
 import { BookingActions } from "./BookingActions";
@@ -8,39 +8,42 @@ import { BookingStatusBadge } from "./BookingStatusBadge";
 import { useBookingMutations } from "../hooks/useBookingMutations";
 
 type BookingDetailCardProps = {
-  booking: ServicoResponse;
+  booking: Booking;
 };
 
-function toFormState(booking: ServicoResponse): ServicoRequest {
-  const start = new Date(booking.start);
+function toFormState(booking: Booking): ServicoRequest {
+  const start = booking.startsAt;
   const pad = (value: number) => String(value).padStart(2, "0");
   return {
     serviceType: booking.serviceType,
     serviceNotes: booking.serviceNotes || "Observacao detalhada nao informada.",
     date: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
     time: `${pad(start.getHours())}:${pad(start.getMinutes())}`,
-    clientFirstName: booking.clientFirstName,
-    clientLastName: booking.clientLastName,
-    clientEmail: booking.clientEmail,
-    clientPhone: booking.clientPhone,
-    clientCep: booking.clientCep,
-    clientStreet: booking.clientStreet,
-    clientNeighborhood: booking.clientNeighborhood,
-    clientNumber: booking.clientNumber,
-    clientComplement: booking.clientComplement,
-    clientCity: booking.clientCity,
-    clientState: booking.clientState,
+    clientFirstName: booking.client.firstName,
+    clientLastName: booking.client.lastName,
+    clientEmail: booking.client.email ?? "",
+    clientPhone: booking.client.phone ?? "",
+    clientCep: booking.client.address.postalCode ?? "",
+    clientStreet: booking.client.address.street ?? "",
+    clientNeighborhood: booking.client.address.neighborhood ?? "",
+    clientNumber: booking.client.address.number ?? "",
+    clientComplement: booking.client.address.complement ?? undefined,
+    clientCity: booking.client.address.city ?? "",
+    clientState: booking.client.address.state ?? "",
   };
 }
 
-export function BookingDetailCard({ booking }: BookingDetailCardProps) {
-  const token = useMemo(() => resolveManageToken(booking), [booking]);
+function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
+  const token = useMemo(
+    () => resolveManageToken({ eventId: booking.id, manageToken: booking.manageToken ?? undefined }),
+    [booking.id, booking.manageToken],
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [form, setForm] = useState<ServicoRequest>(() => toFormState(booking));
   const { updateBooking, deleteBooking, isUpdating, isDeleting, updateError, deleteError } = useBookingMutations();
 
-  const lockedByTime = isWithinTwoHours(booking.start);
+  const lockedByTime = isWithinTwoHours(booking.startsAt);
   const canManage = Boolean(token) && !lockedByTime;
 
   const onChange = (field: keyof ServicoRequest, value: string) => {
@@ -49,13 +52,13 @@ export function BookingDetailCard({ booking }: BookingDetailCardProps) {
 
   const submitUpdate = async () => {
     if (!token) return;
-    await updateBooking({ eventId: booking.eventId, token, payload: form });
+    await updateBooking({ eventId: booking.id, token, payload: form });
     setIsEditing(false);
   };
 
   const submitDelete = async () => {
     if (!token) return;
-    await deleteBooking({ eventId: booking.eventId, token });
+    await deleteBooking({ eventId: booking.id, token });
     setConfirmCancel(false);
   };
 
@@ -64,9 +67,9 @@ export function BookingDetailCard({ booking }: BookingDetailCardProps) {
       <div className="booking-detail__header">
         <div>
           <h2>{booking.serviceType}</h2>
-          <p>{formatDateTime(booking.start)}</p>
+          <p>{formatDateTime(booking.startsAt)}</p>
         </div>
-        <BookingStatusBadge status={mapBookingStatus(booking.status)} />
+        <BookingStatusBadge status={booking.status} />
       </div>
 
       {lockedByTime ? <p className="booking-detail__notice">Alterações só podem ser feitas com pelo menos 2 horas de antecedência.</p> : null}
@@ -111,14 +114,14 @@ export function BookingDetailCard({ booking }: BookingDetailCardProps) {
         <div className="booking-detail__content">
           <div className="booking-detail__section">
             <h3>Cliente</h3>
-            <p>{booking.clientFirstName} {booking.clientLastName}</p>
-            <p>{booking.clientEmail}</p>
-            <p>{booking.clientPhone}</p>
+            <p>{booking.client.fullName}</p>
+            <p>{booking.client.email}</p>
+            <p>{booking.client.phone}</p>
           </div>
           <div className="booking-detail__section">
             <h3>Endereço</h3>
-            <p>{booking.clientAddressLine}</p>
-            <p>{booking.clientCity} - {booking.clientState}</p>
+            <p>{booking.client.address.formatted}</p>
+            <p>{booking.client.address.city ?? ""} - {booking.client.address.state ?? ""}</p>
           </div>
         </div>
       )}
@@ -139,4 +142,8 @@ export function BookingDetailCard({ booking }: BookingDetailCardProps) {
       ) : null}
     </section>
   );
+}
+
+export function BookingDetailCard({ booking }: BookingDetailCardProps) {
+  return <BookingDetailCardContent key={booking.id} booking={booking} />;
 }

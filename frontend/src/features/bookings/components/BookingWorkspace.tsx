@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { BookingListEntry } from "../types";
 import { BookingDetailCard } from "./BookingDetailCard";
 import { BookingList } from "./BookingList";
@@ -10,12 +10,6 @@ type BookingWorkspaceProps = {
 export function BookingWorkspace({ bookings }: BookingWorkspaceProps) {
   const [selectedEventId, setSelectedEventId] = useState<string>(bookings[0]?.model.id ?? "");
 
-  useEffect(() => {
-    if (!bookings.find(({ model }) => model.id === selectedEventId)) {
-      setSelectedEventId(bookings[0]?.model.id ?? "");
-    }
-  }, [bookings, selectedEventId]);
-
   const selectedBooking = useMemo(
     () => bookings.find(({ model }) => model.id === selectedEventId) ?? bookings[0],
     [bookings, selectedEventId],
@@ -24,7 +18,7 @@ export function BookingWorkspace({ bookings }: BookingWorkspaceProps) {
   return (
     <div className="my-bookings__workspace">
       <BookingList bookings={bookings} selectedEventId={selectedBooking?.model.id} onSelect={(booking) => setSelectedEventId(booking.eventId)} />
-      {selectedBooking ? <BookingDetailCard booking={selectedBooking.legacy} /> : <p className="my-bookings__empty">Selecione um agendamento para ver os detalhes.</p>}
+      {selectedBooking ? <BookingDetailCard booking={selectedBooking.model} /> : <p className="my-bookings__empty">Selecione um agendamento para ver os detalhes.</p>}
     </div>
   );
 }

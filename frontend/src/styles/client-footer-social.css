@@ -1,600 +1,1301 @@
-/* Client footer production contract.
-   One visible footer for the public/client landing: brand | links | social actions.
-   It intentionally overrides old footer variants that injected duplicated labels or
-   privacy blocks, without creating another visual component. */
+/* CalendarMate client footer v3.
+   The footer intentionally does not use the old .wf-footer classes. Older
+   landing CSS contains many !important .wf-footer rules; this isolated block
+   prevents those rules from squeezing text into vertical columns. */
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social {
+html body footer.cm-footer {
+  --cm-footer-ink: #07135d;
+  --cm-footer-blue: #06258f;
+  --cm-footer-orange: #ff4b0b;
+  --cm-footer-muted: rgba(7, 19, 93, .68);
+  --cm-footer-line: rgba(7, 19, 93, .14);
+  --cm-footer-bg-1: #f7f5f0;
+  --cm-footer-bg-2: #ece8df;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
-  margin: clamp(16px, 1.7vw, 28px) 0 0 !important;
-  padding: clamp(12px, 1.05vw, 18px) 0 clamp(10px, .95vw, 16px) !important;
-  display: grid !important;
-  grid-template-columns: minmax(150px, 230px) minmax(270px, 1fr) minmax(150px, auto) !important;
-  grid-template-areas: "brand links social" !important;
-  align-items: center !important;
-  justify-content: stretch !important;
-  gap: clamp(12px, 1.8vw, 32px) !important;
-  border: 0 !important;
-  border-top: 1px solid rgba(7, 19, 93, .14) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-  box-sizing: border-box !important;
-}
-
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social > p,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social > strong,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-platform-copy,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-privacy-card {
-  display: none !important;
-}
-
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-brand {
-  grid-area: brand !important;
-  min-width: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  padding: 0 clamp(12px, 1.2vw, 22px) 0 0 !important;
-  margin: 0 !important;
-  border-right: 1px solid rgba(7, 19, 93, .13) !important;
-}
-
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-brand .wf-logo,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-brand .wf-logo--compact {
-  width: auto !important;
-  min-width: 0 !important;
-  margin: 0 !important;
+  margin: clamp(12px, 1.1vw, 18px) 0 0 !important;
   padding: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-brand .wf-logo img,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-brand img {
-  width: auto !important;
-  height: clamp(46px, 3.7vw, 68px) !important;
-  max-width: min(100%, clamp(140px, 12vw, 212px)) !important;
   display: block !important;
-  object-fit: contain !important;
-  object-position: left center !important;
-}
-
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links {
-  grid-area: links !important;
-  min-width: 0 !important;
-  width: 100% !important;
-  max-width: 540px !important;
-  justify-self: center !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  position: relative !important;
+  z-index: 2 !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
   border: 0 !important;
+  border-top: 1px solid var(--cm-footer-line) !important;
   border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-}
-
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links button {
-  min-width: 0 !important;
-  width: auto !important;
-  min-height: clamp(36px, 2.4vw, 44px) !important;
-  margin: 0 !important;
-  padding: 0 clamp(16px, 1.35vw, 30px) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  color: #003bd9 !important;
-  font-size: clamp(12px, .82vw, 15px) !important;
-  font-weight: 760 !important;
-  line-height: 1.1 !important;
-  text-align: center !important;
-  white-space: nowrap !important;
-  cursor: pointer !important;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(255, 255, 255, .98) 0 21%, rgba(255,255,255,0) 44%),
+    linear-gradient(180deg, var(--cm-footer-bg-1) 0%, var(--cm-footer-bg-2) 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.78), 0 -10px 28px rgba(7, 19, 93, .05) !important;
+  color: var(--cm-footer-ink) !important;
+  text-align: left !important;
   transform: none !important;
-  transition: color 160ms ease, background 160ms ease, transform 160ms ease !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links button + button {
-  border-left: 1px solid rgba(7, 19, 93, .14) !important;
+html body footer.cm-footer,
+html body footer.cm-footer * {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  direction: ltr !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  transform: none;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links button::before,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links button::after,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links button:nth-child(2)::after {
+html body footer.cm-footer button,
+html body footer.cm-footer a {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  font: inherit !important;
+  color: inherit !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+
+html body footer.cm-footer button::before,
+html body footer.cm-footer button::after,
+html body footer.cm-footer a::before,
+html body footer.cm-footer a::after {
   content: none !important;
   display: none !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links button:hover,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links button:focus-visible {
-  color: #ff4b0b !important;
-  background: rgba(255, 75, 11, .08) !important;
-  transform: translateY(-1px) !important;
-  outline: none !important;
+html body footer.cm-footer .cm-footer__shell {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: clamp(24px, 2.4vw, 42px) clamp(48px, 4.4vw, 86px) clamp(16px, 1.5vw, 28px) !important;
+  display: grid !important;
+  grid-template-columns: minmax(260px, .98fr) minmax(135px, .44fr) minmax(360px, 1fr) minmax(370px, 1.05fr) !important;
+  gap: clamp(26px, 3.1vw, 58px) !important;
+  align-items: start !important;
+  justify-items: stretch !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social {
-  grid-area: social !important;
+html body footer.cm-footer .cm-footer__brand-card,
+html body footer.cm-footer .cm-footer__nav,
+html body footer.cm-footer .cm-footer__contact,
+html body footer.cm-footer .cm-footer__social {
+  width: 100% !important;
+  max-width: 100% !important;
   min-width: 0 !important;
-  justify-self: end !important;
-  display: grid !important;
-  grid-template-columns: auto !important;
-  grid-template-areas:
-    "icons"
-    "email" !important;
-  align-items: center !important;
-  justify-items: end !important;
-  gap: 7px !important;
   margin: 0 !important;
   padding: 0 !important;
-  box-sizing: border-box !important;
+  position: static !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__title {
-  display: none !important;
+html body footer.cm-footer .cm-footer__nav,
+html body footer.cm-footer .cm-footer__contact,
+html body footer.cm-footer .cm-footer__social {
+  min-height: clamp(154px, 11vw, 205px) !important;
+  padding-left: clamp(24px, 2vw, 38px) !important;
+  border-left: 1px solid var(--cm-footer-line) !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icons {
-  grid-area: icons !important;
+html body footer.cm-footer h2 {
+  width: max-content !important;
+  max-width: 100% !important;
+  margin: 0 0 clamp(20px, 1.4vw, 28px) !important;
+  padding: 0 !important;
+  display: block !important;
+  position: relative !important;
+  color: var(--cm-footer-ink) !important;
+  font-family: inherit !important;
+  font-size: clamp(13px, .9vw, 16px) !important;
+  font-weight: 950 !important;
+  line-height: 1.08 !important;
+  letter-spacing: .02em !important;
+  text-align: left !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+html body footer.cm-footer h2::before { content: none !important; display: none !important; }
+html body footer.cm-footer h2::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  bottom: clamp(-10px, -.52vw, -7px) !important;
+  width: clamp(34px, 2.2vw, 45px) !important;
+  height: 3px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, #ff4b0b, #ff8a2c) !important;
+  box-shadow: 0 4px 10px rgba(255, 75, 11, .22) !important;
+}
+
+html body footer.cm-footer .cm-footer__brand-card {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-content: start !important;
+  justify-items: start !important;
+  gap: clamp(13px, 1vw, 18px) !important;
+}
+
+html body footer.cm-footer .cm-footer__brand {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-end !important;
-  gap: clamp(7px, .65vw, 10px) !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
+  justify-content: flex-start !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icon,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card__mail {
-  width: clamp(40px, 2.6vw, 48px) !important;
-  height: clamp(40px, 2.6vw, 48px) !important;
-  min-width: clamp(40px, 2.6vw, 48px) !important;
-  min-height: clamp(40px, 2.6vw, 48px) !important;
-  padding: 0 !important;
+html body footer.cm-footer .cm-footer__brand .wf-logo,
+html body footer.cm-footer .cm-footer__brand .wf-logo--compact {
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
   margin: 0 !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body footer.cm-footer .cm-footer__brand .wf-logo img,
+html body footer.cm-footer .cm-footer__brand img {
+  width: auto !important;
+  height: clamp(66px, 5.4vw, 104px) !important;
+  max-width: min(100%, clamp(218px, 17vw, 330px)) !important;
+  display: block !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+  filter: drop-shadow(0 9px 14px rgba(7, 19, 93, .08)) !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-button {
+  order: 2 !important;
+  width: min(100%, clamp(205px, 17vw, 310px)) !important;
+  min-height: clamp(40px, 2.65vw, 51px) !important;
+  margin: clamp(4px, .45vw, 8px) 0 0 !important;
+  padding: 0 clamp(13px, 1.1vw, 18px) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border: 1px solid rgba(7, 19, 93, .08) !important;
-  border-radius: clamp(13px, .9vw, 16px) !important;
-  background: #fff !important;
-  box-shadow: 0 7px 18px rgba(7, 19, 93, .10) !important;
+  gap: 10px !important;
+  border: 2px solid rgba(7, 19, 93, .9) !important;
+  border-radius: 11px !important;
+  background: rgba(255, 255, 255, .5) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7) !important;
+  color: var(--cm-footer-ink) !important;
+  font-size: clamp(12px, .82vw, 15px) !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  transition: transform 170ms ease, background 170ms ease, color 170ms ease, border-color 170ms ease, box-shadow 170ms ease !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-button span {
+  display: inline-block !important;
   color: inherit !important;
-  cursor: pointer !important;
-  transform: none !important;
-  overflow: visible !important;
-  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease !important;
+  font: inherit !important;
+  line-height: inherit !important;
+  text-align: center !important;
+  white-space: nowrap !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icon .wf-icon,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card__mail .wf-icon {
-  width: clamp(34px, 2.2vw, 42px) !important;
-  height: clamp(34px, 2.2vw, 42px) !important;
-  min-width: clamp(34px, 2.2vw, 42px) !important;
-  min-height: clamp(34px, 2.2vw, 42px) !important;
+html body footer.cm-footer .cm-footer__contact-button-arrow {
+  margin-left: auto !important;
+  color: var(--cm-footer-orange) !important;
+  font-size: clamp(28px, 2vw, 34px) !important;
+  font-weight: 760 !important;
+  line-height: .7 !important;
+  transition: transform 170ms ease, color 170ms ease !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-button:hover,
+html body footer.cm-footer .cm-footer__contact-button:focus-visible {
+  transform: translateY(-2px) !important;
+  border-color: var(--cm-footer-orange) !important;
+  background: var(--cm-footer-orange) !important;
+  color: #fff !important;
+  box-shadow: 0 14px 28px rgba(255, 75, 11, .18) !important;
+  outline: none !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-button:hover .cm-footer__contact-button-arrow,
+html body footer.cm-footer .cm-footer__contact-button:focus-visible .cm-footer__contact-button-arrow {
+  color: #fff !important;
+  transform: translateX(3px) !important;
+}
+
+html body footer.cm-footer .cm-footer__brand-copy {
+  order: 3 !important;
+  width: min(100%, 330px) !important;
+  display: grid !important;
+  gap: 5px !important;
+}
+
+html body footer.cm-footer .cm-footer__brand-title {
+  display: block !important;
+  color: var(--cm-footer-ink) !important;
+  font-size: clamp(13px, .92vw, 16px) !important;
+  font-weight: 950 !important;
+  line-height: 1.22 !important;
+  text-align: left !important;
+  white-space: normal !important;
+}
+
+html body footer.cm-footer p,
+html body footer.cm-footer small {
+  display: block !important;
+  margin: 0 !important;
+  color: var(--cm-footer-muted) !important;
+  font-size: clamp(12px, .78vw, 14px) !important;
+  font-weight: 650 !important;
+  line-height: 1.42 !important;
+  text-align: left !important;
+  white-space: normal !important;
+}
+
+html body footer.cm-footer .cm-footer__nav {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: clamp(16px, 1.35vw, 25px) !important;
+}
+
+html body footer.cm-footer .cm-footer__nav button {
+  width: auto !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(7, 19, 93, .72) !important;
+  font-size: clamp(14px, .98vw, 18px) !important;
+  font-weight: 650 !important;
+  line-height: 1.15 !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  transition: color 170ms ease, transform 170ms ease !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icon:hover,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icon:focus-visible,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card__mail:hover,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card__mail:focus-visible {
-  transform: translateY(-2px) scale(1.03) !important;
-  box-shadow: 0 12px 26px rgba(7, 19, 93, .16) !important;
+html body footer.cm-footer .cm-footer__nav button:hover,
+html body footer.cm-footer .cm-footer__nav button:focus-visible {
+  color: var(--cm-footer-orange) !important;
+  transform: translateX(4px) !important;
+  outline: none !important;
+}
+
+html body footer.cm-footer .cm-footer__contact,
+html body footer.cm-footer .cm-footer__social {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-content: start !important;
+  justify-items: start !important;
+  gap: clamp(12px, 1vw, 17px) !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-row,
+html body footer.cm-footer .cm-footer__social-item {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: clamp(47px, 3.65vw, 63px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: grid !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--cm-footer-ink) !important;
+  text-align: left !important;
+  overflow: visible !important;
+  transition: transform 180ms ease, filter 180ms ease !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-row {
+  grid-template-columns: clamp(58px, 3.75vw, 72px) minmax(0, 1fr) !important;
+  column-gap: clamp(11px, 1vw, 18px) !important;
+}
+
+html body footer.cm-footer .cm-footer__social-item {
+  grid-template-columns: clamp(72px, 4.65vw, 88px) minmax(0, 1fr) !important;
+  column-gap: clamp(13px, 1.15vw, 21px) !important;
+}
+
+html body footer.cm-footer .cm-footer__row-icon,
+html body footer.cm-footer .cm-footer__social-icon {
+  aspect-ratio: 1 / 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  justify-self: start !important;
+  align-self: center !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  transition: transform 180ms ease, filter 180ms ease !important;
+}
+
+html body footer.cm-footer .cm-footer__row-icon {
+  width: clamp(58px, 3.75vw, 72px) !important;
+  height: clamp(58px, 3.75vw, 72px) !important;
+  flex: 0 0 clamp(58px, 3.75vw, 72px) !important;
+}
+
+html body footer.cm-footer .cm-footer__social-icon {
+  width: clamp(72px, 4.65vw, 88px) !important;
+  height: clamp(72px, 4.65vw, 88px) !important;
+  flex: 0 0 clamp(72px, 4.65vw, 88px) !important;
+}
+
+html body footer.cm-footer .wf-svg-wrapper,
+html body footer.cm-footer .wf-icon,
+html body footer.cm-footer .wf-icon--image {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body footer.cm-footer .wf-svg-wrapper img,
+html body footer.cm-footer .wf-icon img,
+html body footer.cm-footer .wf-svg-wrapper svg,
+html body footer.cm-footer .wf-icon svg {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  filter: none !important;
+  transform: none !important;
+  transform-origin: center center !important;
+  clip-path: none !important;
+}
+
+html body footer.cm-footer .cm-footer__social-item--whatsapp .wf-svg-wrapper img,
+html body footer.cm-footer .cm-footer__social-item--whatsapp .wf-icon img,
+html body footer.cm-footer .cm-footer__social-item--instagram .wf-svg-wrapper img,
+html body footer.cm-footer .cm-footer__social-item--instagram .wf-icon img,
+html body footer.cm-footer .cm-footer__social-item--email .wf-svg-wrapper img,
+html body footer.cm-footer .cm-footer__social-item--email .wf-icon img {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+html body footer.cm-footer .cm-footer__row-text,
+html body footer.cm-footer .cm-footer__social-text {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  align-content: center !important;
+  gap: 4px !important;
+  color: #151a2c !important;
+  font-size: clamp(12px, .8vw, 15px) !important;
+  font-weight: 850 !important;
+  line-height: 1.16 !important;
+  text-align: left !important;
+  white-space: normal !important;
+}
+
+html body footer.cm-footer .cm-footer__row-text b,
+html body footer.cm-footer .cm-footer__social-text b {
+  display: block !important;
+  margin: 0 !important;
+  color: #151a2c !important;
+  font-size: clamp(12px, .82vw, 15px) !important;
+  font-weight: 900 !important;
+  line-height: 1.12 !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+}
+
+html body footer.cm-footer .cm-footer__row-text small,
+html body footer.cm-footer .cm-footer__social-text small {
+  display: block !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  color: rgba(7, 19, 93, .66) !important;
+  font-size: clamp(11px, .72vw, 13px) !important;
+  font-weight: 650 !important;
+  line-height: 1.2 !important;
+  text-align: left !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-row--email .cm-footer__row-text,
+html body footer.cm-footer .cm-footer__social-item--email .cm-footer__social-text small {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  overflow-wrap: normal !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-row--email,
+html body footer.cm-footer .cm-footer__social-item--email {
+  cursor: copy !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-row:hover,
+html body footer.cm-footer .cm-footer__contact-row:focus-visible,
+html body footer.cm-footer .cm-footer__social-item:hover,
+html body footer.cm-footer .cm-footer__social-item:focus-visible {
+  transform: translateY(-2px) !important;
   filter: saturate(1.08) !important;
   outline: none !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icon--email-mobile {
-  display: inline-flex !important;
+html body footer.cm-footer .cm-footer__contact-row:hover .cm-footer__row-icon,
+html body footer.cm-footer .cm-footer__contact-row:focus-visible .cm-footer__row-icon,
+html body footer.cm-footer .cm-footer__social-item:hover .cm-footer__social-icon,
+html body footer.cm-footer .cm-footer__social-item:focus-visible .cm-footer__social-icon {
+  transform: translateY(-2px) scale(1.06) !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card {
-  grid-area: email !important;
-  width: min(100%, 300px) !important;
-  min-width: 0 !important;
-  min-height: 34px !important;
+html body footer.cm-footer .cm-footer__social-item--instagram:hover .cm-footer__social-icon,
+html body footer.cm-footer .cm-footer__social-item--instagram:focus-visible .cm-footer__social-icon {
+  filter: drop-shadow(0 14px 20px rgba(219, 39, 119, .26)) saturate(1.14) !important;
+}
+
+html body footer.cm-footer .cm-footer__social-item--email:hover .cm-footer__social-icon,
+html body footer.cm-footer .cm-footer__social-item--email:focus-visible .cm-footer__social-icon {
+  filter: drop-shadow(0 14px 20px rgba(66, 133, 244, .23)) saturate(1.12) !important;
+}
+
+html body footer.cm-footer .cm-footer__social-item--whatsapp:hover .cm-footer__social-icon,
+html body footer.cm-footer .cm-footer__social-item--whatsapp:focus-visible .cm-footer__social-icon {
+  filter: drop-shadow(0 14px 22px rgba(14, 180, 80, .28)) saturate(1.14) !important;
+}
+
+html body footer.cm-footer .cm-footer__bottom {
+  width: 100% !important;
   margin: 0 !important;
-  padding: 3px 4px 3px 3px !important;
-  display: none !important;
-  grid-template-columns: 30px minmax(0, 1fr) auto !important;
+  padding: clamp(12px, 1vw, 18px) clamp(52px, 4.8vw, 92px) clamp(13px, 1.2vw, 21px) !important;
+  display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  border: 1px solid rgba(3, 88, 255, .13) !important;
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, .95) !important;
-  box-shadow: 0 6px 16px rgba(7, 19, 93, .06) !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
+  justify-content: space-between !important;
+  gap: 18px !important;
+  border-top: 1px solid var(--cm-footer-line) !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card__mail {
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  min-height: 28px !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  box-shadow: none !important;
-  background: transparent !important;
+html body footer.cm-footer .cm-footer__bottom p {
+  margin: 0 !important;
+  color: rgba(7, 19, 93, .68) !important;
+  font-size: clamp(11px, .76vw, 14px) !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card__mail .wf-icon {
-  width: 26px !important;
-  height: 26px !important;
-  min-width: 26px !important;
-  min-height: 26px !important;
+html body footer.cm-footer .cm-footer__bottom b {
+  display: inline !important;
+  color: var(--cm-footer-ink) !important;
+  font-weight: 950 !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card__address {
-  min-width: 0 !important;
-  color: #07135d !important;
-  font-size: clamp(9px, .62vw, 11px) !important;
-  font-weight: 850 !important;
+html body footer.cm-footer .cm-footer__bottom span {
+  display: inline !important;
+  color: var(--cm-footer-orange) !important;
+  font-size: 1.35em !important;
+  font-weight: 950 !important;
+  line-height: 0 !important;
+  vertical-align: -.08em !important;
+}
+
+@media (min-width: 1500px) {
+  html body footer.cm-footer .cm-footer__shell {
+    grid-template-columns: minmax(335px, .95fr) minmax(160px, .43fr) minmax(410px, 1fr) minmax(430px, 1.04fr) !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1180px) {
+  html body footer.cm-footer .cm-footer__shell {
+    padding-inline: clamp(24px, 2.6vw, 34px) !important;
+    grid-template-columns: minmax(185px, .95fr) minmax(92px, .42fr) minmax(245px, .92fr) minmax(250px, .95fr) !important;
+    gap: clamp(14px, 1.65vw, 22px) !important;
+  }
+  html body footer.cm-footer .cm-footer__nav,
+  html body footer.cm-footer .cm-footer__contact,
+  html body footer.cm-footer .cm-footer__social {
+    padding-left: clamp(14px, 1.35vw, 22px) !important;
+  }
+  html body footer.cm-footer .cm-footer__row-text,
+  html body footer.cm-footer .cm-footer__social-text,
+  html body footer.cm-footer .cm-footer__row-text b,
+  html body footer.cm-footer .cm-footer__social-text b {
+    font-size: 12px !important;
+  }
+  html body footer.cm-footer .cm-footer__bottom {
+    padding-inline: clamp(30px, 3vw, 44px) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body footer.cm-footer {
+    margin-top: clamp(16px, 3vw, 24px) !important;
+  }
+  html body footer.cm-footer .cm-footer__shell {
+    padding: clamp(22px, 3.6vw, 34px) clamp(26px, 4vw, 38px) clamp(14px, 2.5vw, 22px) !important;
+    grid-template-columns: minmax(190px, 1.05fr) minmax(105px, .52fr) minmax(190px, .84fr) minmax(190px, .86fr) !important;
+    gap: clamp(18px, 3vw, 28px) !important;
+  }
+  html body footer.cm-footer .cm-footer__brand .wf-logo img,
+  html body footer.cm-footer .cm-footer__brand img {
+    height: clamp(60px, 10vw, 90px) !important;
+    max-width: min(100%, 260px) !important;
+  }
+  html body footer.cm-footer .cm-footer__brand-copy {
+    order: 2 !important;
+    max-width: 235px !important;
+  }
+  html body footer.cm-footer .cm-footer__contact-button {
+    order: 3 !important;
+    width: min(100%, 230px) !important;
+  }
+  html body footer.cm-footer .cm-footer__nav,
+  html body footer.cm-footer .cm-footer__contact,
+  html body footer.cm-footer .cm-footer__social {
+    min-height: 0 !important;
+    padding-left: clamp(14px, 2.2vw, 24px) !important;
+  }
+  html body footer.cm-footer h2 {
+    font-size: clamp(12px, 1.5vw, 14px) !important;
+  }
+  html body footer.cm-footer .cm-footer__nav button {
+    font-size: clamp(12px, 1.7vw, 15px) !important;
+  }
+  html body footer.cm-footer .cm-footer__row-text,
+  html body footer.cm-footer .cm-footer__social-text,
+  html body footer.cm-footer .cm-footer__row-text b,
+  html body footer.cm-footer .cm-footer__social-text b {
+    font-size: clamp(11px, 1.45vw, 13px) !important;
+  }
+  html body footer.cm-footer .cm-footer__row-text small,
+  html body footer.cm-footer .cm-footer__social-text small {
+    font-size: clamp(10px, 1.3vw, 12px) !important;
+  }
+  html body footer.cm-footer .cm-footer__contact-row--email .cm-footer__row-text,
+  html body footer.cm-footer .cm-footer__social-item--email .cm-footer__social-text small {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere !important;
+  }
+  html body footer.cm-footer .cm-footer__contact-row--email,
+  html body footer.cm-footer .cm-footer__social-item--email {
+    cursor: pointer !important;
+  }
+  html body footer.cm-footer .cm-footer__bottom {
+    padding: clamp(10px, 2vw, 14px) clamp(26px, 4vw, 38px) clamp(12px, 2.3vw, 18px) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  html body footer.cm-footer .cm-footer__shell {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-areas:
+      "brand brand"
+      "nav contact"
+      "social social" !important;
+    gap: 20px 18px !important;
+  }
+  html body footer.cm-footer .cm-footer__brand-card { grid-area: brand !important; }
+  html body footer.cm-footer .cm-footer__nav { grid-area: nav !important; }
+  html body footer.cm-footer .cm-footer__contact { grid-area: contact !important; }
+  html body footer.cm-footer .cm-footer__social { grid-area: social !important; }
+  html body footer.cm-footer .cm-footer__brand-card {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    column-gap: 14px !important;
+    align-items: center !important;
+  }
+  html body footer.cm-footer .cm-footer__brand { grid-row: 1 / span 3 !important; width: auto !important; }
+  html body footer.cm-footer .cm-footer__brand .wf-logo img,
+  html body footer.cm-footer .cm-footer__brand img {
+    height: 74px !important;
+    max-width: 170px !important;
+  }
+  html body footer.cm-footer .cm-footer__social {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 11px !important;
+    padding-left: 0 !important;
+    border-left: 0 !important;
+    border-top: 1px solid var(--cm-footer-line) !important;
+    padding-top: 16px !important;
+  }
+  html body footer.cm-footer .cm-footer__social h2 { grid-column: 1 / -1 !important; }
+  html body footer.cm-footer .cm-footer__social-item {
+    grid-template-columns: 1fr !important;
+    justify-items: center !important;
+    text-align: center !important;
+    gap: 7px !important;
+  }
+  html body footer.cm-footer .cm-footer__social-text,
+  html body footer.cm-footer .cm-footer__social-text b,
+  html body footer.cm-footer .cm-footer__social-text small {
+    text-align: center !important;
+    justify-items: center !important;
+  }
+  html body footer.cm-footer .cm-footer__social-item--whatsapp .cm-footer__social-text,
+  html body footer.cm-footer .cm-footer__social-item--whatsapp .cm-footer__social-text b,
+  html body footer.cm-footer .cm-footer__social-item--whatsapp .cm-footer__social-text small {
+    text-align: left !important;
+    justify-items: start !important;
+  }
+  html body footer.cm-footer .cm-footer__bottom {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body footer.cm-footer .cm-footer__shell {
+    padding-inline: 16px !important;
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "brand"
+      "nav"
+      "contact"
+      "social" !important;
+  }
+  html body footer.cm-footer .cm-footer__brand-card { grid-template-columns: 1fr !important; }
+  html body footer.cm-footer .cm-footer__brand { grid-row: auto !important; }
+  html body footer.cm-footer .cm-footer__brand .wf-logo img,
+  html body footer.cm-footer .cm-footer__brand img {
+    height: 70px !important;
+    max-width: 215px !important;
+  }
+  html body footer.cm-footer .cm-footer__nav,
+  html body footer.cm-footer .cm-footer__contact {
+    padding-left: 0 !important;
+    border-left: 0 !important;
+    border-top: 1px solid var(--cm-footer-line) !important;
+    padding-top: 16px !important;
+  }
+  html body footer.cm-footer .cm-footer__social { grid-template-columns: 1fr !important; }
+  html body footer.cm-footer .cm-footer__social-item {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+    justify-items: start !important;
+    text-align: left !important;
+  }
+  html body footer.cm-footer .cm-footer__social-text,
+  html body footer.cm-footer .cm-footer__social-text b,
+  html body footer.cm-footer .cm-footer__social-text small {
+    text-align: left !important;
+    justify-items: start !important;
+  }
+  html body footer.cm-footer .cm-footer__bottom { padding-inline: 16px !important; }
+}
+
+/* Redirect confirmation modal. */
+html body .cm-footer-redirect {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1200 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 22px !important;
+  background: rgba(4, 8, 35, .46) !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+html body .cm-footer-redirect__dialog {
+  width: min(100%, 440px) !important;
+  display: grid !important;
+  grid-template-columns: 64px minmax(0, 1fr) !important;
+  gap: 14px 18px !important;
+  align-items: center !important;
+  padding: 22px !important;
+  border-radius: 22px !important;
+  border: 1px solid rgba(255,255,255,.7) !important;
+  background: linear-gradient(180deg, #fff 0%, #f3f6ff 100%) !important;
+  box-shadow: 0 24px 70px rgba(4, 8, 35, .24) !important;
+}
+
+html body .cm-footer-redirect__icon {
+  width: 64px !important;
+  height: 64px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: 0 12px 28px rgba(7,19,93,.13) !important;
+}
+
+html body .cm-footer-redirect__icon .wf-icon,
+html body .cm-footer-redirect__icon .wf-icon img,
+html body .cm-footer-redirect__icon svg {
+  width: 52px !important;
+  height: 52px !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+
+html body .cm-footer-redirect__content { display: grid !important; gap: 6px !important; }
+html body .cm-footer-redirect__eyebrow {
+  display: block !important;
+  color: #ff4b0b !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
   line-height: 1 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+}
+html body .cm-footer-redirect__content h2 {
+  margin: 0 !important;
+  color: #07135d !important;
+  font-size: 22px !important;
+  font-weight: 950 !important;
+  line-height: 1.1 !important;
+}
+html body .cm-footer-redirect__content p {
+  margin: 0 !important;
+  color: rgba(7,19,93,.72) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.42 !important;
+}
+html body .cm-footer-redirect__actions {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+}
+html body .cm-footer-redirect__actions button {
+  min-height: 42px !important;
+  padding: 0 18px !important;
+  border-radius: 12px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+html body .cm-footer-redirect__cancel {
+  border: 1px solid rgba(7,19,93,.2) !important;
+  background: #fff !important;
+  color: #07135d !important;
+}
+html body .cm-footer-redirect__confirm {
+  border: 0 !important;
+  background: linear-gradient(135deg, #ff6d1a, #e53900) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 22px rgba(255,75,11,.2) !important;
+}
+
+
+/* v5 icon sizing correction: icons from the wireframe are pre-cropped with safe padding.
+   Keep them larger and prevent side clipping without changing the rest of the footer layout. */
+html body footer.cm-footer .cm-footer__row-icon,
+html body footer.cm-footer .cm-footer__social-icon {
+  overflow: visible !important;
+  flex-shrink: 0 !important;
+}
+
+html body footer.cm-footer .cm-footer__row-icon {
+  width: clamp(58px, 3.75vw, 72px) !important;
+  height: clamp(58px, 3.75vw, 72px) !important;
+  flex-basis: clamp(58px, 3.75vw, 72px) !important;
+}
+
+html body footer.cm-footer .cm-footer__social-icon {
+  width: clamp(72px, 4.65vw, 88px) !important;
+  height: clamp(72px, 4.65vw, 88px) !important;
+  flex-basis: clamp(72px, 4.65vw, 88px) !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-row {
+  grid-template-columns: clamp(58px, 3.75vw, 72px) minmax(0, 1fr) !important;
+}
+
+html body footer.cm-footer .cm-footer__social-item {
+  grid-template-columns: clamp(72px, 4.65vw, 88px) minmax(0, 1fr) !important;
+}
+
+html body footer.cm-footer .wf-svg-wrapper img,
+html body footer.cm-footer .wf-icon img,
+html body footer.cm-footer .wf-svg-wrapper svg,
+html body footer.cm-footer .wf-icon svg {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 900px) {
+  html body footer.cm-footer .cm-footer__row-icon {
+    width: clamp(52px, 7vw, 64px) !important;
+    height: clamp(52px, 7vw, 64px) !important;
+    flex-basis: clamp(52px, 7vw, 64px) !important;
+  }
+
+  html body footer.cm-footer .cm-footer__social-icon {
+    width: clamp(62px, 8vw, 76px) !important;
+    height: clamp(62px, 8vw, 76px) !important;
+    flex-basis: clamp(62px, 8vw, 76px) !important;
+  }
+
+  html body footer.cm-footer .cm-footer__contact-row {
+    grid-template-columns: clamp(52px, 7vw, 64px) minmax(0, 1fr) !important;
+  }
+
+  html body footer.cm-footer .cm-footer__social-item {
+    grid-template-columns: clamp(62px, 8vw, 76px) minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body footer.cm-footer .cm-footer__social-item {
+    grid-template-columns: 64px minmax(0, 1fr) !important;
+  }
+}
+
+/* v6: keep phone/location unchanged, reduce only the extracted social/e-mail PNG icons by 20%
+   to prevent the slight right-side clipping. Also force pointer cursor on hover/clickable footer items. */
+html body footer.cm-footer button,
+html body footer.cm-footer a,
+html body footer.cm-footer .cm-footer__contact-button,
+html body footer.cm-footer .cm-footer__contact-row,
+html body footer.cm-footer .cm-footer__social-item,
+html body .cm-footer-redirect__actions button {
+  cursor: pointer !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-row--email,
+html body footer.cm-footer .cm-footer__social-item--email {
+  cursor: pointer !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-row:hover,
+html body footer.cm-footer .cm-footer__social-item:hover,
+html body footer.cm-footer .cm-footer__contact-button:hover,
+html body footer.cm-footer .cm-footer__nav button:hover {
+  cursor: pointer !important;
+}
+
+/* Social icons: Instagram, Gmail/Email and WhatsApp only. */
+html body footer.cm-footer .cm-footer__social-icon .wf-svg-wrapper img,
+html body footer.cm-footer .cm-footer__social-icon .wf-icon img,
+html body footer.cm-footer .cm-footer__social-icon .wf-svg-wrapper svg,
+html body footer.cm-footer .cm-footer__social-icon .wf-icon svg,
+html body footer.cm-footer .cm-footer__contact-row--email .cm-footer__row-icon .wf-svg-wrapper img,
+html body footer.cm-footer .cm-footer__contact-row--email .cm-footer__row-icon .wf-icon img,
+html body footer.cm-footer .cm-footer__contact-row--email .cm-footer__row-icon .wf-svg-wrapper svg,
+html body footer.cm-footer .cm-footer__contact-row--email .cm-footer__row-icon .wf-icon svg {
+  width: 80% !important;
+  height: 80% !important;
+  max-width: 80% !important;
+  max-height: 80% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  transform: none !important;
+  transform-origin: center center !important;
+  overflow: visible !important;
+}
+
+/* Phone and map/location intentionally remain at the previous size. */
+html body footer.cm-footer .cm-footer__contact-row--phone .cm-footer__row-icon .wf-svg-wrapper img,
+html body footer.cm-footer .cm-footer__contact-row--phone .cm-footer__row-icon .wf-icon img,
+html body footer.cm-footer .cm-footer__contact-row--phone .cm-footer__row-icon .wf-svg-wrapper svg,
+html body footer.cm-footer .cm-footer__contact-row--phone .cm-footer__row-icon .wf-icon svg,
+html body footer.cm-footer .cm-footer__contact-row--location .cm-footer__row-icon .wf-svg-wrapper img,
+html body footer.cm-footer .cm-footer__contact-row--location .cm-footer__row-icon .wf-icon img,
+html body footer.cm-footer .cm-footer__contact-row--location .cm-footer__row-icon .wf-svg-wrapper svg,
+html body footer.cm-footer .cm-footer__contact-row--location .cm-footer__row-icon .wf-icon svg {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+
+/* v8 final icon alignment: keep phone/map unchanged and normalize only social icons. */
+html body footer.cm-footer .cm-footer__social-item {
+  grid-template-columns: clamp(68px, 4.25vw, 82px) minmax(0, 1fr) !important;
+  column-gap: clamp(14px, 1.12vw, 21px) !important;
+  align-items: center !important;
+}
+
+html body footer.cm-footer .cm-footer__social-icon {
+  width: clamp(58px, 3.65vw, 70px) !important;
+  height: clamp(58px, 3.65vw, 70px) !important;
+  flex: 0 0 clamp(58px, 3.65vw, 70px) !important;
+  justify-self: center !important;
+  align-self: center !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+
+html body footer.cm-footer .cm-footer__social-icon .wf-svg-wrapper,
+html body footer.cm-footer .cm-footer__social-icon .wf-icon,
+html body footer.cm-footer .cm-footer__social-icon .wf-icon--image {
+  width: 100% !important;
+  height: 100% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+
+html body footer.cm-footer .cm-footer__social-icon .wf-svg-wrapper img,
+html body footer.cm-footer .cm-footer__social-icon .wf-icon img,
+html body footer.cm-footer .cm-footer__social-icon .wf-svg-wrapper svg,
+html body footer.cm-footer .cm-footer__social-icon .wf-icon svg {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  display: block !important;
+  transform: none !important;
+  clip-path: none !important;
+  overflow: visible !important;
+}
+
+html body footer.cm-footer .cm-footer__social-text {
+  align-self: center !important;
+  align-content: center !important;
+  justify-content: start !important;
+  transform: translateY(0) !important;
+}
+
+html body footer.cm-footer .cm-footer__social-text b,
+html body footer.cm-footer .cm-footer__social-text small {
+  text-align: left !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-row,
+html body footer.cm-footer .cm-footer__social-item,
+html body footer.cm-footer .cm-footer__contact-button,
+html body footer.cm-footer .cm-footer__nav button {
+  cursor: pointer !important;
+}
+
+html body footer.cm-footer .cm-footer__contact-row--email,
+html body footer.cm-footer .cm-footer__social-item--email {
+  cursor: pointer !important;
+}
+
+@media (max-width: 900px) {
+  html body footer.cm-footer .cm-footer__social-item {
+    grid-template-columns: clamp(58px, 7.6vw, 70px) minmax(0, 1fr) !important;
+    column-gap: clamp(12px, 2.1vw, 18px) !important;
+  }
+
+  html body footer.cm-footer .cm-footer__social-icon {
+    width: clamp(50px, 6.8vw, 62px) !important;
+    height: clamp(50px, 6.8vw, 62px) !important;
+    flex-basis: clamp(50px, 6.8vw, 62px) !important;
+  }
+}
+
+
+/* v9: requested footer refinements.
+   - Social icons 10% larger without changing phone/location.
+   - Contact rows share one vertical rhythm, so phone, email and city text align.
+   - Brand contact button gets a stronger blue gradient hover.
+   - Tablet/mobile footer uses less cramped layouts from 431px to 900px. */
+html body footer.cm-footer .cm-footer__contact-button:hover,
+html body footer.cm-footer .cm-footer__contact-button:focus-visible {
+  border-color: #0b4fff !important;
+  background: linear-gradient(135deg, #07135d 0%, #0b39d8 48%, #1b74ff 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 16px 34px rgba(11, 57, 216, .25), 0 0 0 4px rgba(27, 116, 255, .08) !important;
+}
+html body footer.cm-footer .cm-footer__contact-button:hover .cm-footer__contact-button-arrow,
+html body footer.cm-footer .cm-footer__contact-button:focus-visible .cm-footer__contact-button-arrow {
+  color: #ff7a1a !important;
+  transform: translateX(4px) scale(1.05) !important;
+}
+
+html body footer.cm-footer .cm-footer__contact {
+  gap: clamp(14px, 1.06vw, 18px) !important;
+}
+html body footer.cm-footer .cm-footer__contact-row {
+  grid-template-columns: clamp(58px, 3.75vw, 72px) minmax(0, 1fr) !important;
+  min-height: clamp(54px, 3.75vw, 68px) !important;
+  align-items: center !important;
+  justify-items: stretch !important;
+}
+html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-icon {
+  justify-self: center !important;
+  align-self: center !important;
+}
+html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text,
+html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text--stacked {
+  align-self: center !important;
+  align-content: center !important;
+  transform: none !important;
+}
+html body footer.cm-footer .cm-footer__contact-row--email .cm-footer__row-text {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card__copy {
-  min-width: 48px !important;
-  height: 25px !important;
-  padding: 0 9px !important;
-  margin: 0 !important;
-  display: inline-flex !important;
+html body footer.cm-footer .cm-footer__social-item {
+  grid-template-columns: clamp(78px, 4.72vw, 91px) minmax(0, 1fr) !important;
+  min-height: clamp(58px, 4vw, 74px) !important;
   align-items: center !important;
-  justify-content: center !important;
-  border: 1px solid rgba(255, 75, 11, .42) !important;
-  border-radius: 999px !important;
-  background: #fff5ed !important;
-  color: #ff4b0b !important;
-  box-shadow: none !important;
-  font-size: 9px !important;
-  font-weight: 950 !important;
-  line-height: 1 !important;
-  cursor: pointer !important;
+}
+html body footer.cm-footer .cm-footer__social-icon {
+  width: clamp(64px, 4.02vw, 77px) !important;
+  height: clamp(64px, 4.02vw, 77px) !important;
+  flex: 0 0 clamp(64px, 4.02vw, 77px) !important;
+  justify-self: center !important;
+  align-self: center !important;
+}
+html body footer.cm-footer .cm-footer__social-text {
+  align-self: center !important;
+  align-content: center !important;
 }
 
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card__copy:hover,
-html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card__copy:focus-visible {
-  background: #ff4b0b !important;
-  color: #fff !important;
-  outline: none !important;
-}
-
-@media (min-width: 1280px) {
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social {
-    grid-template-columns: minmax(170px, 250px) minmax(300px, 1fr) minmax(260px, 360px) !important;
-  }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social {
-    grid-template-columns: auto minmax(0, 1fr) !important;
+@media (min-width: 761px) and (max-width: 900px) {
+  html body footer.cm-footer .cm-footer__shell {
+    padding: clamp(24px, 3.4vw, 34px) clamp(24px, 4vw, 38px) clamp(16px, 2.4vw, 22px) !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
     grid-template-areas:
-      "title icons"
-      "email email" !important;
-    column-gap: 10px !important;
+      "brand nav"
+      "contact social" !important;
+    gap: clamp(20px, 3vw, 30px) clamp(22px, 3.4vw, 34px) !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__title {
-    grid-area: title !important;
-    display: inline-block !important;
-    color: #07135d !important;
-    font-size: clamp(10px, .65vw, 12px) !important;
-    font-weight: 950 !important;
-    line-height: 1 !important;
-    white-space: nowrap !important;
-    opacity: .76 !important;
+  html body footer.cm-footer .cm-footer__brand-card { grid-area: brand !important; }
+  html body footer.cm-footer .cm-footer__nav { grid-area: nav !important; }
+  html body footer.cm-footer .cm-footer__contact { grid-area: contact !important; }
+  html body footer.cm-footer .cm-footer__social { grid-area: social !important; }
+  html body footer.cm-footer .cm-footer__nav,
+  html body footer.cm-footer .cm-footer__social {
+    border-left: 1px solid var(--cm-footer-line) !important;
+    padding-left: clamp(18px, 3vw, 26px) !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card {
-    display: grid !important;
+  html body footer.cm-footer .cm-footer__contact {
+    border-left: 0 !important;
+    border-top: 1px solid var(--cm-footer-line) !important;
+    padding-left: 0 !important;
+    padding-top: 18px !important;
   }
-}
-
-@media (min-width: 901px) and (max-width: 1120px) {
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social {
-    grid-template-columns: minmax(118px, 158px) minmax(250px, 1fr) minmax(132px, auto) !important;
-    gap: 10px !important;
+  html body footer.cm-footer .cm-footer__social {
+    border-top: 1px solid var(--cm-footer-line) !important;
+    padding-top: 18px !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-brand .wf-logo img,
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-brand img {
-    height: clamp(40px, 4.6vw, 54px) !important;
-    max-width: min(100%, 150px) !important;
+  html body footer.cm-footer .cm-footer__brand .wf-logo img,
+  html body footer.cm-footer .cm-footer__brand img {
+    height: clamp(72px, 10vw, 94px) !important;
+    max-width: min(100%, 270px) !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links button {
-    padding-inline: 10px !important;
-    font-size: clamp(10px, 1.08vw, 12px) !important;
+  html body footer.cm-footer .cm-footer__nav button {
+    white-space: normal !important;
+    line-height: 1.2 !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icons {
-    gap: 6px !important;
+  html body footer.cm-footer .cm-footer__contact-row {
+    grid-template-columns: 62px minmax(0, 1fr) !important;
+    min-height: 62px !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icon {
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
-    min-height: 38px !important;
-    border-radius: 13px !important;
+  html body footer.cm-footer .cm-footer__social-item {
+    grid-template-columns: 74px minmax(0, 1fr) !important;
+    min-height: 68px !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icon .wf-icon {
-    width: 33px !important;
-    height: 33px !important;
-    min-width: 33px !important;
-    min-height: 33px !important;
+  html body footer.cm-footer .cm-footer__social-icon {
+    width: 66px !important;
+    height: 66px !important;
+    flex-basis: 66px !important;
   }
 }
 
-@media (max-width: 900px) {
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social {
-    margin-top: clamp(16px, 4vw, 24px) !important;
-    padding: 16px clamp(10px, 3vw, 14px) 18px !important;
-    grid-template-columns: 1fr !important;
+@media (min-width: 431px) and (max-width: 760px) {
+  html body footer.cm-footer .cm-footer__shell {
+    padding: clamp(22px, 4vw, 30px) clamp(20px, 4vw, 30px) clamp(16px, 3vw, 22px) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     grid-template-areas:
       "brand"
-      "links"
+      "nav"
+      "contact"
       "social" !important;
-    justify-items: center !important;
-    gap: 13px !important;
-    border-top: 1px solid rgba(7, 19, 93, .12) !important;
-    border-radius: 18px 18px 0 0 !important;
-    background: linear-gradient(180deg, rgba(255,255,255,.98) 0%, #f8fbff 100%) !important;
-    overflow: hidden !important;
+    gap: 18px !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-brand {
-    justify-content: center !important;
-    padding: 0 !important;
-    border-right: 0 !important;
+  html body footer.cm-footer .cm-footer__brand-card { grid-area: brand !important; }
+  html body footer.cm-footer .cm-footer__nav { grid-area: nav !important; }
+  html body footer.cm-footer .cm-footer__contact { grid-area: contact !important; }
+  html body footer.cm-footer .cm-footer__social { grid-area: social !important; }
+  html body footer.cm-footer .cm-footer__brand-card {
+    grid-template-columns: minmax(0, 1fr) minmax(190px, .85fr) !important;
+    gap: 14px 18px !important;
+    align-items: center !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-brand .wf-logo img,
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-brand img {
-    height: clamp(42px, 11vw, 52px) !important;
-    max-width: clamp(132px, 36vw, 176px) !important;
-    object-position: center !important;
+  html body footer.cm-footer .cm-footer__brand {
+    grid-column: 1 / 2 !important;
+    grid-row: 1 / span 2 !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links {
-    width: min(100%, 430px) !important;
-    max-width: 430px !important;
+  html body footer.cm-footer .cm-footer__brand-copy,
+  html body footer.cm-footer .cm-footer__contact-button {
+    grid-column: 2 / 3 !important;
+  }
+  html body footer.cm-footer .cm-footer__brand .wf-logo img,
+  html body footer.cm-footer .cm-footer__brand img {
+    height: clamp(70px, 13vw, 86px) !important;
+    max-width: min(100%, 230px) !important;
+  }
+  html body footer.cm-footer .cm-footer__nav,
+  html body footer.cm-footer .cm-footer__contact,
+  html body footer.cm-footer .cm-footer__social {
+    border-left: 0 !important;
+    border-top: 1px solid var(--cm-footer-line) !important;
+    padding-left: 0 !important;
+    padding-top: 16px !important;
+  }
+  html body footer.cm-footer .cm-footer__nav {
     display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    border: 1px solid rgba(3, 88, 255, .12) !important;
-    border-radius: 16px !important;
-    background: #fff !important;
-    overflow: hidden !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links button {
-    width: 100% !important;
-    min-height: 40px !important;
-    padding-inline: 8px !important;
-    font-size: clamp(11px, 3vw, 13px) !important;
+  html body footer.cm-footer .cm-footer__nav h2 {
+    grid-column: 1 / -1 !important;
+  }
+  html body footer.cm-footer .cm-footer__nav button {
+    min-height: 42px !important;
+    padding: 0 12px !important;
+    border: 1px solid rgba(7, 19, 93, .14) !important;
+    border-radius: 12px !important;
+    background: rgba(255,255,255,.42) !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+  html body footer.cm-footer .cm-footer__contact {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+  html body footer.cm-footer .cm-footer__contact h2 {
+    grid-column: 1 / -1 !important;
+  }
+  html body footer.cm-footer .cm-footer__contact-row {
+    grid-template-columns: 1fr !important;
+    justify-items: center !important;
+    align-content: start !important;
+    min-height: 122px !important;
+    padding: 10px 8px !important;
+    border: 1px solid rgba(7, 19, 93, .12) !important;
+    border-radius: 16px !important;
+    background: rgba(255,255,255,.38) !important;
+  }
+  html body footer.cm-footer .cm-footer__contact-row--location {
+    grid-column: 1 / -1 !important;
+    grid-template-columns: 62px minmax(0, 1fr) !important;
+    min-height: 82px !important;
+    justify-items: stretch !important;
+    align-content: center !important;
+    text-align: left !important;
+  }
+  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-icon {
+    width: 58px !important;
+    height: 58px !important;
+    flex-basis: 58px !important;
+  }
+  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text,
+  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text b,
+  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text small {
+    text-align: center !important;
+    justify-items: center !important;
+  }
+  html body footer.cm-footer .cm-footer__contact-row--location .cm-footer__row-text,
+  html body footer.cm-footer .cm-footer__contact-row--location .cm-footer__row-text b,
+  html body footer.cm-footer .cm-footer__contact-row--location .cm-footer__row-text small {
+    text-align: left !important;
+    justify-items: start !important;
+  }
+  html body footer.cm-footer .cm-footer__contact-row--email .cm-footer__row-text {
     white-space: normal !important;
     overflow-wrap: anywhere !important;
-    border-radius: 0 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social {
-    width: 100% !important;
-    justify-self: center !important;
-    justify-items: center !important;
+  html body footer.cm-footer .cm-footer__social {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+  html body footer.cm-footer .cm-footer__social h2 {
+    grid-column: 1 / -1 !important;
+  }
+  html body footer.cm-footer .cm-footer__social-item {
     grid-template-columns: 1fr !important;
-    grid-template-areas:
-      "title"
-      "icons" !important;
-    gap: 8px !important;
-  }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__title {
-    display: block !important;
-    color: #07135d !important;
-    font-size: 11px !important;
-    font-weight: 950 !important;
-    opacity: .8 !important;
-  }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icons {
-    justify-content: center !important;
-    gap: 10px !important;
-  }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icon,
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icon--email-mobile {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    min-height: 44px !important;
-    border-radius: 15px !important;
-  }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__icon .wf-icon {
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
-    min-height: 38px !important;
-  }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-email-card {
-    display: none !important;
-  }
-}
-
-@media (max-width: 380px) {
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social {
-    padding-inline: 10px !important;
-  }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-links button {
-    min-height: 42px !important;
-    padding-inline: 5px !important;
-    font-size: 10.5px !important;
-    line-height: 1.08 !important;
-  }
-
-  html body .wf-client-landing .wf-footer.wf-footer--client-final.wf-footer--client-social .wf-footer-social__title {
-    display: none !important;
-  }
-}
-
-.wf-footer-redirect {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 9999 !important;
-  padding: 18px !important;
-  display: grid !important;
-  place-items: center !important;
-  background: rgba(4, 10, 34, .48) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  backdrop-filter: blur(10px) !important;
-  box-sizing: border-box !important;
-}
-
-.wf-footer-redirect__dialog {
-  width: min(100%, 430px) !important;
-  padding: 20px !important;
-  display: grid !important;
-  grid-template-columns: 58px minmax(0, 1fr) !important;
-  grid-template-areas:
-    "icon content"
-    "actions actions" !important;
-  align-items: center !important;
-  gap: 14px !important;
-  border-radius: 24px !important;
-  border: 1px solid rgba(255,255,255,.62) !important;
-  background: #fff !important;
-  box-shadow: 0 24px 64px rgba(7, 19, 93, .26) !important;
-  box-sizing: border-box !important;
-}
-
-.wf-footer-redirect__icon {
-  grid-area: icon !important;
-  width: 58px !important;
-  height: 58px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-radius: 18px !important;
-  background: #f5f7ff !important;
-}
-
-.wf-footer-redirect__icon .wf-icon,
-.wf-footer-redirect__icon .wf-icon img {
-  width: 46px !important;
-  height: 46px !important;
-  min-width: 46px !important;
-  min-height: 46px !important;
-  display: block !important;
-  object-fit: contain !important;
-}
-
-.wf-footer-redirect__content {
-  grid-area: content !important;
-  min-width: 0 !important;
-}
-
-.wf-footer-redirect__eyebrow {
-  display: block !important;
-  margin-bottom: 4px !important;
-  color: #ff4b0b !important;
-  font-size: .68rem !important;
-  font-weight: 950 !important;
-  text-transform: uppercase !important;
-  letter-spacing: .04em !important;
-}
-
-.wf-footer-redirect__content h2 {
-  margin: 0 !important;
-  color: #07135d !important;
-  font-size: 1.18rem !important;
-  font-weight: 950 !important;
-  line-height: 1.05 !important;
-  letter-spacing: -.03em !important;
-}
-
-.wf-footer-redirect__content p {
-  margin: 7px 0 0 !important;
-  color: rgba(7, 19, 93, .72) !important;
-  font-size: .86rem !important;
-  font-weight: 650 !important;
-  line-height: 1.35 !important;
-}
-
-.wf-footer-redirect__actions {
-  grid-area: actions !important;
-  display: flex !important;
-  justify-content: flex-end !important;
-  align-items: center !important;
-  gap: 10px !important;
-  margin-top: 2px !important;
-}
-
-.wf-footer-redirect__actions button {
-  height: 38px !important;
-  padding: 0 16px !important;
-  border-radius: 999px !important;
-  font-size: .82rem !important;
-  font-weight: 900 !important;
-  line-height: 1 !important;
-  cursor: pointer !important;
-  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease !important;
-}
-
-.wf-footer-redirect__cancel {
-  border: 1px solid rgba(7, 19, 93, .16) !important;
-  background: #fff !important;
-  color: #07135d !important;
-}
-
-.wf-footer-redirect__confirm {
-  border: 1px solid #ff4b0b !important;
-  background: #ff4b0b !important;
-  color: #fff !important;
-  box-shadow: 0 10px 24px rgba(255, 75, 11, .24) !important;
-}
-
-.wf-footer-redirect__actions button:hover,
-.wf-footer-redirect__actions button:focus-visible {
-  transform: translateY(-1px) !important;
-  outline: none !important;
-}
-
-@media (max-width: 460px) {
-  .wf-footer-redirect__dialog {
-    grid-template-columns: 1fr !important;
-    grid-template-areas:
-      "icon"
-      "content"
-      "actions" !important;
     justify-items: center !important;
+    min-height: 128px !important;
+    padding: 10px 8px !important;
+    border: 1px solid rgba(7, 19, 93, .12) !important;
+    border-radius: 16px !important;
+    background: rgba(255,255,255,.38) !important;
     text-align: center !important;
   }
-
-  .wf-footer-redirect__actions {
-    width: 100% !important;
-    flex-direction: column-reverse !important;
+  html body footer.cm-footer .cm-footer__social-item--whatsapp {
+    grid-column: 1 / -1 !important;
+    grid-template-columns: 74px minmax(0, 1fr) !important;
+    min-height: 82px !important;
+    justify-items: stretch !important;
+    text-align: left !important;
   }
+  html body footer.cm-footer .cm-footer__social-icon {
+    width: 66px !important;
+    height: 66px !important;
+    flex-basis: 66px !important;
+  }
+  html body footer.cm-footer .cm-footer__social-text,
+  html body footer.cm-footer .cm-footer__social-text b,
+  html body footer.cm-footer .cm-footer__social-text small {
+    text-align: center !important;
+    justify-items: center !important;
+  }
+  html body footer.cm-footer .cm-footer__social-item--whatsapp .cm-footer__social-text,
+  html body footer.cm-footer .cm-footer__social-item--whatsapp .cm-footer__social-text b,
+  html body footer.cm-footer .cm-footer__social-item--whatsapp .cm-footer__social-text small {
+    text-align: left !important;
+    justify-items: start !important;
+  }
+  html body footer.cm-footer .cm-footer__social-item--email .cm-footer__social-text small {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+}
 
-  .wf-footer-redirect__actions button {
-    width: 100% !important;
+@media (max-width: 430px) {
+  html body footer.cm-footer .cm-footer__social-icon {
+    width: 60px !important;
+    height: 60px !important;
+    flex-basis: 60px !important;
   }
 }

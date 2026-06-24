@@ -15,9 +15,11 @@ import contactWhatsAppIcon from '../../assets/wireframes/icons/contact-whatsapp.
 import contactInstagramIcon from '../../assets/wireframes/icons/contact-instagram.png';
 import contactPhoneIcon from '../../assets/wireframes/icons/contact-phone.png';
 import contactEmailIcon from '../../assets/wireframes/icons/contact-email.png';
-import footerWhatsApp3dIcon from '../../assets/wireframes/icons/footer-whatsapp-3d.svg';
-import footerInstagram3dIcon from '../../assets/wireframes/icons/footer-instagram-3d.svg';
-import footerEmail3dIcon from '../../assets/wireframes/icons/footer-email-3d.svg';
+import footerWhatsAppWireframeIcon from '../../assets/wireframes/icons/footer-whatsapp-wireframe.png';
+import footerInstagramWireframeIcon from '../../assets/wireframes/icons/footer-instagram-wireframe.png';
+import footerEmailWireframeIcon from '../../assets/wireframes/icons/footer-email-wireframe.png';
+import footerPhoneWireframeIcon from '../../assets/wireframes/icons/footer-phone-wireframe.png';
+import footerMapWireframeIcon from '../../assets/wireframes/icons/footer-map-wireframe.png';
 import footerSecurityIcon from '../../assets/wireframes/icons/footer-security-shield.png';
 import servicePinturaCard from '../../assets/images/landing-carousel/01-servicos-de-pintor.png';
 import serviceMontagemCard from '../../assets/images/landing-carousel/02-montagem-e-instalacao.png';
@@ -796,9 +798,11 @@ function Icon({ name }: { name: string }) {
     chevron: <svg {...common}><path d="m20 26 12 12 12-12" {...line}/></svg>,
     whatsapp: <svg {...common}><defs><linearGradient id={`${uid}-wa`} x1="10" y1="8" x2="55" y2="56"><stop stopColor="#28d66b"/><stop offset="1" stopColor="#0aa64b"/></linearGradient></defs><circle cx="32" cy="32" r="27" fill={`url(#${uid}-wa)`}/><path d="M19 47.5 22 38a18 18 0 1 1 6.4 5.9L19 47.5Z" fill="#fff"/><path d="M27.8 23.8c.6-1.4 1.3-1.6 2.4-1.5h1.4c.5 0 1 .2 1.3.9.4 1 1.4 3.7 1.5 4.1.2.4.2.8-.1 1.2-.4.7-1 1.5-1.6 2-.4.4-.5.7-.2 1.2 1.1 1.8 2.6 3.4 4.3 4.6 1.5 1 2.3 1.3 2.9.7.7-.7 1.5-1.8 1.9-2.3.4-.5.8-.6 1.5-.4l4 1.9c.7.4.8.7.7 1.1-.2 1.6-1.5 3.5-3.2 4.1-1.9.7-5.1.3-9.2-2.2-5.6-3.4-9.1-8.4-9.8-12.3-.4-1.6.1-2.5 1.2-3.1Z" fill="#0aa64b"/></svg>,
     instagram: <svg {...common}><defs><linearGradient id={`${uid}-ig`} x1="9" y1="55" x2="55" y2="9"><stop stopColor="#ffbd2e"/><stop offset=".35" stopColor="#ff2f6d"/><stop offset=".68" stopColor="#a42cff"/><stop offset="1" stopColor="#2864ff"/></linearGradient></defs><rect x="7" y="7" width="50" height="50" rx="15" fill={`url(#${uid}-ig)`}/><rect x="18" y="18" width="28" height="28" rx="8" stroke="#fff" strokeWidth="4"/><circle cx="32" cy="32" r="8" stroke="#fff" strokeWidth="4"/><circle cx="43" cy="21" r="3" fill="#fff"/></svg>,
-    'footer-whatsapp-social': <img src={footerWhatsApp3dIcon} alt="" />,
-    'footer-instagram-social': <img src={footerInstagram3dIcon} alt="" />,
-    'footer-email-social': <img src={footerEmail3dIcon} alt="" />,
+    'footer-whatsapp-social': <img src={footerWhatsAppWireframeIcon} alt="" />,
+    'footer-instagram-social': <img src={footerInstagramWireframeIcon} alt="" />,
+    'footer-email-social': <img src={footerEmailWireframeIcon} alt="" />,
+    'footer-phone-wireframe': <img src={footerPhoneWireframeIcon} alt="" />,
+    'footer-map-wireframe': <img src={footerMapWireframeIcon} alt="" />,
     'file-upload': <svg {...common}><defs><linearGradient id={`${uid}-file`} x1="13" y1="8" x2="52" y2="56"><stop stopColor="#8f71ff"/><stop offset="1" stopColor="#6d2ee8"/></linearGradient></defs><path d="M18 8h25l9 10v38H18V8Z" fill="#f4efff" stroke={`url(#${uid}-file)`} strokeWidth="4" strokeLinejoin="round"/><path d="M43 9v11h9" stroke="#6d2ee8" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><path d="M31 44V28M23 36l8-8 8 8" stroke="#6d2ee8" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><path d="M41 41h7M45 37v8" stroke="#0358ff" strokeWidth="3.2" strokeLinecap="round"/></svg>,
     'file-check': <svg {...common}><defs><linearGradient id={`${uid}-fcheck`} x1="13" y1="8" x2="52" y2="56"><stop stopColor="#5be18f"/><stop offset="1" stopColor="#09a64b"/></linearGradient></defs><path d="M18 8h25l9 10v38H18V8Z" fill="#edfff5" stroke={`url(#${uid}-fcheck)`} strokeWidth="4" strokeLinejoin="round"/><path d="M43 9v11h9" stroke="#09a64b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="45" cy="45" r="9" fill="#09a64b"/><path d="m40.5 45 3 3.2 6.2-7.2" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     paperclip: <svg {...common}><path d="M24 36 39 21a9 9 0 0 1 13 13L31 55a14 14 0 0 1-20-20l22-22a8 8 0 0 1 12 12L24 46a4 4 0 0 1-6-6l20-20" {...line}/></svg>,
@@ -1310,6 +1314,8 @@ export function ClientLanding() {
           supportEmail={supportEmail}
           supportInstagramUrl={supportInstagramUrl}
           supportWhatsAppUrl={supportWhatsAppUrl}
+          supportPhoneDisplay={supportPhoneDisplay}
+          serviceCitiesLabel="Itabirito, Ouro Preto, Moeda, Belo Horizonte e Nova Lima"
         />
       </main>
       <CalendarMateModal modal={modal} onClose={() => setModal(null)} />
@@ -2811,7 +2817,7 @@ function ServicesInfoModal() {
         <header className="wf-services-info__header">
           <div className="wf-services-info__logo"><LogoMark /></div>
           <div className="wf-services-info__title-block">
-            <h2>Sobre os serviços</h2>
+            <h2>Serviços prestados</h2>
           </div>
         </header>
         <div className="wf-services-info__grid">

@@ -1,6 +1,6 @@
 import type { CalendarEvent } from "../features/calendar/types";
 import type { ServicoResponse } from "../types/api";
-import type { AdminMeResponse, AdminRole } from "../types/api";
+import type { AdminMeResponse, AdminRole, AdminWorkspaceContext } from "../types/api";
 import { isValidPhone, normalizePhone } from "./authRole";
 
 const ADMIN_TOKEN_STORAGE_KEY = "calendar.admin.token";
@@ -37,6 +37,7 @@ type ClientProfilePatch = Partial<Omit<StoredClientProfile, "updatedAt">>;
 
 export type StoredAdminSession = AdminMeResponse & {
   sessionToken: string;
+  workspace?: AdminWorkspaceContext;
 };
 
 type AdminCalendarMode = "view" | "block";
@@ -229,6 +230,24 @@ export function getStoredAdminToken(): string {
     || "";
 }
 
+function normalizeWorkspace(session: StoredAdminSession): AdminWorkspaceContext | undefined {
+  const workspace = session.workspace;
+  if (workspace?.mode === "PROVIDER" && workspace.providerId?.trim()) {
+    return {
+      mode: "PROVIDER",
+      providerId: workspace.providerId.trim(),
+      providerName: workspace.providerName?.trim() || undefined,
+    };
+  }
+  if (workspace?.mode === "ADMIN" && session.role === "OWNER") {
+    return { mode: "ADMIN" };
+  }
+  if (session.role === "PROVIDER") {
+    return { mode: "PROVIDER", providerId: session.id, providerName: session.name };
+  }
+  return undefined;
+}
+
 export function setStoredAdminToken(token: string): void {
   const normalized = token.trim();
   const storage = getStorage();
@@ -269,13 +288,17 @@ export function getStoredAdminSession(): StoredAdminSession | null {
     clearStoredAdminToken();
     return null;
   }
-  return session;
+  return {
+    ...session,
+    workspace: normalizeWorkspace(session),
+  };
 }
 
 export function saveAdminSession(sessionToken: string, admin: AdminMeResponse): StoredAdminSession {
   const session: StoredAdminSession = {
     ...admin,
     sessionToken: sessionToken.trim(),
+    workspace: admin.role === "PROVIDER" ? { mode: "PROVIDER", providerId: admin.id, providerName: admin.name } : undefined,
   };
   writeJson(ADMIN_SESSION_STORAGE_KEY, session);
   getStorage()?.removeItem(ADMIN_TOKEN_STORAGE_KEY);
@@ -283,12 +306,50 @@ export function saveAdminSession(sessionToken: string, admin: AdminMeResponse): 
   return session;
 }
 
+export function setAdminWorkspace(workspace: AdminWorkspaceContext): StoredAdminSession | null {
+  const session = getStoredAdminSession();
+  if (!session) return null;
+  const normalized: AdminWorkspaceContext = workspace.mode === "PROVIDER"
+    ? {
+        mode: "PROVIDER",
+        providerId: workspace.providerId?.trim(),
+        providerName: workspace.providerName?.trim() || undefined,
+      }
+    : { mode: "ADMIN" };
+  const nextSession: StoredAdminSession = {
+    ...session,
+    workspace: normalized,
+  };
+  writeJson(ADMIN_SESSION_STORAGE_KEY, nextSession);
+  return nextSession;
+}
+
+export function getStoredAdminWorkspace(): AdminWorkspaceContext | undefined {
+  return getStoredAdminSession()?.workspace;
+}
+
+export function getStoredAdminWorkspaceHeaders(): Record<string, string> {
+  const workspace = getStoredAdminWorkspace();
+  if (!workspace) return {};
+  if (workspace.mode === "PROVIDER" && workspace.providerId) {
+    return {
+      "X-ADMIN-WORKSPACE": "PROVIDER",
+      "X-ADMIN-PROVIDER-ID": workspace.providerId,
+    };
+  }
+  if (workspace.mode === "ADMIN") {
+    return { "X-ADMIN-WORKSPACE": "ADMIN" };
+  }
+  return {};
+}
+
 export function getStoredAdminRole(): AdminRole | null {
   return getStoredAdminSession()?.role ?? null;
 }
 
 export function isStoredAdminOwner(): boolean {
-  return getStoredAdminRole() === "OWNER";
+  const session = getStoredAdminSession();
+  return session?.role === "OWNER" && session.workspace?.mode !== "PROVIDER";
 }
 
 export function getManageTokens(): string[] {

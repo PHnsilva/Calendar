@@ -101,4 +101,24 @@ describe("admin API authentication", () => {
     expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).has("X-ADMIN-SESSION")).toBe(false);
     expect(new Headers(fetchMock.mock.calls[1]?.[1]?.headers).get("X-ADMIN-SESSION")).toBe("confirmed-token");
   });
+
+  it("sends provider workspace headers with authenticated admin requests", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("[]", {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { saveAdminSession, setAdminWorkspace } = await import("../../../lib/storage");
+    saveAdminSession("session-token", admin);
+    setAdminWorkspace({ mode: "PROVIDER", providerId: "provider-2", providerName: "Prestador 2" });
+
+    const { getAdminBookings } = await import("./get-admin-bookings");
+    await getAdminBookings();
+
+    const headers = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
+    expect(headers.get("X-ADMIN-SESSION")).toBe("session-token");
+    expect(headers.get("X-ADMIN-WORKSPACE")).toBe("PROVIDER");
+    expect(headers.get("X-ADMIN-PROVIDER-ID")).toBe("provider-2");
+  });
 });

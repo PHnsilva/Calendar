@@ -1,73 +1,50 @@
-# React + TypeScript + Vite
+# CalendarMate Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React/Vite client for the public booking flow, client booking recovery, and admin/provider workspaces.
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
+npm run test
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Environment
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Use `.env.example` as the base:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_BASE_URL=http://localhost:8080
+VITE_GEOAPIFY_PUBLIC_KEY=
+VITE_ADMIN_ENABLED=true
 ```
+
+## Admin And Provider Workspaces
+
+Admin login uses the backend OTP flow:
+
+- `POST /api/admin/auth/start`
+- `POST /api/admin/auth/confirm`
+
+After an `OWNER` session is confirmed, the UI opens a workspace modal:
+
+- `Entrar como Admin`
+- `Entrar como <ProviderName>`
+
+The selected workspace is stored with the admin session in local storage. Provider workspace requests automatically send:
+
+```http
+X-ADMIN-SESSION: <token>
+X-ADMIN-WORKSPACE: PROVIDER
+X-ADMIN-PROVIDER-ID: <providerId>
+```
+
+Admin workspace requests send `X-ADMIN-WORKSPACE: ADMIN`.
+
+Provider workspace UI intentionally shows only the provider agenda plus agenda-level actions such as email and budget. It hides admin history, finance/extrato, global bloqueios, assignment, deletion, bulk operations, and new booking controls. Backend authorization still enforces the same boundaries.
+
+## Provider Registry
+
+Providers come from the backend `admin_users` registry or `ADMIN_USERS` fallback config. The frontend does not hardcode provider names or phones; it loads provider workspace options with `/api/admin/auth/providers`.

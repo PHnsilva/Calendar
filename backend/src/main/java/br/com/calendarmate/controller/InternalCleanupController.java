@@ -21,9 +21,11 @@ public class InternalCleanupController {
     @PostMapping("/cleanup")
     public InternalCleanupService.CleanupResult cleanup(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @RequestParam(required = false) Integer historyRetentionMonths) throws IOException {
 
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         return cleanupService.runDefault(historyRetentionMonths);
     }
 }

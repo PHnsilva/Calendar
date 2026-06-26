@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, ty
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
-import heroClient from '../../assets/wireframes/landing/client-hero-composite.png';
+import heroClient from '../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png';
 import heroClientMobile from '../../assets/wireframes/landing/client-hero-composite-mobile.png';
-import heroAdmin from '../../assets/wireframes/landing/admin-hero-composite.png';
-import heroAdminMobile from '../../assets/wireframes/landing/admin-hero-composite-mobile.png';
+import heroAdmin from '../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png';
+import heroAdminMobile from '../../assets/wireframes/landing/client-hero-composite-mobile-tall.png';
 import houseCard from '../../assets/wireframes/cards/client-house-card.png';
 import clientCreateCalendarIcon from '../../assets/wireframes/icons/client-create-calendar.png';
 import clientFollowCalendarIcon from '../../assets/wireframes/icons/client-follow-calendar.png';
@@ -65,11 +65,11 @@ import emailIllustrationAsset from '../../assets/wireframes/modals/email-illustr
 import { FinancialStatementPanel } from '../admin/FinancialStatementPanel';
 import { HistoryPanel } from '../admin/HistoryPanel';
 import AdminNavbar, { type AdminNavView } from '../layout/AdminNavbar';
+import ProviderNavbar from '../layout/ProviderNavbar';
 import { PageShell, SvgWrapper } from '../layout/ResponsivePrimitives';
 import AppointmentCard from '../../features/appointments/ui/AppointmentCard';
 import AppointmentsPageShell from '../../features/appointments/ui/AppointmentsPageShell';
 import SupportedCitiesPanel from '../../features/appointments/ui/SupportedCitiesPanel';
-import NotificationsModalView, { type NotificationModalItem } from '../../features/notifications/ui/NotificationsModal';
 import AddressAutocompleteField from '../../features/booking-form/components/AddressAutocompleteField';
 import type { AddressSuggestion } from '../../features/booking-form/hooks/useAddressSuggestions';
 import { buildSuggestionInputValue, buildSuggestionStreetLine, getSuggestionHouseNumber, shouldShowManualHouseNumber } from '../../features/booking-form/utils/address-selection';
@@ -92,10 +92,12 @@ import {
   getManageTokens,
   getStoredAdminSession,
   getStoredAdminToken,
+  getStoredAdminWorkspace,
   getStoredClientProfile,
   getStoredPhoneVerification,
   isStoredAdminOwner,
   clearAdminToken,
+  setAdminWorkspace,
   saveLocalCalendarEvent,
   saveClientProfile,
   saveManageToken,
@@ -103,7 +105,7 @@ import {
   saveRecoveredBookings,
   getPhoneVerificationChangedEventName,
 } from '../../lib/storage';
-import type { AdminProviderResponse, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
+import type { AdminAuthConfirmResponse, AdminProviderResponse, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
 import { confirmAdminLogin, listAdminProviders, resendAdminLogin, startAdminLogin } from '../../features/admin/api/admin-auth';
 import { updateAdminBooking } from '../../features/admin/api/update-admin-booking';
@@ -132,7 +134,6 @@ type ModalKind =
   | 'contact'
   | 'services-info'
   | 'help-contact'
-  | 'notifications'
   | 'block-admin'
   | 'assign-provider'
   | 'edit-admin'
@@ -507,14 +508,15 @@ function useAdminBookingsData() {
 
 function useAdminBlocksData() {
   const hasAdminToken = Boolean(getStoredAdminToken());
+  const owner = isStoredAdminOwner();
   const query = useQuery({
     queryKey: ['wireframe-admin-blocks'],
     queryFn: () => listAdminBlocks(),
-    enabled: hasAdminToken,
+    enabled: hasAdminToken && owner,
     staleTime: 15_000,
     retry: 0,
   });
-  return { blocks: query.data ?? [], isLoading: query.isFetching, isError: query.isError, hasAdminToken };
+  return { blocks: owner ? query.data ?? [] : [], isLoading: owner && query.isFetching, isError: owner && query.isError, hasAdminToken };
 }
 
 const supportPhoneDigits = '553195415323';
@@ -1276,7 +1278,7 @@ export function ClientLanding() {
   useDoubleBackToLeavePage();
   return (
     <PageShell className="wf-page wf-client-landing">
-      <PublicNavbar onCreate={() => setModal('create-client')} onNotifications={() => setModal('notifications')} onConfirmPhone={() => setModal('confirm-phone')} onProfile={() => setModal('client-profile')} />
+      <PublicNavbar onCreate={() => setModal('create-client')} onConfirmPhone={() => setModal('confirm-phone')} onProfile={() => setModal('client-profile')} />
       <main className="wf-landing-main">
         <LandingHero
           badge={<Badge icon="calendar" color="orange">Simples, rápido e sem complicações</Badge>}
@@ -1532,12 +1534,11 @@ export function ClientBookings() {
     <>
       <AppointmentsPageShell
         pageClassName="wf-page wf-page--list"
-        clientNavbar={{ page: 'my', onCreate: openCreate, onNotifications: () => setModal('notifications'), onConfirmPhone: () => setModal('confirm-phone'), onProfile: () => setModal('client-profile') }}
+        clientNavbar={{ page: 'my', onCreate: openCreate, onConfirmPhone: () => setModal('confirm-phone'), onProfile: () => setModal('client-profile') }}
         mobileFilters={<FiltersBar className="wf-filters-bar--mobile" />}
         calendar={<CalendarBoard bookings={bookings} onCreate={openCreate} />}
       >
         <div className="wf-booking-tools">
-          <button type="button" onClick={() => setModal('notifications')}><Icon name="bell-purple" /> Notificações</button>
           <button type="button" onClick={() => setModal(profile.verified ? 'client-profile' : 'confirm-phone')}><Icon name={profile.verified ? 'user' : 'shield-check'} /> {profile.verified ? 'Perfil' : 'Confirmar telefone'}</button>
         </div>
         <FiltersBar className="wf-filters-bar--desktop" />
@@ -1572,6 +1573,10 @@ function AdminLandingCard({
   onOpen: (view: AdminView) => void;
   wide?: boolean;
 }) {
+  if (!isStoredAdminOwner() && (view === 'historico' || view === 'bloqueios' || view === 'extrato')) {
+    return null;
+  }
+
   return (
     <button type="button" className={cx('wf-admin-card', `wf-admin-card--${color}`, wide && 'wf-admin-card--wide', mediaIcon && 'wf-admin-card--with-media')} onClick={() => onOpen(view)}>
       <span className="wf-admin-card__icon"><Icon name={icon} /></span>
@@ -1597,6 +1602,81 @@ function getAdminAuthErrorMessage(error: unknown, step: 'start' | 'confirm'): st
   return 'Não foi possível validar o acesso agora. Tente novamente.';
 }
 
+async function loadAdminWorkspaceProviders(response: AdminAuthConfirmResponse): Promise<AdminProviderResponse[]> {
+  if (response.admin.role !== 'OWNER') return [];
+  try {
+    return await listAdminProviders();
+  } catch {
+    return [];
+  }
+}
+
+function setDefaultWorkspaceForAdmin(response: AdminAuthConfirmResponse) {
+  if (response.admin.role === 'PROVIDER') {
+    setAdminWorkspace({ mode: 'PROVIDER', providerId: response.admin.id, providerName: response.admin.name });
+  }
+}
+
+function AdminWorkspaceSelectionModal({
+  embedded = false,
+  providers,
+  onDone,
+}: {
+  embedded?: boolean;
+  providers: AdminProviderResponse[];
+  onDone: () => void;
+}) {
+  const chooseAdmin = () => {
+    setAdminWorkspace({ mode: 'ADMIN' });
+    onDone();
+  };
+
+  const chooseProvider = (provider: AdminProviderResponse) => {
+    setAdminWorkspace({ mode: 'PROVIDER', providerId: provider.id, providerName: provider.name });
+    onDone();
+  };
+
+  const body = (
+    <>
+      <ModalTitle icon="user" title="Escolha o workspace" text="Selecione como deseja entrar nesta sessao." />
+      <div className="wf-provider-list wf-provider-list--wireframe wf-workspace-list">
+        <button type="button" onClick={chooseAdmin}>
+          <span className="wf-radio-dot" />
+          <Avatar name="Admin" />
+          <strong>Entrar como Admin</strong>
+          <small>Acesso completo</small>
+          <small>OWNER</small>
+        </button>
+        {providers.map((provider) => (
+          <button key={provider.id} type="button" onClick={() => chooseProvider(provider)}>
+            <span className="wf-radio-dot" />
+            <Avatar name={provider.name} />
+            <strong>{`Entrar como ${provider.name}`}</strong>
+            <small>{formatPhoneForDisplay(provider.phone)}</small>
+            <small>PROVIDER</small>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+
+  if (embedded) {
+    return body;
+  }
+
+  return (
+    <ModalShell
+      open
+      dataModal="admin-workspace"
+      className="wf-modal wf-modal--admin-workspace"
+      onClose={() => undefined}
+      closeIcon={<Icon name="close" />}
+    >
+      {body}
+    </ModalShell>
+  );
+}
+
 export function AdminLanding() {
   const [modal, setModal] = useState<ModalKind>(null);
   const navigate = useNavigate();
@@ -1609,23 +1689,37 @@ export function AdminLanding() {
     navigate(`/admin/dashboard?view=${view === 'agenda' ? 'agendamentos' : view}`);
   };
   if (!session) {
-    return <AdminLoginScreen onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
+    return <AdminLoginScreen onDone={() => { window.location.href = '/admin/dashboard?view=agendamentos'; }} />;
   }
-  const owner = session.role === 'OWNER';
+  const workspace = getStoredAdminWorkspace();
+  const providerWorkspace = workspace?.mode === 'PROVIDER';
+  const owner = isStoredAdminOwner();
   return (
     <PageShell className="wf-page wf-admin-landing">
-      <AdminNavbar
-        adminName={session.name}
-        owner={owner}
-        onAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
-        onBudgetClick={() => setModal('budget-admin')}
-        onCreate={() => setModal('create-client')}
-        onEmailClick={() => setModal('email-admin')}
-        onMobileAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
-        onMobileMenu={() => notifyUnavailable('Menu do administrador')}
-        onNotificationsClick={() => setModal('notifications')}
-        onView={openNavbarView}
-      />
+      {providerWorkspace ? (
+        <ProviderNavbar
+          providerName={workspace.providerName || session.name}
+          actions={[
+            { label: 'Agenda', icon: 'calendar', active: true, onClick: () => openNavbarView('agendamentos') },
+            { label: 'Email', icon: 'mail', onClick: () => setModal('email-admin') },
+            { label: 'Orcamento', icon: 'budget', onClick: () => setModal('budget-admin') },
+          ]}
+          onMenu={() => notifyUnavailable('Menu do prestador')}
+          onProviderClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
+        />
+      ) : (
+        <AdminNavbar
+          adminName={session.name}
+          owner={owner}
+          onAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
+          onBudgetClick={() => setModal('budget-admin')}
+          onCreate={() => setModal('create-client')}
+          onEmailClick={() => setModal('email-admin')}
+          onMobileAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
+          onMobileMenu={() => notifyUnavailable('Menu do administrador')}
+          onView={openNavbarView}
+        />
+      )}
       <main className="wf-landing-main wf-landing-main--admin">
         <section className="wf-hero wf-hero--admin wf-admin-home-hero-final">
           <div className="wf-hero-copy wf-admin-home-copy-final">
@@ -1654,6 +1748,7 @@ function AdminLoginScreen({ onDone }: { onDone: () => void }) {
   const [verificationId, setVerificationId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [workspaceProviders, setWorkspaceProviders] = useState<AdminProviderResponse[] | null>(null);
 
   const start = async () => {
     if (!phone.trim() || loading) return;
@@ -1674,7 +1769,12 @@ function AdminLoginScreen({ onDone }: { onDone: () => void }) {
     setLoading(true);
     setError('');
     try {
-      await confirmAdminLogin(verificationId, code.trim());
+      const response = await confirmAdminLogin(verificationId, code.trim());
+      setDefaultWorkspaceForAdmin(response);
+      if (response.admin.role === 'OWNER') {
+        setWorkspaceProviders(await loadAdminWorkspaceProviders(response));
+        return;
+      }
       onDone();
     } catch (err) {
       setError(getAdminAuthErrorMessage(err, 'confirm'));
@@ -1702,6 +1802,12 @@ function AdminLoginScreen({ onDone }: { onDone: () => void }) {
           <HeroVisual type="admin" className="wf-admin-login-visual-final" />
         </section>
       </main>
+      {workspaceProviders ? (
+        <AdminWorkspaceSelectionModal
+          providers={workspaceProviders}
+          onDone={onDone}
+        />
+      ) : null}
     </PageShell>
   );
 }
@@ -1721,11 +1827,13 @@ export function AdminDashboard() {
   const [importedFinanceDashboard, setImportedFinanceDashboard] = useState<FinancialDashboardDTO | null>(null);
   const openCreate = (date?: string) => { setContext(date ? { createDate: date } : {}); setModal('create-client'); };
   const session = getStoredAdminSession();
-  const owner = session?.role === 'OWNER';
+  const workspace = getStoredAdminWorkspace();
+  const providerWorkspace = workspace?.mode === 'PROVIDER';
+  const owner = session?.role === 'OWNER' && !providerWorkspace;
   const effectiveView = !owner && (view === 'extrato' || view === 'bloqueios') ? 'agendamentos' : view;
 
   if (!session) {
-    return <AdminLoginScreen onDone={() => window.location.assign('/admin/dashboard?view=agendamentos')} />;
+    return <AdminLoginScreen onDone={() => { window.location.href = '/admin/dashboard?view=agendamentos'; }} />;
   }
 
   const selectAdminView = (nextView: AdminView) => {
@@ -1736,19 +1844,31 @@ export function AdminDashboard() {
 
   return (
     <PageShell className="wf-page wf-admin-dashboard">
-      <AdminNavbar
-        active={effectiveView}
-        adminName={session.name}
-        owner={owner}
-        onAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
-        onBudgetClick={() => { setContext({}); setModal('budget-admin'); }}
-        onCreate={openCreate}
-        onEmailClick={() => { setContext({}); setModal('email-admin'); }}
-        onMobileAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
-        onMobileMenu={() => notifyUnavailable('Menu do administrador')}
-        onNotificationsClick={() => setModal('notifications')}
-        onView={selectAdminView}
-      />
+      {providerWorkspace ? (
+        <ProviderNavbar
+          providerName={workspace.providerName || session.name}
+          actions={[
+            { label: 'Agenda', icon: 'calendar', active: true, onClick: () => selectAdminView('agendamentos') },
+            { label: 'Email', icon: 'mail', onClick: () => { setContext({}); setModal('email-admin'); } },
+            { label: 'Orcamento', icon: 'budget', onClick: () => { setContext({}); setModal('budget-admin'); } },
+          ]}
+          onMenu={() => notifyUnavailable('Menu do prestador')}
+          onProviderClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
+        />
+      ) : (
+        <AdminNavbar
+          active={effectiveView}
+          adminName={session.name}
+          owner={owner}
+          onAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
+          onBudgetClick={() => { setContext({}); setModal('budget-admin'); }}
+          onCreate={openCreate}
+          onEmailClick={() => { setContext({}); setModal('email-admin'); }}
+          onMobileAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
+          onMobileMenu={() => notifyUnavailable('Menu do administrador')}
+          onView={selectAdminView}
+        />
+      )}
       <main className="wf-admin-main">
         {effectiveView === 'agendamentos' ? <AdminAppointmentsView setModal={setModal} setContext={setContext} /> : null}
         {effectiveView === 'bloqueios' ? <AdminBlocksView setModal={setModal} /> : null}
@@ -1760,35 +1880,340 @@ export function AdminDashboard() {
   );
 }
 
+function getWeekStart(date = new Date()): Date {
+  const cursor = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const weekday = cursor.getDay();
+  const diff = weekday === 0 ? -6 : 1 - weekday;
+  cursor.setDate(cursor.getDate() + diff);
+  cursor.setHours(0, 0, 0, 0);
+  return cursor;
+}
+
+function getWeekEnd(date = new Date()): Date {
+  const start = getWeekStart(date);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
+function isSameIsoDate(a: string, b: string): boolean {
+  return a === b;
+}
+
+function isCurrentWeek(booking: BookingItem, reference = new Date()): boolean {
+  const date = toLocalDate(booking.date);
+  return date >= getWeekStart(reference) && date <= getWeekEnd(reference);
+}
+
+function getMonthRange(date = new Date()): { start: string; end: string } {
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  return { start: toIsoDate(start), end: toIsoDate(end) };
+}
+
+function getWeekRangeLabel(reference = new Date()): string {
+  const start = getWeekStart(reference);
+  const end = getWeekEnd(reference);
+  const startLabel = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(start).replace('.', '');
+  const endLabel = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(end).replace('.', '');
+  return `${startLabel} – ${endLabel}`;
+}
+
+function getDayHeaderLabel(dateIso: string): string {
+  const date = toLocalDate(dateIso);
+  const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' }).format(date).replace('.', '');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  const month = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(date).replace('.', '');
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${day} ${month.charAt(0).toUpperCase()}${month.slice(1)}`;
+}
+
+function getShortAddress(booking: BookingItem): string {
+  const city = booking.city?.trim();
+  if (!city) return booking.address;
+  const neighborhood = booking.address.split(/[,-]/).map((part) => part.trim()).find((part) => part && !normalizeText(part).includes(normalizeText(city)));
+  return neighborhood ? `${city} • ${neighborhood}` : city;
+}
+
+function isWithoutProvider(booking: BookingItem): boolean {
+  const provider = normalizeText(booking.provider || '');
+  return !provider || provider === 'a definir' || provider.includes('sem prestador');
+}
+
+function matchesAdminAgendaSearch(booking: BookingItem, search: string): boolean {
+  const term = normalizeText(search.trim());
+  if (!term) return true;
+  return [booking.name, booking.phone, booking.service, booking.address, booking.city, booking.provider]
+    .filter(Boolean)
+    .some((value) => normalizeText(String(value)).includes(term));
+}
+
+function groupBookingsByDate(bookings: BookingItem[]): Array<{ date: string; items: BookingItem[] }> {
+  const groups = new Map<string, BookingItem[]>();
+  sortBookings(bookings).forEach((booking) => {
+    groups.set(booking.date, [...(groups.get(booking.date) ?? []), booking]);
+  });
+  return [...groups.entries()].map(([date, items]) => ({ date, items }));
+}
+
+function resolveAgendaAccent(booking: BookingItem, index: number): Accent {
+  const text = normalizeText(`${booking.service} ${booking.notes ?? ''}`);
+  if (text.includes('torneira') || text.includes('hidraul')) return 'orange';
+  if (text.includes('movel') || text.includes('móveis') || text.includes('montagem')) return 'green';
+  if (text.includes('varal') || text.includes('teto')) return 'purple';
+  if (text.includes('porta')) return 'cyan';
+  if (text.includes('suporte') || text.includes('tv')) return 'orange';
+  return accentCycle[index % accentCycle.length];
+}
+
+function AdminAgendaSummaryCard({ tone, icon, title, value, label }: { tone: Accent; icon: string; title: string; value: number; label: string }) {
+  return (
+    <article className={cx('wf-admin-agenda-summary-card', `wf-admin-agenda-summary-card--${tone}`)}>
+      <span className="wf-admin-agenda-summary-card__icon"><Icon name={icon} /></span>
+      <span className="wf-admin-agenda-summary-card__copy"><strong>{title}</strong><b>{value}</b><small>{label}</small></span>
+    </article>
+  );
+}
+
+function ServiceIllustration({ booking, accent }: { booking: BookingItem; accent: Accent }) {
+  const text = normalizeText(`${booking.service} ${booking.notes ?? ''}`);
+  const kind = text.includes('torneira') || text.includes('hidraul')
+    ? 'faucet'
+    : text.includes('movel') || text.includes('móveis') || text.includes('montagem')
+      ? 'cabinet'
+      : text.includes('varal') || text.includes('teto')
+        ? 'clothesline'
+        : text.includes('porta')
+          ? 'door'
+          : text.includes('suporte') || text.includes('tv')
+            ? 'tv'
+            : 'shelf';
+
+  return (
+    <span className={cx('wf-admin-agenda-service-art', `wf-admin-agenda-service-art--${accent}`)} aria-hidden="true">
+      {kind === 'faucet' ? (
+        <svg viewBox="0 0 96 96"><path d="M28 45h29c9 0 16 7 16 16v5" /><path d="M24 66h55" /><path d="M37 45V31h20" /><path d="M50 31V20M41 20h18" /><path d="M72 72c5 5 5 11 0 16-5-5-5-11 0-16Z" /></svg>
+      ) : kind === 'cabinet' ? (
+        <svg viewBox="0 0 96 96"><rect x="25" y="18" width="46" height="62" rx="3" /><path d="M48 18v62M40 48h2M56 48h2M31 80v6M65 80v6" /></svg>
+      ) : kind === 'clothesline' ? (
+        <svg viewBox="0 0 96 96"><path d="M19 31h58M24 39h48M30 39v30M42 39v22M54 39v34M66 39v22" /><path d="M25 66h8M38 58h8M50 70h8M62 58h8" /></svg>
+      ) : kind === 'door' ? (
+        <svg viewBox="0 0 96 96"><rect x="31" y="15" width="36" height="67" rx="2" /><path d="M38 22h22v53H38z" /><circle cx="56" cy="49" r="2" /></svg>
+      ) : kind === 'tv' ? (
+        <svg viewBox="0 0 96 96"><path d="M22 30h52v28H22zM16 24v40M80 24v40M30 68h36M36 76h24" /><path d="M34 38h28M34 48h28" /></svg>
+      ) : (
+        <svg viewBox="0 0 96 96"><path d="M20 67h58M24 32h48v35H24zM32 45h32M38 32v35M58 32v35" /><path d="M65 57c8-7 16-4 18 5-8 1-14-1-18-5Z" /></svg>
+      )}
+    </span>
+  );
+}
+
+function AdminAgendaActionButton({ icon, label, danger = false, onClick }: { icon: string; label: string; danger?: boolean; onClick?: () => void }) {
+  return (
+    <button type="button" className={cx('wf-admin-agenda-action', danger && 'wf-admin-agenda-action--danger')} onClick={onClick} aria-label={label} title={label}>
+      <Icon name={icon} />
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function AdminAgendaBookingCard({
+  booking,
+  index,
+  owner,
+  onAssign,
+  onBudget,
+  onDetails,
+  onEdit,
+}: {
+  booking: BookingItem;
+  index: number;
+  owner: boolean;
+  onAssign: () => void;
+  onBudget: () => void;
+  onDetails: () => void;
+  onEdit: () => void;
+}) {
+  const accent = resolveAgendaAccent(booking, index);
+  const providerUndefined = isWithoutProvider(booking);
+  const formattedPhone = formatPhoneForDisplay(booking.phone) || 'Telefone não informado';
+
+  return (
+    <article className={cx('wf-admin-agenda-booking-card', `wf-admin-agenda-booking-card--${accent}`)}>
+      <div className="wf-admin-agenda-booking-card__time">
+        <strong>{booking.time}</strong>
+        <span>{booking.endTime ? `– ${booking.endTime}` : 'Horário único'}</span>
+      </div>
+      <div className="wf-admin-agenda-booking-card__main">
+        <h3>{booking.service}</h3>
+        <p><Icon name="booking-field-user" /> <span>{booking.name}</span></p>
+        <p><Icon name="booking-field-phone" /> <span>{formattedPhone}</span></p>
+        <p><Icon name="booking-field-location" /> <span>{getShortAddress(booking)}</span></p>
+      </div>
+      <ServiceIllustration booking={booking} accent={accent} />
+      <div className="wf-admin-agenda-booking-card__provider">
+        <strong>{booking.provider || 'A definir'}</strong>
+        <span className={providerUndefined ? 'is-missing' : ''}>{providerUndefined ? 'A definir' : 'Prestador'}</span>
+      </div>
+      <div className="wf-admin-agenda-booking-card__actions">
+        <AdminAgendaActionButton icon="booking-action-eye" label="Ver" onClick={onDetails} />
+        <AdminAgendaActionButton icon="booking-action-pencil" label="Editar" onClick={onEdit} />
+        {owner ? <AdminAgendaActionButton icon="booking-action-provider" label="Designar" onClick={onAssign} /> : null}
+        <AdminAgendaActionButton icon="budget" label="Orçamento" onClick={onBudget} />
+        <AdminAgendaActionButton icon="booking-action-cancel" label="Cancelar" danger onClick={() => notifyUnavailable('Cancelamento')} />
+      </div>
+    </article>
+  );
+}
+
+function AdminWeekDayGroup({
+  date,
+  index,
+  items,
+  onAssign,
+  onBudget,
+  onDetails,
+  onEdit,
+  owner,
+}: {
+  date: string;
+  index: number;
+  items: BookingItem[];
+  onAssign: (booking: BookingItem) => void;
+  onBudget: (booking: BookingItem) => void;
+  onDetails: (booking: BookingItem) => void;
+  onEdit: (booking: BookingItem) => void;
+  owner: boolean;
+}) {
+  const accent = accentCycle[index % accentCycle.length];
+  const today = toIsoDate(new Date());
+  return (
+    <section className={cx('wf-admin-week-day', `wf-admin-week-day--${accent}`)}>
+      <header className="wf-admin-week-day__header">
+        <span className="wf-admin-week-day__calendar"><Icon name="calendar" /></span>
+        <h2>{getDayHeaderLabel(date)} {isSameIsoDate(date, today) ? <em>Hoje</em> : null}</h2>
+        <strong>{items.length} {items.length === 1 ? 'agendamento' : 'agendamentos'}</strong>
+        <Icon name="chevron" />
+      </header>
+      <div className="wf-admin-week-day__list">
+        {items.map((booking, bookingIndex) => (
+          <AdminAgendaBookingCard
+            key={booking.id}
+            booking={booking}
+            index={bookingIndex + index}
+            owner={owner}
+            onAssign={() => onAssign(booking)}
+            onBudget={() => onBudget(booking)}
+            onDetails={() => onDetails(booking)}
+            onEdit={() => onEdit(booking)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AdminCalendarModal({ bookings, onClose, onCreate }: { bookings: BookingItem[]; onClose: () => void; onCreate?: (date?: string) => void }) {
+  return (
+    <div className="wf-admin-calendar-modal" role="dialog" aria-modal="true" aria-labelledby="wf-admin-calendar-modal-title">
+      <div className="wf-admin-calendar-modal__backdrop" onClick={onClose} />
+      <section className="wf-admin-calendar-modal__panel">
+        <header className="wf-admin-calendar-modal__header">
+          <div>
+            <h2 id="wf-admin-calendar-modal-title">Calendário</h2>
+            <p>Visualização mensal embutida. O calendário permanece fechado por padrão.</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Fechar calendário"><Icon name="close" /></button>
+        </header>
+        <CalendarBoard bookings={bookings} admin onCreate={onCreate ? (date) => { onClose(); onCreate(date); } : undefined} />
+      </section>
+    </div>
+  );
+}
+
 function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: ModalKind) => void; setContext: (context: ModalContext) => void }) {
   const navigate = useNavigate();
   const { bookings, isLoading, isError, hasAdminToken } = useAdminBookingsData();
+  const { blocks } = useAdminBlocksData();
   const owner = isStoredAdminOwner();
+  const [search, setSearch] = useState('');
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const monthRange = getMonthRange();
+  const weekBookings = useMemo(
+    () => bookings.filter((booking) => isCurrentWeek(booking)).filter((booking) => matchesAdminAgendaSearch(booking, search)),
+    [bookings, search],
+  );
+  const dayGroups = useMemo(() => groupBookingsByDate(weekBookings), [weekBookings]);
+  const missingProviderCount = useMemo(() => bookings.filter((booking) => isCurrentWeek(booking) && isWithoutProvider(booking)).length, [bookings]);
+  const monthBlocksCount = useMemo(() => blocks.filter((block) => {
+    const start = block.start?.slice(0, 10) || block.end?.slice(0, 10) || '';
+    return start >= monthRange.start && start <= monthRange.end;
+  }).length, [blocks, monthRange.end, monthRange.start]);
+
   const openDetails = (booking: BookingItem) => {
     setContext({ booking });
     navigate(`/admin/booking/${booking.id}`);
   };
   const openAssign = (booking: BookingItem) => { setContext({ booking }); setModal('assign-provider'); };
   const openEdit = (booking: BookingItem) => { setContext({ booking }); setModal('edit-admin'); };
+  const openBudget = (booking: BookingItem) => { setContext({ booking }); setModal('budget-admin'); };
   const openCreate = (date?: string) => {
     setContext(date ? { createDate: date } : {});
     setModal('create-client');
   };
 
   return (
-    <AppointmentsPageShell
-      admin
-      mobileFilters={<FiltersBar admin canAssign={owner} className="wf-filters-bar--mobile" />}
-      calendar={<CalendarBoard bookings={bookings} admin onCreate={openCreate} />}
-    >
-      <FiltersBar admin canAssign={owner} className="wf-filters-bar--desktop" />
-      <div className="wf-booking-stack wf-booking-stack--admin">
+    <section className="wf-admin-week-agenda" aria-labelledby="wf-admin-week-agenda-title">
+      <div className="wf-admin-week-agenda__hero">
+        <div>
+          <h1 id="wf-admin-week-agenda-title">Agendamentos</h1>
+          <p>Visão da semana</p>
+        </div>
+        {owner ? <button type="button" className="wf-admin-week-agenda__new wf-admin-week-agenda__new--desktop" onClick={() => openCreate()}><Icon name="plus" /> Novo agendamento</button> : null}
+      </div>
+
+      <div className="wf-admin-week-agenda__controls">
+        <button type="button" className="wf-admin-week-agenda__week"><Icon name="calendar" /> Esta semana <Icon name="chevron" /></button>
+        <button type="button" className="wf-admin-week-agenda__calendar" onClick={() => setCalendarOpen(true)}><Icon name="calendar" /> Abrir calendário</button>
+        <span className="wf-admin-week-agenda__range"><Icon name="calendar" /> {getWeekRangeLabel()}</span>
+        {owner ? <button type="button" className="wf-admin-week-agenda__new wf-admin-week-agenda__new--mobile" onClick={() => openCreate()}><Icon name="plus" /> Novo agendamento</button> : null}
+      </div>
+
+      <div className="wf-admin-week-agenda__search-row">
+        <label className="wf-admin-week-agenda__search">
+          <Icon name="booking-search" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por cliente, serviço ou endereço" />
+        </label>
+        <button type="button" className="wf-admin-week-agenda__filter" onClick={() => notifyUnavailable('Filtros avançados')}><Icon name="booking-filter" /> Filtrar</button>
+      </div>
+
+      <div className="wf-admin-agenda-summary-grid">
+        {owner ? <AdminAgendaSummaryCard tone="blue" icon="booking-field-user" title="Sem prestador" value={missingProviderCount} label="agendamentos" /> : null}
+        <AdminAgendaSummaryCard tone="orange" icon="calendar-create" title="Agendamentos" value={weekBookings.length} label="esta semana" />
+        {owner ? <AdminAgendaSummaryCard tone="green" icon="admin-blocks" title="Bloqueios do mês" value={monthBlocksCount} label="bloqueios" /> : null}
+      </div>
+
+      <div className="wf-admin-week-agenda__list">
         {isLoading ? <EmptyState title="Carregando agendamentos" text="Buscando agendamentos reais do backend." /> : null}
         {isError || !hasAdminToken ? <EmptyState title="Agendamentos não disponíveis" text="Faça login administrativo para carregar os dados reais do backend." /> : null}
-        {!isLoading && !isError && bookings.length === 0 ? <EmptyState title="Nenhum agendamento cadastrado" text="Ainda não há agendamentos retornados pela API administrativa." /> : null}
-        {bookings.map((booking) => <BookingCard key={booking.id} booking={booking} admin canAssign={owner} onDetails={() => openDetails(booking)} onAssign={() => openAssign(booking)} onEdit={() => openEdit(booking)} />)}
+        {!isLoading && !isError && dayGroups.length === 0 ? <EmptyState title="Nenhum agendamento nesta semana" text={search ? 'Nenhum agendamento da semana corresponde à busca atual.' : 'A semana atual ainda não possui agendamentos retornados pela API administrativa.'} /> : null}
+        {dayGroups.map((group, index) => (
+          <AdminWeekDayGroup
+            key={group.date}
+            date={group.date}
+            index={index}
+            items={group.items}
+            owner={owner}
+            onAssign={openAssign}
+            onBudget={openBudget}
+            onDetails={openDetails}
+            onEdit={openEdit}
+          />
+        ))}
       </div>
-    </AppointmentsPageShell>
+
+      {calendarOpen ? <AdminCalendarModal bookings={bookings} onClose={() => setCalendarOpen(false)} onCreate={owner ? openCreate : undefined} /> : null}
+    </section>
   );
 }
 
@@ -1907,8 +2332,10 @@ export function AdminBookingDetails() {
   const { eventId } = useParams();
   const { bookings, isLoading, hasAdminToken } = useAdminBookingsData();
   const booking = useMemo(() => bookings.find((item) => item.id === eventId) ?? bookings[0], [bookings, eventId]);
-  const owner = isStoredAdminOwner();
   const session = getStoredAdminSession();
+  const workspace = getStoredAdminWorkspace();
+  const providerWorkspace = workspace?.mode === 'PROVIDER';
+  const owner = isStoredAdminOwner();
 
   const openBudget = () => {
     setModal('budget-admin');
@@ -1925,19 +2352,31 @@ export function AdminBookingDetails() {
 
   return (
     <PageShell className="wf-page wf-admin-details-page">
-      <AdminNavbar
-        active="agendamentos"
-        adminName={session?.name}
-        owner={owner}
-        onAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
-        onBudgetClick={() => { setContext(booking ? { booking } : {}); setModal('budget-admin'); }}
-        onCreate={() => setModal('create-client')}
-        onEmailClick={() => { setContext(booking ? { booking } : {}); setModal('email-admin'); }}
-        onMobileAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
-        onMobileMenu={() => notifyUnavailable('Menu do administrador')}
-        onNotificationsClick={() => setModal('notifications')}
-        onView={selectAdminView}
-      />
+      {providerWorkspace ? (
+        <ProviderNavbar
+          providerName={workspace.providerName || session?.name}
+          actions={[
+            { label: 'Agenda', icon: 'calendar', active: true, onClick: () => selectAdminView('agendamentos') },
+            { label: 'Email', icon: 'mail', onClick: () => { setContext(booking ? { booking } : {}); setModal('email-admin'); } },
+            { label: 'Orcamento', icon: 'budget', onClick: () => { setContext(booking ? { booking } : {}); setModal('budget-admin'); } },
+          ]}
+          onMenu={() => notifyUnavailable('Menu do prestador')}
+          onProviderClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
+        />
+      ) : (
+        <AdminNavbar
+          active="agendamentos"
+          adminName={session?.name}
+          owner={owner}
+          onAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
+          onBudgetClick={() => { setContext(booking ? { booking } : {}); setModal('budget-admin'); }}
+          onCreate={() => setModal('create-client')}
+          onEmailClick={() => { setContext(booking ? { booking } : {}); setModal('email-admin'); }}
+          onMobileAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
+          onMobileMenu={() => notifyUnavailable('Menu do administrador')}
+          onView={selectAdminView}
+        />
+      )}
       <main className="wf-details-main">
         <div className="wf-admin-title-row">
           <Link to="/admin/dashboard?view=agendamentos" className="wf-back-btn"><Icon name="back" /></Link>
@@ -2015,7 +2454,6 @@ function CalendarMateModal({
     modal === 'contact' && 'wf-modal--contact',
     modal === 'services-info' && 'wf-modal--services-info',
     modal === 'help-contact' && 'wf-modal--help-contact',
-    modal === 'notifications' && 'wf-modal--notifications',
     modal === 'block-admin' && 'wf-modal--admin-block',
     modal === 'assign-provider' && 'wf-modal--assign',
     modal === 'edit-admin' && 'wf-modal--create',
@@ -2033,7 +2471,6 @@ function CalendarMateModal({
         {modal === 'contact' ? <ContactModal onClose={closeModal} /> : null}
         {modal === 'services-info' ? <ServicesInfoModal /> : null}
         {modal === 'help-contact' ? <HelpContactModal /> : null}
-        {modal === 'notifications' ? <NotificationsModal onClose={closeModal} /> : null}
         {modal === 'block-admin' ? <AdminBlockModal onClose={closeModal} /> : null}
         {modal === 'assign-provider' ? <AssignProviderModal booking={context.booking} onClose={closeModal} /> : null}
         {modal === 'edit-admin' ? <EditAdminBookingModal booking={context.booking} onClose={closeModal} /> : null}
@@ -2452,6 +2889,7 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [workspaceProviders, setWorkspaceProviders] = useState<AdminProviderResponse[] | null>(null);
   const normalizedPhone = normalizePhone(phone);
   const canSendCode = isValidPhone(phone) && !loading;
   const canConfirm = Boolean(flow?.verificationId) && code.length === 3 && !loading;
@@ -2558,10 +2996,15 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
 
     try {
       if (flow.role === 'admin') {
-        await confirmAdminLogin(flow.verificationId, code);
+        const response = await confirmAdminLogin(flow.verificationId, code);
+        setDefaultWorkspaceForAdmin(response);
         await queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
+        if (response.admin.role === 'OWNER') {
+          setWorkspaceProviders(await loadAdminWorkspaceProviders(response));
+          return;
+        }
         onClose();
-        navigate('/admin/dashboard', { replace: false });
+        window.location.href = '/admin/dashboard?view=agendamentos';
         return;
       }
 
@@ -2588,6 +3031,19 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
       setLoading(false);
     }
   };
+
+  if (workspaceProviders) {
+    return (
+      <AdminWorkspaceSelectionModal
+        embedded
+        providers={workspaceProviders}
+        onDone={() => {
+          onClose();
+          window.location.href = '/admin/dashboard?view=agendamentos';
+        }}
+      />
+    );
+  }
 
   return (
     <div className="wf-confirm-page">
@@ -2843,83 +3299,6 @@ function HelpContactModal() {
         <ContactOption icon="contact-phone" title="Telefone" text={supportPhoneDisplay} color="blue" onClick={openSupportPhone} />
       </div>
     </>
-  );
-}
-
-const notificationReadStorageKey = 'calendar.notifications.readIds';
-
-function readNotificationReadIds(): Set<string> {
-  try {
-    const raw = window.localStorage.getItem(notificationReadStorageKey);
-    const parsed = raw ? JSON.parse(raw) as string[] : [];
-    return new Set(Array.isArray(parsed) ? parsed : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function writeNotificationReadIds(ids: Set<string>): void {
-  try {
-    window.localStorage.setItem(notificationReadStorageKey, JSON.stringify([...ids].slice(-200)));
-  } catch {
-    // Local read state is a UI convenience; failing to persist should not break notifications.
-  }
-}
-
-function NotificationsModal({ onClose }: { onClose: () => void }) {
-  const clientData = useClientBookingsData();
-  const adminData = useAdminBookingsData();
-  const isAdminContext = Boolean(getStoredAdminToken());
-  const { bookings, isLoading } = isAdminContext ? adminData : clientData;
-  const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(() => readNotificationReadIds());
-  const notifications: NotificationModalItem[] = bookings.slice(0, 8).map((booking) => {
-    const normalizedStatus = booking.status.toLowerCase();
-    const isConfirmed = normalizedStatus.includes('confirm') || normalizedStatus.includes('aceit') || normalizedStatus.includes('agend');
-    const isDone = normalizedStatus.includes('conclu');
-    const isCancelled = normalizedStatus.includes('cancel') || normalizedStatus.includes('recus');
-    const id = `${isAdminContext ? 'admin' : 'client'}:${booking.id}:${booking.status}:${booking.date}:${booking.time}`;
-    const icon = isDone ? 'shield-check' : isCancelled ? 'clock-orange' : isConfirmed ? 'notification-calendar' : 'bell-purple';
-    const tone = isDone ? 'green' : isCancelled ? 'orange' : isConfirmed ? 'purple' : 'blue';
-    const title = isCancelled
-      ? 'Agendamento atualizado'
-      : isDone
-        ? 'Agendamento concluído'
-        : isConfirmed
-          ? 'Agendamento confirmado'
-          : 'Agendamento registrado';
-    const dateText = ptDate.format(toLocalDate(booking.date));
-    const providerText = booking.provider && booking.provider !== 'A definir' ? ` Prestador: ${booking.provider}.` : '';
-    return {
-      id,
-      icon,
-      title,
-      time: dateText,
-      tone,
-      unread: !readNotificationIds.has(id) && !isDone && !isCancelled,
-      text: `${booking.service} em ${booking.city || 'cidade não informada'} para ${dateText} às ${booking.time}. Status: ${booking.status}.${providerText}`,
-    };
-  });
-  const unreadCount = notifications.filter((item) => item.unread).length;
-
-  const markAllRead = () => {
-    const next = new Set(readNotificationIds);
-    notifications.forEach((item) => next.add(item.id));
-    setReadNotificationIds(next);
-    writeNotificationReadIds(next);
-  };
-
-  return (
-    <NotificationsModalView
-      emptyState={<EmptyState title="Nenhuma notificação" text="Nenhum agendamento real foi encontrado para gerar notificações." />}
-      isLoading={isLoading}
-      loadingState={<EmptyState title="Carregando notificações" text="Buscando atualizações dos seus agendamentos." />}
-      notifications={notifications}
-      onClose={onClose}
-      onMarkAllRead={markAllRead}
-      renderIcon={(name) => <Icon name={name} />}
-      title={<ModalTitle icon="bell-purple" title="Notificações" text="Acompanhe atualizações dos seus agendamentos." />}
-      unreadCount={unreadCount}
-    />
   );
 }
 

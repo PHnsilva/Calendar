@@ -26,6 +26,19 @@ describe("admin session boundary", () => {
     expect(requireAdminSessionToken()).toBe("session-token");
   });
 
+  it("stores provider workspace context separately from the session token", async () => {
+    const { getStoredAdminSession, saveAdminSession, setAdminWorkspace } = await import("../../../lib/storage");
+
+    saveAdminSession("session-token", admin);
+    setAdminWorkspace({ mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1" });
+
+    expect(getStoredAdminSession()).toMatchObject({
+      sessionToken: "session-token",
+      role: "OWNER",
+      workspace: { mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1" },
+    });
+  });
+
   it("rejects and clears an expired admin session", async () => {
     window.localStorage.setItem("calendar.admin.session", JSON.stringify({
       ...admin,

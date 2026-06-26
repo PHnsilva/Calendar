@@ -10,6 +10,7 @@ import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.AdminPrincipal;
+import br.com.calendarmate.model.AdminRole;
 import br.com.calendarmate.model.AdminSession;
 import br.com.calendarmate.model.AdminUser;
 import br.com.calendarmate.service.store.AdminSessionStore;
@@ -142,6 +143,10 @@ public class AdminAuthService {
     }
 
     public AdminPrincipal require(String sessionToken) {
+        return require(sessionToken, null, null);
+    }
+
+    public AdminPrincipal require(String sessionToken, String workspaceMode, String providerId) {
         String token = cleanToken(sessionToken);
         if (token.isBlank()) {
             throw new ForbiddenException("Sessao administrativa ausente");
@@ -156,12 +161,20 @@ public class AdminAuthService {
             throw new ForbiddenException("Administrador desativado");
         }
         adminSessionStore.touch(session.getSessionId(), now);
+        AdminPrincipal scoped = resolveWorkspacePrincipal(user, session, workspaceMode, providerId);
+        if (scoped != null) {
+            return scoped;
+        }
         return new AdminPrincipal(user, session);
     }
 
     public AdminPrincipal requireOwner(String sessionToken) {
-        AdminPrincipal principal = require(sessionToken);
-        if (!principal.isOwner()) {
+        return requireOwner(sessionToken, null, null);
+    }
+
+    public AdminPrincipal requireOwner(String sessionToken, String workspaceMode, String providerId) {
+        AdminPrincipal principal = require(sessionToken, workspaceMode, providerId);
+        if (!principal.isOwner() || principal.isWorkspaceScoped()) {
             throw new ForbiddenException("Acesso permitido apenas ao OWNER");
         }
         return principal;
@@ -210,6 +223,7 @@ public class AdminAuthService {
             throw new ForbiddenException("Acesso permitido apenas ao OWNER");
         }
         return adminUserStore.listActive().stream()
+                .filter(user -> user.getRole() == AdminRole.PROVIDER)
                 .map(user -> new AdminProviderResponse(
                         user.getId(),
                         user.getName(),
@@ -224,6 +238,9 @@ public class AdminAuthService {
         if (user == null) {
             throw new BadRequestException("Prestador nao encontrado");
         }
+        if (user.getRole() != AdminRole.PROVIDER) {
+            throw new BadRequestException("Usuario informado nao e prestador");
+        }
         return user;
     }
 
@@ -236,6 +253,40 @@ public class AdminAuthService {
         out.setPermissions(principal.permissions());
         out.setSessionExpiresAt(principal.getSession() == null ? 0L : principal.getSession().getExpiresAtEpochSec());
         return out;
+    }
+
+    private AdminPrincipal resolveWorkspacePrincipal(AdminUser authenticated, AdminSession session, String workspaceMode, String providerId) {
+        String mode = workspaceMode == null ? "" : workspaceMode.trim().toUpperCase(java.util.Locale.ROOT);
+        String selectedProviderId = providerId == null ? "" : providerId.trim();
+
+        if ("ADMIN".equals(mode)) {
+            if (!authenticated.isOwner()) {
+                throw new ForbiddenException("Acesso permitido apenas ao OWNER");
+            }
+            return new AdminPrincipal(authenticated, session);
+        }
+
+        if ("PROVIDER".equals(mode)) {
+            AdminUser provider = selectedProviderId.isBlank()
+                    ? authenticated
+                    : adminUserStore.findActiveById(selectedProviderId);
+            if (provider == null || provider.getRole() != AdminRole.PROVIDER) {
+                throw new ForbiddenException("Prestador nao autorizado");
+            }
+            if (!authenticated.isOwner() && !authenticated.getId().equals(provider.getId())) {
+                throw new ForbiddenException("Prestador nao autorizado para este workspace");
+            }
+            return new AdminPrincipal(authenticated, provider, session);
+        }
+
+        if (!authenticated.isOwner()) {
+            if (!selectedProviderId.isBlank() && !authenticated.getId().equals(selectedProviderId)) {
+                throw new ForbiddenException("Prestador nao autorizado para este workspace");
+            }
+            return new AdminPrincipal(authenticated, session);
+        }
+
+        return null;
     }
 
     private String generateToken() {

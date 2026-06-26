@@ -183,6 +183,26 @@ class ServicoServiceTest {
         assertDoesNotThrow(() -> service.requireActiveAdminAccess(unassigned.getId(), owner));
     }
 
+    @Test
+    void ownerProviderWorkspaceUsesSelectedProviderScopeForBookingAccess() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        LocalDate date = LocalDate.now(ZONE).plusDays(1);
+        Event providerOne = calendar.createEvent(confirmedBooking(date, LocalTime.of(9, 0), "provider-1"));
+        Event providerTwo = calendar.createEvent(confirmedBooking(date, LocalTime.of(10, 0), "provider-2"));
+        AdminUser ownerUser = new AdminUser("owner-1", "31995438467", "Owner", AdminRole.OWNER, true, 0, 0);
+        AdminUser providerUser = new AdminUser("provider-2", "31977777777", "Provider Two", AdminRole.PROVIDER, true, 0, 0);
+        AdminPrincipal ownerAsProvider = new AdminPrincipal(ownerUser, providerUser, null);
+
+        List<br.com.calendarmate.dto.ServicoResponse> visible = service.listAllAdmin(ownerAsProvider, date, date, null, null);
+
+        assertEquals(1, visible.size());
+        assertEquals(providerTwo.getId(), visible.get(0).getEventId());
+        assertThrows(ForbiddenException.class, () -> service.requireActiveAdminAccess(providerOne.getId(), ownerAsProvider));
+        assertDoesNotThrow(() -> service.requireActiveAdminAccess(providerTwo.getId(), ownerAsProvider));
+    }
+
     private static ServicoService serviceWith(DummyCalendarClient calendar, AppProperties props) {
         TokenUtil tokenUtil = new TokenUtil("test-secret", 600);
         InMemoryPendingStore pendingStore = new InMemoryPendingStore();

@@ -6,6 +6,7 @@ import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.dto.ServicoResponse;
+import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.model.AdminPrincipal;
 import br.com.calendarmate.model.AdminUser;
 import br.com.calendarmate.service.AdminAuthService;
@@ -81,33 +82,42 @@ public class ServicoController {
     @GetMapping("/admin")
     public ResponseEntity<List<ServicoResponse>> listAll(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String city) throws IOException {
 
-        AdminPrincipal principal = adminAuthService.require(session);
+        AdminPrincipal principal = adminAuthService.require(session, workspace, providerId);
         return ResponseEntity.ok(service.listAllAdmin(principal, from, to, status, city));
     }
 
     @GetMapping("/admin/history")
     public ResponseEntity<List<ServicoResponse>> listHistory(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String city) throws IOException {
 
-        AdminPrincipal principal = adminAuthService.require(session);
+        AdminPrincipal principal = adminAuthService.require(session, workspace, providerId);
+        if (!principal.isOwner()) {
+            throw new ForbiddenException("Historico administrativo permitido apenas ao OWNER");
+        }
         return ResponseEntity.ok(service.listHistoryAdmin(principal, from, to, status, city));
     }
 
     @DeleteMapping("/admin/{eventId}")
     public ResponseEntity<Void> adminDelete(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @PathVariable String eventId) throws IOException {
 
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         service.deleteByIdAdmin(eventId);
         return ResponseEntity.ok().build();
     }
@@ -115,20 +125,24 @@ public class ServicoController {
     @PutMapping("/admin/{eventId}")
     public ResponseEntity<ServicoResponse> adminUpdate(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @PathVariable String eventId,
             @Valid @RequestBody ServicoRequest req) throws IOException {
 
-        AdminPrincipal principal = adminAuthService.require(session);
+        AdminPrincipal principal = adminAuthService.require(session, workspace, providerId);
         return ResponseEntity.ok(service.updateByIdAdmin(eventId, principal, req));
     }
 
     @PutMapping("/admin/{eventId}/assignee")
     public ResponseEntity<ServicoResponse> assignProvider(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @PathVariable String eventId,
             @Valid @RequestBody AdminAssignProviderRequest req) throws IOException {
 
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         AdminUser provider = adminAuthService.requireAssignableProvider(req.getProviderId());
         return ResponseEntity.ok(service.assignProviderAdmin(eventId, provider));
     }

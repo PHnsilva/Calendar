@@ -25,12 +25,14 @@ public class AdminDashboardController {
     @GetMapping("/summary")
     public ResponseEntity<AdminDashboardSummaryResponse> summary(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String city
     ) throws IOException {
-        AdminPrincipal principal = adminAuthService.require(session);
+        AdminPrincipal principal = adminAuthService.require(session, workspace, providerId);
         return ResponseEntity.ok(service.summary(principal, from, to, status, city));
     }
 }

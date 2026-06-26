@@ -29,40 +29,48 @@ public class AdminAvailabilityBlockController {
     @PostMapping("/preview")
     public ResponseEntity<AvailabilityBlockPreviewResponse> preview(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @Valid @RequestBody AvailabilityBlockPreviewRequest req
     ) throws IOException {
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         return ResponseEntity.ok(service.preview(req));
     }
 
     @PostMapping
     public ResponseEntity<AvailabilityBlockResponse> create(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @Valid @RequestBody AvailabilityBlockCreateRequest req
     ) throws IOException {
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         return ResponseEntity.ok(service.create(req));
     }
 
     @GetMapping
     public ResponseEntity<List<AvailabilityBlockResponse>> list(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
             @RequestParam(required = false) String mode,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String reason
     ) throws IOException {
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         return ResponseEntity.ok(service.list(from, to, mode, type, reason));
     }
 
     @DeleteMapping("/{blockId}")
     public ResponseEntity<Void> delete(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @PathVariable String blockId
     ) throws IOException {
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         service.delete(blockId);
         return ResponseEntity.ok().build();
     }

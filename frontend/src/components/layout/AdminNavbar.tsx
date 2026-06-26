@@ -13,7 +13,6 @@ type AdminNavbarProps = {
   onEmailClick?: () => void;
   onMobileAdminClick?: () => void;
   onMobileMenu?: () => void;
-  onNotificationsClick?: () => void;
   onView?: (view: AdminNavView) => void;
   owner?: boolean;
 };
@@ -34,29 +33,28 @@ type ProfileMenuItem = {
 };
 
 const adminTabs: AdminTab[] = [
-  { key: 'agendamentos', label: 'Agendamentos', icon: 'calendar' },
+  { key: 'agendamentos', label: 'Agenda', icon: 'calendar' },
   { key: 'bloqueios', label: 'Bloqueios', icon: 'lock', ownerOnly: true },
   { key: 'historico', label: 'Histórico', icon: 'clock' },
-  { key: 'extrato', label: 'Comissões', icon: 'chart', ownerOnly: true },
+  { key: 'extrato', label: 'Extrato', icon: 'chart', ownerOnly: true },
 ];
 
-function getAdminGreeting(adminName?: string): string {
+function getAdminFirstName(adminName?: string): string {
   const normalized = adminName?.trim() || 'Admin';
   const sanitized = normalized.replace(/^olá,\s*/i, '').trim();
-  const firstName = sanitized.split(/\s+/)[0] || 'Admin';
-  return `Olá, ${firstName}`;
+  return sanitized.split(/\s+/)[0] || 'Admin';
 }
 
 function AdminProfileMenu({
   compact = false,
-  greeting,
+  firstName,
   labelContent,
   onBudgetClick,
   onEmailClick,
   onLogout,
 }: {
   compact?: boolean;
-  greeting: string;
+  firstName: string;
   labelContent?: ReactNode;
   onBudgetClick?: () => void;
   onEmailClick?: () => void;
@@ -79,7 +77,7 @@ function AdminProfileMenu({
           title="Abrir opções do administrador"
           className="wf-admin-profile-trigger"
         >
-          {labelContent ?? <><NavbarIcon name="user" /> <span>{greeting}</span> <NavbarIcon name="chevron" /></>}
+          {labelContent ?? <><NavbarIcon name="user" /> <span>{firstName}</span> <NavbarIcon name="chevron" /></>}
         </NavbarButton>
       )}
     >
@@ -117,37 +115,35 @@ export default function AdminNavbar({
   onView,
   owner = false,
 }: AdminNavbarProps) {
-  const visibleTabs = adminTabs.filter((tab) => owner || !tab.ownerOnly);
-  const greeting = getAdminGreeting(adminName);
+  const visibleTabs = owner ? adminTabs : adminTabs;
+  const firstName = getAdminFirstName(adminName);
   const openEmail = onEmailClick ?? (() => undefined);
+  const logout = onMobileAdminClick ?? onAdminClick;
 
   const desktopActions = (
     <>
-      <NavbarButton variant="ghost" onClick={openEmail}><NavbarIcon name="mail" /> <span>Email</span></NavbarButton>
-      <NavbarButton variant="ghost" onClick={onBudgetClick}><NavbarIcon name="budget" /> <span>Orçamento</span></NavbarButton>
+      <NavbarButton variant="orange" onClick={onCreate}><NavbarIcon name="plus" /> <span>Novo agendamento</span></NavbarButton>
       <AdminProfileMenu
-        greeting={greeting}
+        firstName={firstName}
         onBudgetClick={onBudgetClick}
         onEmailClick={openEmail}
         onLogout={onAdminClick}
       />
-      <NavbarButton variant="orange" onClick={onCreate}><span>Novo agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
     </>
   );
 
   const mobileActions = (
     <>
+      <NavbarButton variant="ghost" compact onClick={onMobileMenu} ariaLabel="Abrir menu administrativo" title="Menu">
+        <NavbarIcon name="menu" />
+      </NavbarButton>
       <AdminProfileMenu
-        compact
-        greeting={greeting}
-        labelContent={<NavbarIcon name="user" />}
+        firstName={firstName}
+        labelContent={<><NavbarIcon name="user" /> <span>{firstName}</span></>}
         onBudgetClick={onBudgetClick}
         onEmailClick={openEmail}
-        onLogout={onMobileAdminClick ?? onAdminClick}
+        onLogout={logout}
       />
-      <NavbarButton variant="orange" compact onClick={onCreate ?? onMobileMenu} ariaLabel="Novo agendamento" title="Novo agendamento">
-        <NavbarIcon name="plus" />
-      </NavbarButton>
     </>
   );
 

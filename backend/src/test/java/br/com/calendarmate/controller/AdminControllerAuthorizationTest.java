@@ -28,6 +28,8 @@ class AdminControllerAuthorizationTest {
         adminAuthService = mock(AdminAuthService.class);
         when(adminAuthService.requireOwner(PROVIDER_SESSION))
                 .thenThrow(new ForbiddenException("Acesso permitido apenas ao OWNER"));
+        when(adminAuthService.requireOwner(PROVIDER_SESSION, null, null))
+                .thenThrow(new ForbiddenException("Acesso permitido apenas ao OWNER"));
     }
 
     @Test
@@ -35,7 +37,7 @@ class AdminControllerAuthorizationTest {
         AdminBookingOpsService service = mock(AdminBookingOpsService.class);
         AdminBookingOpsController controller = new AdminBookingOpsController(service, adminAuthService);
 
-        assertThrows(ForbiddenException.class, () -> controller.bulkCancel(PROVIDER_SESSION, new AdminBulkCancelRequest()));
+        assertThrows(ForbiddenException.class, () -> controller.bulkCancel(PROVIDER_SESSION, null, null, new AdminBulkCancelRequest()));
         verifyNoInteractions(service);
     }
 
@@ -44,7 +46,7 @@ class AdminControllerAuthorizationTest {
         AvailabilityBlockService service = mock(AvailabilityBlockService.class);
         AdminAvailabilityBlockController controller = new AdminAvailabilityBlockController(service, adminAuthService);
 
-        assertThrows(ForbiddenException.class, () -> controller.list(PROVIDER_SESSION, null, null, null, null, null));
+        assertThrows(ForbiddenException.class, () -> controller.list(PROVIDER_SESSION, null, null, null, null, null, null, null));
         verifyNoInteractions(service);
     }
 
@@ -53,7 +55,7 @@ class AdminControllerAuthorizationTest {
         AdminFinanceService service = mock(AdminFinanceService.class);
         AdminFinanceController controller = new AdminFinanceController(service, adminAuthService);
 
-        assertThrows(ForbiddenException.class, () -> controller.health(PROVIDER_SESSION));
+        assertThrows(ForbiddenException.class, () -> controller.health(PROVIDER_SESSION, null, null));
         verifyNoInteractions(service);
     }
 
@@ -68,8 +70,8 @@ class AdminControllerAuthorizationTest {
         AdminAssignProviderRequest assignment = new AdminAssignProviderRequest();
         assignment.setProviderId("provider-2");
 
-        assertThrows(ForbiddenException.class, () -> controller.adminDelete(PROVIDER_SESSION, "event-1"));
-        assertThrows(ForbiddenException.class, () -> controller.assignProvider(PROVIDER_SESSION, "event-1", assignment));
+        assertThrows(ForbiddenException.class, () -> controller.adminDelete(PROVIDER_SESSION, null, null, "event-1"));
+        assertThrows(ForbiddenException.class, () -> controller.assignProvider(PROVIDER_SESSION, null, null, "event-1", assignment));
         verifyNoInteractions(service);
     }
 }

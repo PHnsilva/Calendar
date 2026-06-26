@@ -41,6 +41,7 @@ Render  -> backend Dockerizado
 - Token de gerenciamento sem login.
 - Recuperação de agendamentos por telefone.
 - Painel admin por telefone/SMS, sessao temporaria e papeis `OWNER`/`PROVIDER`.
+- Apos confirmar o telefone do owner `31995438467`, selecao de workspace entre Admin e prestadores cadastrados.
 - Bloqueios de disponibilidade e escala 4x4.
 - Histórico com retenção configurável, por padrão 2 meses.
 - Extrato/admin financeiro via provider `DUMMY` ou Banco Inter.
@@ -253,7 +254,20 @@ VITE_API_BASE_URL=https://seu-backend.onrender.com
 
 ### Admin
 
-O admin usa `/api/admin/auth/start` e `/api/admin/auth/confirm` para login por SMS. As demais rotas exigem `X-ADMIN-SESSION`.
+O admin/prestador usa `/api/admin/auth/start` e `/api/admin/auth/confirm` para login por SMS. As demais rotas exigem `X-ADMIN-SESSION`.
+
+Workspaces:
+
+- `OWNER` pode entrar como Admin ou como qualquer prestador ativo.
+- `PROVIDER` entra somente no proprio workspace de prestador.
+- Chamadas em workspace de prestador enviam `X-ADMIN-WORKSPACE: PROVIDER` e `X-ADMIN-PROVIDER-ID`.
+- O backend aplica o filtro de prestador nas rotas de agenda e rejeita historico, financeiro, bloqueios globais, atribuicao, exclusao, bulk cancel e cleanup fora do workspace Admin/OWNER.
+
+Registro central de prestadores:
+
+- Supabase: tabela `admin_users` com `id`, `phone_digits`, `name`, `role`, `active`.
+- Fallback sem Supabase: `ADMIN_USERS=telefone|nome|OWNER|id;telefone|nome|PROVIDER|id`.
+- O seed/documentacao inclui `provider-1`, `provider-2` e `provider-3`; troque os telefones placeholder antes de producao.
 
 - `GET /api/servicos/admin`
 - `GET /api/servicos/admin/history`

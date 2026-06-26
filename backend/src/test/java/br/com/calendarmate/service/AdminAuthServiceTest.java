@@ -100,10 +100,38 @@ class AdminAuthServiceTest {
         AdminPrincipal provider = new AdminPrincipal(userStore.findActiveByPhone("31988888888"), null);
 
         assertThrows(ForbiddenException.class, () -> service.listProviders(provider));
-        assertEquals(2, service.listProviders(owner).size());
+        assertEquals(1, service.listProviders(owner).size());
         assertTrue(owner.permissions().contains("ASSIGN_PROVIDER"));
         assertFalse(provider.permissions().contains("ASSIGN_PROVIDER"));
         assertEquals(AdminRole.PROVIDER, provider.getRole());
+    }
+
+    @Test
+    void ownerCanSelectProviderWorkspaceAndProviderCannotSelectAnotherProvider() {
+        InMemoryAdminUserStore userStore = new InMemoryAdminUserStore(
+                "+55 31 99999-9999|Owner|OWNER|owner-1;+55 31 98888-8888|Provider One|PROVIDER|provider-1;+55 31 97777-7777|Provider Two|PROVIDER|provider-2");
+        InMemoryAdminSessionStore sessionStore = new InMemoryAdminSessionStore();
+        InMemoryVerificationStore verificationStore = new InMemoryVerificationStore();
+        AdminAuthService service = new AdminAuthService(
+                userStore,
+                sessionStore,
+                verificationStore,
+                new RecordingOtpDeliveryClient(),
+                new TestAppProperties());
+
+        String ownerToken = confirmToken(service, verificationStore, "+55 31 99999-9999");
+        String providerToken = confirmToken(service, verificationStore, "+55 31 98888-8888");
+
+        AdminPrincipal ownerAsProvider = service.require(ownerToken, "PROVIDER", "provider-2");
+        assertTrue(ownerAsProvider.isProvider());
+        assertEquals("provider-2", ownerAsProvider.getId());
+        assertEquals("owner-1", ownerAsProvider.getAuthenticatedId());
+        assertThrows(ForbiddenException.class, () -> service.requireOwner(ownerToken, "PROVIDER", "provider-2"));
+
+        AdminPrincipal providerSelf = service.require(providerToken, "PROVIDER", "provider-1");
+        assertEquals("provider-1", providerSelf.getId());
+        assertThrows(ForbiddenException.class, () -> service.require(providerToken, "PROVIDER", "provider-2"));
+        assertThrows(ForbiddenException.class, () -> service.require(providerToken, "ADMIN", null));
     }
 
     @Test

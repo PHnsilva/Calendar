@@ -1,12 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '../../../lib/query-keys';
+import { getStoredAdminWorkspace } from '../../../lib/storage';
 import type { ServicoResponse } from '../../../types/api';
 import type { CalendarEvent } from '../../calendar/types';
 import { getAdminBookings } from '../api/get-admin-bookings';
 import type { AdminFilters } from '../types';
 
 function buildFiltersKey(filters: AdminFilters) {
-  return JSON.stringify(filters ?? {});
+  return JSON.stringify({
+    filters: filters ?? {},
+    workspace: getStoredAdminWorkspace() ?? null,
+  });
 }
 
 function mapServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {

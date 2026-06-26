@@ -1,4 +1,5 @@
 import { resolveApiBaseUrl } from "./env";
+import { getStoredAdminWorkspaceHeaders } from "./storage";
 
 export class ApiError extends Error {
   status: number;
@@ -90,6 +91,7 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
         Accept: "application/json",
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
         ...(adminToken ? { "X-ADMIN-SESSION": adminToken } : {}),
+        ...(adminToken ? getStoredAdminWorkspaceHeaders() : {}),
         ...headers,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,

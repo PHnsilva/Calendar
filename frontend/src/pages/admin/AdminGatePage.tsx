@@ -1,5 +1,5 @@
-import AdminLandingPage from '../../features/landing/ui/AdminLandingPage';
+import AdminAppointmentsDashboardPage from '../../features/appointments/ui/AdminAppointmentsDashboardPage';
 
 export default function AdminGatePage() {
-  return <AdminLandingPage />;
+  return <AdminAppointmentsDashboardPage />;
 }

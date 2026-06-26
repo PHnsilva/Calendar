@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/brand/logowithname.png';
+import adminLogoMark from '../../assets/brand/admin-logo-mark.png';
+import adminLogoWordmark from '../../assets/brand/admin-logo-wordmark.png';
 
 type NavbarProfile = 'client' | 'admin' | 'provider';
 type NavbarButtonVariant = 'blue' | 'orange' | 'ghost';
@@ -183,8 +185,26 @@ export default function BaseNavbar({
   mobileActions,
   profile,
 }: BaseNavbarProps) {
+  if (profile === 'admin') {
+    return (
+      <header className={cx('wf-admin-navbar-shell', 'wf-header', 'wf-navbar', 'wf-navbar--admin', 'wf-header--admin', Boolean(children) && 'wf-navbar--has-nav', className)}>
+        <div className="wf-admin-navbar-shell__top">
+          <Link to={logoTo} className="wf-admin-navbar-brand wf-logo wf-navbar__logo">
+            <span className="wf-admin-brand" aria-label={logoLabel}>
+              <span className="wf-admin-brand__mark"><img src={adminLogoMark} alt="" aria-hidden="true" /></span>
+              <span className="wf-admin-brand__wordmark"><img src={adminLogoWordmark} alt={logoLabel} /></span>
+            </span>
+          </Link>
+          {actions ? <nav className="wf-admin-navbar-shell__actions wf-header-actions wf-navbar__actions" aria-label="Ações principais">{actions}</nav> : null}
+          {mobileActions ? <nav className="wf-admin-navbar-shell__mobile-actions wf-mobile-actions wf-navbar__mobile-actions" aria-label="Ações rápidas">{mobileActions}</nav> : null}
+        </div>
+        {children ? <nav className="wf-admin-navbar-shell__tabs wf-navbar__nav" aria-label="Navegação principal">{children}</nav> : null}
+      </header>
+    );
+  }
+
   return (
-    <header className={cx('wf-header', 'wf-navbar', `wf-navbar--${profile}`, profile === 'client' && 'wf-header--public', profile === 'admin' && 'wf-header--admin', Boolean(children) && 'wf-navbar--has-nav', Boolean(mobileLeadingAction) && 'wf-navbar--has-mobile-leading', className)}>
+    <header className={cx('wf-header', 'wf-navbar', `wf-navbar--${profile}`, profile === 'client' && 'wf-header--public', Boolean(children) && 'wf-navbar--has-nav', Boolean(mobileLeadingAction) && 'wf-navbar--has-mobile-leading', className)}>
       {mobileLeadingAction ? <nav className="wf-navbar__mobile-leading" aria-label="Menu">{mobileLeadingAction}</nav> : null}
       <Link to={logoTo} className="wf-logo wf-navbar__logo">
         <img src={logo} alt={logoLabel} />

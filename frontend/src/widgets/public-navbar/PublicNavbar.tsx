@@ -3,7 +3,6 @@ import ClientNavbar from "../../components/layout/ClientNavbar";
 type PublicNavbarProps = {
   onConfirmPhone?: () => void;
   onCreate?: () => void;
-  onNotifications?: () => void;
   onProfile?: () => void;
 };
 

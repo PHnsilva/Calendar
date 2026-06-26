@@ -1,16 +1,22 @@
 import type { ReactNode } from "react";
-import heroClientDesktop1200 from "../../assets/wireframes/landing/client-hero-composite-1200.png";
-import heroClientDesktop1600 from "../../assets/wireframes/landing/client-hero-composite-1600.png";
-import heroClientDesktop2200 from "../../assets/wireframes/landing/client-hero-composite-2200.png";
-import heroClientDesktop3000 from "../../assets/wireframes/landing/client-hero-composite-3000.png";
+import heroClientDesktop901 from "../../assets/wireframes/landing/hero-tradesman-transparent-901w.png";
+import heroClientDesktop1024 from "../../assets/wireframes/landing/hero-tradesman-transparent-1024w.png";
+import heroClientDesktop1280 from "../../assets/wireframes/landing/hero-tradesman-transparent-1280w.png";
+import heroClientDesktop1600 from "../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png";
+import heroClientDesktop1920 from "../../assets/wireframes/landing/hero-tradesman-transparent-1920w.png";
+import heroClientDesktop2200 from "../../assets/wireframes/landing/hero-tradesman-transparent-2200w.png";
+import heroClientDesktop2500 from "../../assets/wireframes/landing/hero-tradesman-transparent-2500w.png";
 import heroClientMobile from "../../assets/wireframes/landing/client-hero-composite-mobile.png";
 import ResponsiveAsset from "../../shared/ui/ResponsiveAsset";
 
 const clientHeroDesktopSrcSet = [
-  `${heroClientDesktop1200} 1200w`,
+  `${heroClientDesktop901} 901w`,
+  `${heroClientDesktop1024} 1024w`,
+  `${heroClientDesktop1280} 1280w`,
   `${heroClientDesktop1600} 1600w`,
+  `${heroClientDesktop1920} 1920w`,
   `${heroClientDesktop2200} 2200w`,
-  `${heroClientDesktop3000} 3000w`,
+  `${heroClientDesktop2500} 2500w`,
 ].join(", ");
 
 type LandingHeroProps = {

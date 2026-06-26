@@ -138,8 +138,6 @@
     height: 0;
   }
 
-
-
   .home-mobile-empty-prompt {
     position: fixed;
     left: 50%;
@@ -319,7 +317,6 @@
     filter: drop-shadow(0 1px 0 rgba(255,255,255,0.55));
   }
 
-
 }
 
 @media (max-width: 730px) {
@@ -396,10 +393,6 @@
   .mobile-header-actions__button svg {
     width: 20px;
     height: 20px;
-  }
-
-  .mobile-header-actions__button--notifications {
-    color: #c24a2d;
   }
 
   .mobile-header-actions__dot {
@@ -716,125 +709,6 @@
   }
 }
 
-/* Contatos no logo e ajustes do menu mobile sem alterar tamanho/responsividade do header. */
-@media (max-width: 730px) {
-  :root {
-    --mobile-header-brand-red: #7b1d12;
-  }
-
-  .brand-lockup-contact-anchor {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    min-width: 0;
-  }
-
-  .brand-contact-mini-popover {
-    position: absolute;
-    top: calc(100% + 10px);
-    left: 0;
-    z-index: 110;
-    width: max-content;
-    max-width: calc(100vw - 18px);
-    padding: 10px 11px 8px;
-    display: grid;
-    gap: 8px;
-    border: 1px solid rgba(30, 72, 124, 0.12);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.98);
-    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.16);
-    backdrop-filter: blur(14px);
-  }
-
-  .brand-contact-mini-popover__actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .brand-contact-mini-popover__action {
-    min-width: 38px;
-    height: 38px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 0;
-    border: 1px solid rgba(30, 72, 124, 0.08);
-    border-radius: 13px;
-    background: linear-gradient(180deg, #ffffff, #f2f5f9);
-    color: #394a60;
-    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.07);
-    cursor: pointer;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  .brand-contact-mini-popover__action svg {
-    width: 23px;
-    height: 23px;
-    flex: 0 0 23px;
-    display: block;
-  }
-
-  .brand-contact-mini-popover__action--phone-open {
-    padding: 0 7px 0 8px;
-    justify-content: flex-start;
-  }
-
-  .brand-contact-mini-popover__phone-value {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: #26364d;
-    font-size: 0.72rem;
-    font-weight: 850;
-    line-height: 1;
-  }
-
-  .brand-contact-mini-popover__phone-value > button {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: 0;
-    border-radius: 8px;
-    background: rgba(123, 29, 18, 0.1);
-    color: var(--mobile-header-brand-red);
-    display: inline-grid;
-    place-items: center;
-    cursor: pointer;
-  }
-
-  .brand-contact-mini-popover__phone-value > button svg {
-    width: 15px;
-    height: 15px;
-  }
-
-  .brand-contact-mini-popover__founded {
-    color: rgba(71, 85, 105, 0.78);
-    font-size: 0.68rem;
-    font-weight: 850;
-    line-height: 1.2;
-    text-align: center;
-  }
-
-  .mobile-header-actions__button:not(.mobile-header-actions__button--notifications),
-  .mobile-header-menu-action svg {
-    color: var(--mobile-header-brand-red);
-  }
-
-  .mobile-header-popover--options {
-    display: grid;
-    grid-auto-flow: row;
-    grid-auto-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .mobile-header-menu-action {
-    justify-content: flex-start;
-  }
-}
-
 @media (max-width: 390px) {
   .brand-contact-mini-popover {
     max-width: calc(100vw - 14px);
@@ -872,7 +746,7 @@
   }
 }
 
-/* Correção final do header: mantém layout antigo, remove o botão de tema do header e usa notificações. */
+/* Header final responsive adjustment. */
 .public-header__actions {
   padding-right: clamp(6px, 1vw, 14px);
 }
@@ -1076,7 +950,7 @@
   }
 }
 
-/* Correção: contatos abaixo da logo, telefone retrátil e notificações desktop como popover. */
+/* Contact popover positioning adjustment. */
 .brand-contact-mini-popover {
   top: calc(100% + 42px) !important;
   z-index: 140 !important;
@@ -1156,18 +1030,6 @@
   font-weight: 800;
 }
 
-@keyframes desktopNotificationReveal {
-  from {
-    opacity: 0;
-    transform: scaleX(0.72) translateY(-3px);
-  }
-
-  to {
-    opacity: 1;
-    transform: scaleX(1) translateY(0);
-  }
-}
-
 @media (min-width: 731px) {
   .brand-contact-mini-popover {
     top: calc(100% + 48px) !important;
@@ -1176,32 +1038,6 @@
 
   .public-header__actions--home .mobile-header-actions {
     display: inline-flex !important;
-  }
-
-  .public-header__actions--home .mobile-header-actions__item--notifications {
-    position: relative;
-  }
-
-  .public-header__actions--home .mobile-header-popover--notifications {
-    left: 0 !important;
-    right: auto !important;
-    width: clamp(252px, 30vw, 340px);
-    max-width: calc(100vw - 32px);
-    transform-origin: left top;
-    animation: desktopNotificationReveal 170ms ease-out;
-  }
-
-  .public-header__actions--home .mobile-header-popover--notifications::before {
-    content: "";
-    position: absolute;
-    top: -6px;
-    left: 16px;
-    width: 12px;
-    height: 12px;
-    border-left: 1px solid rgba(30, 72, 124, 0.1);
-    border-top: 1px solid rgba(30, 72, 124, 0.1);
-    background: rgba(255, 255, 255, 0.98);
-    transform: rotate(45deg);
   }
 }
 
@@ -1223,18 +1059,11 @@
   }
 }
 
-
-
-/* Ajuste pontual: notificações desktop/mobile e posição do modal de contatos. */
+/* Contact popover positioning adjustment. */
 .mobile-header-actions__button,
-.mobile-header-actions__button--notifications,
-.public-header__actions--home .mobile-header-actions__button,
-.public-header__actions--home .mobile-header-actions__button--notifications {
+.public-header__actions--home .mobile-header-actions__button{
   cursor: pointer !important;
 }
-
-.mobile-header-actions__button--notifications svg,
-.public-header__actions--home .mobile-header-actions__button--notifications svg,
 .mobile-header-actions__bell-svg {
   width: 20px !important;
   height: 20px !important;
@@ -1252,12 +1081,6 @@
   .brand-contact-mini-popover {
     top: calc(100% + 3px) !important;
   }
-
-  .public-header__actions--home .mobile-header-popover--notifications {
-    left: 0 !important;
-    right: auto !important;
-    transform-origin: left top;
-  }
 }
 
 @media (max-width: 730px) {
@@ -1265,16 +1088,6 @@
     top: calc(100% + 2px) !important;
   }
 }
-
-
-/* Ajuste final: modal de contatos levemente mais baixo e notificação com cor mobile. */
-.mobile-header-actions__button--notifications,
-.public-header__actions--home .mobile-header-actions__button--notifications {
-  color: #c24a2d !important;
-}
-
-.mobile-header-actions__button--notifications svg,
-.public-header__actions--home .mobile-header-actions__button--notifications svg,
 .mobile-header-actions__bell-svg {
   color: #c24a2d !important;
   stroke: #c24a2d !important;
@@ -1296,118 +1109,15 @@
   }
 }
 
-
-/* Ajuste final solicitado: borda desktop igual ao mobile e contatos mais baixo. */
-@media (min-width: 731px) {
-  .public-header__actions--home .mobile-header-actions__button--notifications {
-    border: 1px solid rgba(30, 72, 124, 0.12) !important;
-    background: linear-gradient(180deg, #ffffff, #edf2f8) !important;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
-    color: #c24a2d !important;
-  }
-
-  .public-header__actions--home .mobile-header-actions__button--notifications svg {
-    color: #c24a2d !important;
-    stroke: #c24a2d !important;
-  }
-
-  .brand-contact-mini-popover {
-    top: calc(100% + 13px) !important;
-  }
-}
-
 @media (max-width: 730px) {
   .brand-contact-mini-popover {
     top: calc(100% + 12px) !important;
   }
 }
 
-
-/* Ajuste fino: sino desktop mais visível/alinhado e contatos + metade do último deslocamento. */
-@media (min-width: 731px) {
-  .public-header__actions--home .mobile-header-actions__button--notifications {
-    display: inline-grid !important;
-    place-items: center !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
-    line-height: 0 !important;
-    border-color: rgba(194, 74, 45, 0.28) !important;
-    background: linear-gradient(180deg, #ffffff, #edf2f8) !important;
-    box-shadow:
-      0 8px 18px rgba(15, 23, 42, 0.08),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.78) !important;
-  }
-
-  .public-header__actions--home .mobile-header-actions__button--notifications svg {
-    width: 22px !important;
-    height: 22px !important;
-    margin: 0 !important;
-    display: block !important;
-    transform: translateY(0) !important;
-    color: #d04a2f !important;
-    stroke: #d04a2f !important;
-  }
-
-  .public-header__actions--home .mobile-header-actions__button--notifications svg path {
-    stroke-width: 2.15 !important;
-  }
-
-  .brand-contact-mini-popover {
-    top: calc(100% + 16px) !important;
-  }
-}
-
 @media (max-width: 730px) {
   .brand-contact-mini-popover {
     top: calc(100% + 15px) !important;
-  }
-}
-
-
-
-
-/* Correção: modal de notificações menor entre 340px e 320px. */
-@media (max-width: 340px) {
-  .mobile-header-popover--notifications {
-    width: min(222px, calc(100vw - 16px)) !important;
-    padding: 8px !important;
-    border-radius: 15px !important;
-    right: -4px !important;
-  }
-
-  .mobile-header-popover--notifications .mobile-header-popover__eyebrow {
-    margin-bottom: 6px !important;
-    font-size: 0.58rem !important;
-    letter-spacing: 0.09em !important;
-  }
-
-  .mobile-header-popover--notifications .mobile-header-popover__empty {
-    font-size: 0.68rem !important;
-    line-height: 1.25 !important;
-  }
-
-  .mobile-header-popover--notifications .mobile-header-booking-card {
-    padding: 8px !important;
-    border-radius: 12px !important;
-    gap: 2px !important;
-  }
-
-  .mobile-header-popover--notifications .mobile-header-booking-card strong {
-    font-size: 0.76rem !important;
-  }
-
-  .mobile-header-popover--notifications .mobile-header-booking-card span,
-  .mobile-header-popover--notifications .mobile-header-booking-card small {
-    font-size: 0.64rem !important;
-  }
-}
-
-@media (max-width: 320px) {
-  .mobile-header-popover--notifications {
-    width: min(210px, calc(100vw - 12px)) !important;
-    padding: 7px !important;
-    right: -2px !important;
   }
 }
 
@@ -1427,94 +1137,6 @@
 
 .mobile-header-menu-action__warning-svg {
   color: #dc2626 !important;
-}
-
-/* Correção pontual cliente desktop: alinhar o botão de perfil/opções no header sem afetar o admin. */
-@media (min-width: 731px) {
-  .public-header__actions--home .mobile-header-actions {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    height: 44px;
-  }
-
-  .public-header__actions--home .mobile-header-actions__item {
-    height: 44px;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .public-header__actions--home .mobile-header-actions__button,
-  .public-header__actions--home .mobile-header-actions__button--options,
-  .public-header__actions--home .mobile-header-actions__button--notifications {
-    width: 42px !important;
-    height: 42px !important;
-    min-width: 42px !important;
-    min-height: 42px !important;
-    padding: 0 !important;
-    display: inline-grid !important;
-    place-items: center !important;
-    align-items: center !important;
-    justify-content: center !important;
-    line-height: 0 !important;
-    vertical-align: middle !important;
-    transform: none !important;
-  }
-
-  .public-header__actions--home .mobile-header-actions__button svg,
-  .public-header__actions--home .mobile-header-actions__button--options svg,
-  .public-header__actions--home .mobile-header-actions__button--notifications svg {
-    display: block !important;
-    margin: 0 !important;
-    transform: none !important;
-  }
-}
-
-/* Cliente desktop: correção final de alinhamento dos botões de opções/perfil no header. */
-@media (min-width: 731px) {
-  .public-header__actions--home {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-    gap: 10px !important;
-  }
-
-  .public-header__actions--home .mobile-header-actions,
-  .public-header__actions--home .mobile-header-actions__item {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    height: 44px !important;
-    min-height: 44px !important;
-    line-height: 1 !important;
-  }
-
-  .public-header__actions--home .mobile-header-actions__button,
-  .public-header__actions--home .mobile-header-actions__button--options,
-  .public-header__actions--home .mobile-header-actions__button--notifications {
-    flex: 0 0 42px !important;
-    width: 42px !important;
-    height: 42px !important;
-    min-width: 42px !important;
-    min-height: 42px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: grid !important;
-    place-items: center !important;
-    line-height: 0 !important;
-    transform: none !important;
-  }
-
-  .public-header__actions--home .mobile-header-actions__button svg,
-  .public-header__actions--home .mobile-header-actions__button--options svg,
-  .public-header__actions--home .mobile-header-actions__button--notifications svg {
-    width: 20px !important;
-    height: 20px !important;
-    display: block !important;
-    margin: 0 auto !important;
-    transform: none !important;
-  }
 }
 
 /* v18 cliente: opções alinhadas, contato sob o botão e modal maior de edição. */
@@ -1543,8 +1165,7 @@ button:disabled {
 .mobile-header-actions__button,
 .public-header__actions--home .mobile-header-actions__button,
 .public-header__actions--home .mobile-header-actions__button--options,
-.public-header__actions--home .mobile-header-actions__button--profile,
-.public-header__actions--home .mobile-header-actions__button--notifications {
+.public-header__actions--home .mobile-header-actions__button--profile{
   border: 1px solid rgba(30, 72, 124, 0.18) !important;
   background: linear-gradient(180deg, #ffffff, #eef4fb) !important;
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10) !important;

@@ -20,6 +20,4 @@
 @import "../styles/landing-visual-regression-fixes.css";
 @import "../styles/admin-week-agenda.css";
 @import "../styles/asset-responsive-fixes.css";
-@import "../styles/admin-navbar-final-fix.css";
-@import "../styles/admin-navbar-stable-fix.css";
-@import "../styles/admin-navbar-profile-clip-fix.css";
+@import "../styles/admin-navbar.css";

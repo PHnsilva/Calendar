@@ -762,3 +762,54 @@ html body footer.cm-footer .cm-footer__row-text small {
     flex-basis: 70px !important;
   }
 }
+/* Generated hero asset sizing. Kept with the landing visual rules instead of a late catch-all fix file. */
+@media (min-width: 901px) {
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client {
+    justify-content: flex-end !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture {
+    width: clamp(680px, 60vw, 1120px) !important;
+    max-width: none !important;
+    margin: clamp(-12px, -0.6vw, -4px) calc(-1 * clamp(24px, 3.4vw, 84px)) 0 0 !important;
+  }
+
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture > img {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: none !important;
+    object-fit: contain !important;
+    object-position: right top !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture {
+    width: clamp(880px, 58vw, 1240px) !important;
+    margin-right: calc(-1 * clamp(54px, 4.5vw, 118px)) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture {
+    width: clamp(320px, 58vw, 560px) !important;
+    margin: -4px 0 0 auto !important;
+  }
+
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture > img {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    object-position: right top !important;
+  }
+}
+
+@media (max-width: 640px) {
+  html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture {
+    width: clamp(230px, 56vw, 360px) !important;
+  }
+}

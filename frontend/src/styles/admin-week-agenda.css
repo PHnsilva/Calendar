@@ -1910,159 +1910,163 @@
   }
 }
 
-/* Follow-up admin header fix: prevent right clipping and center the desktop tab row. */
-html,
-body {
-  overflow-x: hidden;
-}
-
-@media (min-width: 901px) {
-  .wf-header--admin.wf-navbar.wf-header,
-  .wf-navbar--admin.wf-header {
-    max-width: 100vw !important;
-    overflow: hidden !important;
-    min-height: 138px !important;
-    grid-template-columns: minmax(460px, 1fr) max-content !important;
-    padding-right: clamp(58px, 5.6vw, 116px) !important;
+/* Agenda card asset sizing. Kept here so admin weekly agenda owns its own responsive card rules. */
+@media (max-width: 900px) {
+  html body .wf-admin-agenda-booking-card {
+    grid-template-columns: 128px minmax(0, 1fr) 126px !important;
+    grid-template-areas:
+      "time main art"
+      "time main provider"
+      "actions actions actions" !important;
+    gap: 22px !important;
+    min-height: 330px !important;
+    padding: 30px 22px 28px 26px !important;
   }
 
-  .wf-header--admin .wf-navbar__actions {
+  html body .wf-admin-agenda-booking-card::before {
+    inset: 24px auto 24px 0 !important;
+    width: 8px !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__time strong {
+    font-size: clamp(3rem, 9.5vw, 4rem) !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__time span {
+    font-size: clamp(1.38rem, 4vw, 1.72rem) !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__main h3 {
+    font-size: clamp(1.42rem, 4vw, 1.78rem) !important;
+    line-height: 1.18 !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__main p {
+    font-size: clamp(1.12rem, 3.2vw, 1.36rem) !important;
+    line-height: 1.28 !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__main .wf-icon {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  html body .wf-admin-agenda-service-art {
+    width: 118px !important;
+    height: 118px !important;
+    border-radius: 20px !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__provider {
+    width: 126px !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__provider strong {
+    font-size: 1.24rem !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__provider span {
+    font-size: 1.12rem !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__actions {
+    gap: 14px !important;
+    padding-top: 10px !important;
+  }
+
+  html body .wf-admin-agenda-action {
+    min-height: 76px !important;
     min-width: 0 !important;
-    max-width: calc(100vw - 520px) !important;
-    justify-self: end !important;
-    padding-right: 4px !important;
+    border-radius: 18px !important;
   }
 
-  .wf-header--admin .wf-top-btn--orange {
-    white-space: nowrap !important;
-  }
-
-  .wf-header--admin .wf-admin-profile-trigger {
-    min-width: 148px !important;
-    max-width: 190px !important;
-    overflow: hidden !important;
-  }
-
-  .wf-header--admin .wf-admin-profile-trigger > span:not(.wf-icon) {
-    min-width: 0 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
-
-  .wf-header--admin .wf-navbar__nav {
-    width: 100% !important;
-    margin-right: 0 !important;
-    padding-inline: clamp(82px, 10vw, 210px) !important;
-    justify-content: center !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-  }
-
-  .wf-header--admin .wf-admin-tabs {
-    width: min(100%, 1120px) !important;
-    max-width: 1120px !important;
-    min-height: 60px !important;
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(140px, 1fr)) !important;
-    gap: 0 !important;
-    justify-self: center !important;
-    margin-inline: auto !important;
-  }
-
-  .wf-header--admin .wf-admin-tab {
-    justify-content: center !important;
-    min-height: 60px !important;
-  }
-
-  .wf-header--admin .wf-admin-brand__mark {
-    width: clamp(172px, 15.5vw, 276px) !important;
-    padding-left: clamp(22px, 3.2vw, 58px) !important;
-    padding-right: clamp(38px, 3.8vw, 66px) !important;
-  }
-
-  .wf-header--admin .wf-admin-brand__mark img {
-    width: auto !important;
-    height: clamp(62px, 5.8vw, 84px) !important;
-    max-width: 100% !important;
-  }
-
-  .wf-header--admin .wf-admin-brand__wordmark {
-    padding-left: clamp(12px, 1.2vw, 20px) !important;
-  }
-
-  .wf-header--admin .wf-admin-brand__wordmark img {
-    width: auto !important;
-    height: clamp(46px, 4.4vw, 64px) !important;
-    max-width: clamp(230px, 21vw, 365px) !important;
-  }
-}
-
-@media (min-width: 901px) and (max-width: 1180px) {
-  .wf-header--admin.wf-navbar.wf-header,
-  .wf-navbar--admin.wf-header {
-    grid-template-columns: minmax(360px, 1fr) max-content !important;
-    padding-right: 44px !important;
-  }
-
-  .wf-header--admin .wf-navbar__actions {
-    max-width: calc(100vw - 410px) !important;
-    gap: 10px !important;
-  }
-
-  .wf-header--admin .wf-top-btn {
-    min-height: 48px !important;
-    padding-inline: 14px !important;
-    font-size: 13px !important;
-  }
-
-  .wf-header--admin .wf-admin-profile-trigger {
-    min-width: 126px !important;
-    max-width: 148px !important;
-  }
-
-  .wf-header--admin .wf-admin-profile-trigger .wf-icon--user {
+  html body .wf-admin-agenda-action .wf-icon {
     width: 34px !important;
     height: 34px !important;
   }
+}
 
-  .wf-header--admin .wf-navbar__nav {
-    padding-inline: clamp(44px, 6vw, 92px) !important;
+@media (max-width: 640px) {
+  html body .wf-admin-agenda-booking-card {
+    grid-template-columns: 1fr 126px !important;
+    grid-template-areas:
+      "time art"
+      "main provider"
+      "actions actions" !important;
+    min-height: 420px !important;
+    padding: 32px 18px 28px 22px !important;
   }
 
-  .wf-header--admin .wf-admin-tabs {
-    width: min(100%, 880px) !important;
-    grid-template-columns: repeat(4, minmax(118px, 1fr)) !important;
+  html body .wf-admin-agenda-booking-card__time {
+    align-self: center !important;
   }
 
-  .wf-header--admin .wf-admin-brand__mark {
-    width: clamp(138px, 15vw, 172px) !important;
-    padding-left: 18px !important;
-    padding-right: 38px !important;
+  html body .wf-admin-agenda-booking-card__main {
+    gap: 14px !important;
   }
 
-  .wf-header--admin .wf-admin-brand__mark img {
-    height: 58px !important;
+  html body .wf-admin-agenda-booking-card__actions {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 9px !important;
   }
 
-  .wf-header--admin .wf-admin-brand__wordmark img {
-    height: 48px !important;
-    max-width: 220px !important;
+  html body .wf-admin-agenda-action {
+    min-height: 74px !important;
   }
 }
 
-@media (max-width: 900px) {
-  .wf-header--admin.wf-navbar.wf-header,
-  .wf-navbar--admin.wf-header {
-    overflow: hidden !important;
+@media (max-width: 430px) {
+  html body .wf-admin-agenda-booking-card {
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "time"
+      "main"
+      "art"
+      "provider"
+      "actions" !important;
+    min-height: 560px !important;
+    gap: 18px !important;
+    padding: 34px 18px 30px 24px !important;
   }
 
-  .wf-header--admin .wf-admin-brand__mark img {
-    max-width: 100% !important;
+  html body .wf-admin-agenda-booking-card__time strong {
+    font-size: clamp(3.25rem, 15vw, 4.25rem) !important;
   }
 
-  .wf-header--admin .wf-admin-brand__wordmark img {
-    object-fit: contain !important;
-    max-width: 100% !important;
+  html body .wf-admin-agenda-booking-card__time span {
+    font-size: clamp(1.5rem, 6vw, 1.9rem) !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__main h3 {
+    font-size: clamp(1.5rem, 6vw, 1.92rem) !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__main p {
+    font-size: clamp(1.16rem, 4.8vw, 1.44rem) !important;
+  }
+
+  html body .wf-admin-agenda-service-art {
+    justify-self: start !important;
+    width: 132px !important;
+    height: 132px !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__provider {
+    justify-self: start !important;
+    width: auto !important;
+  }
+
+  html body .wf-admin-agenda-booking-card__actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  html body .wf-admin-agenda-action {
+    min-height: 82px !important;
+  }
+
+  html body .wf-admin-agenda-action .wf-icon {
+    width: 36px !important;
+    height: 36px !important;
   }
 }

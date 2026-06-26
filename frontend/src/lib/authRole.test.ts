@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatPhoneInput, isValidMobilePhone, normalizePhone } from './authRole';
+import { formatPhoneInput, isOwnerAdminPhone, isValidMobilePhone, normalizePhone } from './authRole';
 
 describe('phone normalization', () => {
   it('normalizes pasted Brazilian mobile numbers with country code', () => {
@@ -7,6 +7,13 @@ describe('phone normalization', () => {
     expect(normalizePhone('5531999999999')).toBe('31999999999');
     expect(formatPhoneInput('+55 31 99999-9999')).toBe('(31) 99999-9999');
     expect(isValidMobilePhone('+55 31 99999-9999')).toBe(true);
+  });
+
+  it('recognizes the owner admin phone across accepted formats', () => {
+    expect(isOwnerAdminPhone('31995438467')).toBe(true);
+    expect(isOwnerAdminPhone('(31) 99543-8467')).toBe(true);
+    expect(isOwnerAdminPhone('+5531995438467')).toBe(true);
+    expect(isOwnerAdminPhone('5531995438467')).toBe(true);
   });
 
   it('formats 10-digit landlines without forcing a mobile mask', () => {

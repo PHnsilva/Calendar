@@ -237,6 +237,7 @@ function normalizeWorkspace(session: StoredAdminSession): AdminWorkspaceContext 
       mode: "PROVIDER",
       providerId: workspace.providerId.trim(),
       providerName: workspace.providerName?.trim() || undefined,
+      impersonatedByOwner: workspace.impersonatedByOwner || undefined,
     };
   }
   if (workspace?.mode === "ADMIN" && session.role === "OWNER") {
@@ -314,6 +315,7 @@ export function setAdminWorkspace(workspace: AdminWorkspaceContext): StoredAdmin
         mode: "PROVIDER",
         providerId: workspace.providerId?.trim(),
         providerName: workspace.providerName?.trim() || undefined,
+        impersonatedByOwner: workspace.impersonatedByOwner || undefined,
       }
     : { mode: "ADMIN" };
   const nextSession: StoredAdminSession = {
@@ -349,7 +351,7 @@ export function getStoredAdminRole(): AdminRole | null {
 
 export function isStoredAdminOwner(): boolean {
   const session = getStoredAdminSession();
-  return session?.role === "OWNER" && session.workspace?.mode !== "PROVIDER";
+  return session?.role === "OWNER" && session.workspace?.mode === "ADMIN";
 }
 
 export function getManageTokens(): string[] {

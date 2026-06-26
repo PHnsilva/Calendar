@@ -1,8 +1,17 @@
 export type UserRole = 'admin' | 'client';
 
+const defaultOwnerAdminPhone = '31995438467';
+
 const configuredAdminPhones = [
   import.meta.env.VITE_ADMIN_AUTH_PHONES,
   import.meta.env.VITE_ADMIN_PHONES,
+]
+  .filter((value): value is string => Boolean(value?.trim()))
+  .join(',');
+
+const configuredOwnerAdminPhones = [
+  import.meta.env.VITE_OWNER_ADMIN_PHONE,
+  import.meta.env.VITE_OWNER_ADMIN_PHONES,
 ]
   .filter((value): value is string => Boolean(value?.trim()))
   .join(',');
@@ -59,10 +68,20 @@ const adminPhoneSet = new Set(
     .filter(isValidPhone),
 );
 
+const ownerAdminPhoneSet = new Set(
+  [defaultOwnerAdminPhone, ...configuredOwnerAdminPhones.split(',')]
+    .map((phone) => normalizePhone(phone.trim()))
+    .filter(isValidPhone),
+);
+
 export function isAdminPhone(value: string): boolean {
   return adminPhoneSet.has(normalizePhone(value));
 }
 
+export function isOwnerAdminPhone(value: string): boolean {
+  return ownerAdminPhoneSet.has(normalizePhone(value));
+}
+
 export function resolveUserRoleByPhone(value: string): UserRole {
-  return isAdminPhone(value) ? 'admin' : 'client';
+  return isOwnerAdminPhone(value) || isAdminPhone(value) ? 'admin' : 'client';
 }

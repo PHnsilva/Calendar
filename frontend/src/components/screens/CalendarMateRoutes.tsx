@@ -105,7 +105,7 @@ import {
   saveRecoveredBookings,
   getPhoneVerificationChangedEventName,
 } from '../../lib/storage';
-import type { AdminAuthConfirmResponse, AdminProviderResponse, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
+import type { AdminAuthConfirmResponse, AdminProviderResponse, AdminWorkspaceContext, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
 import { confirmAdminLogin, listAdminProviders, resendAdminLogin, startAdminLogin } from '../../features/admin/api/admin-auth';
 import { updateAdminBooking } from '../../features/admin/api/update-admin-booking';
@@ -115,7 +115,7 @@ import { ALLOWED_CITIES } from '../../data/allowed-cities';
 import { getAllowedCities, getBookingDurationMinutesByCity, getDefaultCity, getDefaultState, getMaxFutureMonthsAhead, getSlotMinutes } from '../../lib/bootstrap-config';
 import { confirmRecovery, resendRecovery } from '../../features/recovery/api/confirm-recovery';
 import { startRecovery } from '../../features/recovery/api/start-recovery';
-import { isValidPhone, normalizePhone, resolveUserRoleByPhone, type UserRole } from '../../lib/authRole';
+import { isOwnerAdminPhone, isValidPhone, normalizePhone, resolveUserRoleByPhone, type UserRole } from '../../lib/authRole';
 import { buildMailtoUrl } from '../../lib/mailto';
 import ModalShell from '../../shared/ui/ModalShell';
 import PageTitle from '../../shared/ui/PageTitle';
@@ -1602,12 +1602,16 @@ function getAdminAuthErrorMessage(error: unknown, step: 'start' | 'confirm'): st
 }
 
 async function loadAdminWorkspaceProviders(response: AdminAuthConfirmResponse): Promise<AdminProviderResponse[]> {
-  if (response.admin.role !== 'OWNER') return [];
+  if (!isConfirmedOwnerAdmin(response)) return [];
   try {
     return await listAdminProviders();
   } catch {
     return [];
   }
+}
+
+function isConfirmedOwnerAdmin(response: AdminAuthConfirmResponse, fallbackPhone = ''): boolean {
+  return response.admin.role === 'OWNER' || isOwnerAdminPhone(response.admin.phone || fallbackPhone);
 }
 
 function setDefaultWorkspaceForAdmin(response: AdminAuthConfirmResponse) {
@@ -1619,27 +1623,46 @@ function setDefaultWorkspaceForAdmin(response: AdminAuthConfirmResponse) {
 function AdminWorkspaceSelectionModal({
   embedded = false,
   providers,
+  sessionPhone,
+  selectedWorkspace,
+  onSelectWorkspace,
   onDone,
 }: {
   embedded?: boolean;
   providers: AdminProviderResponse[];
-  onDone: () => void;
+  sessionPhone?: string;
+  selectedWorkspace?: string;
+  onSelectWorkspace?: (workspace: string) => void;
+  onDone: (workspace: AdminWorkspaceContext) => void;
 }) {
   const chooseAdmin = () => {
-    setAdminWorkspace({ mode: 'ADMIN' });
-    onDone();
+    const workspace: AdminWorkspaceContext = { mode: 'ADMIN' };
+    onSelectWorkspace?.('ADMIN');
+    setAdminWorkspace(workspace);
+    onDone(workspace);
   };
 
   const chooseProvider = (provider: AdminProviderResponse) => {
-    setAdminWorkspace({ mode: 'PROVIDER', providerId: provider.id, providerName: provider.name });
-    onDone();
+    const workspace: AdminWorkspaceContext = {
+      mode: 'PROVIDER',
+      providerId: provider.id,
+      providerName: provider.name,
+      impersonatedByOwner: true,
+    };
+    onSelectWorkspace?.(provider.id);
+    setAdminWorkspace(workspace);
+    onDone(workspace);
   };
 
   const body = (
     <>
-      <ModalTitle icon="user" title="Escolha o workspace" text="Selecione como deseja entrar nesta sessao." />
+      <ModalTitle
+        icon="user"
+        title="Escolha o workspace"
+        text={sessionPhone ? `Selecione como deseja entrar para ${formatPhoneForDisplay(sessionPhone)}.` : 'Selecione como deseja entrar nesta sessao.'}
+      />
       <div className="wf-provider-list wf-provider-list--wireframe wf-workspace-list">
-        <button type="button" onClick={chooseAdmin}>
+        <button type="button" className={selectedWorkspace === 'ADMIN' ? 'is-selected' : ''} aria-pressed={selectedWorkspace === 'ADMIN'} onClick={chooseAdmin}>
           <span className="wf-radio-dot" />
           <Avatar name="Admin" />
           <strong>Entrar como Admin</strong>
@@ -1647,7 +1670,7 @@ function AdminWorkspaceSelectionModal({
           <small>OWNER</small>
         </button>
         {providers.map((provider) => (
-          <button key={provider.id} type="button" onClick={() => chooseProvider(provider)}>
+          <button key={provider.id} type="button" className={selectedWorkspace === provider.id ? 'is-selected' : ''} aria-pressed={selectedWorkspace === provider.id} onClick={() => chooseProvider(provider)}>
             <span className="wf-radio-dot" />
             <Avatar name={provider.name} />
             <strong>{`Entrar como ${provider.name}`}</strong>
@@ -1676,6 +1699,45 @@ function AdminWorkspaceSelectionModal({
   );
 }
 
+function AdminWorkspaceSelectionGate({ onDone }: { onDone: () => void }) {
+  const [pendingWorkspaceSelection] = useState(true);
+  const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
+  const [selectedWorkspace, setSelectedWorkspace] = useState('');
+  const [sessionPhone] = useState(() => getStoredAdminSession()?.phone || '');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    listAdminProviders()
+      .then((providers) => {
+        if (!cancelled) setAvailableWorkspaces(providers);
+      })
+      .catch(() => {
+        if (!cancelled) setError('Nao foi possivel carregar os prestadores agora.');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionPhone]);
+
+  if (!pendingWorkspaceSelection) {
+    return null;
+  }
+
+  return (
+    <PageShell className="wf-page wf-admin-landing wf-admin-login-page">
+      {error ? <p className="booking-form__error">{error}</p> : null}
+      <AdminWorkspaceSelectionModal
+        providers={availableWorkspaces}
+        sessionPhone={sessionPhone}
+        selectedWorkspace={selectedWorkspace}
+        onSelectWorkspace={setSelectedWorkspace}
+        onDone={onDone}
+      />
+    </PageShell>
+  );
+}
+
 export function AdminLanding() {
   const [modal, setModal] = useState<ModalKind>(null);
   const navigate = useNavigate();
@@ -1688,7 +1750,10 @@ export function AdminLanding() {
     navigate(`/admin/dashboard?view=${view === 'agenda' ? 'agendamentos' : view}`);
   };
   if (!session) {
-    return <AdminLoginScreen onDone={() => { window.location.href = '/admin/dashboard?view=agendamentos'; }} />;
+    return <AdminLoginScreen onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
+  }
+  if (session.role === 'OWNER' && !session.workspace) {
+    return <AdminWorkspaceSelectionGate onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
   }
   const workspace = getStoredAdminWorkspace();
   const providerWorkspace = workspace?.mode === 'PROVIDER';
@@ -1747,7 +1812,10 @@ function AdminLoginScreen({ onDone }: { onDone: () => void }) {
   const [verificationId, setVerificationId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [workspaceProviders, setWorkspaceProviders] = useState<AdminProviderResponse[] | null>(null);
+  const [pendingWorkspaceSelection, setPendingWorkspaceSelection] = useState(false);
+  const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
+  const [selectedWorkspace, setSelectedWorkspace] = useState('');
+  const [sessionPhone, setSessionPhone] = useState('');
 
   const start = async () => {
     if (!phone.trim() || loading) return;
@@ -1769,11 +1837,14 @@ function AdminLoginScreen({ onDone }: { onDone: () => void }) {
     setError('');
     try {
       const response = await confirmAdminLogin(verificationId, code.trim());
-      setDefaultWorkspaceForAdmin(response);
-      if (response.admin.role === 'OWNER') {
-        setWorkspaceProviders(await loadAdminWorkspaceProviders(response));
+      const confirmedPhone = response.admin.phone || phone;
+      setSessionPhone(confirmedPhone);
+      if (isConfirmedOwnerAdmin(response, phone)) {
+        setPendingWorkspaceSelection(true);
+        setAvailableWorkspaces(await loadAdminWorkspaceProviders(response));
         return;
       }
+      setDefaultWorkspaceForAdmin(response);
       onDone();
     } catch (err) {
       setError(getAdminAuthErrorMessage(err, 'confirm'));
@@ -1801,9 +1872,12 @@ function AdminLoginScreen({ onDone }: { onDone: () => void }) {
           <HeroVisual type="admin" className="wf-admin-login-visual-final" />
         </section>
       </main>
-      {workspaceProviders ? (
+      {pendingWorkspaceSelection ? (
         <AdminWorkspaceSelectionModal
-          providers={workspaceProviders}
+          providers={availableWorkspaces}
+          sessionPhone={sessionPhone}
+          selectedWorkspace={selectedWorkspace}
+          onSelectWorkspace={setSelectedWorkspace}
           onDone={onDone}
         />
       ) : null}
@@ -1828,11 +1902,14 @@ export function AdminDashboard() {
   const session = getStoredAdminSession();
   const workspace = getStoredAdminWorkspace();
   const providerWorkspace = workspace?.mode === 'PROVIDER';
-  const owner = session?.role === 'OWNER' && !providerWorkspace;
+  const owner = session?.role === 'OWNER' && workspace?.mode === 'ADMIN';
   const effectiveView = !owner && (view === 'extrato' || view === 'bloqueios') ? 'agendamentos' : view;
 
   if (!session) {
-    return <AdminLoginScreen onDone={() => { window.location.href = '/admin/dashboard?view=agendamentos'; }} />;
+    return <AdminLoginScreen onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
+  }
+  if (session.role === 'OWNER' && !session.workspace) {
+    return <AdminWorkspaceSelectionGate onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
   }
 
   const selectAdminView = (nextView: AdminView) => {
@@ -2335,6 +2412,10 @@ export function AdminBookingDetails() {
   const workspace = getStoredAdminWorkspace();
   const providerWorkspace = workspace?.mode === 'PROVIDER';
   const owner = isStoredAdminOwner();
+
+  if (session?.role === 'OWNER' && !session.workspace) {
+    return <AdminWorkspaceSelectionGate onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
+  }
 
   const openBudget = () => {
     setModal('budget-admin');
@@ -2888,7 +2969,10 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [workspaceProviders, setWorkspaceProviders] = useState<AdminProviderResponse[] | null>(null);
+  const [pendingWorkspaceSelection, setPendingWorkspaceSelection] = useState(false);
+  const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
+  const [selectedWorkspace, setSelectedWorkspace] = useState('');
+  const [sessionPhone, setSessionPhone] = useState('');
   const normalizedPhone = normalizePhone(phone);
   const canSendCode = isValidPhone(phone) && !loading;
   const canConfirm = Boolean(flow?.verificationId) && code.length === 3 && !loading;
@@ -2996,14 +3080,17 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
     try {
       if (flow.role === 'admin') {
         const response = await confirmAdminLogin(flow.verificationId, code);
-        setDefaultWorkspaceForAdmin(response);
+        const confirmedPhone = response.admin.phone || normalizedPhone;
+        setSessionPhone(confirmedPhone);
         await queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
-        if (response.admin.role === 'OWNER') {
-          setWorkspaceProviders(await loadAdminWorkspaceProviders(response));
+        if (isConfirmedOwnerAdmin(response, normalizedPhone)) {
+          setPendingWorkspaceSelection(true);
+          setAvailableWorkspaces(await loadAdminWorkspaceProviders(response));
           return;
         }
+        setDefaultWorkspaceForAdmin(response);
         onClose();
-        window.location.href = '/admin/dashboard?view=agendamentos';
+        navigate('/admin/dashboard?view=agendamentos', { replace: false });
         return;
       }
 
@@ -3031,14 +3118,17 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
     }
   };
 
-  if (workspaceProviders) {
+  if (pendingWorkspaceSelection) {
     return (
       <AdminWorkspaceSelectionModal
         embedded
-        providers={workspaceProviders}
+        providers={availableWorkspaces}
+        sessionPhone={sessionPhone}
+        selectedWorkspace={selectedWorkspace}
+        onSelectWorkspace={setSelectedWorkspace}
         onDone={() => {
           onClose();
-          window.location.href = '/admin/dashboard?view=agendamentos';
+          navigate('/admin/dashboard?view=agendamentos', { replace: false });
         }}
       />
     );

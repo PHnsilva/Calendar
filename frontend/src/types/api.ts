@@ -195,6 +195,7 @@ export type AdminWorkspaceContext = {
   mode: AdminWorkspaceMode;
   providerId?: string;
   providerName?: string;
+  impersonatedByOwner?: boolean;
 };
 
 export type AdminMeResponse = {

@@ -30,13 +30,23 @@ describe("admin session boundary", () => {
     const { getStoredAdminSession, saveAdminSession, setAdminWorkspace } = await import("../../../lib/storage");
 
     saveAdminSession("session-token", admin);
-    setAdminWorkspace({ mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1" });
+    setAdminWorkspace({ mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1", impersonatedByOwner: true });
 
     expect(getStoredAdminSession()).toMatchObject({
       sessionToken: "session-token",
       role: "OWNER",
-      workspace: { mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1" },
+      workspace: { mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1", impersonatedByOwner: true },
     });
+  });
+
+  it("does not treat an owner session as full admin before workspace selection", async () => {
+    const { isStoredAdminOwner, saveAdminSession, setAdminWorkspace } = await import("../../../lib/storage");
+
+    saveAdminSession("session-token", admin);
+    expect(isStoredAdminOwner()).toBe(false);
+
+    setAdminWorkspace({ mode: "ADMIN" });
+    expect(isStoredAdminOwner()).toBe(true);
   });
 
   it("rejects and clears an expired admin session", async () => {

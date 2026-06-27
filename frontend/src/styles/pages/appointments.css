@@ -1,0 +1,6 @@
+/*
+ * Appointment/admin booking legacy visual contract.
+ * Kept separate from the public landing entrypoint so the global cascade can be
+ * reduced in later passes without mixing appointment overrides with landing CSS.
+ */
+@import "../appointments-wireframe-overrides.css";

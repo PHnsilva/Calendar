@@ -1,9 +1,8 @@
 /*
  * Global CSS cascade entrypoint.
  *
- * Keep src/app/styles.css as a single import and maintain the effective order here.
- * This is the first safe step toward reducing legacy overrides without changing the
- * landing/footer visuals in this pass.
+ * src/app/styles.css must remain a single import. Keep this file ordered by
+ * responsibility instead of appending late override files to src/app/styles.css.
  */
 
 /* 1. Foundation */
@@ -25,17 +24,14 @@
 @import "./navbar-responsive.css";
 @import "./responsive-foundation.css";
 
-/* 4. Current wireframe locks and legacy overrides.
- * These remain imported in the same effective order to avoid visual regression.
- * Do not add new files to this group; consolidate future fixes into page-specific CSS.
+/* 4. Feature/page compatibility layers.
+ * The client landing file intentionally replaces two older landing override
+ * files that were repeated in the active cascade:
+ * - landing-client-wireframe-final.css
+ * - client-landing-mobile-order-fix.css
  */
-@import "./landing-client-wireframe-final.css";
-@import "./appointments-wireframe-overrides.css";
-@import "./client-landing-mobile-order-fix.css";
-@import "./client-landing-wireframe-lock.css";
-@import "./client-footer-social.css";
-@import "./landing-visual-regression-fixes.css";
-@import "./client-navbar-unified.css";
+@import "./pages/appointments.css";
+@import "./pages/client-landing.css";
 
 /* 5. Admin navigation tail. */
 @import "./admin-week-agenda.css";

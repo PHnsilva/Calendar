@@ -18,6 +18,7 @@ public class SupabaseAdminUserStore implements AdminUserStore {
     private final SupabaseClient sb;
     private final String table;
     private final List<AdminUser> seedUsers;
+    private volatile boolean seedAttempted;
 
     public SupabaseAdminUserStore(SupabaseClient sb, String table, String seedConfig) {
         this.sb = sb;
@@ -59,12 +60,14 @@ public class SupabaseAdminUserStore implements AdminUserStore {
 
     @Override
     public AdminUser findActiveById(String id) {
+        ensureSeedUsersAvailable();
         List<Map> rows = sb.select(table, Map.of("id", id == null ? "" : id.trim(), "active", "true"), 1, null);
         return first(rows);
     }
 
     @Override
     public List<AdminUser> listActive() {
+        ensureSeedUsersAvailable();
         List<Map> rows = sb.select(table, Map.of("active", "true"), 100, "name.asc");
         if (rows == null) {
             return List.of();
@@ -85,6 +88,21 @@ public class SupabaseAdminUserStore implements AdminUserStore {
             return;
         }
         sb.update(table, Map.of("id", id), Map.of("last_login_at", epochSec));
+    }
+
+    private void ensureSeedUsersAvailable() {
+        if (seedAttempted || seedUsers.isEmpty()) {
+            return;
+        }
+        synchronized (this) {
+            if (seedAttempted) {
+                return;
+            }
+            for (AdminUser user : seedUsers) {
+                upsertSeed(user);
+            }
+            seedAttempted = true;
+        }
     }
 
     private AdminUser first(List<Map> rows) {

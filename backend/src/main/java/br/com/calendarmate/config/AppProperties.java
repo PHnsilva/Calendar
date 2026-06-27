@@ -1,6 +1,7 @@
 package br.com.calendarmate.config;
 
 import br.com.calendarmate.util.LocationNormalizer;
+import br.com.calendarmate.util.PhoneNumberNormalizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
@@ -334,15 +335,10 @@ public class AppProperties {
     public int getAdminBulkCancelMaxItems() { return Math.max(1, Math.min(adminBulkCancelMaxItems, 1000)); }
     public Duration getAdminSessionTtl() { return Duration.ofDays(Math.max(1, Math.min(adminSessionTtlDays, 30))); }
     public String getAdminUsersCsv() {
-        String value = adminUsersCsv == null ? "" : adminUsersCsv.trim();
-        String debugEntry = buildDebugAdminSeedEntry();
-        if (debugEntry.isBlank()) {
-            return value;
-        }
-        if (value.isBlank()) {
-            return debugEntry;
-        }
-        return value + ";" + debugEntry;
+        return mergeAdminUserSeeds(
+                AdminUserRegistryDefaults.DEFAULT_SEED,
+                adminUsersCsv,
+                buildDebugAdminSeedEntry());
     }
     public int getAdminBookingActivePastDays() { return Math.max(0, Math.min(adminBookingActivePastDays, 90)); }
     public int getAdminBookingMaxFutureMonthsAhead() { return Math.max(1, Math.min(adminBookingMaxFutureMonthsAhead, 24)); }
@@ -438,6 +434,50 @@ public class AppProperties {
         String name = cleanOrDefault(debugDevAdminName, "Admin Debug");
         String role = cleanOrDefault(debugDevAdminRole, "OWNER").toUpperCase(Locale.ROOT);
         return phone + "|" + name + "|" + role;
+    }
+
+    private String mergeAdminUserSeeds(String... configs) {
+        List<AdminUserSeedEntry> entries = new ArrayList<>();
+        for (String config : configs) {
+            for (String rawEntry : splitAdminUserSeedEntries(config)) {
+                AdminUserSeedEntry entry = AdminUserSeedEntry.from(rawEntry);
+                if (entry == null) {
+                    continue;
+                }
+                entries.removeIf(existing -> existing.conflictsWith(entry));
+                entries.add(entry);
+            }
+        }
+        return entries.stream()
+                .map(AdminUserSeedEntry::raw)
+                .collect(Collectors.joining(";"));
+    }
+
+    private List<String> splitAdminUserSeedEntries(String config) {
+        String raw = clean(config);
+        if (raw.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(raw.split(";"))
+                .map(String::trim)
+                .filter(entry -> !entry.isBlank())
+                .toList();
+    }
+
+    private record AdminUserSeedEntry(String raw, String phone, String id) {
+        static AdminUserSeedEntry from(String raw) {
+            String[] parts = raw.split("\\|");
+            String phone = parts.length > 0 ? PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(parts[0]) : "";
+            if (phone.isBlank()) {
+                return null;
+            }
+            String id = parts.length > 3 ? parts[3].trim() : "";
+            return new AdminUserSeedEntry(raw.trim(), phone, id);
+        }
+
+        boolean conflictsWith(AdminUserSeedEntry other) {
+            return phone.equals(other.phone) || (!id.isBlank() && id.equals(other.id));
+        }
     }
 
     private boolean isLocalDebugProfile() {

@@ -48,7 +48,6 @@ public class AdminPrincipal {
         return List.of(
                 "BOOKINGS_READ_ASSIGNED",
                 "BOOKINGS_EDIT_ASSIGNED",
-                "HISTORY_READ_ASSIGNED",
                 "BUDGET_WRITE"
         );
     }

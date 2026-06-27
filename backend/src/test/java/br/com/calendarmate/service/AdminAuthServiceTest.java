@@ -103,7 +103,28 @@ class AdminAuthServiceTest {
         assertEquals(1, service.listProviders(owner).size());
         assertTrue(owner.permissions().contains("ASSIGN_PROVIDER"));
         assertFalse(provider.permissions().contains("ASSIGN_PROVIDER"));
+        assertFalse(provider.permissions().contains("HISTORY_READ_ASSIGNED"));
         assertEquals(AdminRole.PROVIDER, provider.getRole());
+    }
+
+    @Test
+    void defaultRegistryLetsOwnerListThreeBaseProviders() {
+        AppProperties props = new AppProperties();
+        InMemoryAdminUserStore userStore = new InMemoryAdminUserStore(props.getAdminUsersCsv());
+        AdminAuthService service = new AdminAuthService(
+                userStore,
+                new InMemoryAdminSessionStore(),
+                new InMemoryVerificationStore(),
+                new RecordingOtpDeliveryClient(),
+                new TestAppProperties());
+        AdminPrincipal owner = new AdminPrincipal(userStore.findActiveByPhone("31995438467"), null);
+
+        List<br.com.calendarmate.dto.AdminProviderResponse> providers = service.listProviders(owner);
+
+        assertEquals(3, providers.size());
+        assertTrue(providers.stream().anyMatch(provider -> "provider-1".equals(provider.getId()) && "Prestador 1".equals(provider.getName())));
+        assertTrue(providers.stream().anyMatch(provider -> "provider-2".equals(provider.getId()) && "Prestador 2".equals(provider.getName())));
+        assertTrue(providers.stream().anyMatch(provider -> "provider-3".equals(provider.getId()) && "Prestador 3".equals(provider.getName())));
     }
 
     @Test

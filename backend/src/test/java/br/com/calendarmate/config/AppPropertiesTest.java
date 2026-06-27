@@ -35,12 +35,44 @@ class AppPropertiesTest {
         set(props, "springProfilesActive", "local");
         set(props, "appEnv", "");
 
-        assertEquals(
-                "31911112222|Base Admin|OWNER;31995438467|Admin Debug|OWNER",
-                props.getAdminUsersCsv());
+        String localRegistry = props.getAdminUsersCsv();
+        assertTrue(localRegistry.contains("31911112222|Base Admin|OWNER"));
+        assertTrue(localRegistry.contains("31995438467|Admin Debug|OWNER"));
+        assertTrue(localRegistry.contains("31900000001|Prestador 1|PROVIDER|provider-1"));
+        assertTrue(localRegistry.contains("31900000002|Prestador 2|PROVIDER|provider-2"));
+        assertTrue(localRegistry.contains("31900000003|Prestador 3|PROVIDER|provider-3"));
 
         set(props, "springProfilesActive", "prod");
-        assertEquals("31911112222|Base Admin|OWNER", props.getAdminUsersCsv());
+        String prodRegistry = props.getAdminUsersCsv();
+        assertTrue(prodRegistry.contains("31911112222|Base Admin|OWNER"));
+        assertFalse(prodRegistry.contains("Admin Debug"));
+        assertTrue(prodRegistry.contains("31900000001|Prestador 1|PROVIDER|provider-1"));
+    }
+
+    @Test
+    void defaultAdminRegistryIncludesOwnerAndThreeBaseProviders() throws Exception {
+        AppProperties props = new AppProperties();
+        set(props, "adminUsersCsv", "");
+        set(props, "debugDevAdminEnabled", false);
+
+        String registry = props.getAdminUsersCsv();
+
+        assertTrue(registry.contains("31995438467|SG Admin|OWNER|owner-main"));
+        assertTrue(registry.contains("31900000001|Prestador 1|PROVIDER|provider-1"));
+        assertTrue(registry.contains("31900000002|Prestador 2|PROVIDER|provider-2"));
+        assertTrue(registry.contains("31900000003|Prestador 3|PROVIDER|provider-3"));
+    }
+
+    @Test
+    void configuredProviderByIdOverridesDefaultPlaceholderPhone() throws Exception {
+        AppProperties props = new AppProperties();
+        set(props, "adminUsersCsv", "31988887777|Prestador Real|PROVIDER|provider-1");
+        set(props, "debugDevAdminEnabled", false);
+
+        String registry = props.getAdminUsersCsv();
+
+        assertTrue(registry.contains("31988887777|Prestador Real|PROVIDER|provider-1"));
+        assertFalse(registry.contains("31900000001|Prestador 1|PROVIDER|provider-1"));
     }
 
     @Test

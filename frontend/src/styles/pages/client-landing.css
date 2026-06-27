@@ -1,14 +1,11 @@
 /*
- * Client landing cascade entrypoint.
+ * Client landing cascade authority.
  *
- * This file is the active landing-specific authority while the JSX is still
- * being extracted from CalendarMateRoutes.tsx. Keep footer styles here because
- * the current approved footer must remain unchanged during the landing cleanup.
- *
- * Legacy client landing files removed from the active cascade:
- * - ../landing-client-wireframe-final.css
- * - ../client-landing-mobile-order-fix.css
+ * This phase only groups the active landing/footer CSS and removes superseded
+ * legacy imports from the global cascade. Do not add new one-off override files;
+ * migrate useful rules into this file as the landing is rebuilt.
  */
+
 @import "../client-landing-wireframe-lock.css";
 @import "../client-footer-social.css";
 @import "../landing-visual-regression-fixes.css";

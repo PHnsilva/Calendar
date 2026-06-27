@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ClipboardEvent, type DragEvent, type InputHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ClipboardEvent, type DragEvent, type InputHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
@@ -6,7 +6,6 @@ import heroClient from '../../assets/wireframes/landing/hero-tradesman-transpare
 import heroClientMobile from '../../assets/wireframes/landing/client-hero-composite-mobile.png';
 import heroAdmin from '../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png';
 import heroAdminMobile from '../../assets/wireframes/landing/client-hero-composite-mobile-tall.png';
-import houseCard from '../../assets/wireframes/cards/client-house-card.png';
 import clientCreateCalendarIcon from '../../assets/wireframes/icons/client-create-calendar.png';
 import clientFollowCalendarIcon from '../../assets/wireframes/icons/client-follow-calendar.png';
 import clientPhoneIcon from '../../assets/wireframes/icons/client-phone.png';
@@ -21,13 +20,6 @@ import footerEmailWireframeIcon from '../../assets/wireframes/icons/footer-email
 import footerPhoneWireframeIcon from '../../assets/wireframes/icons/footer-phone-wireframe.png';
 import footerMapWireframeIcon from '../../assets/wireframes/icons/footer-map-wireframe.png';
 import footerSecurityIcon from '../../assets/wireframes/icons/footer-security-shield.png';
-import servicePinturaCard from '../../assets/images/landing-carousel/01-servicos-de-pintor.png';
-import serviceMontagemCard from '../../assets/images/landing-carousel/02-montagem-e-instalacao.png';
-import servicePedreiroCard from '../../assets/images/landing-carousel/03-servicos-de-pedreiro.png';
-import serviceDroneCard from '../../assets/images/landing-carousel/04-filmagem-com-drone.png';
-import serviceHidraulicaCard from '../../assets/images/landing-carousel/05-hidraulica.png';
-import serviceEletricaCard from '../../assets/images/landing-carousel/06-eletrica-basica.png';
-import serviceJardinagemCard from '../../assets/images/landing-carousel/07-jardinagem.png';
 import adminAppointmentsIcon from '../../assets/wireframes/icons/admin-appointments-clipboard.png';
 import adminBlocksIcon from '../../assets/wireframes/icons/admin-blocks-lock.png';
 import adminHistoryIcon from '../../assets/wireframes/icons/admin-history-clock.png';
@@ -122,12 +114,9 @@ import { OTP_CODE_LENGTH, applyOtpInput, codeToOtpDigits } from '../../lib/otp';
 import ModalShell from '../../shared/ui/ModalShell';
 import PageTitle from '../../shared/ui/PageTitle';
 import ResponsiveAsset from '../../shared/ui/ResponsiveAsset';
-import ClientFooter from '../../widgets/client-footer';
-import LandingHero from '../../widgets/landing-hero';
-import ServiceCarousel from '../../widgets/service-carousel';
 
 
-type ModalKind =
+export type ModalKind =
   | 'create-client'
   | 'confirm-phone'
   | 'client-profile'
@@ -246,7 +235,7 @@ function useModalBrowserBack(open: boolean, key: string, onClose: () => void) {
   }, [onCloseRef, open]);
 }
 
-function useDoubleBackToLeavePage(enabled = true) {
+export function useDoubleBackToLeavePage(enabled = true) {
   const lastBackAtRef = useRef(0);
 
   useEffect(() => {
@@ -826,18 +815,6 @@ function Badge({ icon, children, color = 'orange' }: { icon?: string; children: 
   return <span className={cx('wf-badge', `wf-badge--${color}`)}>{icon ? <Icon name={icon} /> : null}{children}</span>;
 }
 
-function ActionCard({ icon, title, text, color, onClick, to }: { icon: string; title: string; text?: string; color: Accent; onClick?: () => void; to?: string }) {
-  const content = (
-    <>
-      <span className="wf-action-card__icon"><Icon name={icon} /></span>
-      <span className="wf-action-card__body"><strong>{title}</strong>{text ? <small>{text}</small> : null}</span>
-      <span className="wf-action-card__arrow">›</span>
-    </>
-  );
-  if (to) return <Link to={to} className={cx('wf-action-card', `wf-action-card--${color}`)}>{content}</Link>;
-  return <button type="button" className={cx('wf-action-card', `wf-action-card--${color}`)} onClick={onClick}>{content}</button>;
-}
-
 function HeroVisual({ type, className }: { type: 'client' | 'admin'; className?: string }) {
   const desktop = type === 'admin' ? heroAdmin : heroClient;
   const mobile = type === 'admin' ? heroAdminMobile : heroClientMobile;
@@ -1057,272 +1034,6 @@ function useClientProfileSnapshot(): ClientProfileSnapshot {
   }, []);
 
   return snapshot;
-}
-
-function ClientLandingModalButtons({ profile, setModal }: { profile: ClientProfileSnapshot; setModal: (modal: ModalKind) => void }) {
-  return (
-    <div className="wf-actions-grid wf-actions-grid--client">
-      <ActionCard icon="calendar-create" title="Criar agendamento" color="orange" onClick={() => setModal('create-client')} />
-      <ActionCard icon="calendar-clock" title="Acompanhar agendamento" color="blue" to="/meus-agendamentos" />
-      <ActionCard
-        icon={profile.verified ? 'user' : 'mobile-phone'}
-        title={profile.verified ? 'Perfil' : 'Confirmar telefone'}
-        color="green"
-        onClick={() => setModal(profile.verified ? 'client-profile' : 'confirm-phone')}
-      />
-      <ActionCard icon="chat-bubbles" title="Fale conosco" color="purple" onClick={() => setModal('contact')} />
-    </div>
-  );
-}
-
-type ServiceShowcaseItem = {
-  title: string;
-  alt: string;
-  image: string;
-};
-
-const SERVICE_SHOWCASE_INTERVAL_MS = 4600;
-
-const SERVICE_SHOWCASE_ITEMS: ServiceShowcaseItem[] = [
-  {
-    title: 'Serviços de pintor',
-    alt: 'Card do serviço de pintura',
-    image: servicePinturaCard,
-  },
-  {
-    title: 'Montagem e instalação',
-    alt: 'Card do serviço de montagem e instalação',
-    image: serviceMontagemCard,
-  },
-  {
-    title: 'Serviços de pedreiro',
-    alt: 'Card do serviço de pedreiro',
-    image: servicePedreiroCard,
-  },
-  {
-    title: 'Filmagem com drone',
-    alt: 'Card do serviço de filmagem com drone',
-    image: serviceDroneCard,
-  },
-  {
-    title: 'Hidráulica',
-    alt: 'Card do serviço de hidráulica',
-    image: serviceHidraulicaCard,
-  },
-  {
-    title: 'Elétrica básica',
-    alt: 'Card do serviço de elétrica básica',
-    image: serviceEletricaCard,
-  },
-  {
-    title: 'Jardinagem',
-    alt: 'Card do serviço de jardinagem',
-    image: serviceJardinagemCard,
-  },
-];
-
-export function ServiceShowcaseCarousel() {
-  const [index, setIndex] = useState(0);
-  const [progressKey, setProgressKey] = useState(0);
-  const carouselRef = useRef<HTMLElement | null>(null);
-  const pointerStartRef = useRef<{ x: number; pointerId: number } | null>(null);
-
-  const resetProgress = useCallback(() => {
-    carouselRef.current?.style.setProperty('--wf-carousel-progress', '0', 'important');
-    setProgressKey((current) => current + 1);
-  }, []);
-
-  const goTo = useCallback((nextIndex: number) => {
-    setIndex(((nextIndex % SERVICE_SHOWCASE_ITEMS.length) + SERVICE_SHOWCASE_ITEMS.length) % SERVICE_SHOWCASE_ITEMS.length);
-    resetProgress();
-  }, [resetProgress]);
-
-  const goPrev = useCallback(() => {
-    setIndex((current) => (current - 1 + SERVICE_SHOWCASE_ITEMS.length) % SERVICE_SHOWCASE_ITEMS.length);
-    resetProgress();
-  }, [resetProgress]);
-
-  const goNext = useCallback(() => {
-    setIndex((current) => (current + 1) % SERVICE_SHOWCASE_ITEMS.length);
-    resetProgress();
-  }, [resetProgress]);
-
-  useEffect(() => {
-    SERVICE_SHOWCASE_ITEMS.forEach((service) => {
-      const image = new Image();
-      image.src = service.image;
-    });
-  }, []);
-
-  useEffect(() => {
-    let animationFrame = 0;
-    const startedAt = window.performance.now();
-
-    const updateProgress = (now: number) => {
-      const ratio = Math.min(1, (now - startedAt) / SERVICE_SHOWCASE_INTERVAL_MS);
-      carouselRef.current?.style.setProperty('--wf-carousel-progress', ratio.toFixed(4), 'important');
-
-      if (ratio < 1) {
-        animationFrame = window.requestAnimationFrame(updateProgress);
-      }
-    };
-
-    carouselRef.current?.style.setProperty('--wf-carousel-progress', '0', 'important');
-    animationFrame = window.requestAnimationFrame(updateProgress);
-
-    const timer = window.setTimeout(goNext, SERVICE_SHOWCASE_INTERVAL_MS);
-
-    return () => {
-      window.clearTimeout(timer);
-      window.cancelAnimationFrame(animationFrame);
-    };
-  }, [goNext, index, progressKey]);
-
-  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    pointerStartRef.current = { x: event.clientX, pointerId: event.pointerId };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-  };
-
-  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    const start = pointerStartRef.current;
-    pointerStartRef.current = null;
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
-
-    if (!start) return;
-
-    const deltaX = event.clientX - start.x;
-    if (Math.abs(deltaX) >= 38) {
-      if (deltaX > 0) {
-        goPrev();
-        return;
-      }
-
-      goNext();
-      return;
-    }
-
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const relativeX = event.clientX - bounds.left;
-
-    if (relativeX <= bounds.width * 0.34) {
-      goPrev();
-      return;
-    }
-
-    if (relativeX >= bounds.width * 0.66) {
-      goNext();
-    }
-  };
-
-  const handlePointerCancel = (event: PointerEvent<HTMLDivElement>) => {
-    pointerStartRef.current = null;
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
-  };
-
-  return (
-    <article
-      ref={carouselRef}
-      className="wf-services-showcase"
-      aria-roledescription="carousel"
-      aria-label="Carrossel de serviços prestados"
-    >
-      <div
-        className="wf-services-showcase__viewport"
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-      >
-        {SERVICE_SHOWCASE_ITEMS.map((service, serviceIndex) => (
-          <img
-            key={service.image}
-            className={cx('wf-services-showcase__image', serviceIndex === index && 'is-active')}
-            src={service.image}
-            alt={service.alt}
-            loading={serviceIndex === 0 ? 'eager' : 'lazy'}
-            decoding="async"
-            draggable={false}
-            aria-hidden={serviceIndex !== index}
-          />
-        ))}
-
-        <div className="wf-services-showcase__overlay">
-          <div className="wf-services-showcase__dots" role="tablist" aria-label="Indicadores do carrossel">
-            {SERVICE_SHOWCASE_ITEMS.map((service, serviceIndex) => (
-              <button
-                key={service.title}
-                type="button"
-                className={cx('wf-services-showcase__dot', serviceIndex === index && 'is-active')}
-                aria-label={`Ir para ${service.title}`}
-                aria-pressed={serviceIndex === index}
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={() => goTo(serviceIndex)}
-              >
-                <span
-                  className="wf-services-showcase__dot-progress"
-                  aria-hidden="true"
-                />
-                <span className="sr-only">{service.title}</span>
-              </button>
-            ))}
-          </div>
-          <span className="wf-services-showcase__counter">{index + 1} / {SERVICE_SHOWCASE_ITEMS.length}</span>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-export function ClientLanding() {
-  const [modal, setModal] = useState<ModalKind>(null);
-  const profile = useClientProfileSnapshot();
-  useDoubleBackToLeavePage();
-  return (
-    <PageShell className="wf-page wf-client-landing">
-      <ClientNavbar onCreate={() => setModal('create-client')} onConfirmPhone={() => setModal('confirm-phone')} onProfile={() => setModal('client-profile')} />
-      <main className="wf-landing-main">
-        <LandingHero
-          badge={<Badge icon="calendar" color="orange">Simples, rápido e sem complicações</Badge>}
-          description={<>Crie seu agendamento sem precisar fazer login.<br />No dia, confirme seu número de telefone e pronto!</>}
-          highlight="facilidade."
-          onPrimaryAction={() => setModal('create-client')}
-          onSecondaryAction={() => setModal('services-info')}
-          primaryIcon={<Icon name="calendar" />}
-          primaryLabel="Criar agendamento"
-          secondaryIcon={<span className="wf-play"><Icon name="play" /></span>}
-          secondaryLabel="Como funciona?"
-          title="Organize seus agendamentos e pequenos reparos com"
-          mobileTitle={<>Organize seus<br />agendamentos e<br />pequenos reparos<br />com <span>facilidade.</span></>}
-        />
-
-        <ClientLandingModalButtons profile={profile} setModal={setModal} />
-
-        <section className="wf-info-row" id="wf-why-use">
-          <article className="wf-house-card">
-            <img src={houseCard} alt="Casa atendida" />
-            <div>
-              <h2>Agende quando e onde estiver</h2>
-              <p>Do computador ou do celular, organize seus atendimentos de forma rápida e segura, 24 horas por dia.</p>
-            </div>
-          </article>
-          <ServiceCarousel />
-        </section>
-        <ClientFooter
-          brand={<LogoMark compact />}
-          onContact={() => setModal('contact')}
-          onHelp={() => setModal('help-contact')}
-          onServices={() => setModal('services-info')}
-          openExternal={openExternal}
-          renderIcon={(name) => <Icon name={name} />}
-          supportEmail={supportEmail}
-          supportInstagramUrl={supportInstagramUrl}
-          supportWhatsAppUrl={supportWhatsAppUrl}
-          supportPhoneDisplay={supportPhoneDisplay}
-          serviceCitiesLabel="Itabirito, Ouro Preto, Moeda, Belo Horizonte e Nova Lima"
-        />
-      </main>
-      <CalendarMateModal modal={modal} onClose={() => setModal(null)} />
-    </PageShell>
-  );
 }
 
 function CalendarBoard({ bookings = [], admin = false, onCreate }: { bookings?: BookingItem[]; admin?: boolean; onCreate?: (date?: string) => void }) {
@@ -2437,7 +2148,7 @@ function Avatar({ name, large = false, huge = false }: { name: string; large?: b
   return <span className={cx('wf-avatar', large && 'wf-avatar--large', huge && 'wf-avatar--huge')}>{initials}</span>;
 }
 
-function CalendarMateModal({
+export function CalendarMateModal({
   modal,
   context = {},
   onClose,

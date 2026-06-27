@@ -1,8 +1,8 @@
 /*
  * Global CSS cascade entrypoint.
  *
- * src/app/styles.css must remain a single import. Keep this file ordered by
- * responsibility instead of appending late override files to src/app/styles.css.
+ * src/app/styles.css must import only this file. Keep the public landing/footer
+ * cascade grouped here while legacy page overrides are being retired gradually.
  */
 
 /* 1. Foundation */
@@ -24,14 +24,9 @@
 @import "./navbar-responsive.css";
 @import "./responsive-foundation.css";
 
-/* 4. Feature/page compatibility layers.
- * The client landing file intentionally replaces two older landing override
- * files that were repeated in the active cascade:
- * - landing-client-wireframe-final.css
- * - client-landing-mobile-order-fix.css
- */
-@import "./pages/appointments.css";
+/* 4. Page-specific active cascades. */
 @import "./pages/client-landing.css";
+@import "./pages/appointments.css";
 
 /* 5. Admin navigation tail. */
 @import "./admin-week-agenda.css";

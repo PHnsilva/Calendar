@@ -1,12 +1,11 @@
 /*
  * Client landing cascade authority.
  *
- * This phase only groups the active landing/footer CSS and removes superseded
- * legacy imports from the global cascade. Do not add new one-off override files;
- * migrate useful rules into this file as the landing is rebuilt.
+ * Fase 5/6: the landing layout, landing regression tail and footer component
+ * are separated. Avoid reintroducing broad one-off override files here.
  */
 
-@import "../client-landing-wireframe-lock.css";
-@import "../client-footer-social.css";
-@import "../landing-visual-regression-fixes.css";
+@import "./client-landing-core.css";
+@import "./client-landing-regression.css";
 @import "../client-navbar-unified.css";
+@import "../components/client-footer.css";

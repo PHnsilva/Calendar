@@ -1,3 +1,8 @@
+/*
+ * Landing-only regression tail split from landing-visual-regression-fixes.css.
+ * Footer selectors now live in styles/components/client-footer.css.
+ */
+
 /* Landing visual regression fixes.
    This file is imported after the old wireframe lock files to neutralize the
    accumulated one-off overrides without touching unrelated screens. */
@@ -10,6 +15,7 @@ body,
   overflow-x: clip !important;
 }
 
+
 html body .wf-client-landing {
   --cm-landing-shell-x: clamp(30px, 2.35vw, 64px);
   width: 100% !important;
@@ -17,9 +23,11 @@ html body .wf-client-landing {
   overflow-x: clip !important;
 }
 
+
 /* Desktop navbar: align logo with hero content, remove the excessive bottom
    void and restore buttons to the target visual scale. */
 @media (min-width: 901px) {
+
   html body .wf-page.wf-client-landing > .wf-navbar.wf-navbar--client.wf-header,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header {
     width: 100% !important;
@@ -37,6 +45,7 @@ html body .wf-client-landing {
     overflow: visible !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-logo,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-navbar__logo {
     justify-self: start !important;
@@ -44,6 +53,7 @@ html body .wf-client-landing {
     margin: 0 !important;
     padding: 0 !important;
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-navbar__logo img {
@@ -54,6 +64,7 @@ html body .wf-client-landing {
     object-fit: contain !important;
     object-position: left center !important;
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-header-actions,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-navbar__actions {
@@ -70,6 +81,7 @@ html body .wf-client-landing {
     overflow: visible !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-header-actions > *,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-profile-menu-wrap {
     flex: 0 0 auto !important;
@@ -77,6 +89,7 @@ html body .wf-client-landing {
     min-width: 0 !important;
     max-width: none !important;
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
@@ -93,6 +106,7 @@ html body .wf-client-landing {
     white-space: nowrap !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger .wf-icon {
     width: clamp(18px, 1.25vw, 24px) !important;
@@ -100,13 +114,16 @@ html body .wf-client-landing {
     height: clamp(18px, 1.25vw, 24px) !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
     min-width: clamp(156px, 12.5vw, 215px) !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn--orange {
     min-width: clamp(158px, 12.8vw, 220px) !important;
   }
+
 
   /* Hero: left edge aligned to the navbar/logo shell, right side bleeds to the
      viewport edge. This removes the unintended right white strip. */
@@ -117,6 +134,7 @@ html body .wf-client-landing {
     padding: 0 var(--cm-landing-shell-x) clamp(14px, 1vw, 22px) !important;
     overflow: visible !important;
   }
+
 
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final {
     width: calc(100% + var(--cm-landing-shell-x)) !important;
@@ -132,6 +150,7 @@ html body .wf-client-landing {
     background: #fff !important;
   }
 
+
   html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
     position: relative !important;
     z-index: 5 !important;
@@ -139,10 +158,12 @@ html body .wf-client-landing {
     padding-top: clamp(10px, .75vw, 18px) !important;
   }
 
+
   html body .wf-client-landing .wf-hero-title,
   html body .wf-client-landing .wf-hero.wf-hero--client h1 {
     max-width: clamp(410px, 35vw, 640px) !important;
   }
+
 
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client {
     position: relative !important;
@@ -157,6 +178,7 @@ html body .wf-client-landing {
     overflow: hidden !important;
   }
 
+
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture {
     width: 100% !important;
     max-width: none !important;
@@ -164,6 +186,7 @@ html body .wf-client-landing {
     display: block !important;
     overflow: hidden !important;
   }
+
 
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture > img {
     width: 100% !important;
@@ -175,6 +198,7 @@ html body .wf-client-landing {
     transform: none !important;
   }
 
+
   /* The quick action cards belong below the hero. Keep intended proximity but
      prevent their white cards from climbing over the hero image. */
   html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client {
@@ -185,25 +209,31 @@ html body .wf-client-landing {
   }
 }
 
+
 @media (min-width: 901px) and (max-width: 1120px) {
+
   html body .wf-client-landing {
     --cm-landing-shell-x: clamp(20px, 2.5vw, 34px);
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header {
     grid-template-columns: minmax(132px, 170px) minmax(0, 1fr) !important;
     column-gap: clamp(10px, 1.4vw, 18px) !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-navbar__logo img {
     width: clamp(124px, 13vw, 154px) !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-header-actions,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-navbar__actions {
     gap: 8px !important;
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
@@ -216,17 +246,21 @@ html body .wf-client-landing {
     gap: 6px !important;
   }
 
+
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final {
     grid-template-columns: minmax(310px, 40%) minmax(0, 60%) !important;
   }
 }
 
+
 /* Keep the tablet/mobile hero from inheriting desktop bleed behavior. */
 @media (max-width: 900px) {
+
   html body .wf-client-landing .wf-landing-main {
     padding-inline: clamp(12px, 4vw, 24px) !important;
     overflow: visible !important;
   }
+
 
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final {
     width: 100% !important;
@@ -235,10 +269,12 @@ html body .wf-client-landing {
     overflow: visible !important;
   }
 
+
   html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client {
     transform: none !important;
   }
 }
+
 
 /* Carousel normalization. All PNG service cards are treated as media inside one
    fixed ratio viewport. Jardinagem has a different source dimension, so this
@@ -250,6 +286,7 @@ html body .wf-client-landing .wf-services-showcase {
   min-width: 0 !important;
   overflow: visible !important;
 }
+
 
 html body .wf-client-landing .wf-services-showcase__viewport {
   position: relative !important;
@@ -264,6 +301,7 @@ html body .wf-client-landing .wf-services-showcase__viewport {
   touch-action: pan-y !important;
   user-select: none !important;
 }
+
 
 html body .wf-client-landing .wf-services-showcase__image {
   position: absolute !important;
@@ -283,20 +321,24 @@ html body .wf-client-landing .wf-services-showcase__image {
   transition: opacity 180ms ease !important;
 }
 
+
 html body .wf-client-landing .wf-services-showcase__image.is-active {
   opacity: 1 !important;
   visibility: visible !important;
 }
 
+
 html body .wf-client-landing .wf-services-showcase__overlay {
   z-index: 3 !important;
 }
+
 
 html body .wf-client-landing .wf-services-showcase__dot::after,
 html body .wf-client-landing .wf-services-showcase__dot.is-active::after {
   display: none !important;
   content: none !important;
 }
+
 
 html body .wf-client-landing .wf-services-showcase__dot-progress {
   position: absolute !important;
@@ -310,163 +352,25 @@ html body .wf-client-landing .wf-services-showcase__dot-progress {
   transform: none !important;
 }
 
+
 html body .wf-client-landing .wf-services-showcase__dot.is-active .wf-services-showcase__dot-progress {
   width: calc(var(--wf-carousel-progress, 0) * 100%) !important;
 }
+
 
 html body .wf-client-landing .wf-services-showcase__dot:not(.is-active) .wf-services-showcase__dot-progress {
   width: 0 !important;
 }
 
-/* Footer contact alignment and tablet vertical flow. */
-html body footer.cm-footer .cm-footer__contact-row {
-  display: grid !important;
-  grid-template-columns: clamp(56px, 3.55vw, 68px) minmax(0, 1fr) !important;
-  column-gap: clamp(10px, .9vw, 16px) !important;
-  align-items: center !important;
-  justify-items: stretch !important;
-  min-height: clamp(54px, 3.55vw, 66px) !important;
-}
-
-html body footer.cm-footer .cm-footer__row-icon {
-  width: clamp(52px, 3.25vw, 62px) !important;
-  height: clamp(52px, 3.25vw, 62px) !important;
-  justify-self: center !important;
-  align-self: center !important;
-  display: inline-grid !important;
-  place-items: center !important;
-  transform: none !important;
-}
-
-html body footer.cm-footer .cm-footer__row-icon .wf-icon,
-html body footer.cm-footer .cm-footer__row-icon .wf-svg-wrapper,
-html body footer.cm-footer .cm-footer__row-icon img,
-html body footer.cm-footer .cm-footer__row-icon svg {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  object-position: center center !important;
-  margin: 0 !important;
-  transform: none !important;
-}
-
-html body footer.cm-footer .cm-footer__row-text,
-html body footer.cm-footer .cm-footer__row-text--stacked {
-  align-self: center !important;
-  align-content: center !important;
-  justify-content: center !important;
-  min-height: 0 !important;
-  transform: none !important;
-}
-
-@media (min-width: 431px) and (max-width: 760px) {
-  html body footer.cm-footer .cm-footer__shell {
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-areas:
-      "brand"
-      "nav"
-      "contact"
-      "social" !important;
-    gap: 18px !important;
-  }
-
-  html body footer.cm-footer .cm-footer__brand-card,
-  html body footer.cm-footer .cm-footer__nav,
-  html body footer.cm-footer .cm-footer__contact,
-  html body footer.cm-footer .cm-footer__social {
-    grid-column: 1 / -1 !important;
-    width: 100% !important;
-  }
-
-  html body footer.cm-footer .cm-footer__brand-card {
-    grid-template-columns: minmax(0, 1fr) !important;
-    justify-items: start !important;
-  }
-
-  html body footer.cm-footer .cm-footer__brand,
-  html body footer.cm-footer .cm-footer__brand-copy,
-  html body footer.cm-footer .cm-footer__contact-button {
-    grid-column: auto !important;
-    grid-row: auto !important;
-  }
-
-  html body footer.cm-footer .cm-footer__nav,
-  html body footer.cm-footer .cm-footer__contact,
-  html body footer.cm-footer .cm-footer__social {
-    border-left: 0 !important;
-    border-top: 1px solid var(--cm-footer-line) !important;
-    padding-left: 0 !important;
-    padding-top: 16px !important;
-  }
-
-  html body footer.cm-footer .cm-footer__nav,
-  html body footer.cm-footer .cm-footer__contact,
-  html body footer.cm-footer .cm-footer__social {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    gap: 12px !important;
-  }
-
-  html body footer.cm-footer .cm-footer__nav h2,
-  html body footer.cm-footer .cm-footer__contact h2,
-  html body footer.cm-footer .cm-footer__social h2 {
-    grid-column: 1 / -1 !important;
-  }
-
-  html body footer.cm-footer .cm-footer__nav button {
-    width: 100% !important;
-    min-height: 42px !important;
-    padding: 0 12px !important;
-    justify-content: flex-start !important;
-    text-align: left !important;
-    border: 1px solid rgba(7, 19, 93, .12) !important;
-    border-radius: 12px !important;
-    background: rgba(255,255,255,.4) !important;
-    white-space: normal !important;
-  }
-
-  html body footer.cm-footer .cm-footer__contact-row,
-  html body footer.cm-footer .cm-footer__contact-row--location,
-  html body footer.cm-footer .cm-footer__social-item,
-  html body footer.cm-footer .cm-footer__social-item--whatsapp {
-    grid-column: 1 / -1 !important;
-    grid-template-columns: 62px minmax(0, 1fr) !important;
-    min-height: 70px !important;
-    padding: 8px 10px !important;
-    justify-items: stretch !important;
-    align-content: center !important;
-    border: 1px solid rgba(7, 19, 93, .12) !important;
-    border-radius: 16px !important;
-    background: rgba(255,255,255,.38) !important;
-    text-align: left !important;
-  }
-
-  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-icon,
-  html body footer.cm-footer .cm-footer__social-icon {
-    width: 58px !important;
-    height: 58px !important;
-    flex-basis: 58px !important;
-    justify-self: center !important;
-  }
-
-  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text,
-  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text b,
-  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text small,
-  html body footer.cm-footer .cm-footer__social-text,
-  html body footer.cm-footer .cm-footer__social-text b,
-  html body footer.cm-footer .cm-footer__social-text small {
-    text-align: left !important;
-    justify-items: start !important;
-  }
-}
 
 /* v9 desktop navbar and footer contact correction.
    Scope: desktop navbar only above 900px; mobile navbar rules remain untouched. */
 @media (min-width: 901px) {
+
   html body .wf-client-landing {
     --cm-landing-shell-x: clamp(24px, 3vw, 72px);
   }
+
 
   html body .wf-page.wf-client-landing > .wf-navbar.wf-navbar--client.wf-header,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header {
@@ -477,6 +381,7 @@ html body footer.cm-footer .cm-footer__row-text--stacked {
     align-items: center !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-navbar__logo {
     width: auto !important;
@@ -486,12 +391,14 @@ html body footer.cm-footer .cm-footer__row-text--stacked {
     align-self: center !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-navbar__logo img {
     width: clamp(146px, 11.9vw, 220px) !important;
     height: auto !important;
     max-width: none !important;
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-header-actions,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-navbar__actions {
@@ -503,11 +410,13 @@ html body footer.cm-footer .cm-footer__row-text--stacked {
     max-width: 100% !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-header-actions > *,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-profile-menu-wrap {
     flex: 0 1 auto !important;
     min-width: 0 !important;
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn:not(.wf-top-btn--compact),
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
@@ -522,13 +431,16 @@ html body footer.cm-footer .cm-footer__row-text--stacked {
     white-space: nowrap !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
     min-width: clamp(152px, 11.9vw, 210px) !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn--orange:not(.wf-top-btn--compact) {
     min-width: clamp(158px, 12.5vw, 218px) !important;
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn:not(.wf-top-btn--compact) .wf-icon,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-icon {
@@ -538,10 +450,13 @@ html body footer.cm-footer .cm-footer__row-text--stacked {
   }
 }
 
+
 @media (min-width: 901px) and (max-width: 1080px) {
+
   html body .wf-client-landing {
     --cm-landing-shell-x: clamp(18px, 2.25vw, 26px);
   }
+
 
   html body .wf-page.wf-client-landing > .wf-navbar.wf-navbar--client.wf-header,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header {
@@ -551,15 +466,18 @@ html body footer.cm-footer .cm-footer__row-text--stacked {
     column-gap: clamp(10px, 1.3vw, 16px) !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-navbar__logo img {
     width: clamp(126px, 13.4vw, 146px) !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-header-actions,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-navbar__actions {
     gap: clamp(6px, .8vw, 9px) !important;
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn:not(.wf-top-btn--compact),
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
@@ -573,6 +491,7 @@ html body footer.cm-footer .cm-footer__row-text--stacked {
     gap: 5px !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn:not(.wf-top-btn--compact) .wf-icon,
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-icon {
     width: 15px !important;
@@ -581,15 +500,19 @@ html body footer.cm-footer .cm-footer__row-text--stacked {
   }
 }
 
+
 @media (min-width: 1081px) and (max-width: 1320px) {
+
   html body .wf-client-landing {
     --cm-landing-shell-x: clamp(24px, 2.8vw, 40px);
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header .wf-navbar__logo img {
     width: clamp(148px, 12.2vw, 172px) !important;
   }
+
 
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn:not(.wf-top-btn--compact),
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
@@ -599,181 +522,27 @@ html body footer.cm-footer .cm-footer__row-text--stacked {
     font-size: clamp(11px, .9vw, 13px) !important;
   }
 
+
   html body .wf-client-landing .wf-navbar.wf-navbar--client .wf-top-btn--orange:not(.wf-top-btn--compact) {
     min-width: clamp(154px, 12.9vw, 182px) !important;
   }
 }
 
-/* Footer contact section v9: keep the Fale conosco rows as horizontal rows,
-   restore icon scale, and center icon/text vertically on desktop and mobile. */
-html body footer.cm-footer .cm-footer__contact {
-  align-items: stretch !important;
-  justify-items: stretch !important;
-}
-
-html body footer.cm-footer .cm-footer__contact-row {
-  width: 100% !important;
-  display: grid !important;
-  grid-template-columns: clamp(76px, 4.7vw, 90px) minmax(0, 1fr) !important;
-  column-gap: clamp(12px, 1vw, 20px) !important;
-  align-items: center !important;
-  align-content: center !important;
-  justify-items: stretch !important;
-  min-height: clamp(72px, 4.7vw, 88px) !important;
-  padding: 0 !important;
-  text-align: left !important;
-}
-
-html body footer.cm-footer .cm-footer__row-icon {
-  width: clamp(72px, 4.35vw, 84px) !important;
-  height: clamp(72px, 4.35vw, 84px) !important;
-  min-width: clamp(72px, 4.35vw, 84px) !important;
-  min-height: clamp(72px, 4.35vw, 84px) !important;
-  flex: 0 0 clamp(72px, 4.35vw, 84px) !important;
-  display: inline-grid !important;
-  place-items: center !important;
-  justify-self: center !important;
-  align-self: center !important;
-  overflow: visible !important;
-}
-
-html body footer.cm-footer .cm-footer__row-icon .wf-svg-wrapper,
-html body footer.cm-footer .cm-footer__row-icon .wf-icon,
-html body footer.cm-footer .cm-footer__row-icon .wf-icon--image {
-  width: 100% !important;
-  height: 100% !important;
-  display: inline-grid !important;
-  place-items: center !important;
-  overflow: visible !important;
-}
-
-html body footer.cm-footer .cm-footer__row-icon img,
-html body footer.cm-footer .cm-footer__row-icon svg {
-  width: 112% !important;
-  height: 112% !important;
-  max-width: none !important;
-  max-height: none !important;
-  object-fit: contain !important;
-  object-position: center center !important;
-  transform: scale(1.08) !important;
-  transform-origin: center center !important;
-}
-
-html body footer.cm-footer .cm-footer__row-text,
-html body footer.cm-footer .cm-footer__row-text--stacked {
-  width: 100% !important;
-  min-height: 0 !important;
-  display: grid !important;
-  align-self: center !important;
-  align-content: center !important;
-  justify-self: stretch !important;
-  justify-items: start !important;
-  text-align: left !important;
-  transform: none !important;
-}
-
-html body footer.cm-footer .cm-footer__row-text,
-html body footer.cm-footer .cm-footer__row-text b,
-html body footer.cm-footer .cm-footer__row-text small {
-  text-align: left !important;
-}
-
-@media (max-width: 900px) {
-  html body footer.cm-footer .cm-footer__contact-row {
-    grid-template-columns: 78px minmax(0, 1fr) !important;
-    column-gap: 12px !important;
-    min-height: 78px !important;
-    align-items: center !important;
-    align-content: center !important;
-    justify-items: stretch !important;
-    padding: 0 !important;
-    text-align: left !important;
-  }
-
-  html body footer.cm-footer .cm-footer__row-icon {
-    width: 74px !important;
-    height: 74px !important;
-    min-width: 74px !important;
-    min-height: 74px !important;
-    flex-basis: 74px !important;
-    justify-self: center !important;
-    align-self: center !important;
-  }
-
-  html body footer.cm-footer .cm-footer__row-icon img,
-  html body footer.cm-footer .cm-footer__row-icon svg {
-    width: 112% !important;
-    height: 112% !important;
-    transform: scale(1.08) !important;
-  }
-}
-
-@media (min-width: 431px) and (max-width: 760px) {
-  html body footer.cm-footer .cm-footer__contact {
-    grid-template-columns: minmax(0, 1fr) !important;
-    gap: 12px !important;
-  }
-
-  html body footer.cm-footer .cm-footer__contact-row,
-  html body footer.cm-footer .cm-footer__contact-row--location {
-    grid-column: 1 / -1 !important;
-    grid-template-columns: 82px minmax(0, 1fr) !important;
-    min-height: 86px !important;
-    padding: 8px 12px !important;
-    justify-items: stretch !important;
-    align-content: center !important;
-    text-align: left !important;
-  }
-
-  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-icon {
-    width: 76px !important;
-    height: 76px !important;
-    min-width: 76px !important;
-    min-height: 76px !important;
-    flex-basis: 76px !important;
-  }
-
-  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text,
-  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text b,
-  html body footer.cm-footer .cm-footer__contact-row .cm-footer__row-text small,
-  html body footer.cm-footer .cm-footer__contact-row--location .cm-footer__row-text,
-  html body footer.cm-footer .cm-footer__contact-row--location .cm-footer__row-text b,
-  html body footer.cm-footer .cm-footer__contact-row--location .cm-footer__row-text small {
-    text-align: left !important;
-    justify-items: start !important;
-    align-content: center !important;
-  }
-}
-
-@media (max-width: 430px) {
-  html body footer.cm-footer .cm-footer__contact-row,
-  html body footer.cm-footer .cm-footer__contact-row--location {
-    grid-template-columns: 74px minmax(0, 1fr) !important;
-    min-height: 80px !important;
-    padding: 6px 8px !important;
-    text-align: left !important;
-  }
-
-  html body footer.cm-footer .cm-footer__row-icon {
-    width: 70px !important;
-    height: 70px !important;
-    min-width: 70px !important;
-    min-height: 70px !important;
-    flex-basis: 70px !important;
-  }
-}
 /* Generated hero asset sizing. Kept with the landing visual rules instead of a late catch-all fix file. */
 @media (min-width: 901px) {
+
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client {
     justify-content: flex-end !important;
     overflow: visible !important;
   }
+
 
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture {
     width: clamp(680px, 60vw, 1120px) !important;
     max-width: none !important;
     margin: clamp(-12px, -0.6vw, -4px) calc(-1 * clamp(24px, 3.4vw, 84px)) 0 0 !important;
   }
+
 
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture > img {
     display: block !important;
@@ -787,18 +556,23 @@ html body footer.cm-footer .cm-footer__row-text small {
   }
 }
 
+
 @media (min-width: 1600px) {
+
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture {
     width: clamp(880px, 58vw, 1240px) !important;
     margin-right: calc(-1 * clamp(54px, 4.5vw, 118px)) !important;
   }
 }
 
+
 @media (max-width: 900px) {
+
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture {
     width: clamp(320px, 58vw, 560px) !important;
     margin: -4px 0 0 auto !important;
   }
+
 
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture > img {
     width: 100% !important;
@@ -808,11 +582,14 @@ html body footer.cm-footer .cm-footer__row-text small {
   }
 }
 
+
 @media (max-width: 640px) {
+
   html body .wf-client-landing .wf-landing-main > .wf-hero.wf-hero--client.wf-hero--client-final > .wf-client-hero-visual-final.wf-hero-visual--client > picture {
     width: clamp(230px, 56vw, 360px) !important;
   }
 }
+
 
 
 /* Client landing contact card: enlarge only the Fale conosco illustration without changing the card grid. */
@@ -820,12 +597,15 @@ html body footer.cm-footer .cm-footer__row-text small {
   overflow: visible;
 }
 
+
 .wf-client-landing .wf-actions-grid--client .wf-action-card--purple .wf-icon--chat-bubbles {
   transform: scale(1.3);
   transform-origin: center;
 }
 
+
 @media (max-width: 360px) {
+
   .wf-client-landing .wf-actions-grid--client .wf-action-card--purple .wf-icon--chat-bubbles {
     transform: scale(1.18);
   }

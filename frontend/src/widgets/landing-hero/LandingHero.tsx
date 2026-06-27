@@ -6,7 +6,13 @@ import heroClientDesktop1600 from "../../assets/wireframes/landing/hero-tradesma
 import heroClientDesktop1920 from "../../assets/wireframes/landing/hero-tradesman-transparent-1920w.png";
 import heroClientDesktop2200 from "../../assets/wireframes/landing/hero-tradesman-transparent-2200w.png";
 import heroClientDesktop2500 from "../../assets/wireframes/landing/hero-tradesman-transparent-2500w.png";
-import heroClientMobile from "../../assets/wireframes/landing/client-hero-composite-mobile.png";
+import heroClientMobile320 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-320w.png";
+import heroClientMobile360 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-360w.png";
+import heroClientMobile390 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-390w.png";
+import heroClientMobile430 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-430w.png";
+import heroClientMobile531 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-531w.png";
+import heroClientMobile768 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-768w.png";
+import heroClientMobile899 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-899w.png";
 import ResponsiveAsset from "../../shared/ui/ResponsiveAsset";
 
 const clientHeroDesktopSrcSet = [
@@ -17,6 +23,23 @@ const clientHeroDesktopSrcSet = [
   `${heroClientDesktop1920} 1920w`,
   `${heroClientDesktop2200} 2200w`,
   `${heroClientDesktop2500} 2500w`,
+].join(", ");
+
+const clientHeroMobileSrcSet = [
+  `${heroClientMobile320} 320w`,
+  `${heroClientMobile360} 360w`,
+  `${heroClientMobile390} 390w`,
+  `${heroClientMobile430} 430w`,
+  `${heroClientMobile531} 531w`,
+  `${heroClientMobile768} 768w`,
+  `${heroClientMobile899} 899w`,
+].join(", ");
+
+const clientHeroSmallMobileSrcSet = [
+  `${heroClientMobile320} 320w`,
+  `${heroClientMobile360} 360w`,
+  `${heroClientMobile390} 390w`,
+  `${heroClientMobile430} 430w`,
 ].join(", ");
 
 type LandingHeroProps = {
@@ -71,10 +94,14 @@ export function LandingHero({
         desktopSrc={heroClientDesktop1600}
         desktopSrcSet={clientHeroDesktopSrcSet}
         sizes="(min-width: 901px) min(56vw, 900px), 100vw"
-        mobileSrc={heroClientMobile}
+        mobileSrc={heroClientMobile531}
+        mobileSrcSet={clientHeroMobileSrcSet}
+        mobileSizes="(max-width: 430px) min(58vw, 430px), (max-width: 900px) min(56vw, 560px), 100vw"
         mobileBreakpoint={900}
-        smallMobileSrc={heroClientMobile}
-        smallMobileBreakpoint={500}
+        smallMobileSrc={heroClientMobile320}
+        smallMobileSrcSet={clientHeroSmallMobileSrcSet}
+        smallMobileBreakpoint={430}
+        smallMobileSizes="min(58vw, 430px)"
       />
     </section>
   );

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type InputHTMLAttributes, type PointerEvent, type ReactNode } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ClipboardEvent, type DragEvent, type InputHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
 import heroClient from '../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png';
@@ -65,6 +65,7 @@ import emailIllustrationAsset from '../../assets/wireframes/modals/email-illustr
 import { FinancialStatementPanel } from '../admin/FinancialStatementPanel';
 import { HistoryPanel } from '../admin/HistoryPanel';
 import AdminNavbar, { type AdminNavView } from '../layout/AdminNavbar';
+import ClientNavbar from '../layout/ClientNavbar';
 import ProviderNavbar from '../layout/ProviderNavbar';
 import { PageShell, SvgWrapper } from '../layout/ResponsivePrimitives';
 import AppointmentCard from '../../features/appointments/ui/AppointmentCard';
@@ -117,12 +118,12 @@ import { confirmRecovery, resendRecovery } from '../../features/recovery/api/con
 import { startRecovery } from '../../features/recovery/api/start-recovery';
 import { isOwnerAdminPhone, isValidPhone, normalizePhone, resolveUserRoleByPhone, type UserRole } from '../../lib/authRole';
 import { buildMailtoUrl } from '../../lib/mailto';
+import { OTP_CODE_LENGTH, applyOtpInput, codeToOtpDigits } from '../../lib/otp';
 import ModalShell from '../../shared/ui/ModalShell';
 import PageTitle from '../../shared/ui/PageTitle';
 import ResponsiveAsset from '../../shared/ui/ResponsiveAsset';
 import ClientFooter from '../../widgets/client-footer';
 import LandingHero from '../../widgets/landing-hero';
-import PublicNavbar from '../../widgets/public-navbar';
 import ServiceCarousel from '../../widgets/service-carousel';
 
 
@@ -1277,7 +1278,7 @@ export function ClientLanding() {
   useDoubleBackToLeavePage();
   return (
     <PageShell className="wf-page wf-client-landing">
-      <PublicNavbar onCreate={() => setModal('create-client')} onConfirmPhone={() => setModal('confirm-phone')} onProfile={() => setModal('client-profile')} />
+      <ClientNavbar onCreate={() => setModal('create-client')} onConfirmPhone={() => setModal('confirm-phone')} onProfile={() => setModal('client-profile')} />
       <main className="wf-landing-main">
         <LandingHero
           badge={<Badge icon="calendar" color="orange">Simples, rápido e sem complicações</Badge>}
@@ -1750,7 +1751,7 @@ export function AdminLanding() {
     navigate(`/admin/dashboard?view=${view === 'agenda' ? 'agendamentos' : view}`);
   };
   if (!session) {
-    return <AdminLoginScreen onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
+    return <Navigate to="/" replace />;
   }
   if (session.role === 'OWNER' && !session.workspace) {
     return <AdminWorkspaceSelectionGate onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
@@ -1806,85 +1807,6 @@ export function AdminLanding() {
   );
 }
 
-function AdminLoginScreen({ onDone }: { onDone: () => void }) {
-  const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [verificationId, setVerificationId] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [pendingWorkspaceSelection, setPendingWorkspaceSelection] = useState(false);
-  const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
-  const [selectedWorkspace, setSelectedWorkspace] = useState('');
-  const [sessionPhone, setSessionPhone] = useState('');
-
-  const start = async () => {
-    if (!phone.trim() || loading) return;
-    setLoading(true);
-    setError('');
-    try {
-      const response = await startAdminLogin(phone);
-      setVerificationId(response.verificationId);
-    } catch (err) {
-      setError(getAdminAuthErrorMessage(err, 'start'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const confirm = async () => {
-    if (!verificationId || code.trim().length < 3 || loading) return;
-    setLoading(true);
-    setError('');
-    try {
-      const response = await confirmAdminLogin(verificationId, code.trim());
-      const confirmedPhone = response.admin.phone || phone;
-      setSessionPhone(confirmedPhone);
-      if (isConfirmedOwnerAdmin(response, phone)) {
-        setPendingWorkspaceSelection(true);
-        setAvailableWorkspaces(await loadAdminWorkspaceProviders(response));
-        return;
-      }
-      setDefaultWorkspaceForAdmin(response);
-      onDone();
-    } catch (err) {
-      setError(getAdminAuthErrorMessage(err, 'confirm'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <PageShell className="wf-page wf-admin-landing wf-admin-login-page">
-      <main className="wf-landing-main wf-landing-main--admin">
-        <section className="wf-hero wf-hero--admin wf-admin-login-hero-final">
-          <div className="wf-hero-copy wf-admin-login-copy-final">
-            <h1>Acesso do prestador</h1>
-            <p>Entre com o telefone cadastrado para carregar sua agenda administrativa.</p>
-            <div className="wf-admin-login-card">
-              <label>Telefone<input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="(31) 99999-9999" inputMode="tel" /></label>
-              {verificationId ? <label>Codigo SMS<input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 3))} placeholder="000" inputMode="numeric" /></label> : null}
-              {error ? <p className="booking-form__error">{error}</p> : null}
-              <button type="button" className="wf-primary-cta" onClick={verificationId ? confirm : start} disabled={loading || (!verificationId && !phone.trim()) || (Boolean(verificationId) && code.length < 3)}>
-                {loading ? 'Validando...' : verificationId ? 'Entrar' : 'Enviar codigo'} <Icon name="user" />
-              </button>
-            </div>
-          </div>
-          <HeroVisual type="admin" className="wf-admin-login-visual-final" />
-        </section>
-      </main>
-      {pendingWorkspaceSelection ? (
-        <AdminWorkspaceSelectionModal
-          providers={availableWorkspaces}
-          sessionPhone={sessionPhone}
-          selectedWorkspace={selectedWorkspace}
-          onSelectWorkspace={setSelectedWorkspace}
-          onDone={onDone}
-        />
-      ) : null}
-    </PageShell>
-  );
-}
-
 function getInitialAdminView(): AdminView {
   const param = new URLSearchParams(window.location.search).get('view');
   if (param === 'agenda') return 'agendamentos';
@@ -1903,10 +1825,10 @@ export function AdminDashboard() {
   const workspace = getStoredAdminWorkspace();
   const providerWorkspace = workspace?.mode === 'PROVIDER';
   const owner = session?.role === 'OWNER' && workspace?.mode === 'ADMIN';
-  const effectiveView = !owner && (view === 'extrato' || view === 'bloqueios') ? 'agendamentos' : view;
+  const effectiveView = !owner && (view === 'extrato' || view === 'bloqueios' || view === 'historico') ? 'agendamentos' : view;
 
   if (!session) {
-    return <AdminLoginScreen onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
+    return <Navigate to="/" replace />;
   }
   if (session.role === 'OWNER' && !session.workspace) {
     return <AdminWorkspaceSelectionGate onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
@@ -2413,6 +2335,9 @@ export function AdminBookingDetails() {
   const providerWorkspace = workspace?.mode === 'PROVIDER';
   const owner = isStoredAdminOwner();
 
+  if (!session) {
+    return <Navigate to="/" replace />;
+  }
   if (session?.role === 'OWNER' && !session.workspace) {
     return <AdminWorkspaceSelectionGate onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
   }
@@ -2973,23 +2898,68 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
   const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
   const [selectedWorkspace, setSelectedWorkspace] = useState('');
   const [sessionPhone, setSessionPhone] = useState('');
+  const codeInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const normalizedPhone = normalizePhone(phone);
   const canSendCode = isValidPhone(phone) && !loading;
-  const canConfirm = Boolean(flow?.verificationId) && code.length === 3 && !loading;
+  const canConfirm = Boolean(flow?.verificationId) && code.length === OTP_CODE_LENGTH && !loading;
+  const codeDigits = codeToOtpDigits(code, OTP_CODE_LENGTH);
 
-  const setCodeDigit = (index: number, value: string) => {
-    const digits = value.replace(/\D/g, '');
-    if (digits.length > 1) {
-      setCode(digits.slice(0, 3));
+  const focusCodeInput = useCallback((index: number) => {
+    window.requestAnimationFrame(() => {
+      const input = codeInputRefs.current[Math.max(0, Math.min(index, OTP_CODE_LENGTH - 1))];
+      input?.focus();
+      input?.select();
+    });
+  }, []);
+
+  const handleCodeChange = (index: number, value: string) => {
+    const next = applyOtpInput(codeDigits, index, value);
+    setCode(next.digits.join(''));
+    focusCodeInput(next.focusIndex);
+  };
+
+  const handleCodeKeyDown = (index: number, event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Backspace') {
+      if (!codeDigits[index] && index > 0) {
+        event.preventDefault();
+        focusCodeInput(index - 1);
+        return;
+      }
+      if (codeDigits[index]) {
+        event.preventDefault();
+        const next = [...codeDigits];
+        next[index] = '';
+        setCode(next.join(''));
+        focusCodeInput(index);
+      }
       return;
     }
-    const digit = digits.slice(-1);
-    setCode((current) => {
-      const next = current.padEnd(3, ' ').split('');
-      next[index] = digit || ' ';
-      return next.join('').replace(/\s/g, '').slice(0, 3);
-    });
+
+    if (event.key === 'ArrowLeft' && index > 0) {
+      event.preventDefault();
+      focusCodeInput(index - 1);
+      return;
+    }
+
+    if (event.key === 'ArrowRight' && index < OTP_CODE_LENGTH - 1) {
+      event.preventDefault();
+      focusCodeInput(index + 1);
+    }
   };
+
+  const handleCodePaste = (index: number, event: ClipboardEvent<HTMLInputElement>) => {
+    const pasted = event.clipboardData.getData('text');
+    if (!pasted) return;
+    event.preventDefault();
+    const next = applyOtpInput(codeDigits, index, pasted);
+    setCode(next.digits.join(''));
+    focusCodeInput(next.focusIndex);
+  };
+
+  useEffect(() => {
+    if (!flow?.verificationId) return;
+    focusCodeInput(0);
+  }, [flow?.verificationId, focusCodeInput]);
 
   const startClientAuth = async (targetPhone: string): Promise<GeneralAuthFlow> => {
     const response = await startRecovery(targetPhone);
@@ -3021,9 +2991,10 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
     setError('');
     setMessage('');
     setCode('');
+    let preferredRole: UserRole = 'client';
 
     try {
-      const preferredRole = resolveUserRoleByPhone(normalizedPhone);
+      preferredRole = resolveUserRoleByPhone(normalizedPhone);
       let nextFlow: GeneralAuthFlow;
 
       if (preferredRole === 'admin') {
@@ -3041,6 +3012,10 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
       setMessage(nextFlow.role === 'admin' ? 'Código enviado para acesso administrativo.' : 'Código enviado para confirmar seus agendamentos.');
     } catch (authError) {
       setFlow(null);
+      if (preferredRole === 'admin') {
+        setError(getAdminAuthErrorMessage(authError, 'start'));
+        return;
+      }
       setError(mapGeneralAuthError(authError, 'Não foi possível enviar o código agora.'));
     } finally {
       setLoading(false);
@@ -3112,6 +3087,10 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
       onClose();
       navigate('/meus-agendamentos', { replace: false });
     } catch (authError) {
+      if (flow.role === 'admin') {
+        setError(getAdminAuthErrorMessage(authError, 'confirm'));
+        return;
+      }
       setError(mapGeneralAuthError(authError, 'Não foi possível confirmar o código.'));
     } finally {
       setLoading(false);
@@ -3171,16 +3150,23 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
             <strong className="wf-confirm-code-panel__label">Código de verificação</strong>
             <div className="wf-confirm-code-panel__content">
               <div className="wf-confirm-code-fields">
-                {[0, 1, 2].map((index) => (
+                {Array.from({ length: OTP_CODE_LENGTH }, (_, index) => (
                   <input
                     key={index}
-                    value={code[index] ?? ''}
-                    onChange={(event) => setCodeDigit(index, event.target.value)}
+                    ref={(element) => {
+                      codeInputRefs.current[index] = element;
+                    }}
+                    value={codeDigits[index] ?? ''}
+                    onChange={(event) => handleCodeChange(index, event.target.value)}
+                    onKeyDown={(event) => handleCodeKeyDown(index, event)}
+                    onPaste={(event) => handleCodePaste(index, event)}
+                    onFocus={(event) => event.currentTarget.select()}
                     inputMode="numeric"
                     autoComplete={index === 0 ? 'one-time-code' : 'off'}
                     maxLength={1}
                     placeholder="—"
                     disabled={!flow}
+                    aria-label={`Digito ${index + 1} do codigo`}
                   />
                 ))}
               </div>

@@ -1,0 +1,43 @@
+/*
+ * Global CSS cascade entrypoint.
+ *
+ * Keep src/app/styles.css as a single import and maintain the effective order here.
+ * This is the first safe step toward reducing legacy overrides without changing the
+ * landing/footer visuals in this pass.
+ */
+
+/* 1. Foundation */
+@import "./globals.css";
+@import "./site-preparation.css";
+
+/* 2. Core page baselines */
+@import "./landing.css";
+@import "./admin.css";
+@import "./modals.css";
+@import "./charts.css";
+@import "./navbar.css";
+
+/* 3. Responsive baselines */
+@import "./landing-responsive.css";
+@import "./admin-responsive.css";
+@import "./modals-responsive.css";
+@import "./charts-responsive.css";
+@import "./navbar-responsive.css";
+@import "./responsive-foundation.css";
+
+/* 4. Current wireframe locks and legacy overrides.
+ * These remain imported in the same effective order to avoid visual regression.
+ * Do not add new files to this group; consolidate future fixes into page-specific CSS.
+ */
+@import "./landing-client-wireframe-final.css";
+@import "./appointments-wireframe-overrides.css";
+@import "./client-landing-mobile-order-fix.css";
+@import "./client-landing-wireframe-lock.css";
+@import "./client-footer-social.css";
+@import "./landing-visual-regression-fixes.css";
+@import "./client-navbar-unified.css";
+
+/* 5. Admin navigation tail. */
+@import "./admin-week-agenda.css";
+@import "./admin-navbar.css";
+@import "./admin-navbar-stable.css";

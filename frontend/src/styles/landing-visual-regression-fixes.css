@@ -813,3 +813,20 @@ html body footer.cm-footer .cm-footer__row-text small {
     width: clamp(230px, 56vw, 360px) !important;
   }
 }
+
+
+/* Client landing contact card: enlarge only the Fale conosco illustration without changing the card grid. */
+.wf-client-landing .wf-actions-grid--client .wf-action-card--purple .wf-action-card__icon {
+  overflow: visible;
+}
+
+.wf-client-landing .wf-actions-grid--client .wf-action-card--purple .wf-icon--chat-bubbles {
+  transform: scale(1.3);
+  transform-origin: center;
+}
+
+@media (max-width: 360px) {
+  .wf-client-landing .wf-actions-grid--client .wf-action-card--purple .wf-icon--chat-bubbles {
+    transform: scale(1.18);
+  }
+}

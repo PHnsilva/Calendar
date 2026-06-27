@@ -16,6 +16,10 @@ describe('otp helpers', () => {
       digits: ['1', '2', '3'],
       focusIndex: 2,
     });
+    expect(applyOtpInput(['', '', ''], 0, 'Codigo: 1-2 3')).toEqual({
+      digits: ['1', '2', '3'],
+      focusIndex: 2,
+    });
   });
 
   it('clears current or previous digit on backspace', () => {

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import BaseNavbar, { NavbarButton, NavbarIcon, type NavbarIconName } from './BaseNavbar';
+import BaseNavbar, { NavbarIcon, type NavbarIconName } from './BaseNavbar';
 import NavbarMenu from '../../shared/ui/NavbarMenu';
 
 export type AdminNavView = 'agenda' | 'agendamentos' | 'bloqueios' | 'historico' | 'extrato';
@@ -31,6 +31,10 @@ type ProfileMenuItem = {
   onClick?: () => void;
   danger?: boolean;
 };
+
+function cx(...classes: Array<string | false | null | undefined>): string {
+  return classes.filter(Boolean).join(' ');
+}
 
 const adminTabs: AdminTab[] = [
   { key: 'agendamentos', label: 'Agenda', icon: 'calendar' },
@@ -69,23 +73,25 @@ function AdminProfileMenu({
   return (
     <NavbarMenu
       ariaLabel="Opções do administrador"
+      className="cm-admin-profile-menu-wrap"
+      menuClassName="cm-admin-profile-menu"
       trigger={({ toggle }) => (
-        <NavbarButton
-          compact={compact}
+        <button
+          type="button"
           onClick={toggle}
-          ariaLabel="Abrir opções do administrador"
+          aria-label="Abrir opções do administrador"
           title="Abrir opções do administrador"
-          className="wf-admin-profile-trigger"
+          className={cx('cm-admin-profile-trigger', compact && 'cm-admin-profile-trigger--compact')}
         >
           {labelContent ?? <><NavbarIcon name="user" /> <span>{firstName}</span> <NavbarIcon name="chevron" /></>}
-        </NavbarButton>
+        </button>
       )}
     >
       {({ close }) => menuItems.map((item) => (
         <button
           key={item.label}
           type="button"
-          className={['wf-profile-menu-item', item.danger ? 'is-danger' : ''].filter(Boolean).join(' ')}
+          className={cx('cm-admin-profile-menu-item', 'wf-profile-menu-item', item.danger && 'is-danger')}
           data-menu-action={item.action}
           aria-label={item.label}
           title={item.label}
@@ -115,14 +121,16 @@ export default function AdminNavbar({
   onView,
   owner = false,
 }: AdminNavbarProps) {
-  const visibleTabs = owner ? adminTabs : adminTabs;
+  const visibleTabs = adminTabs.filter((tab) => owner || !tab.ownerOnly);
   const firstName = getAdminFirstName(adminName);
   const openEmail = onEmailClick ?? (() => undefined);
   const logout = onMobileAdminClick ?? onAdminClick;
 
   const desktopActions = (
     <>
-      <NavbarButton variant="orange" onClick={onCreate}><NavbarIcon name="plus" /> <span>Novo agendamento</span></NavbarButton>
+      <button type="button" className="cm-admin-create-button" onClick={onCreate}>
+        <NavbarIcon name="plus" /> <span>Novo agendamento</span>
+      </button>
       <AdminProfileMenu
         firstName={firstName}
         onBudgetClick={onBudgetClick}
@@ -134,10 +142,11 @@ export default function AdminNavbar({
 
   const mobileActions = (
     <>
-      <NavbarButton variant="ghost" compact onClick={onMobileMenu} ariaLabel="Abrir menu administrativo" title="Menu">
+      <button type="button" className="cm-admin-menu-button" onClick={onMobileMenu} aria-label="Abrir menu administrativo" title="Menu">
         <NavbarIcon name="menu" />
-      </NavbarButton>
+      </button>
       <AdminProfileMenu
+        compact
         firstName={firstName}
         labelContent={<><NavbarIcon name="user" /> <span>{firstName}</span></>}
         onBudgetClick={onBudgetClick}

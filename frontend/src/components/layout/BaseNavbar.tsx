@@ -187,18 +187,20 @@ export default function BaseNavbar({
 }: BaseNavbarProps) {
   if (profile === 'admin') {
     return (
-      <header className={cx('wf-admin-navbar-shell', 'wf-header', 'wf-navbar', 'wf-navbar--admin', 'wf-header--admin', Boolean(children) && 'wf-navbar--has-nav', className)}>
-        <div className="wf-admin-navbar-shell__top">
-          <Link to={logoTo} className="wf-admin-navbar-brand wf-logo wf-navbar__logo">
-            <span className="wf-admin-brand" aria-label={logoLabel}>
-              <span className="wf-admin-brand__mark"><img src={adminLogoMark} alt="" aria-hidden="true" /></span>
-              <span className="wf-admin-brand__wordmark"><img src={adminLogoWordmark} alt={logoLabel} /></span>
+      <header className={cx('cm-admin-navbar', className)} data-admin-navbar>
+        <div className="cm-admin-navbar__top">
+          <Link to={logoTo} className="cm-admin-navbar__brand" aria-label={logoLabel}>
+            <span className="cm-admin-navbar__mark" aria-hidden="true">
+              <img src={adminLogoMark} alt="" />
+            </span>
+            <span className="cm-admin-navbar__wordmark">
+              <img src={adminLogoWordmark} alt={logoLabel} />
             </span>
           </Link>
-          {actions ? <nav className="wf-admin-navbar-shell__actions wf-header-actions wf-navbar__actions" aria-label="Ações principais">{actions}</nav> : null}
-          {mobileActions ? <nav className="wf-admin-navbar-shell__mobile-actions wf-mobile-actions wf-navbar__mobile-actions" aria-label="Ações rápidas">{mobileActions}</nav> : null}
+          {actions ? <nav className="cm-admin-navbar__actions" aria-label="Ações principais">{actions}</nav> : null}
+          {mobileActions ? <nav className="cm-admin-navbar__mobile-actions" aria-label="Ações rápidas">{mobileActions}</nav> : null}
         </div>
-        {children ? <nav className="wf-admin-navbar-shell__tabs wf-navbar__nav" aria-label="Navegação principal">{children}</nav> : null}
+        {children ? <nav className="cm-admin-navbar__tabs" aria-label="Navegação administrativa">{children}</nav> : null}
       </header>
     );
   }

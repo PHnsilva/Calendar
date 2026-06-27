@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type MouseEvent, type ReactNode } from "react";
 
 type FooterIconName = string;
 
@@ -51,6 +51,7 @@ export function ClientFooter({
 }: ClientFooterProps) {
   const [redirectTarget, setRedirectTarget] = useState<FooterRedirectTarget | null>(null);
   const [emailCopied, setEmailCopied] = useState(false);
+  const [phoneCopied, setPhoneCopied] = useState(false);
 
   const closeRedirectModal = () => {
     setRedirectTarget(null);
@@ -89,13 +90,13 @@ export function ClientFooter({
     icon: "footer-whatsapp-social",
   });
 
-  const copyEmailToClipboard = async () => {
+  const copyTextToClipboard = async (value: string, fallbackMessage: string, onCopied: () => void) => {
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(supportEmail);
+        await navigator.clipboard.writeText(value);
       } else {
         const input = document.createElement("input");
-        input.value = supportEmail;
+        input.value = value;
         input.setAttribute("readonly", "true");
         input.style.position = "fixed";
         input.style.left = "-9999px";
@@ -104,11 +105,24 @@ export function ClientFooter({
         document.execCommand("copy");
         document.body.removeChild(input);
       }
+      onCopied();
+    } catch {
+      window.alert(fallbackMessage);
+    }
+  };
+
+  const copyEmailToClipboard = async () => {
+    await copyTextToClipboard(supportEmail, `Copie o e-mail: ${supportEmail}`, () => {
       setEmailCopied(true);
       window.setTimeout(() => setEmailCopied(false), 1600);
-    } catch {
-      window.alert(`Copie o e-mail: ${supportEmail}`);
-    }
+    });
+  };
+
+  const copyPhoneToClipboard = async () => {
+    await copyTextToClipboard(supportPhoneDisplay, `Copie o telefone: ${supportPhoneDisplay}`, () => {
+      setPhoneCopied(true);
+      window.setTimeout(() => setPhoneCopied(false), 1600);
+    });
   };
 
   const requestEmailRedirect = () => requestRedirect({
@@ -127,6 +141,13 @@ export function ClientFooter({
       return;
     }
     void copyEmailToClipboard();
+  };
+
+  const handlePhoneAction = (event: MouseEvent<HTMLAnchorElement>) => {
+    const isMobileFooter = window.matchMedia?.("(max-width: 900px)").matches;
+    if (isMobileFooter) return;
+    event.preventDefault();
+    void copyPhoneToClipboard();
   };
 
   const telHref = phoneHref(supportPhoneDisplay);
@@ -156,9 +177,15 @@ export function ClientFooter({
 
           <section className="cm-footer__contact" aria-label="Fale conosco">
             <h2>Fale conosco</h2>
-            <a className="cm-footer__contact-row cm-footer__contact-row--phone" href={telHref} aria-label={`Ligar para ${supportPhoneDisplay}`}>
+            <a
+              className="cm-footer__contact-row cm-footer__contact-row--phone"
+              href={telHref}
+              onClick={handlePhoneAction}
+              aria-label="Ligar no celular ou copiar telefone no desktop"
+              title={supportPhoneDisplay}
+            >
               <span className="cm-footer__row-icon cm-footer__row-icon--phone">{renderIcon("footer-phone-wireframe")}</span>
-              <span className="cm-footer__row-text">{supportPhoneDisplay}</span>
+              <span className="cm-footer__row-text">{phoneCopied ? "Telefone copiado" : supportPhoneDisplay}</span>
             </a>
             <button
               type="button"

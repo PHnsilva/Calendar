@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import '../../../app/booking-modal-day-picker.css';
+import '../../../styles/components/booking-modal-day-picker.css';
 import { useAvailableSlots } from '../../calendar/hooks/useAvailableSlots';
 import { useAvailableMonthDates } from '../../calendar/hooks/useAvailableMonthDates';
 import type { CalendarEvent } from '../../calendar/types';

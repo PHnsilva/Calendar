@@ -1,4 +1,7 @@
 import { useState, type MouseEvent, type ReactNode } from "react";
+import footerEmailContactIcon from "../../assets/wireframes/icons/footer-email-wireframe.png";
+import footerLocationContactIcon from "../../assets/footer/contact-location-red.svg";
+import footerPhoneContactIcon from "../../assets/footer/contact-phone-chat-green.svg";
 
 type FooterIconName = string;
 
@@ -34,6 +37,24 @@ function phoneHref(phone: string) {
   if (!digits) return undefined;
   const normalized = digits.startsWith("55") ? digits : `55${digits}`;
   return `tel:+${normalized}`;
+}
+
+function FooterContactAsset({ kind }: { kind: "phone" | "email" | "location" }) {
+  const iconSrc = {
+    phone: footerPhoneContactIcon,
+    email: footerEmailContactIcon,
+    location: footerLocationContactIcon,
+  }[kind];
+
+  return (
+    <img
+      className={`cm-footer__contact-asset cm-footer__contact-asset--${kind}`}
+      src={iconSrc}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+    />
+  );
 }
 
 export function ClientFooter({
@@ -184,7 +205,7 @@ export function ClientFooter({
               aria-label="Ligar no celular ou copiar telefone no desktop"
               title={supportPhoneDisplay}
             >
-              <span className="cm-footer__row-icon cm-footer__row-icon--phone">{renderIcon("footer-phone-wireframe")}</span>
+              <span className="cm-footer__row-icon cm-footer__row-icon--phone"><FooterContactAsset kind="phone" /></span>
               <span className="cm-footer__row-text">{phoneCopied ? "Telefone copiado" : supportPhoneDisplay}</span>
             </a>
             <button
@@ -194,11 +215,11 @@ export function ClientFooter({
               aria-label="Copiar e-mail no desktop ou abrir e-mail no celular"
               title={supportEmail}
             >
-              <span className="cm-footer__row-icon cm-footer__row-icon--email">{renderIcon("footer-email-social")}</span>
+              <span className="cm-footer__row-icon cm-footer__row-icon--email"><FooterContactAsset kind="email" /></span>
               <span className="cm-footer__row-text">{emailCopied ? "E-mail copiado" : supportEmail}</span>
             </button>
             <div className="cm-footer__contact-row cm-footer__contact-row--location">
-              <span className="cm-footer__row-icon cm-footer__row-icon--location">{renderIcon("footer-map-wireframe")}</span>
+              <span className="cm-footer__row-icon cm-footer__row-icon--location"><FooterContactAsset kind="location" /></span>
               <span className="cm-footer__row-text cm-footer__row-text--stacked"><b>Atendemos em:</b><small>{serviceCitiesLabel}</small></span>
             </div>
           </section>

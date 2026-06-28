@@ -310,7 +310,7 @@
 @media (max-width: 1280px) {
   .wf-header { width: min(var(--wf-page-max), calc(100vw - 42px)); }
 
-  .wf-landing-main { width: min(var(--wf-page-max), calc(100vw - 42px)); }
+  
 
   .wf-hero h1 { font-size: clamp(42px, 5vw, 64px); }
 
@@ -328,7 +328,7 @@
 
   .wf-top-btn--compact { width: 76px; min-width: 76px; height: 76px; }
 
-  .wf-landing-main { width: calc(100vw - 52px); }
+  
 
   .wf-hero-copy { display: contents; }
 
@@ -362,17 +362,17 @@
 
   .wf-actions-grid { grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 16px; }
 
-  .wf-action-card { min-height: 138px; grid-template-columns: 82px 1fr 24px; padding: 22px; }
+  
 
-  .wf-action-card strong { font-size: 20px; }
+  
 
-  .wf-action-card small { font-size: 16px; }
+  
 
-  .wf-info-row { grid-template-columns: 1fr; gap: 20px; }
+  
 
-  .wf-house-card { grid-template-columns: 1fr 1fr; min-height: 172px; padding: 18px; }
+  
 
-  .wf-house-card img { height: 150px; }
+  
 
   .wf-mini-features { grid-template-columns: repeat(4, 1fr); gap: 10px; }
 
@@ -382,9 +382,9 @@
 
   .wf-mini-features small { font-size: 13px; }
 
-  .wf-footer { grid-template-columns: 1fr; text-align: center; justify-items: center; padding: 18px 0 24px; gap: 12px; }
+  
 
-  .wf-footer .wf-logo { display: none; }
+  
 
   .wf-calendar-panel { padding: 20px; min-height: auto; }
 
@@ -449,7 +449,7 @@
 
   .wf-top-btn--compact { width: 56px; min-width: 56px; height: 56px; border-radius: 14px; font-size: 24px; }
 
-  .wf-landing-main { width: calc(100vw - 36px); }
+  
 
   .wf-hero { padding-top: 12px; }
 
@@ -479,9 +479,9 @@
 
   .wf-actions-grid { grid-template-columns: 1fr; }
 
-  .wf-action-card { min-height: 112px; }
+  
 
-  .wf-house-card { grid-template-columns: 1fr; text-align: left; }
+  
 
   .wf-mini-features { grid-template-columns: 1fr 1fr; }
 
@@ -499,7 +499,7 @@
 }
 
 @media (max-width: 900px) {
-  .wf-action-card__icon .wf-icon { width: 54px; height: 54px; }
+  
 
   .wf-empty-state { min-height: 170px; padding: 22px; }
 
@@ -507,13 +507,13 @@
 
   .wf-empty-state p { font-size: 14px; }
 
-  .wf-footer button { text-align: center; }
+  
 }
 
 @media (max-width: 680px) {
   .wf-top-btn--compact .wf-icon { width: 28px; height: 28px; }
 
-  .wf-action-card__icon .wf-icon { width: 44px; height: 44px; }
+  
 
   .wf-large-icon .wf-icon { width: 42px; height: 42px; }
 
@@ -521,13 +521,7 @@
 }
 
 @media (max-width: 720px) {
-  .wf-action-card__icon .wf-icon--calendar-create,
-    .wf-action-card__icon .wf-icon--calendar-clock,
-    .wf-action-card__icon .wf-icon--mobile-phone,
-    .wf-action-card__icon .wf-icon--chat-bubbles {
-      width: 58px;
-      height: 58px;
-    }
+  
 }
 
 @media (max-width: 1180px) {
@@ -563,9 +557,9 @@
 
   .wf-hero-burst { display: none; }
 
-  .wf-action-card { grid-template-columns: 78px 1fr 24px; }
+  
 
-  .wf-action-card__icon { width: 78px; height: 78px; }
+  
 }
 
 @media (max-width: 680px) {
@@ -583,17 +577,11 @@
 
   .wf-hero-visual--client .wf-pin--two { left: 50px; bottom: 50px; }
 
-  .wf-action-card { min-height: 114px; grid-template-columns: 68px 1fr 22px; padding: 18px; }
+  
 
-  .wf-action-card__icon { width: 68px; height: 68px; }
+  
 
-  .wf-action-card__icon .wf-icon--calendar-create,
-    .wf-action-card__icon .wf-icon--calendar-clock,
-    .wf-action-card__icon .wf-icon--mobile-phone,
-    .wf-action-card__icon .wf-icon--chat-bubbles {
-      width: 62px;
-      height: 62px;
-    }
+  
 }
 
 @media (max-width: 900px) {
@@ -639,20 +627,14 @@
       height: 23px;
     }
 
-  .wf-landing-main {
-      width: 100vw;
-      max-width: 100vw;
-      padding: 0 10px;
-      overflow: hidden;
-    }
+  
 
   .wf-hero,
-    .wf-hero-copy,
-    .wf-badge,
-    .wf-hero-buttons,
-    .wf-feature-line,
-    .wf-actions-grid,
-    .wf-info-row {
+.wf-hero-copy,
+.wf-badge,
+.wf-hero-buttons,
+.wf-feature-line,
+.wf-actions-grid{
       min-width: 0;
       max-width: 100%;
     }
@@ -695,16 +677,11 @@
       min-width: 0;
     }
 
-  .wf-action-card__icon .wf-icon--image {
-      width: 62px;
-      height: 62px;
-    }
+  
 }
 
 @media (max-width: 1280px) {
-  .wf-hero--client {
-      grid-template-columns: minmax(0, 44%) minmax(0, 56%);
-    }
+  
 
   .wf-hero-visual--client picture {
       width: min(900px, calc(100% + 54px));
@@ -717,35 +694,20 @@
 }
 
 @media (max-width: 900px) {
-  .wf-hero--client {
-      grid-template-columns: 1fr;
-      min-height: auto;
-    }
+  
 
   .wf-hero-visual--client picture {
       width: min(760px, 100%);
       margin: 0 auto;
     }
 
-  .wf-actions-grid--client {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      margin-top: 18px;
-    }
+  
 
-  .wf-action-card {
-      grid-template-columns: 78px minmax(0, 1fr) 22px;
-      min-height: 132px;
-      padding: 18px;
-    }
+  
 
-  .wf-action-card__icon {
-      width: 74px;
-      height: 74px;
-    }
+  
 
-  .wf-info-row {
-      gap: 18px;
-    }
+  
 
   .wf-mini-features {
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -802,37 +764,19 @@
       width: 100%;
     }
 
-  .wf-actions-grid--client {
-      grid-template-columns: 1fr;
-    }
+  
 
-  .wf-action-card {
-      min-height: 112px;
-      grid-template-columns: 68px minmax(0, 1fr) 18px;
-      padding: 16px;
-    }
+  
 
-  .wf-action-card__icon {
-      width: 64px;
-      height: 64px;
-    }
+  
 
-  .wf-action-card__icon .wf-icon--image {
-      width: 62px;
-      height: 62px;
-    }
+  
 
-  .wf-action-card strong {
-      font-size: 18px;
-    }
+  
 
-  .wf-action-card small {
-      font-size: 14.5px;
-    }
+  
 
-  .wf-action-card__arrow {
-      font-size: 38px;
-    }
+  
 
   .wf-why-card {
       padding: 18px 16px;
@@ -889,91 +833,29 @@
       padding: 0;
     }
 
-  .wf-hero--client {
-      position: relative;
-      display: grid;
-      grid-template-columns: minmax(0, 54%) minmax(0, 46%);
-      min-height: clamp(510px, 126vw, 660px);
-      gap: 0;
-      align-items: start;
-      padding-top: 18px;
-      overflow: clip;
-    }
+  
 
   .wf-hero-copy {
       display: contents;
     }
 
-  .wf-hero--client .wf-badge,
-    .wf-hero--client h1,
-    .wf-hero--client p,
-    .wf-hero--client .wf-hero-buttons {
-      grid-column: 1;
-      max-width: 100%;
-      position: relative;
-      z-index: 3;
-    }
+  
 
-  .wf-hero--client .wf-badge {
-      width: fit-content;
-      max-width: min(100%, 390px);
-      padding: 9px 12px;
-      font-size: clamp(12px, 2.9vw, 16px);
-      gap: 8px;
-    }
+  
 
-  .wf-hero--client h1 {
-      margin: clamp(16px, 4vw, 28px) 0 12px;
-      font-size: clamp(32px, 8.2vw, 52px);
-      line-height: 1.16;
-      letter-spacing: 0 !important;
-    }
+  
 
-  .wf-hero--client p {
-      margin-bottom: 18px;
-      font-size: clamp(15px, 4vw, 21px);
-      line-height: 1.35;
-    }
+  
 
-  .wf-hero--client .wf-hero-buttons {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      width: min(100%, 390px);
-    }
+  
 
-  .wf-hero--client .wf-primary-cta,
-    .wf-hero--client .wf-secondary-cta {
-      width: 100%;
-      min-height: clamp(52px, 13vw, 68px);
-      border-radius: 13px;
-      padding-inline: 12px;
-      font-size: clamp(15px, 4vw, 20px);
-    }
+  
 
-  .wf-hero--client .wf-feature-line {
-      grid-column: 1 / -1;
-      position: relative;
-      z-index: 4;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 20px;
-      font-size: clamp(11px, 2.8vw, 15px);
-    }
+  
 
-  .wf-hero--client .wf-feature-line span {
-      min-width: 0;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      gap: 6px;
-    }
+  
 
-  .wf-hero--client .wf-feature-line .wf-icon {
-      width: clamp(24px, 7vw, 38px);
-      height: clamp(24px, 7vw, 38px);
-    }
+  
 
   .wf-hero-visual--client {
       grid-column: 2;
@@ -998,66 +880,30 @@
       object-fit: contain;
     }
 
-  .wf-actions-grid--client {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: clamp(10px, 2.6vw, 18px);
-      margin-top: 12px;
-    }
+  
 
-  .wf-action-card {
-      min-height: clamp(118px, 27vw, 148px);
-      grid-template-columns: clamp(48px, 13vw, 74px) minmax(0, 1fr) 16px;
-      gap: 9px;
-      padding: clamp(12px, 3vw, 18px);
-      border-radius: 14px;
-    }
+  
 
-  .wf-action-card__icon,
-    .wf-action-card__icon .wf-icon--image {
-      width: clamp(48px, 13vw, 74px);
-      height: clamp(48px, 13vw, 74px);
-    }
+  
 
-  .wf-action-card strong {
-      font-size: clamp(14px, 3.7vw, 20px);
-      line-height: 1.15;
-    }
+  
 
-  .wf-action-card small {
-      font-size: clamp(12px, 3.1vw, 15px);
-      line-height: 1.35;
-    }
+  
 
-  .wf-action-card__arrow {
-      font-size: clamp(30px, 8vw, 46px);
-    }
+  
 
-  .wf-info-row {
-      grid-template-columns: 1fr;
-      gap: 14px;
-    }
+  
 
-  .wf-house-card {
-      grid-template-columns: minmax(0, 48%) minmax(0, 1fr);
-      gap: 14px;
-      padding: 12px 14px;
-      min-height: 128px;
-    }
+  
 
-  .wf-house-card img {
-      height: auto;
-      max-height: 140px;
-    }
+  
 
-  .wf-house-card h2,
-    .wf-why-card h2 {
+  .wf-why-card h2{
       font-size: clamp(18px, 5vw, 24px);
       letter-spacing: 0;
     }
 
-  .wf-house-card p {
-      font-size: clamp(13px, 3.4vw, 17px);
-    }
+  
 
   .wf-why-card {
       padding: 18px 14px;
@@ -1100,25 +946,11 @@
       line-height: 1.25;
     }
 
-  .wf-footer {
-      grid-template-columns: 1fr;
-      gap: 12px;
-      justify-items: center;
-      text-align: center;
-      padding: 16px 0 22px;
-    }
+  
 
-  .wf-footer .wf-logo {
-      display: none;
-    }
+  
 
-  .wf-footer strong {
-      width: 100%;
-      justify-content: center;
-      border: 1px solid var(--wf-line);
-      border-radius: 14px;
-      padding: 14px;
-    }
+  
 }
 
 @media (max-width: 430px) {
@@ -1137,11 +969,7 @@
       border-radius: 11px;
     }
 
-  .wf-hero--client {
-      grid-template-columns: minmax(0, 58%) minmax(0, 42%);
-      min-height: 500px;
-      padding-top: 12px;
-    }
+  
 
   .wf-hero-visual--client {
       top: 58px;
@@ -1149,56 +977,25 @@
       width: 52vw;
     }
 
-  .wf-hero--client .wf-badge {
-      max-width: 100%;
-      font-size: 11.5px;
-    }
+  
 
-  .wf-hero--client h1 {
-      margin-top: 14px;
-      font-size: clamp(29px, 8.3vw, 36px);
-      line-height: 1.14;
-    }
+  
 
-  .wf-hero--client p {
-      font-size: 14.5px;
-    }
+  
 
-  .wf-hero--client .wf-primary-cta,
-    .wf-hero--client .wf-secondary-cta {
-      min-height: 48px;
-      font-size: 14.5px;
-    }
+  
 
-  .wf-hero--client .wf-feature-line {
-      gap: 6px;
-      font-size: 10.5px;
-    }
+  
 
-  .wf-actions-grid--client {
-      gap: 9px;
-    }
+  
 
-  .wf-action-card {
-      min-height: 104px;
-      grid-template-columns: 42px minmax(0, 1fr) 12px;
-      gap: 7px;
-      padding: 11px;
-    }
+  
 
-  .wf-action-card__icon,
-    .wf-action-card__icon .wf-icon--image {
-      width: 42px;
-      height: 42px;
-    }
+  
 
-  .wf-action-card strong {
-      font-size: 13.5px;
-    }
+  
 
-  .wf-action-card small {
-      font-size: 11.5px;
-    }
+  
 }
 
 @media (max-width: 480px) {
@@ -1206,10 +1003,7 @@
       max-width: 142px;
     }
 
-  .wf-hero--client {
-      grid-template-columns: minmax(0, 57%) minmax(0, 43%);
-      min-height: 510px;
-    }
+  
 
   .wf-hero-visual--client {
       top: 60px;
@@ -1217,35 +1011,21 @@
       width: 56vw;
     }
 
-  .wf-hero--client .wf-badge {
-      font-size: 12px;
-    }
+  
 
-  .wf-hero--client h1 {
-      font-size: clamp(30px, 8.7vw, 40px);
-    }
+  
 
-  .wf-hero--client p {
-      font-size: 15.5px;
-    }
+  
 
   .wf-feature-line {
       font-size: 11px;
     }
 
-  .wf-actions-grid--client {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  
 
-  .wf-action-card {
-      grid-template-columns: 46px minmax(0, 1fr) 14px;
-    }
+  
 
-  .wf-action-card__icon,
-    .wf-action-card__icon .wf-icon--image {
-      width: 46px;
-      height: 46px;
-    }
+  
 
   .wf-mini-features span {
       padding-inline: 5px;
@@ -1259,9 +1039,7 @@
       height: 42px;
     }
 
-  .wf-hero--client {
-      min-height: 495px;
-    }
+  
 
   .wf-hero-visual--client {
       top: 62px;
@@ -1269,19 +1047,11 @@
       width: 52vw;
     }
 
-  .wf-hero--client .wf-primary-cta,
-    .wf-hero--client .wf-secondary-cta {
-      min-height: 50px;
-    }
+  
 
-  .wf-house-card {
-      grid-template-columns: 1fr;
-      text-align: center;
-    }
+  
 
-  .wf-house-card img {
-      margin-inline: auto;
-    }
+  
 
   .wf-mini-features {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1294,27 +1064,17 @@
 }
 
 @media (max-width: 360px) {
-  .wf-actions-grid--client {
-      grid-template-columns: 1fr;
-    }
+  
 
-  .wf-hero--client {
-      grid-template-columns: minmax(0, 60%) minmax(0, 40%);
-    }
+  
 
   .wf-hero-visual--client {
       opacity: .92;
     }
 
-  .wf-action-card {
-      grid-template-columns: 58px minmax(0, 1fr) 18px;
-    }
+  
 
-  .wf-action-card__icon,
-    .wf-action-card__icon .wf-icon--image {
-      width: 58px;
-      height: 58px;
-    }
+  
 }
 
 @media (max-width: 340px) {
@@ -1334,10 +1094,7 @@
       border-radius: 10px;
     }
 
-  .wf-hero--client {
-      grid-template-columns: minmax(0, 62%) minmax(0, 38%);
-      min-height: 482px;
-    }
+  
 
   .wf-hero-visual--client {
       top: 70px;
@@ -1345,43 +1102,21 @@
       width: 50vw;
     }
 
-  .wf-hero--client .wf-badge {
-      padding: 7px 8px;
-      font-size: 10.5px;
-    }
+  
 
-  .wf-hero--client h1 {
-      font-size: 28px;
-    }
+  
 
-  .wf-hero--client p {
-      font-size: 13.5px;
-    }
+  
 
-  .wf-hero--client .wf-primary-cta,
-    .wf-hero--client .wf-secondary-cta {
-      min-height: 46px;
-      font-size: 13.5px;
-      gap: 8px;
-    }
+  
 
-  .wf-hero--client .wf-feature-line {
-      grid-template-columns: 1fr;
-      text-align: left;
-    }
+  
 
-  .wf-hero--client .wf-feature-line span {
-      justify-content: flex-start;
-      text-align: left;
-    }
+  
 
-  .wf-action-card {
-      min-height: 96px;
-      padding: 10px;
-    }
+  
 
-  .wf-house-card,
-    .wf-why-card {
+  .wf-why-card{
       padding: 12px;
     }
 
@@ -1426,9 +1161,7 @@
       height: 21px;
     }
 
-  .wf-hero--client {
-      min-height: 470px;
-    }
+  
 
   .wf-hero-visual--client {
       top: 76px;
@@ -1436,31 +1169,17 @@
       width: 48vw;
     }
 
-  .wf-hero--client h1 {
-      font-size: 27px;
-    }
+  
 
-  .wf-hero--client p {
-      font-size: 13px;
-    }
+  
 
-  .wf-actions-grid--client {
-      gap: 8px;
-    }
+  
 
-  .wf-action-card {
-      grid-template-columns: 50px minmax(0, 1fr) 16px;
-    }
+  
 
-  .wf-action-card__icon,
-    .wf-action-card__icon .wf-icon--image {
-      width: 50px;
-      height: 50px;
-    }
+  
 
-  .wf-footer {
-      font-size: 12px;
-    }
+  
 }
 
 @media (min-width: 800px) {
@@ -1506,71 +1225,34 @@
       min-width: 0;
     }
 
-  .wf-landing-main {
-      width: min(var(--wf-page-max), calc(100vw - 36px));
-    }
+  
 
-  .wf-hero--client {
-      grid-template-columns: minmax(0, 46%) minmax(0, 54%);
-      min-height: clamp(500px, 58vw, 620px);
-      gap: 14px;
-      align-items: start;
-      overflow: visible;
-    }
+  
 
   .wf-hero-copy {
       display: block;
     }
 
-  .wf-hero--client h1 {
-      max-width: 100%;
-      font-size: clamp(38px, 5.4vw, 54px);
-      line-height: 1.04;
-    }
+  
 
-  .wf-hero--client p {
-      max-width: 100%;
-      font-size: clamp(17px, 2.2vw, 20px);
-    }
+  
 
-  .wf-hero--client .wf-hero-buttons {
-      display: flex;
-      width: 100%;
-      max-width: 100%;
-      grid-template-columns: unset;
-    }
+  
 
-  .wf-hero--client .wf-primary-cta,
-    .wf-hero--client .wf-secondary-cta {
-      min-height: 56px;
-      font-size: 16px;
-      padding-inline: 16px;
-    }
+  
 
   .wf-hero-visual--client picture {
       width: min(660px, calc(100% + 42px));
       margin-right: -10px;
     }
 
-  .wf-actions-grid--client {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  
 
-  .wf-action-card {
-      grid-template-columns: 72px minmax(0, 1fr) 20px;
-      min-height: 126px;
-      padding: 16px;
-    }
+  
 
-  .wf-action-card__icon,
-    .wf-action-card__icon .wf-icon--image {
-      width: 68px;
-      height: 68px;
-    }
+  
 
-  .wf-info-row {
-      grid-template-columns: 1fr;
-    }
+  
 
   .wf-mini-features {
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1578,2403 +1260,834 @@
 }
 
 @media (min-width: 800px) and (max-width: 1023px) and (max-height: 520px) {
-  .wf-hero--client {
-      min-height: 420px;
-      padding-top: 8px;
-    }
+  
 
-  .wf-hero--client h1 {
-      margin-block: 12px 10px;
-      font-size: clamp(34px, 4.8vw, 44px);
-    }
+  
 
-  .wf-hero--client p {
-      font-size: 16px;
-      margin-bottom: 12px;
-    }
+  
 
-  .wf-hero--client .wf-feature-line {
-      margin-block: 14px;
-    }
+  
 }
 
 @media (max-width: 799px) {
-  .wf-client-landing {
-      overflow-x: clip;
-    }
+  
 
-  .wf-client-landing .wf-header--public {
-      height: clamp(82px, 13.4vw, 108px);
-      padding: clamp(10px, 2.8vw, 24px) clamp(12px, 3vw, 26px) 6px;
-      align-items: flex-start;
-      gap: clamp(8px, 2vw, 18px);
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo img {
-      height: clamp(56px, 11.2vw, 94px);
-      max-width: clamp(145px, 34vw, 260px);
-      object-position: left center;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-mobile-actions {
-      align-items: flex-start;
-      gap: clamp(8px, 2vw, 16px);
-      padding-top: 4px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn--compact {
-      width: clamp(46px, 10.6vw, 72px);
-      min-width: clamp(46px, 10.6vw, 72px);
-      height: clamp(46px, 10.6vw, 72px);
-      border-radius: clamp(12px, 2.4vw, 18px);
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn--compact .wf-icon {
-      width: 54%;
-      height: 54%;
-    }
+  
 
-  .wf-client-landing .wf-landing-main {
-      width: 100%;
-      max-width: 100vw;
-      padding-inline: clamp(14px, 3vw, 26px);
-      overflow: clip;
-    }
+  
 
-  .wf-client-landing .wf-hero--client {
-      position: relative;
-      display: grid;
-      grid-template-columns: minmax(0, 54%) minmax(0, 46%);
-      min-height: clamp(540px, 116vw, 730px);
-      padding-top: clamp(18px, 3.7vw, 34px);
-      padding-bottom: 0;
-      gap: 0;
-      align-items: start;
-      overflow: visible;
-    }
+  
 
-  .wf-client-landing .wf-hero-copy {
-      display: contents;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge,
-    .wf-client-landing .wf-hero--client h1,
-    .wf-client-landing .wf-hero--client p,
-    .wf-client-landing .wf-hero--client .wf-hero-buttons {
-      grid-column: 1;
-      max-width: 100%;
-      min-width: 0;
-      position: relative;
-      z-index: 3;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge {
-      width: fit-content;
-      max-width: min(100%, 390px);
-      padding: clamp(7px, 1.8vw, 10px) clamp(9px, 2.2vw, 14px);
-      gap: 8px;
-      justify-content: flex-start;
-      text-align: left;
-      font-size: clamp(11.5px, 2.85vw, 18px);
-      line-height: 1.2;
-      white-space: normal;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge .wf-icon {
-      width: clamp(16px, 4vw, 24px);
-      height: clamp(16px, 4vw, 24px);
-    }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-      margin: clamp(18px, 4vw, 30px) 0 clamp(12px, 2.6vw, 18px);
-      font-size: clamp(30px, 8.6vw, 56px);
-      line-height: 1.13;
-      font-weight: 950;
-      overflow-wrap: normal;
-    }
+  
 
-  .wf-client-landing .wf-hero--client p {
-      margin: 0 0 clamp(18px, 4vw, 28px);
-      font-size: clamp(14px, 3.65vw, 22px);
-      line-height: 1.35;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-hero-buttons {
-      width: min(100%, 390px);
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: clamp(10px, 2.5vw, 16px);
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-primary-cta,
-    .wf-client-landing .wf-hero--client .wf-secondary-cta {
-      width: 100%;
-      min-height: clamp(50px, 11.2vw, 72px);
-      border-radius: clamp(11px, 2.2vw, 16px);
-      padding-inline: clamp(12px, 3vw, 24px);
-      gap: clamp(8px, 2vw, 12px);
-      font-size: clamp(14px, 3.65vw, 21px);
-      line-height: 1.1;
-      white-space: normal;
-    }
+  
 
-  .wf-client-landing .wf-play {
-      width: clamp(30px, 7vw, 42px);
-      height: clamp(30px, 7vw, 42px);
-      flex: 0 0 auto;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-      grid-column: 2;
-      grid-row: 1 / span 5;
-      position: absolute;
-      top: clamp(28px, 8vw, 78px);
-      right: clamp(-28px, -3.4vw, -10px);
-      width: clamp(178px, 52vw, 462px);
-      min-height: 0;
-      z-index: 2;
-      pointer-events: none;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-      width: 100%;
-      margin: 0;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client img {
-      width: 100% !important;
-      height: auto !important;
-      max-width: none;
-      object-fit: contain;
-      object-position: center top;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-      grid-column: 1 / -1;
-      position: relative;
-      z-index: 4;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: clamp(8px, 2.2vw, 22px);
-      margin: clamp(22px, 5vw, 34px) 0 0;
-      color: var(--wf-ink);
-      font-size: clamp(11px, 2.7vw, 17px);
-      font-weight: 850;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line span {
-      min-width: 0;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      gap: clamp(6px, 1.8vw, 12px);
-      text-align: left;
-      overflow-wrap: anywhere;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-      width: clamp(26px, 7.5vw, 44px);
-      height: clamp(26px, 7.5vw, 44px);
-      flex: 0 0 auto;
-    }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: clamp(8px, 2.4vw, 18px);
-      margin-top: clamp(14px, 3.5vw, 24px);
-    }
+  
 
-  .wf-client-landing .wf-action-card {
-      min-height: clamp(108px, 26vw, 152px);
-      grid-template-columns: clamp(42px, 12.2vw, 82px) minmax(0, 1fr) clamp(12px, 3.2vw, 22px);
-      gap: clamp(7px, 2vw, 16px);
-      padding: clamp(10px, 2.8vw, 20px);
-      border-radius: clamp(13px, 2.4vw, 16px);
-      align-items: center;
-    }
+  
 
-  .wf-client-landing .wf-action-card__icon,
-    .wf-client-landing .wf-action-card__icon .wf-icon--image {
-      width: clamp(42px, 12.2vw, 82px);
-      height: clamp(42px, 12.2vw, 82px);
-    }
+  
 
-  .wf-client-landing .wf-action-card__body {
-      min-width: 0;
-    }
+  
 
-  .wf-client-landing .wf-action-card strong {
-      margin-bottom: clamp(5px, 1.3vw, 10px);
-      font-size: clamp(12.5px, 3.25vw, 20px);
-      line-height: 1.12;
-      overflow-wrap: anywhere;
-    }
+  
 
-  .wf-client-landing .wf-action-card small {
-      font-size: clamp(10.5px, 2.85vw, 15.5px);
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-    }
+  
 
-  .wf-client-landing .wf-action-card__arrow {
-      font-size: clamp(28px, 7vw, 50px);
-      justify-self: end;
-    }
+  
 
-  .wf-client-landing .wf-info-row {
-      grid-template-columns: 1fr;
-      gap: clamp(18px, 4vw, 28px);
-      margin-top: clamp(18px, 4vw, 28px);
-    }
+  
 
-  .wf-client-landing .wf-house-card {
-      grid-template-columns: minmax(0, 48%) minmax(0, 1fr);
-      gap: clamp(10px, 2.8vw, 24px);
-      min-height: clamp(118px, 28vw, 174px);
-      padding: clamp(10px, 2.8vw, 18px);
-      text-align: left;
-    }
+  
 
-  .wf-client-landing .wf-house-card img {
-      width: 100%;
-      height: auto;
-      max-height: clamp(96px, 22vw, 150px);
-      object-fit: contain;
-    }
+  
 
-  .wf-client-landing .wf-house-card h2 {
-      margin-bottom: clamp(6px, 1.6vw, 12px);
-      font-size: clamp(17px, 4.2vw, 25px);
-      line-height: 1.18;
-    }
+  
 
-  .wf-client-landing .wf-house-card p {
-      font-size: clamp(12px, 3.2vw, 17px);
-      line-height: 1.42;
-    }
+  
 
-  .wf-client-landing .wf-why-card {
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
-    }
+  
 
-  .wf-client-landing .wf-why-card h2 {
-      margin: 0 0 clamp(14px, 3vw, 20px);
-      font-size: clamp(21px, 5vw, 28px);
-      line-height: 1.12;
-      font-weight: 950;
-    }
+  
 
-  .wf-client-landing .wf-mini-features {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0;
-    }
+  
 
-  .wf-client-landing .wf-mini-features span {
-      min-width: 0;
-      min-height: clamp(96px, 22vw, 124px);
-      display: grid;
-      grid-template-columns: 1fr;
-      justify-items: center;
-      align-content: start;
-      gap: clamp(4px, 1.2vw, 8px);
-      padding: 0 clamp(4px, 1.4vw, 14px);
-      border-right: 1px solid #d7dff0;
-      text-align: center;
-    }
+  
 
-  .wf-client-landing .wf-mini-features span:last-child {
-      border-right: 0;
-    }
+  
 
-  .wf-client-landing .wf-mini-features .wf-icon--image {
-      width: clamp(34px, 8.5vw, 56px);
-      height: clamp(34px, 8.5vw, 56px);
-      grid-row: auto;
-    }
+  
 
-  .wf-client-landing .wf-mini-features strong {
-      align-self: start;
-      font-size: clamp(10.5px, 2.65vw, 14.5px);
-      line-height: 1.16;
-      overflow-wrap: anywhere;
-    }
+  
 
-  .wf-client-landing .wf-mini-features small {
-      margin-top: 0;
-      font-size: clamp(9.8px, 2.4vw, 13px);
-      line-height: 1.3;
-      overflow-wrap: anywhere;
-    }
+  
 
-  .wf-client-landing .wf-footer {
-      margin-top: clamp(18px, 4vw, 28px);
-      display: grid;
-      grid-template-columns: repeat(3, auto);
-      justify-content: center;
-      align-items: center;
-      gap: clamp(10px, 2.8vw, 28px);
-      padding: 0 0 calc(18px + env(safe-area-inset-bottom));
-      border: 0;
-      text-align: center;
-    }
+  
 
-  .wf-client-landing .wf-footer .wf-logo {
-      display: none;
-    }
+  
 
-  .wf-client-landing .wf-footer strong {
-      order: 1;
-      grid-column: 1 / -1;
-      width: 100%;
-      display: grid;
-      grid-template-columns: clamp(38px, 9vw, 56px) minmax(0, 1fr);
-      gap: clamp(10px, 2.5vw, 18px);
-      align-items: center;
-      justify-content: stretch;
-      border: 1px solid var(--wf-line);
-      border-bottom: 0;
-      border-radius: 14px 14px 0 0;
-      padding: clamp(12px, 3vw, 18px) clamp(12px, 3vw, 20px) 8px;
-      color: var(--wf-navy);
-      text-align: left;
-      font-size: clamp(14px, 3.6vw, 20px);
-      line-height: 1.2;
-    }
+  
 
-  .wf-client-landing .wf-footer strong .wf-icon--footer-security {
-      width: clamp(38px, 9vw, 56px);
-      height: clamp(38px, 9vw, 56px);
-    }
+  
 
-  .wf-client-landing .wf-footer p {
-      order: 2;
-      grid-column: 1 / -1;
-      width: 100%;
-      margin: -12px 0 0;
-      border: 1px solid var(--wf-line);
-      border-top: 0;
-      border-radius: 0 0 14px 14px;
-      padding: 0 clamp(12px, 3vw, 20px) clamp(12px, 3vw, 18px) clamp(60px, 14vw, 88px);
-      color: var(--wf-ink);
-      text-align: left;
-      font-size: clamp(12px, 3vw, 16px);
-      line-height: 1.35;
-    }
+  
 
-  .wf-client-landing .wf-footer button {
-      order: 3;
-      min-width: 0;
-      color: var(--wf-blue);
-      font-size: clamp(12.5px, 3.2vw, 16px);
-      line-height: 1.2;
-      text-align: center;
-      overflow-wrap: anywhere;
-    }
+  
 
-  .wf-client-landing .wf-footer button + button {
-      border-left: 1px solid var(--wf-line);
-      padding-left: clamp(10px, 2.8vw, 28px);
-    }
+  
 }
 
 @media (max-width: 430px) {
-  .wf-client-landing .wf-header--public {
-      padding-inline: 10px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo img {
-      max-width: 138px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-mobile-actions {
-      gap: 7px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn--compact {
-      width: 42px;
-      min-width: 42px;
-      height: 42px;
-      border-radius: 11px;
-    }
+  
 
-  .wf-client-landing .wf-landing-main {
-      padding-inline: 10px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client {
-      grid-template-columns: minmax(0, 57%) minmax(0, 43%);
-      min-height: 520px;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-      top: 58px;
-      right: -12px;
-      width: 51vw;
-    }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-      font-size: clamp(29px, 8.4vw, 36px);
-    }
+  
 }
 
 @media (max-width: 390px) {
-  .wf-client-landing .wf-hero--client {
-      min-height: 504px;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-      top: 60px;
-      right: -8px;
-      width: 50vw;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-      gap: 6px;
-    }
+  
 }
 
 @media (max-width: 360px) {
-  .wf-client-landing .wf-actions-grid--client {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  
 
-  .wf-client-landing .wf-hero--client {
-      grid-template-columns: minmax(0, 60%) minmax(0, 40%);
-      min-height: 494px;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-      width: 48vw;
-    }
+  
 
-  .wf-client-landing .wf-action-card {
-      grid-template-columns: 40px minmax(0, 1fr) 12px;
-      padding: 10px 8px;
-    }
+  
 
-  .wf-client-landing .wf-action-card__icon,
-    .wf-client-landing .wf-action-card__icon .wf-icon--image {
-      width: 40px;
-      height: 40px;
-    }
+  
 }
 
 @media (max-width: 340px) {
-  .wf-client-landing .wf-header--public {
-      height: 74px;
-      padding-inline: 8px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo img {
-      height: 48px;
-      max-width: 126px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-mobile-actions {
-      gap: 4px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn--compact {
-      width: 38px;
-      min-width: 38px;
-      height: 38px;
-      border-radius: 10px;
-    }
+  
 
-  .wf-client-landing .wf-landing-main {
-      padding-inline: 8px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client {
-      min-height: 482px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge {
-      padding: 7px 8px;
-      font-size: 10.5px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-      font-size: 27.5px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client p {
-      font-size: 13px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-primary-cta,
-    .wf-client-landing .wf-hero--client .wf-secondary-cta {
-      min-height: 46px;
-      font-size: 13px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-      font-size: 10px;
-    }
+  
 
-  .wf-client-landing .wf-house-card {
-      padding: 10px;
-    }
+  
 
-  .wf-client-landing .wf-mini-features {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
+  
 
-  .wf-client-landing .wf-mini-features span {
-      min-height: 98px;
-      padding-inline: 3px;
-      border-right: 1px solid var(--wf-line);
-      border-bottom: 0;
-    }
+  
 
-  .wf-client-landing .wf-mini-features span:last-child {
-      border-right: 0;
-    }
+  
 }
 
 @media (max-width: 320px) {
-  .wf-client-landing .wf-header--public .wf-logo img {
-      max-width: 118px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn--compact {
-      width: 36px;
-      min-width: 36px;
-      height: 36px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client {
-      min-height: 472px;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-      top: 66px;
-      right: -6px;
-      width: 47vw;
-    }
+  
 
-  .wf-client-landing .wf-footer {
-      gap: 8px;
-    }
+  
 
-  .wf-client-landing .wf-footer button + button {
-      padding-left: 8px;
-    }
+  
 }
 
 @media (max-width: 799px) and (orientation: landscape) {
-  .wf-client-landing .wf-header--public {
-      height: 72px;
-      padding-block: 8px 4px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo img {
-      height: 52px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn--compact {
-      width: 44px;
-      min-width: 44px;
-      height: 44px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client {
-      min-height: 430px;
-      padding-top: 10px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-      margin-block: 12px 8px;
-      font-size: clamp(30px, 6vw, 42px);
-    }
+  
 
-  .wf-client-landing .wf-hero--client p {
-      margin-bottom: 12px;
-      font-size: clamp(13px, 2.8vw, 17px);
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-primary-cta,
-    .wf-client-landing .wf-hero--client .wf-secondary-cta {
-      min-height: 46px;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-      top: 20px;
-      width: min(45vw, 360px);
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-      margin-top: 16px;
-    }
+  
 }
 
 @media (min-width: 800px) and (max-width: 1023px) and (max-height: 520px) {
-  .wf-client-landing .wf-hero--client {
-      min-height: 420px;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-      width: min(500px, 100%);
-    }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-      margin-top: 12px;
-    }
+  
 }
 
 @media (max-width: 799px) {
-  .wf-client-landing .wf-header--public {
-      width: 100%;
-      max-width: 100vw;
-      min-height: 84px;
-      height: auto;
-      padding: 12px clamp(10px, 3vw, 26px) 4px;
-      align-items: flex-start;
-      overflow: visible;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo {
-      min-width: 0;
-      flex: 0 1 auto;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo img {
-      height: clamp(58px, 11vw, 94px);
-      max-width: clamp(145px, 34vw, 260px);
-      object-fit: contain;
-      object-position: left top;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-mobile-actions {
-      flex: 0 0 auto;
-      gap: clamp(7px, 2vw, 16px);
-      margin-left: auto;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn--compact {
-      width: clamp(44px, 10.4vw, 72px);
-      min-width: clamp(44px, 10.4vw, 72px);
-      height: clamp(44px, 10.4vw, 72px);
-      border-radius: clamp(12px, 2.2vw, 18px);
-    }
+  
 
-  .wf-client-landing .wf-landing-main {
-      width: 100%;
-      max-width: 100vw;
-      padding-inline: clamp(12px, 3vw, 26px);
-    }
+  
 
-  .wf-client-landing .wf-hero--client {
-      display: grid;
-      grid-template-columns: minmax(0, 55%) minmax(0, 45%);
-      min-height: clamp(548px, 116vw, 730px);
-      padding-top: clamp(16px, 3.4vw, 32px);
-      overflow: clip;
-    }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-      font-size: clamp(30px, 8.4vw, 56px);
-      line-height: 1.13;
-    }
+  
 
-  .wf-client-landing .wf-hero--client p {
-      font-size: clamp(14px, 3.55vw, 22px);
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-      top: clamp(34px, 8vw, 78px);
-      right: clamp(-20px, -2vw, -8px);
-      width: clamp(180px, 52vw, 470px);
-    }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  
 
-  .wf-client-landing .wf-info-row {
-      grid-template-columns: 1fr;
-    }
+  
 }
 
 @media (min-width: 800px) {
-  .wf-client-landing .wf-header--public {
-      display: grid;
-      grid-template-columns: minmax(170px, 260px) minmax(0, 1fr);
-      width: min(var(--wf-page-max), calc(100vw - clamp(32px, 4.5vw, 96px)));
-      height: auto;
-      min-height: clamp(76px, 8vw, 104px);
-      padding-block: clamp(8px, 1vw, 14px);
-      gap: clamp(14px, 2vw, 28px);
-      align-items: start;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo {
-      min-width: 0;
-      width: auto;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo img {
-      height: clamp(58px, 7vw, 84px);
-      max-width: clamp(172px, 22vw, 270px);
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-header-actions {
-      display: flex !important;
-      min-width: 0;
-      justify-content: flex-end;
-      gap: clamp(8px, 1.2vw, 18px);
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn {
-      min-height: clamp(48px, 5vw, 64px);
-      border-radius: 12px;
-      padding-inline: clamp(12px, 1.6vw, 26px);
-      gap: clamp(7px, 1vw, 12px);
-      font-size: clamp(13px, 1.4vw, 17px);
-      line-height: 1;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-header-actions .wf-top-btn:first-child {
-      min-width: 0;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn .wf-icon {
-      width: clamp(20px, 2vw, 26px);
-      height: clamp(20px, 2vw, 26px);
-    }
+  
 
-  .wf-client-landing .wf-landing-main {
-      width: min(var(--wf-page-max), calc(100vw - clamp(32px, 4.5vw, 96px)));
-    }
+  
 
-  .wf-client-landing .wf-hero--client {
-      display: grid;
-      grid-template-columns: minmax(0, 43%) minmax(0, 57%);
-      gap: clamp(14px, 2vw, 28px);
-      min-height: clamp(500px, 43vw, 650px);
-      align-items: start;
-      padding-top: clamp(10px, 1.5vw, 24px);
-      overflow: visible;
-    }
+  
 
-  .wf-client-landing .wf-hero-copy {
-      display: block;
-      min-width: 0;
-    }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-      max-width: 100%;
-      margin: clamp(16px, 2vw, 24px) 0 clamp(12px, 1.3vw, 18px);
-      font-size: clamp(40px, 4.25vw, 68px);
-      line-height: 1.02;
-    }
+  
 
-  .wf-client-landing .wf-hero--client p {
-      max-width: 100%;
-      margin-bottom: clamp(18px, 2vw, 26px);
-      font-size: clamp(17px, 1.55vw, 22px);
-      line-height: 1.42;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-hero-buttons {
-      display: flex;
-      width: 100%;
-      max-width: 100%;
-      gap: clamp(12px, 1.5vw, 18px);
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-primary-cta,
-    .wf-client-landing .wf-hero--client .wf-secondary-cta {
-      width: auto;
-      min-height: clamp(54px, 5vw, 64px);
-      padding-inline: clamp(18px, 2vw, 34px);
-      font-size: clamp(15px, 1.45vw, 18px);
-      white-space: nowrap;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-      position: relative;
-      inset: auto;
-      grid-column: auto;
-      grid-row: auto;
-      width: 100%;
-      min-height: clamp(330px, 36vw, 520px);
-      align-items: flex-start;
-      justify-content: flex-end;
-      pointer-events: auto;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-      width: min(972px, calc(100% + clamp(60px, 8vw, 120px)));
-      margin-right: clamp(-36px, -2vw, -12px);
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client img {
-      width: 100% !important;
-      height: auto !important;
-      max-width: none;
-      object-fit: contain;
-      object-position: right top;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-      display: flex;
-      gap: clamp(18px, 3vw, 64px);
-      align-items: center;
-      margin-top: clamp(22px, 2.6vw, 32px);
-      font-size: clamp(13px, 1.2vw, 16px);
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line span {
-      display: inline-flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-      white-space: normal;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-      width: clamp(25px, 2.6vw, 36px);
-      height: clamp(25px, 2.6vw, 36px);
-      flex: 0 0 auto;
-    }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-      gap: clamp(12px, 1.3vw, 16px);
-      margin-top: clamp(-8px, -0.5vw, 12px);
-    }
+  
 
-  .wf-client-landing .wf-action-card {
-      min-height: clamp(112px, 8.4vw, 122px);
-      grid-template-columns: clamp(70px, 5.8vw, 86px) minmax(0, 1fr) 24px;
-      gap: clamp(12px, 1.2vw, 16px);
-      padding: clamp(16px, 1.4vw, 22px);
-    }
+  
 
-  .wf-client-landing .wf-action-card__icon,
-    .wf-client-landing .wf-action-card__icon .wf-icon--image {
-      width: clamp(68px, 5.6vw, 82px);
-      height: clamp(68px, 5.6vw, 82px);
-    }
+  
 
-  .wf-client-landing .wf-action-card strong {
-      font-size: clamp(17px, 1.45vw, 20px);
-    }
+  
 
-  .wf-client-landing .wf-action-card small {
-      font-size: clamp(13.5px, 1.1vw, 15.5px);
-    }
+  
 }
 
 @media (min-width: 800px) and (max-width: 1023px) {
-  .wf-client-landing .wf-header--public {
-      grid-template-columns: minmax(152px, 178px) minmax(0, 1fr);
-      width: calc(100vw - 28px);
-      min-height: 72px;
-      gap: 10px;
-      padding-block: 8px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo img {
-      height: 58px;
-      max-width: 178px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-header-actions {
-      gap: 8px;
-      align-items: center;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn {
-      min-height: 48px;
-      border-radius: 10px;
-      padding-inline: 10px;
-      font-size: 12.5px;
-      gap: 7px;
-    }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn .wf-icon {
-      width: 20px;
-      height: 20px;
-    }
+  
 
-  .wf-client-landing .wf-landing-main {
-      width: calc(100vw - 28px);
-    }
+  
 
-  .wf-client-landing .wf-hero--client {
-      grid-template-columns: minmax(0, 39%) minmax(0, 61%);
-      min-height: clamp(430px, 50vw, 520px);
-      gap: 8px;
-      padding-top: 8px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge {
-      padding: 8px 10px;
-      font-size: 13px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-      margin-block: 14px 10px;
-      font-size: clamp(34px, 4.4vw, 42px);
-      line-height: 1.08;
-    }
+  
 
-  .wf-client-landing .wf-hero--client p {
-      margin-bottom: 14px;
-      font-size: clamp(14px, 1.8vw, 17px);
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-hero-buttons {
-      gap: 10px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-primary-cta,
-    .wf-client-landing .wf-hero--client .wf-secondary-cta {
-      min-height: 48px;
-      padding-inline: 12px;
-      border-radius: 10px;
-      font-size: 13.5px;
-    }
+  
 
-  .wf-client-landing .wf-play {
-      width: 30px;
-      height: 30px;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-      min-height: 330px;
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-      width: min(650px, calc(100% + 92px));
-      margin-right: -34px;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-      gap: 14px;
-      margin-top: 18px;
-      font-size: 12.5px;
-      flex-wrap: wrap;
-    }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-      width: 24px;
-      height: 24px;
-    }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      margin-top: 14px;
-    }
+  
 
-  .wf-client-landing .wf-info-row {
-      grid-template-columns: 1fr;
-      gap: 14px;
-    }
+  
 
-  .wf-client-landing .wf-house-card {
-      grid-template-columns: minmax(0, 46%) minmax(0, 1fr);
-    }
+  
 
-  .wf-client-landing .wf-footer {
-      grid-template-columns: 160px minmax(0, 1fr) minmax(190px, auto);
-      gap: 14px 18px;
-      align-items: center;
-      padding-bottom: 18px;
-    }
+  
 
-  .wf-client-landing .wf-footer .wf-logo {
-      display: inline-flex;
-    }
+  
 
-  .wf-client-landing .wf-footer .wf-logo img {
-      height: 54px;
-      max-width: 160px;
-    }
+  
 
-  .wf-client-landing .wf-footer p {
-      font-size: 13px;
-    }
+  
 
-  .wf-client-landing .wf-footer button {
-      justify-self: center;
-      font-size: 13px;
-    }
+  
 
-  .wf-client-landing .wf-footer strong {
-      font-size: 13px;
-    }
+  
 }
 
 @media (min-width: 1024px) {
-  .wf-client-landing .wf-actions-grid--client {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
+  
 
-  .wf-client-landing .wf-info-row {
-      grid-template-columns: minmax(0, .96fr) minmax(0, 1fr);
-    }
+  
 }
 
 @media (min-width: 1280px) {
-  .wf-client-landing .wf-hero--client {
-      grid-template-columns: minmax(0, 43%) minmax(0, 57%);
-    }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-      width: min(972px, calc(100% + 104px));
-    }
+  
 }
 
 @media (max-width: 430px) {
-  .wf-client-landing .wf-hero--client {
-      min-height: 520px;
-    }
+  
 }
 
 @media (max-width: 360px) {
-  .wf-client-landing .wf-hero--client {
-      min-height: 500px;
-    }
+  
 }
 
 @media (max-width: 340px) {
-  .wf-client-landing .wf-hero--client {
-      min-height: 486px;
-    }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-      gap: 7px;
-    }
+  
 }
 
 @media (max-width: 320px) {
-  .wf-client-landing .wf-hero--client {
-      min-height: 476px;
-    }
+  
 }
 
 /* Final landing proportion patch: larger images, smaller adjacent text and compact navbar. */
 @media (min-width: 1024px) and (max-width: 1439px) {
-  .wf-client-landing .wf-header--public {
-    min-height: 68px !important;
-    padding-block: 6px !important;
-    grid-template-columns: minmax(150px, 220px) minmax(0, 1fr) !important;
-    gap: 12px !important;
-  }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo img {
-    height: clamp(54px, 4.7vw, 72px) !important;
-    max-width: clamp(165px, 17vw, 225px) !important;
-  }
+  
 
-  .wf-client-landing .wf-header--public .wf-header-actions {
-    gap: 10px !important;
-  }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn {
-    min-height: 48px !important;
-    padding-inline: clamp(12px, 1.4vw, 20px) !important;
-    border-radius: 10px !important;
-    font-size: clamp(12.5px, 1.08vw, 15px) !important;
-    gap: 8px !important;
-  }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn .wf-icon {
-    width: 20px !important;
-    height: 20px !important;
-  }
+  
 
-  .wf-client-landing .wf-header--public .wf-header-actions .wf-top-btn:first-child {
-    min-width: 190px !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 39%) minmax(0, 61%) !important;
-    gap: 10px !important;
-    min-height: clamp(455px, 40vw, 575px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-    font-size: clamp(38px, 3.65vw, 56px) !important;
-    line-height: 1.03 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client p {
-    font-size: clamp(15px, 1.28vw, 18px) !important;
-    line-height: 1.38 !important;
-    margin-bottom: 16px !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge {
-    font-size: clamp(13px, 1.05vw, 16px) !important;
-    padding: 8px 12px !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-primary-cta,
-  .wf-client-landing .wf-hero--client .wf-secondary-cta {
-    min-height: 48px !important;
-    padding-inline: clamp(14px, 1.55vw, 24px) !important;
-    font-size: clamp(13.5px, 1.1vw, 16px) !important;
-    border-radius: 10px !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    min-height: clamp(350px, 35vw, 505px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(1040px, calc(100% + 150px)) !important;
-    margin-right: clamp(-64px, -4.2vw, -34px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client img {
-    width: 100% !important;
-    max-width: none !important;
-    height: auto !important;
-    object-fit: contain !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    margin-top: 16px !important;
-    gap: clamp(16px, 2.4vw, 42px) !important;
-    font-size: clamp(12px, 1vw, 14px) !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    margin-top: 6px !important;
-    gap: 12px !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card {
-    min-height: 104px !important;
-    grid-template-columns: clamp(58px, 5vw, 72px) minmax(0, 1fr) 20px !important;
-    gap: 10px !important;
-    padding: 13px 15px !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon,
-  .wf-client-landing .wf-action-card__icon .wf-icon--image {
-    width: clamp(58px, 5vw, 72px) !important;
-    height: clamp(58px, 5vw, 72px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card strong {
-    font-size: clamp(14px, 1.15vw, 17px) !important;
-    line-height: 1.1 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card small {
-    font-size: clamp(11px, .92vw, 13.5px) !important;
-    line-height: 1.25 !important;
-  }
+  
 
-  .wf-client-landing .wf-info-row {
-    grid-template-columns: minmax(0, 47%) minmax(0, 53%) !important;
-    gap: 12px !important;
-    margin-top: 12px !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card {
-    grid-template-columns: minmax(0, 52%) minmax(0, 48%) !important;
-    gap: 14px !important;
-    min-height: 132px !important;
-    padding: 12px 14px !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card img {
-    width: 100% !important;
-    height: clamp(120px, 10.6vw, 150px) !important;
-    max-height: none !important;
-    object-fit: contain !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card h2 {
-    margin-bottom: 7px !important;
-    font-size: clamp(17px, 1.5vw, 21px) !important;
-    line-height: 1.12 !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card p {
-    font-size: clamp(12px, 1.02vw, 14.5px) !important;
-    line-height: 1.32 !important;
-  }
+  
 
-  .wf-client-landing .wf-why-card {
-    min-height: 132px !important;
-    padding: 12px 16px !important;
-  }
+  
 
-  .wf-client-landing .wf-why-card h2 {
-    margin-bottom: 8px !important;
-    font-size: clamp(17px, 1.5vw, 21px) !important;
-    line-height: 1.1 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features {
-    gap: 8px !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span {
-    grid-template-columns: clamp(34px, 3.2vw, 44px) minmax(0, 1fr) !important;
-    column-gap: 7px !important;
-    min-height: 72px !important;
-    padding-right: 7px !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features .wf-icon--image {
-    width: clamp(34px, 3.2vw, 44px) !important;
-    height: clamp(34px, 3.2vw, 44px) !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features strong {
-    font-size: clamp(10px, .82vw, 12px) !important;
-    line-height: 1.08 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features small {
-    font-size: clamp(9px, .72vw, 11px) !important;
-    line-height: 1.18 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer {
-    grid-template-columns: clamp(150px, 16vw, 220px) minmax(0, 1fr) minmax(210px, auto) !important;
-    min-height: 64px !important;
-    padding-block: 10px !important;
-    gap: 12px !important;
-  }
+  
 
-  .wf-client-landing .wf-footer .wf-logo img {
-    height: clamp(46px, 4.4vw, 62px) !important;
-    max-width: clamp(145px, 15vw, 205px) !important;
-  }
+  
 
-  .wf-client-landing .wf-footer p,
-  .wf-client-landing .wf-footer button,
-  .wf-client-landing .wf-footer strong {
-    font-size: clamp(10.5px, .88vw, 13px) !important;
-    line-height: 1.25 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer strong .wf-icon--footer-security {
-    width: clamp(34px, 3.2vw, 44px) !important;
-    height: clamp(34px, 3.2vw, 44px) !important;
-    flex-basis: clamp(34px, 3.2vw, 44px) !important;
-  }
+  
 }
 
 @media (min-width: 1440px) {
-  .wf-client-landing .wf-house-card {
-    grid-template-columns: minmax(0, 50%) minmax(0, 50%) !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card img {
-    height: clamp(125px, 7.6vw, 160px) !important;
-    max-height: none !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card h2,
-  .wf-client-landing .wf-why-card h2 {
-    font-size: clamp(20px, 1.25vw, 24px) !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card p {
-    font-size: clamp(14px, .9vw, 17px) !important;
-  }
+  
 }
 
 /* Overlap fidelity patch: let the hero art enter the content area and let cards overlap its lower edge. */
 @media (min-width: 1024px) {
-  .wf-client-landing .wf-hero--client {
-    position: relative !important;
-    grid-template-columns: minmax(0, 41%) minmax(0, 59%) !important;
-    gap: 0 !important;
-    overflow: visible !important;
-    isolation: isolate;
-  }
+  
 
-  .wf-client-landing .wf-hero-copy,
-  .wf-client-landing .wf-hero--client .wf-badge,
-  .wf-client-landing .wf-hero--client h1,
-  .wf-client-landing .wf-hero--client p,
-  .wf-client-landing .wf-hero--client .wf-hero-buttons,
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    position: relative !important;
-    z-index: 5 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    position: relative !important;
-    z-index: 1 !important;
-    min-height: clamp(410px, 35.5vw, 610px) !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    display: block !important;
-    width: min(1220px, calc(100% + clamp(190px, 15vw, 285px))) !important;
-    max-width: none !important;
-    margin-left: clamp(-165px, -9.5vw, -82px) !important;
-    margin-right: clamp(-120px, -6vw, -48px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client img {
-    width: 100% !important;
-    height: auto !important;
-    max-width: none !important;
-    object-fit: contain !important;
-    object-position: right top !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    position: relative !important;
-    z-index: 8 !important;
-    margin-top: clamp(-92px, -5.1vw, -54px) !important;
-  }
+  
 
-  .wf-client-landing .wf-info-row {
-    position: relative !important;
-    z-index: 7 !important;
-  }
+  
 }
 
 @media (min-width: 1024px) and (max-width: 1439px) {
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 38%) minmax(0, 62%) !important;
-    min-height: clamp(480px, 41vw, 610px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    min-height: clamp(390px, 36.5vw, 540px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(1140px, calc(100% + clamp(205px, 17vw, 300px))) !important;
-    margin-left: clamp(-180px, -11vw, -100px) !important;
-    margin-right: clamp(-112px, -6.6vw, -54px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-    font-size: clamp(37px, 3.5vw, 54px) !important;
-    max-width: min(100%, 560px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client p {
-    max-width: min(100%, 500px) !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    margin-top: clamp(-86px, -5.8vw, -58px) !important;
-  }
+  
 }
 
 @media (min-width: 1440px) {
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
-    min-height: clamp(590px, 39vw, 740px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    min-height: clamp(525px, 36vw, 710px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(1320px, calc(100% + clamp(220px, 14vw, 320px))) !important;
-    margin-left: clamp(-190px, -9vw, -118px) !important;
-    margin-right: clamp(-120px, -5vw, -70px) !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    margin-top: clamp(-100px, -4.8vw, -66px) !important;
-  }
+  
 }
 
 @media (min-width: 800px) and (max-width: 1023px) {
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(760px, calc(100% + 140px)) !important;
-    margin-left: -72px !important;
-    margin-right: -48px !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    position: relative !important;
-    z-index: 8 !important;
-    margin-top: -34px !important;
-  }
+  
 }
 
 /* Client landing final alignment patch: stabilizes hero overlap, icons, mobile/tablet and wide-screen scaling. */
-.wf-client-landing,
-.wf-client-landing * {
-  box-sizing: border-box;
-}
 
-.wf-client-landing .wf-feature-line,
-.wf-client-landing .wf-feature-line span,
-.wf-client-landing .wf-feature-line .wf-icon,
-.wf-client-landing .wf-feature-line svg {
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.wf-client-landing .wf-feature-line span {
-  background: transparent !important;
-  text-decoration: none !important;
-}
-
-.wf-client-landing .wf-feature-line .wf-icon {
-  display: inline-flex !important;
-  flex: 0 0 auto !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: clamp(22px, 1.85vw, 30px) !important;
-  min-width: clamp(22px, 1.85vw, 30px) !important;
-  height: clamp(22px, 1.85vw, 30px) !important;
-}
-
-.wf-client-landing .wf-feature-line svg {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.wf-client-landing .wf-feature-line span:nth-child(1) .wf-icon { color: #078b43 !important; }
-.wf-client-landing .wf-feature-line span:nth-child(2) .wf-icon { color: #9d071f !important; }
-.wf-client-landing .wf-feature-line span:nth-child(3) .wf-icon { color: #9d071f !important; }
 
 @media (min-width: 1024px) {
-  .wf-client-landing {
-    --wf-page-max: clamp(1584px, 80vw, 1960px);
-  }
+  
 
-  .wf-client-landing .wf-header--public,
-  .wf-client-landing .wf-landing-main {
-    width: min(var(--wf-page-max), calc(100vw - clamp(42px, 4vw, 96px))) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client {
-    position: relative !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
-    gap: 0 !important;
-    min-height: clamp(492px, 34.5vw, 670px) !important;
-    align-items: start !important;
-    overflow: visible !important;
-    isolation: isolate !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-copy,
-  .wf-client-landing .wf-hero--client .wf-badge,
-  .wf-client-landing .wf-hero--client h1,
-  .wf-client-landing .wf-hero--client p,
-  .wf-client-landing .wf-hero--client .wf-hero-buttons,
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    position: relative !important;
-    z-index: 6 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-    font-size: clamp(42px, 3.75vw, 70px) !important;
-    line-height: 1.02 !important;
-    letter-spacing: -0.045em !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client p {
-    max-width: min(100%, 600px) !important;
-    font-size: clamp(16px, 1.28vw, 22px) !important;
-    line-height: 1.38 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    position: relative !important;
-    z-index: 1 !important;
-    min-height: clamp(430px, 31.5vw, 650px) !important;
-    overflow: visible !important;
-    pointer-events: none !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    display: block !important;
-    width: min(1240px, calc(100% + clamp(118px, 9vw, 230px))) !important;
-    max-width: none !important;
-    margin-left: clamp(-130px, -6.2vw, -70px) !important;
-    margin-right: clamp(-88px, -3.6vw, -38px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client img {
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    height: auto !important;
-    object-fit: contain !important;
-    object-position: right top !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    gap: clamp(22px, 3.05vw, 62px) !important;
-    margin-top: clamp(20px, 2.2vw, 30px) !important;
-    font-size: clamp(12px, 1vw, 16px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line span {
-    display: inline-flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 9px !important;
-    white-space: nowrap !important;
-    min-width: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    position: relative !important;
-    z-index: 8 !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: clamp(12px, 1.1vw, 16px) !important;
-    margin-top: clamp(-54px, -2.75vw, -28px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card {
-    min-height: clamp(104px, 7.4vw, 122px) !important;
-    grid-template-columns: clamp(58px, 4.8vw, 82px) minmax(0, 1fr) clamp(18px, 1.5vw, 24px) !important;
-    gap: clamp(10px, 1vw, 16px) !important;
-    padding: clamp(13px, 1.25vw, 20px) clamp(14px, 1.35vw, 22px) !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon,
-  .wf-client-landing .wf-action-card__icon .wf-icon--image {
-    width: clamp(58px, 4.8vw, 80px) !important;
-    height: clamp(58px, 4.8vw, 80px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card strong {
-    font-size: clamp(14px, 1.15vw, 20px) !important;
-    line-height: 1.12 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card small {
-    font-size: clamp(11px, .9vw, 15px) !important;
-    line-height: 1.3 !important;
-  }
+  
 
-  .wf-client-landing .wf-info-row {
-    position: relative !important;
-    z-index: 7 !important;
-    grid-template-columns: minmax(0, 48%) minmax(0, 52%) !important;
-    gap: clamp(12px, 1vw, 18px) !important;
-    margin-top: clamp(12px, 1.1vw, 18px) !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card {
-    grid-template-columns: minmax(0, 52%) minmax(0, 48%) !important;
-    min-height: clamp(126px, 8.5vw, 158px) !important;
-    padding: clamp(12px, 1.1vw, 18px) !important;
-    gap: clamp(12px, 1.2vw, 20px) !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card img {
-    width: 100% !important;
-    height: clamp(118px, 7.8vw, 158px) !important;
-    max-height: none !important;
-    object-fit: contain !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card h2,
-  .wf-client-landing .wf-why-card h2 {
-    font-size: clamp(18px, 1.45vw, 24px) !important;
-    line-height: 1.12 !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card p {
-    font-size: clamp(12px, .92vw, 16px) !important;
-    line-height: 1.34 !important;
-  }
+  
 
-  .wf-client-landing .wf-why-card {
-    min-height: clamp(126px, 8.5vw, 158px) !important;
-    padding: clamp(12px, 1.15vw, 20px) clamp(16px, 1.65vw, 32px) !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span {
-    min-height: clamp(64px, 4.6vw, 86px) !important;
-    grid-template-columns: clamp(36px, 3.2vw, 56px) minmax(0, 1fr) !important;
-    column-gap: clamp(7px, .7vw, 12px) !important;
-    padding-inline: clamp(7px, 1vw, 18px) !important;
-    text-align: left !important;
-  }
+  
 }
 
 @media (min-width: 1024px) and (max-width: 1439px) {
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 39%) minmax(0, 61%) !important;
-    min-height: clamp(470px, 39vw, 585px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(1060px, calc(100% + 168px)) !important;
-    margin-left: clamp(-118px, -8.5vw, -86px) !important;
-    margin-right: clamp(-82px, -5vw, -46px) !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    margin-top: clamp(-46px, -3.2vw, -30px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    gap: clamp(16px, 2.1vw, 36px) !important;
-    font-size: clamp(11px, .98vw, 13.5px) !important;
-  }
+  
 }
 
 @media (min-width: 1440px) and (max-width: 1919px) {
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(1160px, calc(100% + 190px)) !important;
-    margin-left: clamp(-135px, -7.2vw, -100px) !important;
-    margin-right: clamp(-96px, -4vw, -60px) !important;
-  }
+  
 }
 
 @media (min-width: 1920px) {
-  .wf-client-landing {
-    --wf-page-max: clamp(1700px, 78vw, 1960px);
-  }
+  
 
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
-    min-height: clamp(650px, 34vw, 770px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(1320px, calc(100% + 235px)) !important;
-    margin-left: -140px !important;
-    margin-right: -90px !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    margin-top: clamp(-62px, -2.25vw, -42px) !important;
-  }
+  
 }
 
 @media (min-width: 800px) and (max-width: 1023px) {
-  .wf-client-landing .wf-header--public,
-  .wf-client-landing .wf-landing-main {
-    width: calc(100vw - 28px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
-    min-height: clamp(430px, 51vw, 535px) !important;
-    gap: 0 !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    min-height: clamp(300px, 40vw, 430px) !important;
-    pointer-events: none !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(720px, calc(100% + 78px)) !important;
-    margin-left: -44px !important;
-    margin-right: -32px !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    margin-top: -18px !important;
-    gap: 10px !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card {
-    min-height: 98px !important;
-    grid-template-columns: 52px minmax(0, 1fr) 16px !important;
-    padding: 11px !important;
-    gap: 8px !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon,
-  .wf-client-landing .wf-action-card__icon .wf-icon--image {
-    width: 52px !important;
-    height: 52px !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card strong { font-size: 13px !important; }
-  .wf-client-landing .wf-action-card small { font-size: 10.5px !important; }
+  
+  
 }
 
 @media (max-width: 799px) {
-  .wf-client-landing .wf-hero--client {
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    pointer-events: none !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    z-index: 9 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-    width: clamp(24px, 6vw, 40px) !important;
-    min-width: clamp(24px, 6vw, 40px) !important;
-    height: clamp(24px, 6vw, 40px) !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    position: relative !important;
-    z-index: 8 !important;
-    margin-top: clamp(14px, 3vw, 24px) !important;
-  }
+  
 }
 
 @media (max-width: 430px) {
-  .wf-client-landing .wf-hero--client .wf-feature-line span {
-    flex-direction: row !important;
-  }
+  
 }
 
 /* Final client landing reconciliation: wireframe-aligned security row, lower cards and footer. */
 @media (min-width: 1024px) {
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 41%) minmax(0, 59%) !important;
-    min-height: clamp(510px, 39vw, 690px) !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    min-height: clamp(390px, 34vw, 610px) !important;
-    z-index: 1 !important;
-    pointer-events: none !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(1220px, calc(100% + clamp(150px, 12vw, 240px))) !important;
-    margin-left: clamp(-125px, -7.2vw, -70px) !important;
-    margin-right: clamp(-92px, -4.5vw, -42px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client img {
-    width: 100% !important;
-    height: auto !important;
-    max-width: none !important;
-    object-fit: contain !important;
-    object-position: right top !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-copy,
-  .wf-client-landing .wf-hero--client .wf-badge,
-  .wf-client-landing .wf-hero--client h1,
-  .wf-client-landing .wf-hero--client p,
-  .wf-client-landing .wf-hero--client .wf-hero-buttons,
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    position: relative !important;
-    z-index: 6 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    display: grid !important;
-    grid-template-columns: max-content max-content max-content !important;
-    justify-content: start !important;
-    align-items: center !important;
-    gap: clamp(26px, 3.3vw, 58px) !important;
-    margin-top: clamp(22px, 2.2vw, 30px) !important;
-    max-width: min(100%, 720px) !important;
-    color: var(--wf-ink) !important;
-    font-size: clamp(12.5px, 1.04vw, 15px) !important;
-    line-height: 1.15 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line span {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 9px !important;
-    min-width: max-content !important;
-    white-space: nowrap !important;
-    text-align: left !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line span,
-  .wf-client-landing .wf-hero--client .wf-feature-line span * {
-    background-color: transparent !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-    display: inline-flex !important;
-    flex: 0 0 25px !important;
-    width: 25px !important;
-    height: 25px !important;
-    min-width: 25px !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    position: relative !important;
-    z-index: 9 !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: clamp(12px, 1.1vw, 16px) !important;
-    margin-top: clamp(-54px, -3vw, -34px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card {
-    min-height: clamp(102px, 7.5vw, 118px) !important;
-    grid-template-columns: clamp(62px, 5vw, 78px) minmax(0, 1fr) 22px !important;
-    gap: clamp(10px, .95vw, 14px) !important;
-    padding: clamp(14px, 1.25vw, 20px) !important;
-    border-radius: 14px !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon,
-  .wf-client-landing .wf-action-card__icon .wf-icon--image {
-    width: clamp(62px, 5vw, 78px) !important;
-    height: clamp(62px, 5vw, 78px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card strong {
-    font-size: clamp(15px, 1.2vw, 19px) !important;
-    line-height: 1.12 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card small {
-    font-size: clamp(11.5px, .94vw, 14.5px) !important;
-    line-height: 1.28 !important;
-  }
+  
 
-  .wf-client-landing .wf-info-row {
-    grid-template-columns: minmax(0, 47.5%) minmax(0, 52.5%) !important;
-    gap: clamp(12px, 1.2vw, 16px) !important;
-    margin-top: clamp(12px, 1.1vw, 16px) !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card,
-  .wf-client-landing .wf-why-card {
-    min-height: clamp(118px, 8.9vw, 146px) !important;
-    border-radius: 14px !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card {
-    grid-template-columns: minmax(0, 52%) minmax(0, 48%) !important;
-    gap: clamp(12px, 1.3vw, 20px) !important;
-    padding: clamp(11px, 1.2vw, 18px) clamp(14px, 1.5vw, 24px) !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card img {
-    width: 100% !important;
-    height: clamp(112px, 8.5vw, 148px) !important;
-    max-height: none !important;
-    object-fit: contain !important;
-    object-position: center !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card h2,
-  .wf-client-landing .wf-why-card h2 {
-    margin: 0 0 8px !important;
-    font-size: clamp(18px, 1.45vw, 23px) !important;
-    line-height: 1.08 !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card p {
-    font-size: clamp(12px, 1vw, 15px) !important;
-    line-height: 1.34 !important;
-  }
+  
 
-  .wf-client-landing .wf-why-card {
-    padding: clamp(12px, 1.2vw, 18px) clamp(16px, 1.6vw, 26px) !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 0 !important;
-    align-items: stretch !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span {
-    display: grid !important;
-    grid-template-columns: clamp(32px, 2.8vw, 44px) minmax(0, 1fr) !important;
-    grid-template-rows: auto auto !important;
-    column-gap: clamp(6px, .75vw, 10px) !important;
-    row-gap: 2px !important;
-    align-items: center !important;
-    align-content: center !important;
-    min-height: clamp(58px, 5.3vw, 76px) !important;
-    padding: 0 clamp(7px, .9vw, 14px) !important;
-    text-align: left !important;
-    border-right: 1px solid #d7dff0 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span:last-child {
-    border-right: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features .wf-icon--image {
-    grid-row: 1 / span 2 !important;
-    width: clamp(32px, 2.8vw, 44px) !important;
-    height: clamp(32px, 2.8vw, 44px) !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features strong {
-    font-size: clamp(10px, .8vw, 12.5px) !important;
-    line-height: 1.08 !important;
-    font-weight: 950 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features small {
-    font-size: clamp(9px, .72vw, 11.2px) !important;
-    line-height: 1.18 !important;
-    font-weight: 650 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer {
-    display: grid !important;
-    grid-template-columns: clamp(150px, 14vw, 220px) minmax(280px, 1fr) auto auto auto minmax(205px, auto) !important;
-    align-items: center !important;
-    gap: clamp(14px, 1.55vw, 26px) !important;
-    min-height: clamp(64px, 5.5vw, 82px) !important;
-    margin-top: clamp(12px, 1.2vw, 16px) !important;
-    padding: clamp(8px, .9vw, 12px) 0 !important;
-    border-top: 1px solid var(--wf-line) !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
+  
 
-  .wf-client-landing .wf-footer .wf-logo {
-    display: inline-flex !important;
-  }
+  
 
-  .wf-client-landing .wf-footer .wf-logo img {
-    height: clamp(44px, 4.3vw, 66px) !important;
-    max-width: clamp(145px, 13vw, 210px) !important;
-  }
+  
 
-  .wf-client-landing .wf-footer p {
-    grid-column: auto !important;
-    width: auto !important;
-    margin: 0 !important;
-    border: 0 !important;
-    padding: 0 !important;
-    text-align: left !important;
-    font-size: clamp(10.5px, .9vw, 14px) !important;
-    line-height: 1.25 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer button {
-    min-width: max-content !important;
-    padding: 0 !important;
-    border: 0 !important;
-    color: var(--wf-blue) !important;
-    font-size: clamp(10.5px, .88vw, 13px) !important;
-    line-height: 1.15 !important;
-    font-weight: 850 !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-  }
+  
 
-  .wf-client-landing .wf-footer button + button {
-    border-left: 1px solid var(--wf-line) !important;
-    padding-left: clamp(12px, 1.3vw, 24px) !important;
-  }
+  
 
-  .wf-client-landing .wf-footer strong {
-    display: flex !important;
-    width: auto !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    gap: clamp(8px, .9vw, 12px) !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    color: var(--wf-navy) !important;
-    font-size: clamp(11px, .9vw, 14px) !important;
-    line-height: 1.18 !important;
-    text-align: left !important;
-  }
+  
 
-  .wf-client-landing .wf-footer strong .wf-icon--footer-security {
-    width: clamp(34px, 3vw, 50px) !important;
-    height: clamp(34px, 3vw, 50px) !important;
-    flex: 0 0 clamp(34px, 3vw, 50px) !important;
-  }
+  
 }
 
 @media (min-width: 1024px) and (max-width: 1439px) {
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 39.5%) minmax(0, 60.5%) !important;
-    min-height: clamp(470px, 40vw, 585px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(1100px, calc(100% + 190px)) !important;
-    margin-left: -92px !important;
-    margin-right: -62px !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    margin-top: clamp(-48px, -3.2vw, -30px) !important;
-  }
+  
 
-  .wf-client-landing .wf-footer {
-    grid-template-columns: 148px minmax(260px, 1fr) auto auto auto minmax(190px, auto) !important;
-    gap: 13px !important;
-  }
+  
 }
 
 @media (min-width: 1440px) {
-  .wf-client-landing .wf-hero--client {
-    min-height: clamp(585px, 38.5vw, 740px) !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    margin-top: clamp(-64px, -3.8vw, -44px) !important;
-  }
+  
 }
 
 @media (min-width: 1920px) {
-  .wf-client-landing .wf-header--public,
-  .wf-client-landing .wf-landing-main {
-    width: min(2140px, calc(100vw - 112px)) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
-    min-height: clamp(720px, 37vw, 920px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(1540px, calc(100% + 320px)) !important;
-    margin-left: clamp(-210px, -8vw, -145px) !important;
-    margin-right: clamp(-160px, -5vw, -92px) !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    margin-top: clamp(-80px, -3.2vw, -58px) !important;
-  }
+  
 }
 
 @media (min-width: 800px) and (max-width: 1023px) {
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
-    min-height: clamp(420px, 50vw, 520px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, max-content)) !important;
-    gap: 14px !important;
-    font-size: 11.5px !important;
-    margin-top: 14px !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line span {
-    white-space: nowrap !important;
-    gap: 6px !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-    width: 21px !important;
-    height: 21px !important;
-    min-width: 21px !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    margin-top: -14px !important;
-  }
+  
 
-  .wf-client-landing .wf-info-row {
-    grid-template-columns: 1fr !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span {
-    grid-template-columns: 38px minmax(0, 1fr) !important;
-    text-align: left !important;
-  }
+  
 
-  .wf-client-landing .wf-footer {
-    display: grid !important;
-    grid-template-columns: 150px minmax(0, 1fr) minmax(190px, auto) !important;
-    gap: 12px 18px !important;
-    align-items: center !important;
-    padding-block: 12px !important;
-  }
+  
 
-  .wf-client-landing .wf-footer .wf-logo {
-    display: inline-flex !important;
-  }
+  
 
-  .wf-client-landing .wf-footer button {
-    font-size: 12px !important;
-    white-space: nowrap !important;
-  }
+  
 
-  .wf-client-landing .wf-footer button:nth-of-type(1) {
-    grid-column: 1 !important;
-  }
+  
 }
 
 @media (max-width: 799px) {
-  .wf-client-landing .wf-hero--client {
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: auto !important;
-    padding-top: 14px !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-copy {
-    order: 2 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    order: 1 !important;
-    position: relative !important;
-    inset: auto !important;
-    width: min(100%, 520px) !important;
-    min-height: 0 !important;
-    margin: 0 auto 14px !important;
-    z-index: 1 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: 100% !important;
-    margin: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client img {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100% !important;
-    object-fit: contain !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge,
-  .wf-client-landing .wf-hero--client h1,
-  .wf-client-landing .wf-hero--client p,
-  .wf-client-landing .wf-hero--client .wf-hero-buttons,
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    grid-column: auto !important;
-    max-width: 100% !important;
-    z-index: 2 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-hero-buttons {
-    width: 100% !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 10px !important;
-    margin-top: 18px !important;
-    font-size: clamp(12px, 3.3vw, 15px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line span {
-    display: inline-flex !important;
-    flex-direction: row !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-    text-align: left !important;
-    gap: 8px !important;
-    white-space: normal !important;
-    background: transparent !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    margin-top: 18px !important;
-  }
+  
 }
 
 /* Security line collision fix: keep the row inside the copy column instead of the hero image area. */
-.wf-client-landing .wf-hero--client .wf-feature-line {
-  box-sizing: border-box !important;
-  position: relative !important;
-  z-index: 7 !important;
-  overflow: visible !important;
-}
 
-.wf-client-landing .wf-hero--client .wf-feature-line span {
-  min-width: 0 !important;
-  line-height: 1.16 !important;
-}
 
 @media (min-width: 1440px) {
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    align-items: center !important;
-    max-width: min(100%, clamp(404px, 28vw, 560px)) !important;
-    gap: clamp(8px, .85vw, 18px) !important;
-    font-size: clamp(10.8px, .66vw, 13px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line > span {
-    align-items: center !important;
-    gap: 6px !important;
-    white-space: normal !important;
-    overflow-wrap: anywhere !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-    flex: 0 0 clamp(17px, .95vw, 21px) !important;
-    width: clamp(17px, .95vw, 21px) !important;
-    min-width: clamp(17px, .95vw, 21px) !important;
-    height: clamp(17px, .95vw, 21px) !important;
-  }
+  
 }
 
 @media (min-width: 1920px) {
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    max-width: min(100%, 560px) !important;
-  }
+  
 }
 
 @media (min-width: 1024px) and (max-width: 1439px) {
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    max-width: min(100%, clamp(340px, 35vw, 510px)) !important;
-    gap: 8px !important;
-    margin-top: 12px !important;
-    font-size: clamp(10px, .86vw, 12px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line span {
-    align-items: center !important;
-    gap: 5px !important;
-    white-space: normal !important;
-    overflow-wrap: anywhere !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-    flex: 0 0 18px !important;
-    width: 18px !important;
-    min-width: 18px !important;
-    height: 18px !important;
-  }
+  
 }
 
 @media (min-width: 800px) and (max-width: 1023px) {
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    max-width: 100% !important;
-    gap: 6px !important;
-    margin-top: 10px !important;
-    font-size: 9.8px !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line span {
-    align-items: center !important;
-    gap: 4px !important;
-    white-space: normal !important;
-    overflow-wrap: anywhere !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-    flex: 0 0 16px !important;
-    width: 16px !important;
-    min-width: 16px !important;
-    height: 16px !important;
-  }
+  
 }
 
 @media (max-width: 799px) {
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    grid-template-columns: minmax(0, 1fr) !important;
-    max-width: 100% !important;
-    gap: 8px !important;
-    margin-top: 16px !important;
-    font-size: clamp(11.5px, 3.1vw, 14px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line span {
-    gap: 7px !important;
-    white-space: normal !important;
-    overflow-wrap: anywhere !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-    flex: 0 0 clamp(19px, 5vw, 24px) !important;
-    width: clamp(19px, 5vw, 24px) !important;
-    min-width: clamp(19px, 5vw, 24px) !important;
-    height: clamp(19px, 5vw, 24px) !important;
-  }
+  
 }
 
 /* Larger security line text in the client hero. */
-.wf-client-landing .wf-hero--client .wf-feature-line {
-  max-width: min(100%, 680px) !important;
-  gap: 16px !important;
-  font-size: 18px !important;
-}
 
-.wf-client-landing .wf-hero--client .wf-feature-line > span {
-  gap: 9px !important;
-  line-height: 1.22 !important;
-}
-
-.wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-  flex: 0 0 30px !important;
-  width: 30px !important;
-  min-width: 30px !important;
-  height: 30px !important;
-}
 
 @media (min-width: 1024px) {
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    font-size: 18px !important;
-  }
+  
 }
 
 @media (min-width: 800px) and (max-width: 1023px) {
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    font-size: 15px !important;
-    gap: 10px !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-    flex-basis: 24px !important;
-    width: 24px !important;
-    min-width: 24px !important;
-    height: 24px !important;
-  }
+  
 }
 
 @media (max-width: 799px) {
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    font-size: 15px !important;
-    gap: 10px !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-    flex-basis: 24px !important;
-    width: 24px !important;
-    min-width: 24px !important;
-    height: 24px !important;
-  }
+  
 }

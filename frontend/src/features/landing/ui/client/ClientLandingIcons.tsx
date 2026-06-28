@@ -8,8 +8,8 @@ import clientChatIcon from "../../../../assets/wireframes/icons/client-chat.png"
 import footerWhatsAppWireframeIcon from "../../../../assets/wireframes/icons/footer-whatsapp-wireframe.png";
 import footerInstagramWireframeIcon from "../../../../assets/wireframes/icons/footer-instagram-wireframe.png";
 import footerEmailWireframeIcon from "../../../../assets/wireframes/icons/footer-email-wireframe.png";
-import footerPhoneWireframeIcon from "../../../../assets/wireframes/icons/footer-phone-wireframe.png";
-import footerMapWireframeIcon from "../../../../assets/wireframes/icons/footer-map-wireframe.png";
+import footerPhoneWireframeIcon from "../../../../assets/footer/contact-phone-chat-green.svg";
+import footerMapWireframeIcon from "../../../../assets/footer/contact-location-red.svg";
 import { SvgWrapper } from "../../../../components/layout/ResponsivePrimitives";
 
 function cx(...classes: Array<string | false | null | undefined>): string {

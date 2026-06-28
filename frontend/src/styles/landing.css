@@ -1749,10 +1749,6 @@
   font-weight: 900;
 }
 
-.wf-landing-main {
-  width: min(var(--wf-page-max), calc(100vw - 96px));
-  margin: 0 auto;
-}
 
 .wf-hero {
   position: relative;
@@ -1912,7 +1908,7 @@
   box-shadow: 0 6px 12px rgba(163,6,40,.25);
 }
 
-.wf-pin::after { content: ''; position: absolute; inset: 9px; border-radius: 50%; background: #fff; }
+.wf-pin::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: #fff; }
 
 .wf-pin--one { left: 18px; bottom: 142px; }
 
@@ -1927,64 +1923,9 @@
   z-index: 5;
 }
 
-.wf-action-card {
-  min-height: 118px;
-  border-radius: 18px;
-  border: 1px solid var(--wf-line);
-  background: #fff;
-  display: grid;
-  grid-template-columns: 76px 1fr 30px;
-  align-items: center;
-  gap: 14px;
-  text-align: left;
-  padding: 20px;
-  color: var(--wf-ink);
-  box-shadow: 0 12px 28px rgba(4, 23, 89, .05);
-}
 
-.wf-action-card__icon {
-  width: 76px; height: 76px; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 48px;
-  background: linear-gradient(180deg, #fff, #f5f8ff);
-  box-shadow: 0 12px 22px rgba(0,0,0,.06);
-}
+.wf-why-card h2{ margin: 0 0 12px; font-size: 24px; color: var(--wf-navy); }
 
-.wf-action-card strong { display: block; font-size: 20px; margin-bottom: 10px; }
-
-.wf-action-card small { display: block; font-size: 15px; line-height: 1.45; }
-
-.wf-action-card__arrow { font-size: 48px; line-height: 1; font-weight: 700; }
-
-.wf-action-card--orange { background: linear-gradient(135deg, #fff8f3, #fff); border-color: #ffd0bd; }
-
-.wf-action-card--orange .wf-action-card__icon, .wf-action-card--orange .wf-action-card__arrow, .wf-action-card--orange strong { color: var(--wf-orange); }
-
-.wf-action-card--blue { background: linear-gradient(135deg, #f4f9ff, #fff); border-color: #bdd4ff; }
-
-.wf-action-card--blue .wf-action-card__icon, .wf-action-card--blue .wf-action-card__arrow, .wf-action-card--blue strong { color: var(--wf-blue); }
-
-.wf-action-card--green { background: linear-gradient(135deg, #f1fff6, #fff); border-color: #c8efd6; }
-
-.wf-action-card--green .wf-action-card__icon, .wf-action-card--green .wf-action-card__arrow, .wf-action-card--green strong { color: var(--wf-green); }
-
-.wf-action-card--purple { background: linear-gradient(135deg, #fbf7ff, #fff); border-color: #decafc; }
-
-.wf-action-card--purple .wf-action-card__icon, .wf-action-card--purple .wf-action-card__arrow, .wf-action-card--purple strong { color: var(--wf-purple); }
-
-.wf-info-row {
-  margin-top: 14px;
-  display: grid;
-  grid-template-columns: 1fr 1.06fr;
-  gap: 14px;
-}
-
-.wf-house-card { display: grid; grid-template-columns: 48% 1fr; align-items: center; gap: 24px; min-height: 132px; padding: 16px 28px; }
-
-.wf-house-card img { height: 105px; width: 100%; object-fit: contain; }
-
-.wf-house-card h2,
-.wf-why-card h2 { margin: 0 0 12px; font-size: 24px; color: var(--wf-navy); }
-
-.wf-house-card p { margin: 0; font-size: 17px; line-height: 1.5; }
 
 .wf-why-card { padding: 18px 26px; }
 
@@ -2008,26 +1949,6 @@
 
 .wf-mini-features span:nth-child(4) .wf-icon { color: var(--wf-orange); }
 
-.wf-footer {
-  margin: 14px 0 0;
-  min-height: 78px;
-  display: grid;
-  grid-template-columns: 210px minmax(240px, 1fr) auto auto auto minmax(260px, auto);
-  align-items: center;
-  gap: 28px;
-  border-width: 1px 0 0;
-  border-radius: 0;
-  box-shadow: none;
-  background: transparent;
-}
-
-.wf-footer p,
-.wf-footer a,
-.wf-footer strong { margin: 0; font-size: 14px; line-height: 1.4; }
-
-.wf-footer a { font-weight: 800; color: var(--wf-blue-2); }
-
-.wf-footer strong { display: flex; align-items: center; gap: 12px; font-size: 16px; }
 
 .wf-calendar-panel { padding: 34px 36px; min-height: 810px; }
 
@@ -2220,7 +2141,7 @@
 
 .wf-calendar-day { min-height: 98px; border-top: 1px solid #e4e9f4; border-right: 1px solid #e4e9f4; padding: 15px 16px; position: relative; color: var(--wf-blue-2); font-size: 20px; font-weight: 900; }
 
-.wf-calendar-day:nth-child(7n+7) { border-right: 0; }
+.wf-calendar-day:nth-child(7n/**/+7) { border-right: 0; }
 
 .wf-calendar-day.is-weekend { color: #ff101e; }
 
@@ -2263,26 +2184,6 @@
   display: block;
 }
 
-.wf-action-card__icon {
-  position: relative;
-  isolation: isolate;
-}
-
-.wf-action-card__icon::before {
-  content: '';
-  position: absolute;
-  inset: 9px;
-  z-index: -1;
-  border-radius: 16px;
-  background: currentColor;
-  opacity: .08;
-}
-
-.wf-action-card__icon .wf-icon {
-  width: 52px;
-  height: 52px;
-  filter: drop-shadow(0 8px 10px rgba(8,20,95,.15));
-}
 
 .wf-large-icon .wf-icon {
   width: 62px;
@@ -2299,15 +2200,6 @@
   height: 34px;
 }
 
-.wf-footer button {
-  border: 0;
-  background: transparent;
-  color: var(--wf-blue-2);
-  font-weight: 800;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-}
 
 .wf-empty-state {
   min-height: 190px;
@@ -2365,20 +2257,6 @@
   color: inherit;
 }
 
-.wf-action-card__icon .wf-icon--calendar-create,
-.wf-action-card__icon .wf-icon--calendar-clock,
-.wf-action-card__icon .wf-icon--mobile-phone,
-.wf-action-card__icon .wf-icon--chat-bubbles {
-  width: 68px;
-  height: 68px;
-  filter: drop-shadow(0 10px 12px rgba(8,20,95,.16));
-}
-
-.wf-action-card__icon::before {
-  inset: 5px;
-  opacity: .055;
-  border-radius: 20px;
-}
 
 .wf-hero-visual--client {
   min-height: 505px;
@@ -2470,43 +2348,6 @@
   z-index: 6;
 }
 
-.wf-action-card {
-  min-height: 120px;
-  border-radius: 18px;
-  grid-template-columns: 82px 1fr 28px;
-  gap: 16px;
-  padding: 20px 22px;
-  box-shadow: 0 11px 28px rgba(8, 20, 95, .055);
-}
-
-.wf-action-card__icon {
-  width: 82px;
-  height: 82px;
-  border-radius: 18px;
-  overflow: visible;
-}
-
-.wf-action-card__arrow {
-  font-size: 54px;
-  font-weight: 850;
-  transform: translateX(2px);
-}
-
-.wf-action-card--orange { background: linear-gradient(135deg, #fff6ef 0%, #fffaf7 58%, #fff 100%); border-color: #ffc5ac; }
-
-.wf-action-card--blue { background: linear-gradient(135deg, #f0f7ff 0%, #f8fbff 58%, #fff 100%); border-color: #b7d0ff; }
-
-.wf-action-card--green { background: linear-gradient(135deg, #effff5 0%, #f8fffb 58%, #fff 100%); border-color: #c0efce; }
-
-.wf-action-card--purple { background: linear-gradient(135deg, #faf6ff 0%, #fdfbff 58%, #fff 100%); border-color: #ddc9fb; }
-
-.wf-action-card__icon .wf-icon--calendar-create,
-.wf-action-card__icon .wf-icon--calendar-clock,
-.wf-action-card__icon .wf-icon--mobile-phone,
-.wf-action-card__icon .wf-icon--chat-bubbles {
-  width: 76px;
-  height: 76px;
-}
 
 .wf-badge .wf-icon--calendar {
   color: #ff4b0b;
@@ -2533,10 +2374,6 @@
   display: block;
 }
 
-.wf-action-card__icon .wf-icon--image {
-  width: 76px;
-  height: 76px;
-}
 
 .wf-hero-visual {
   align-items: center;
@@ -2557,15 +2394,6 @@
   margin-top: 28px;
 }
 
-.wf-hero--client {
-  min-height: 650px;
-}
-
-.wf-hero--client {
-  grid-template-columns: minmax(0, 43%) minmax(0, 57%);
-  min-height: 648px;
-  align-items: start;
-}
 
 .wf-hero-visual--client {
   min-height: 520px;
@@ -2579,58 +2407,6 @@
   margin-right: -18px;
 }
 
-.wf-actions-grid--client {
-  gap: 16px;
-  margin-top: -6px;
-}
-
-.wf-action-card {
-  min-width: 0;
-  min-height: 122px;
-  grid-template-columns: 86px minmax(0, 1fr) 24px;
-  gap: 16px;
-  padding: 18px 22px;
-  border-radius: 14px;
-}
-
-.wf-action-card__icon {
-  width: 82px;
-  height: 82px;
-  background: transparent;
-  box-shadow: none;
-}
-
-.wf-action-card__icon::before {
-  display: none;
-}
-
-.wf-action-card__body {
-  min-width: 0;
-}
-
-.wf-action-card strong {
-  margin-bottom: 8px;
-  color: currentColor;
-  font-size: 20px;
-  line-height: 1.15;
-}
-
-.wf-action-card small {
-  color: #07135d;
-  font-size: 15.5px;
-  line-height: 1.45;
-}
-
-.wf-action-card__arrow {
-  align-self: center;
-  justify-self: end;
-  font-size: 50px;
-  line-height: 1;
-}
-
-.wf-action-card:hover {
-  box-shadow: 0 14px 30px rgba(8, 20, 95, .075);
-}
 
 .wf-why-card {
   padding: 20px 32px 18px;
@@ -2717,11 +2493,6 @@
   word-break: normal;
 }
 
-.wf-footer strong .wf-icon--footer-security {
-  width: 50px;
-  height: 54px;
-  flex: 0 0 50px;
-}
 
 .wf-header--public .wf-top-btn {
   min-height: 64px;
@@ -2740,20 +2511,4 @@
   height: 26px;
 }
 
-.wf-client-landing .wf-logo,
-.wf-client-landing .wf-logo:where(:link, :visited),
-.wf-client-landing .wf-logo img {
-  border: 0 !important;
-  outline: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
 
-.wf-client-landing .wf-logo {
-  padding: 0;
-  overflow: visible;
-}
-
-.wf-client-landing .wf-logo img {
-  display: block;
-}

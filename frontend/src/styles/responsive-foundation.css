@@ -124,24 +124,21 @@ body,
   overflow: visible;
 }
 
-.wf-action-card,
 .wf-admin-card,
 .wf-booking-card,
 .wf-detail-card,
-.wf-modal-section-card,
-.wf-footer {
+.wf-modal-section-card{
   max-width: 100%;
   overflow-wrap: anywhere;
 }
 
-.wf-action-card__body,
 .wf-admin-card__copy,
 .wf-booking-content,
 .wf-booking-main,
 .wf-booking-main > div,
 .wf-provider-box,
 .wf-detail-body,
-.wf-modal-title > div {
+.wf-modal-title > div{
   min-width: 0;
 }
 
@@ -171,11 +168,9 @@ body,
     --wf-gutter: clamp(32px, 4vw, 80px);
   }
 
-  .wf-landing-main,
-  .wf-client-landing .wf-header--public,
   .wf-two-column,
-  .wf-admin-main,
-  .wf-details-main {
+.wf-admin-main,
+.wf-details-main{
     max-width: var(--wf-max-2xl);
   }
 }
@@ -186,11 +181,9 @@ body,
     --wf-gutter: var(--wf-gutter-wide);
   }
 
-  .wf-landing-main,
-  .wf-client-landing .wf-header--public,
   .wf-two-column,
-  .wf-admin-main,
-  .wf-details-main {
+.wf-admin-main,
+.wf-details-main{
     max-width: var(--wf-max-4k);
   }
 
@@ -211,247 +204,77 @@ body,
     width: min(100%, calc(100vw - (var(--wf-gutter) * 2)));
   }
 
-  .wf-client-landing .wf-navbar--client.wf-header {
-    --wf-home-action-gap: clamp(5px, 1.8vw, 8px);
-    --wf-home-action-size: clamp(38px, 10.5vw, 46px);
-    display: flex !important;
-    width: 100vw !important;
-    inline-size: 100vw !important;
-    max-width: 100vw !important;
-    max-inline-size: 100vw !important;
-    margin-inline: 0 !important;
-    justify-content: space-between !important;
-    gap: clamp(4px, 1.5vw, 8px) !important;
-    padding-inline: clamp(8px, 2.5vw, 12px) !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-logo {
-    width: clamp(118px, 34vw, 148px) !important;
-    max-width: clamp(118px, 34vw, 148px) !important;
-    min-width: 0 !important;
-    flex: 0 0 clamp(118px, 34vw, 148px) !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-logo img {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-mobile-actions {
-    position: absolute !important;
-    top: clamp(24px, 7vw, 32px) !important;
-    right: auto !important;
-    left: calc(100vw - var(--wf-home-action-size) - var(--wf-home-action-size) - var(--wf-home-action-size) - var(--wf-home-action-gap) - var(--wf-home-action-gap) - clamp(8px, 2.5vw, 12px)) !important;
-    width: max-content !important;
-    min-width: max-content !important;
-    flex: 0 0 auto !important;
-    justify-content: flex-end !important;
-    margin-left: auto !important;
-    overflow: visible !important;
-    transform: translateX(clamp(-70px, -13vw, -42px)) !important;
-  }
+  
 
-  .wf-client-landing .wf-landing-main {
-    width: min(100%, calc(100vw - (var(--wf-gutter) * 2))) !important;
-    max-width: 100% !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client {
-    display: grid !important;
-    grid-template-columns: minmax(0, 62%) minmax(0, 38%) !important;
-    gap: 0 !important;
-    min-height: clamp(520px, 122vw, 720px) !important;
-    padding-top: clamp(14px, 3.4vw, 28px) !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-header--public {
-    min-height: clamp(72px, 17vw, 92px) !important;
-    padding-inline: clamp(8px, 2.6vw, 14px) !important;
-  }
+  
 
-  .wf-client-landing .wf-header--public .wf-logo img,
-  .wf-navbar--client .wf-logo img {
+  .wf-navbar--client .wf-logo img{
     width: auto !important;
     height: clamp(48px, 13vw, 64px) !important;
     max-width: clamp(128px, 37vw, 172px) !important;
   }
 
-  .wf-client-landing .wf-navbar--client.wf-header .wf-logo img {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-  }
+  
 
-  .wf-client-landing .wf-header--public .wf-mobile-actions,
-  .wf-navbar--client .wf-mobile-actions {
+  .wf-navbar--client .wf-mobile-actions{
     gap: var(--wf-home-action-gap, clamp(5px, 1.8vw, 8px)) !important;
   }
 
-  .wf-client-landing .wf-header--public .wf-top-btn--compact,
-  .wf-navbar--client .wf-top-btn--compact {
+  .wf-navbar--client .wf-top-btn--compact{
     width: var(--wf-home-action-size, clamp(38px, 10.5vw, 46px)) !important;
     min-width: var(--wf-home-action-size, clamp(38px, 10.5vw, 46px)) !important;
     height: var(--wf-home-action-size, clamp(38px, 10.5vw, 46px)) !important;
   }
 
-  .wf-client-landing .wf-hero-copy {
-    display: contents !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge,
-  .wf-client-landing .wf-hero--client h1,
-  .wf-client-landing .wf-hero--client p,
-  .wf-client-landing .wf-hero--client .wf-hero-buttons {
-    grid-column: 1 !important;
-    max-width: 100% !important;
-    position: relative !important;
-    z-index: 4 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge {
-    width: fit-content !important;
-    padding: 7px 10px !important;
-    font-size: clamp(10.5px, 2.8vw, 13px) !important;
-    line-height: 1.18 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-    margin: clamp(16px, 4vw, 22px) 0 10px !important;
-    font-size: clamp(24.5px, 6.7vw, 30px) !important;
-    line-height: 1.14 !important;
-    letter-spacing: 0 !important;
-    overflow-wrap: normal !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client p {
-    margin-bottom: 16px !important;
-    font-size: clamp(13px, 3.55vw, 16px) !important;
-    line-height: 1.34 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-primary-cta,
-  .wf-client-landing .wf-hero--client .wf-secondary-cta {
-    min-height: clamp(46px, 11vw, 54px) !important;
-    border-radius: 11px !important;
-    padding-inline: 10px !important;
-    font-size: clamp(13px, 3.55vw, 16px) !important;
-    gap: 8px !important;
-  }
+  
 
-  .wf-client-landing .wf-play {
-    width: clamp(28px, 7vw, 34px) !important;
-    height: clamp(28px, 7vw, 34px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    grid-column: 2 !important;
-    grid-row: 1 / span 5 !important;
-    order: initial !important;
-    position: absolute !important;
-    inset: auto clamp(-18px, -2.4vw, -8px) auto auto !important;
-    top: clamp(42px, 11vw, 76px) !important;
-    width: clamp(118px, 39vw, 168px) !important;
-    margin: 0 !important;
-    z-index: 2 !important;
-    pointer-events: none !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture,
-  .wf-client-landing .wf-hero-visual--client img {
-    width: 100% !important;
-    height: auto !important;
-    margin: 0 !important;
-    object-fit: contain !important;
-    object-position: right top !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    grid-column: 1 / -1 !important;
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    gap: clamp(4px, 1.5vw, 8px) !important;
-    margin-top: clamp(18px, 4vw, 26px) !important;
-    font-size: clamp(9px, 2.35vw, 10.5px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line > span {
-    min-width: 0 !important;
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    justify-items: center !important;
-    text-align: center !important;
-    white-space: normal !important;
-    overflow-wrap: anywhere !important;
-    word-break: break-word !important;
-    gap: 4px !important;
-    line-height: 1.08 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon {
-    flex: 0 0 clamp(16px, 5vw, 22px) !important;
-    width: clamp(16px, 5vw, 22px) !important;
-    min-width: clamp(16px, 5vw, 22px) !important;
-    height: clamp(16px, 5vw, 22px) !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: clamp(8px, 2.4vw, 14px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card {
-    min-height: clamp(98px, 24vw, 118px) !important;
-    grid-template-columns: minmax(0, 1fr) 12px !important;
-    grid-template-rows: auto minmax(0, 1fr) !important;
-    gap: clamp(6px, 1.8vw, 9px) !important;
-    padding: clamp(9px, 2.5vw, 12px) !important;
-    align-items: start !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon,
-  .wf-client-landing .wf-action-card__icon .wf-icon--image {
-    width: clamp(36px, 10vw, 46px) !important;
-    height: clamp(36px, 10vw, 46px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__body {
-    grid-column: 1 !important;
-    grid-row: 2 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card strong {
-    margin-bottom: 5px !important;
-    font-size: clamp(11.5px, 3.05vw, 13.5px) !important;
-    line-height: 1.12 !important;
-    overflow-wrap: normal !important;
-    word-break: normal !important;
-    hyphens: none !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card small {
-    font-size: clamp(10px, 2.62vw, 12px) !important;
-    line-height: 1.28 !important;
-    overflow-wrap: normal !important;
-    word-break: normal !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__arrow {
-    grid-column: 2 !important;
-    grid-row: 1 / 3 !important;
-    align-self: center !important;
-    justify-self: end !important;
-    font-size: clamp(25px, 6vw, 32px) !important;
-  }
+  
 
   .wf-two-column--bookings,
   .wf-two-column--admin {
@@ -551,27 +374,13 @@ body,
     min-width: 0 !important;
   }
 
-  .wf-footer {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, auto)) !important;
-    justify-content: center !important;
-    gap: clamp(8px, 2.5vw, 18px) !important;
-    text-align: center !important;
-  }
+  
 
-  .wf-footer .wf-logo {
-    display: none !important;
-  }
+  
 
-  .wf-footer strong {
-    grid-column: 1 / -1 !important;
-    width: 100% !important;
-  }
+  
 
-  .wf-footer p {
-    grid-column: 1 / -1 !important;
-    width: 100% !important;
-  }
+  
 
   .wf-modal-backdrop {
     align-items: flex-end !important;
@@ -697,70 +506,37 @@ body,
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 62%) minmax(0, 38%) !important;
-  }
+  
 }
 
 @media (max-width: 480px) {
-  .wf-client-landing .wf-navbar--client .wf-mobile-actions {
-    transform: translateX(clamp(-58px, -13vw, -42px)) !important;
-  }
+  
 }
 
 @media (max-width: 374px) {
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 64%) minmax(0, 36%) !important;
-    min-height: 500px !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-mobile-actions {
-    transform: translateX(-104px) !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-logo {
-    width: 112px !important;
-    max-width: 112px !important;
-  }
+  
 
-  .wf-client-landing .wf-header--public .wf-top-btn--compact,
-  .wf-navbar--client .wf-top-btn--compact {
+  .wf-navbar--client .wf-top-btn--compact{
     width: 38px !important;
     min-width: 38px !important;
     height: 38px !important;
   }
 
-  .wf-client-landing .wf-hero-visual--client {
-    width: 36vw !important;
-    right: -6px !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    grid-template-columns: 1fr !important;
-    gap: 7px !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card {
-    grid-template-columns: 46px minmax(0, 1fr) 18px !important;
-    grid-template-rows: auto !important;
-    min-height: 98px !important;
-    align-items: center !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__body {
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__arrow {
-    grid-column: 3 !important;
-    grid-row: 1 !important;
-  }
+  
 
   .wf-booking-card {
     grid-template-columns: 68px minmax(0, 1fr) !important;
@@ -795,10 +571,9 @@ body,
     min-height: 100svh;
   }
 
-  .wf-landing-main,
   .wf-two-column,
-  .wf-admin-main,
-  .wf-details-main {
+.wf-admin-main,
+.wf-details-main{
     width: min(calc(100vw - (var(--wf-gutter) * 2)), 1180px) !important;
     max-width: 1180px !important;
     margin-inline: auto !important;
@@ -826,17 +601,9 @@ body,
     max-width: clamp(132px, 24vw, 198px) !important;
   }
 
-  .wf-client-landing .wf-navbar--client .wf-logo {
-    flex: 0 1 clamp(120px, 22vw, 170px) !important;
-    width: clamp(120px, 22vw, 170px) !important;
-    max-width: clamp(120px, 22vw, 170px) !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client.wf-header .wf-logo img {
-    width: 100% !important;
-    height: auto !important;
-    max-height: clamp(42px, 11svh, 58px) !important;
-  }
+  
 
   .wf-navbar .wf-top-btn {
     min-height: clamp(38px, 9svh, 44px) !important;
@@ -859,8 +626,7 @@ body,
   }
 
   .wf-hero,
-  .wf-client-landing .wf-hero--client,
-  .wf-admin-landing .wf-hero--admin {
+.wf-admin-landing .wf-hero--admin{
     min-height: auto !important;
     gap: clamp(10px, 2vw, 20px) !important;
     padding-block: clamp(6px, 2svh, 14px) !important;
@@ -868,16 +634,13 @@ body,
     align-items: center !important;
   }
 
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 58%) minmax(150px, 42%) !important;
-  }
+  
 
   .wf-admin-landing .wf-hero--admin {
     grid-template-columns: minmax(0, .95fr) minmax(220px, .8fr) !important;
   }
 
-  .wf-client-landing .wf-hero-copy,
-  .wf-admin-landing .wf-hero-copy {
+  .wf-admin-landing .wf-hero-copy{
     display: block !important;
     order: 0 !important;
     grid-column: auto !important;
@@ -886,25 +649,16 @@ body,
     min-width: 0 !important;
   }
 
-  .wf-client-landing .wf-hero--client .wf-badge,
-  .wf-client-landing .wf-hero--client h1,
-  .wf-client-landing .wf-hero--client p,
-  .wf-client-landing .wf-hero--client .wf-hero-buttons,
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    grid-column: auto !important;
-    max-width: 100% !important;
-  }
+  
 
-  .wf-hero--client h1,
-  .wf-hero--admin h1 {
+  .wf-hero--admin h1{
     margin-block: clamp(8px, 2svh, 14px) clamp(7px, 1.8svh, 12px) !important;
     font-size: clamp(27px, 8svh, 42px) !important;
     line-height: 1.03 !important;
     letter-spacing: 0 !important;
   }
 
-  .wf-hero--client p,
-  .wf-hero--admin p {
+  .wf-hero--admin p{
     margin-bottom: clamp(8px, 2svh, 14px) !important;
     font-size: clamp(13px, 3.2svh, 16px) !important;
     line-height: 1.28 !important;
@@ -916,18 +670,15 @@ body,
     gap: 8px !important;
   }
 
-  .wf-client-landing .wf-hero--client .wf-primary-cta,
-  .wf-client-landing .wf-hero--client .wf-secondary-cta,
   .wf-primary-cta,
-  .wf-secondary-cta {
+.wf-secondary-cta{
     min-height: clamp(40px, 9svh, 46px) !important;
     border-radius: 10px !important;
     padding-inline: clamp(10px, 2vw, 16px) !important;
     font-size: clamp(12px, 2.8svh, 14px) !important;
   }
 
-  .wf-client-landing .wf-hero-visual--client,
-  .wf-hero-visual--admin {
+  .wf-hero-visual--admin{
     position: relative !important;
     inset: auto !important;
     top: auto !important;
@@ -944,10 +695,8 @@ body,
     pointer-events: none !important;
   }
 
-  .wf-client-landing .wf-hero-visual--client picture,
-  .wf-client-landing .wf-hero-visual--client img,
   .wf-hero-visual--admin picture,
-  .wf-hero-visual--admin img {
+.wf-hero-visual--admin img{
     display: block !important;
     width: 100% !important;
     height: auto !important;
@@ -957,146 +706,58 @@ body,
     object-position: center !important;
   }
 
-  .wf-client-landing .wf-hero-visual--client img {
-    max-width: 100% !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    clip-path: none !important;
-  }
+  
 
   .wf-hero-visual--admin img {
     border-radius: 28px !important;
     clip-path: inset(0 round 28px) !important;
   }
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 6px 12px !important;
-    margin-top: clamp(8px, 2svh, 14px) !important;
-    font-size: clamp(10px, 2.5svh, 12px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line > span {
-    display: inline-flex !important;
-    flex: 1 1 120px !important;
-    justify-items: initial !important;
-    text-align: left !important;
-    white-space: normal !important;
-    line-height: 1.12 !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: clamp(8px, 1.6vw, 12px) !important;
-    margin-block: clamp(10px, 2.4svh, 18px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card {
-    min-height: clamp(76px, 18svh, 96px) !important;
-    grid-template-columns: clamp(34px, 8svh, 42px) minmax(0, 1fr) 14px !important;
-    grid-template-rows: auto !important;
-    align-items: center !important;
-    gap: 7px !important;
-    padding: clamp(8px, 1.8svh, 12px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon,
-  .wf-client-landing .wf-action-card__icon .wf-icon--image {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-    width: clamp(34px, 8svh, 42px) !important;
-    height: clamp(34px, 8svh, 42px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__body {
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__arrow {
-    grid-column: 3 !important;
-    grid-row: 1 !important;
-    font-size: clamp(22px, 5.5svh, 28px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card strong {
-    margin-bottom: 3px !important;
-    font-size: clamp(11.5px, 2.9svh, 13.5px) !important;
-    line-height: 1.12 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card small {
-    font-size: clamp(10px, 2.55svh, 12px) !important;
-    line-height: 1.2 !important;
-  }
+  
 
-  .wf-client-landing .wf-info-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: clamp(10px, 1.8vw, 16px) !important;
-    margin-top: clamp(10px, 2.6svh, 18px) !important;
-  }
+  
 
-  .wf-house-card,
-  .wf-why-card {
+  .wf-why-card{
     min-width: 0 !important;
     padding: clamp(12px, 2.4svh, 18px) !important;
   }
 
-  .wf-house-card {
-    grid-template-columns: minmax(88px, 32%) minmax(0, 1fr) !important;
-    gap: 12px !important;
-  }
+  
 
-  .wf-house-card img {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 160px !important;
-    object-fit: cover !important;
-  }
+  
 
   .wf-mini-features {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
   }
 
-  .wf-footer {
-    display: grid !important;
-    grid-template-columns: auto minmax(0, 1fr) repeat(3, max-content) !important;
-    align-items: center !important;
-    gap: 8px 12px !important;
-    padding: clamp(10px, 2svh, 14px) !important;
-    text-align: left !important;
-  }
+  
 
-  .wf-footer .wf-logo {
-    display: inline-flex !important;
-  }
+  
 
-  .wf-footer .wf-logo img {
-    max-height: 44px !important;
-    width: auto !important;
-  }
+  
 
-  .wf-footer p {
-    grid-column: auto !important;
-    width: auto !important;
-    font-size: clamp(12px, 2.8svh, 14px) !important;
-    line-height: 1.25 !important;
-  }
+  
 
-  .wf-footer button {
-    min-height: 36px !important;
-    padding-inline: 10px !important;
-    white-space: nowrap !important;
-  }
+  
 
-  .wf-footer strong {
-    grid-column: 2 / -1 !important;
-    width: auto !important;
-    font-size: clamp(11px, 2.5svh, 13px) !important;
-  }
+  
 
   .wf-two-column--bookings,
   .wf-two-column--admin {
@@ -1522,8 +1183,7 @@ body,
     display: flex !important;
   }
 
-  .wf-navbar .wf-mobile-actions,
-  .wf-client-landing .wf-navbar--client .wf-mobile-actions {
+  .wf-navbar .wf-mobile-actions{
     display: flex !important;
     position: static !important;
     inset: auto !important;
@@ -1549,39 +1209,26 @@ body,
 }
 
 @media (orientation: landscape) and (max-height: 430px) and (max-width: 940px) {
-  .wf-landing-main {
-    width: min(calc(100vw - 20px), 900px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client,
-  .wf-admin-landing .wf-hero--admin {
+  .wf-admin-landing .wf-hero--admin{
     gap: 8px !important;
     padding-block: 4px !important;
   }
 
-  .wf-hero--client h1,
-  .wf-hero--admin h1 {
+  .wf-hero--admin h1{
     font-size: clamp(24px, 7.4svh, 34px) !important;
   }
 
-  .wf-client-landing .wf-hero-visual--client,
-  .wf-hero-visual--admin {
+  .wf-hero-visual--admin{
     max-width: min(30vw, 230px) !important;
   }
 
-  .wf-client-landing .wf-actions-grid--client {
-    gap: 8px !important;
-    margin-block: 8px !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card {
-    min-height: 72px !important;
-    padding: 8px !important;
-  }
+  
 
-  .wf-client-landing .wf-info-row {
-    margin-top: 8px !important;
-  }
+  
 
   .wf-calendar-day {
     min-height: clamp(32px, 7.6svh, 44px) !important;
@@ -1600,37 +1247,19 @@ body,
 }
 
 @media (orientation: landscape) and (max-height: 430px) and (max-width: 740px) {
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(0, 62%) minmax(120px, 38%) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client p br {
-    display: none;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
+  
 
-  .wf-client-landing .wf-info-row {
-    grid-template-columns: 1fr !important;
-  }
+  
 
-  .wf-footer {
-    grid-template-columns: repeat(3, minmax(0, auto)) !important;
-    justify-content: center !important;
-    text-align: center !important;
-  }
+  
 
-  .wf-footer .wf-logo {
-    display: none !important;
-  }
+  
 
-  .wf-footer p,
-  .wf-footer strong {
-    grid-column: 1 / -1 !important;
-    width: 100% !important;
-  }
+  
 
   .wf-admin-card-grid {
     grid-template-columns: 1fr !important;
@@ -1675,9 +1304,8 @@ body,
 
 @media (max-width: 799px) {
   .wf-navbar.wf-header,
-  .wf-navbar--client.wf-header,
-  .wf-navbar--admin.wf-header,
-  .wf-client-landing .wf-navbar--client.wf-header {
+.wf-navbar--client.wf-header,
+.wf-navbar--admin.wf-header{
     display: grid !important;
     width: 100% !important;
     inline-size: 100% !important;
@@ -1697,8 +1325,7 @@ body,
   }
 
   .wf-navbar--client .wf-logo,
-  .wf-navbar--admin .wf-logo,
-  .wf-client-landing .wf-navbar--client .wf-logo {
+.wf-navbar--admin .wf-logo{
     width: auto !important;
     max-width: calc(100vw - var(--wf-nav-mobile-actions-width) - (var(--wf-nav-mobile-pad) * 2) - var(--wf-nav-mobile-gap)) !important;
     min-width: 0 !important;
@@ -1706,10 +1333,8 @@ body,
   }
 
   .wf-navbar--client .wf-logo img,
-  .wf-navbar--admin .wf-logo img,
-  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
-  .wf-client-landing .wf-navbar--client.wf-header .wf-logo img,
-  .wf-client-landing .wf-header--public .wf-logo img {
+.wf-navbar--admin .wf-logo img,
+.wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img{
     width: auto !important;
     height: clamp(58px, 16vw, 78px) !important;
     max-width: min(clamp(140px, 44vw, 210px), calc(100vw - var(--wf-nav-mobile-actions-width) - (var(--wf-nav-mobile-pad) * 2) - var(--wf-nav-mobile-gap))) !important;
@@ -1718,9 +1343,8 @@ body,
   }
 
   .wf-navbar .wf-mobile-actions,
-  .wf-navbar--client .wf-mobile-actions,
-  .wf-navbar--admin .wf-mobile-actions,
-  .wf-client-landing .wf-navbar--client .wf-mobile-actions {
+.wf-navbar--client .wf-mobile-actions,
+.wf-navbar--admin .wf-mobile-actions{
     display: flex !important;
     position: static !important;
     inset: auto !important;
@@ -1736,9 +1360,8 @@ body,
   }
 
   .wf-navbar .wf-top-btn--compact,
-  .wf-navbar--admin .wf-mobile-actions .wf-top-btn--compact,
-  .wf-client-landing .wf-header--public .wf-top-btn--compact,
-  .wf-navbar--client .wf-top-btn--compact {
+.wf-navbar--admin .wf-mobile-actions .wf-top-btn--compact,
+.wf-navbar--client .wf-top-btn--compact{
     width: var(--wf-nav-mobile-action-size) !important;
     min-width: var(--wf-nav-mobile-action-size) !important;
     height: var(--wf-nav-mobile-action-size) !important;
@@ -1755,206 +1378,48 @@ body,
 }
 
 @media (min-width: 1024px) {
-  .wf-client-landing .wf-hero--client {
-    grid-template-columns: minmax(390px, .72fr) minmax(0, 1fr) !important;
-    min-height: clamp(560px, 38vw, 720px) !important;
-    gap: clamp(12px, 1.5vw, 28px) !important;
-    align-items: center !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-copy,
-  .wf-client-landing .wf-hero--client .wf-badge,
-  .wf-client-landing .wf-hero--client h1,
-  .wf-client-landing .wf-hero--client p,
-  .wf-client-landing .wf-hero--client .wf-hero-buttons,
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    position: relative !important;
-    z-index: 3 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    position: relative !important;
-    inset: auto !important;
-    z-index: 1 !important;
-    width: 100% !important;
-    max-width: none !important;
-    min-height: 0 !important;
-    align-self: center !important;
-    justify-self: end !important;
-    margin: 0 !important;
-    overflow: visible !important;
-    pointer-events: none !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture {
-    width: min(100%, 980px) !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client img {
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100% !important;
-    max-height: clamp(430px, 34vw, 650px) !important;
-    object-fit: contain !important;
-    object-position: right center !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    clip-path: none !important;
-    transform: none !important;
-  }
+  
 }
 
-.wf-client-landing .wf-hero--client .wf-feature-line {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  max-width: min(100%, 720px) !important;
-  gap: clamp(10px, 2vw, 28px) !important;
-  overflow: visible !important;
-  white-space: normal !important;
-}
-
-.wf-client-landing .wf-hero--client .wf-feature-line > span {
-  flex: 0 1 auto !important;
-  min-width: min(100%, 172px) !important;
-  max-width: 100% !important;
-  white-space: normal !important;
-  overflow: visible !important;
-  overflow-wrap: normal !important;
-  word-break: normal !important;
-  line-height: 1.22 !important;
-}
-
-.wf-client-landing .wf-mini-features {
-  overflow: visible !important;
-}
-
-.wf-client-landing .wf-mini-features span {
-  min-width: 0 !important;
-  min-height: clamp(78px, 5.4vw, 96px) !important;
-  grid-template-columns: clamp(42px, 3.2vw, 58px) minmax(0, 1fr) !important;
-  align-items: center !important;
-  row-gap: 3px !important;
-  overflow: visible !important;
-}
-
-.wf-client-landing .wf-mini-features .wf-icon--benefit-practicality,
-.wf-client-landing .wf-mini-features .wf-icon--benefit-security,
-.wf-client-landing .wf-mini-features .wf-icon--benefit-speed,
-.wf-client-landing .wf-mini-features .wf-icon--benefit-follow {
-  width: clamp(42px, 3.2vw, 58px) !important;
-  height: clamp(42px, 3.2vw, 58px) !important;
-  grid-row: 1 / span 2 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  overflow: visible !important;
-}
-
-.wf-client-landing .wf-mini-features strong,
-.wf-client-landing .wf-mini-features small {
-  min-width: 0 !important;
-  display: block !important;
-  white-space: normal !important;
-  overflow: visible !important;
-  overflow-wrap: normal !important;
-  word-break: normal !important;
-  hyphens: none !important;
-}
-
-.wf-client-landing .wf-mini-features strong {
-  font-size: clamp(13px, 1vw, 15px) !important;
-  line-height: 1.18 !important;
-}
-
-.wf-client-landing .wf-mini-features small {
-  font-size: clamp(11.5px, .9vw, 13px) !important;
-  line-height: 1.34 !important;
-}
 
 @media (min-width: 800px) and (max-width: 1279px) {
-  .wf-client-landing .wf-mini-features {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 8px 12px !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span {
-    border-right: 0 !important;
-    padding-inline: 0 !important;
-  }
+  
 }
 
 @media (max-width: 799px) {
-  .wf-client-landing .wf-hero--client {
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: auto !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client {
-    order: 2 !important;
-    position: relative !important;
-    inset: auto !important;
-    width: min(100%, 430px) !important;
-    max-width: 100% !important;
-    min-height: 0 !important;
-    margin: 8px auto 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-copy {
-    order: 1 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture,
-  .wf-client-landing .wf-hero-visual--client img {
-    width: 100% !important;
-    height: auto !important;
-    max-height: none !important;
-    object-fit: contain !important;
-    object-position: center !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    clip-path: none !important;
-    transform: none !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span,
-  .wf-client-landing .wf-mini-features span:nth-child(2n),
-  .wf-client-landing .wf-mini-features span:last-child {
-    border-right: 0 !important;
-    padding: 8px 0 !important;
-  }
+  
 }
 
 @media (max-width: 430px) {
-  .wf-client-landing .wf-mini-features {
-    grid-template-columns: 1fr !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span {
-    min-height: 72px !important;
-    grid-template-columns: 44px minmax(0, 1fr) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line > span {
-    min-width: 100% !important;
-  }
+  
 }
 
 /* SG landing mobile wireframe replication (mobile is <= 900px). */
-.wf-footer-lock {
-  display: none;
-}
+
 
 @media (max-width: 900px) {
   :root {
@@ -1964,11 +1429,10 @@ body,
   }
 
   html,
-  body,
-  #root,
-  .wf-page,
-  .wf-page-shell,
-  .wf-client-landing {
+body,
+#root,
+.wf-page,
+.wf-page-shell{
     width: 100% !important;
     max-width: 100vw !important;
     min-height: 100% !important;
@@ -1976,35 +1440,11 @@ body,
     background: #fff !important;
   }
 
-  .wf-client-landing .wf-navbar--client.wf-header,
-  .wf-client-landing .wf-header--public {
-    width: 100% !important;
-    max-width: 100vw !important;
-    min-height: clamp(86px, 13vw, 124px) !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: clamp(14px, 2.25vw, 22px) var(--sg-mobile-gutter) clamp(5px, .9vw, 8px) !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, var(--sg-logo-width)) minmax(0, 1fr) !important;
-    align-items: start !important;
-    gap: clamp(8px, 2vw, 16px) !important;
-    border: 0 !important;
-    background: #fff !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-logo,
-  .wf-client-landing .wf-navbar--client.wf-header .wf-logo {
-    width: var(--sg-logo-width) !important;
-    max-width: var(--sg-logo-width) !important;
-    min-width: 0 !important;
-    flex: 0 0 var(--sg-logo-width) !important;
-    align-self: start !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-logo img,
-  .wf-client-landing .wf-navbar--client.wf-header .wf-logo img,
-  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img{
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -2014,643 +1454,151 @@ body,
     object-position: left top !important;
   }
 
-  .wf-client-landing .wf-navbar--client .wf-header-actions,
-  .wf-client-landing .wf-navbar--client .wf-navbar__actions,
-  .wf-client-landing .wf-navbar--client .wf-navbar__nav {
-    display: none !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-mobile-actions,
-  .wf-client-landing .wf-header--public .wf-mobile-actions {
-    position: static !important;
-    inset: auto !important;
-    transform: none !important;
-    grid-column: 2 !important;
-    justify-self: end !important;
-    align-self: start !important;
-    display: flex !important;
-    width: auto !important;
-    min-width: 0 !important;
-    margin: 0 !important;
-    gap: clamp(8px, 1.8vw, 16px) !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-top-btn,
-  .wf-client-landing .wf-navbar--client .wf-top-btn--compact,
-  .wf-client-landing .wf-header--public .wf-top-btn--compact {
-    width: var(--sg-nav-button) !important;
-    min-width: var(--sg-nav-button) !important;
-    height: var(--sg-nav-button) !important;
-    min-height: var(--sg-nav-button) !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: clamp(12px, 2.35vw, 18px) !important;
-    box-shadow: 0 13px 24px rgba(5, 30, 124, .18) !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-top-btn .wf-icon,
-  .wf-client-landing .wf-navbar--client .wf-top-btn--compact .wf-icon,
-  .wf-client-landing .wf-header--public .wf-top-btn--compact .wf-icon {
-    width: clamp(22px, 3.8vw, 34px) !important;
-    min-width: clamp(22px, 3.8vw, 34px) !important;
-    height: clamp(22px, 3.8vw, 34px) !important;
-  }
+  
 
-  .wf-client-landing .wf-navbar--client .wf-mobile-actions .wf-profile-menu-wrap:last-child .wf-client-profile-trigger {
-    background: linear-gradient(135deg, #dd2d00, #ff5a10) !important;
-    color: #fff !important;
-    box-shadow: 0 13px 24px rgba(221, 45, 0, .2) !important;
-  }
+  
 
-  .wf-client-landing .wf-landing-main {
-    width: 100% !important;
-    max-width: 100vw !important;
-    margin: 0 !important;
-    padding-inline: var(--sg-mobile-gutter) !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client,
-  .wf-client-landing .wf-hero--client-final {
-    position: relative !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 46%) minmax(0, 54%) !important;
-    grid-auto-rows: auto !important;
-    gap: 0 !important;
-    min-height: clamp(560px, 76vw, 708px) !important;
-    padding: clamp(17px, 2.7vw, 26px) 0 0 !important;
-    align-items: start !important;
-    overflow: visible !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-copy,
-  .wf-client-landing .wf-client-hero-copy-final {
-    display: contents !important;
-    min-width: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge,
-  .wf-client-landing .wf-hero--client h1,
-  .wf-client-landing .wf-hero--client p,
-  .wf-client-landing .wf-hero--client .wf-hero-buttons {
-    grid-column: 1 !important;
-    position: relative !important;
-    z-index: 4 !important;
-    max-width: min(100%, 406px) !important;
-    min-width: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge {
-    width: fit-content !important;
-    max-width: min(100%, 390px) !important;
-    min-height: clamp(36px, 5.4vw, 51px) !important;
-    padding: clamp(8px, 1.3vw, 12px) clamp(12px, 1.9vw, 18px) !important;
-    border: 1px solid rgba(255, 75, 11, .28) !important;
-    border-radius: 12px !important;
-    background: #fff8f3 !important;
-    color: #f21616 !important;
-    gap: clamp(7px, 1.1vw, 12px) !important;
-    font-size: clamp(12px, 1.95vw, 19px) !important;
-    line-height: 1.15 !important;
-    font-weight: 900 !important;
-    white-space: nowrap !important;
-    text-align: left !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-badge .wf-icon {
-    width: clamp(17px, 2.6vw, 24px) !important;
-    min-width: clamp(17px, 2.6vw, 24px) !important;
-    height: clamp(17px, 2.6vw, 24px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-    margin: clamp(20px, 3.2vw, 29px) 0 clamp(14px, 2vw, 20px) !important;
-    color: #07135d !important;
-    font-size: clamp(30px, 5.45vw, 52px) !important;
-    line-height: 1.14 !important;
-    letter-spacing: -0.045em !important;
-    font-weight: 950 !important;
-    overflow-wrap: normal !important;
-    word-break: normal !important;
-    hyphens: none !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client h1 span {
-    color: #a30628 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client p {
-    margin: 0 0 clamp(20px, 3vw, 32px) !important;
-    color: #07135d !important;
-    font-size: clamp(15px, 2.35vw, 23px) !important;
-    line-height: 1.36 !important;
-    font-weight: 520 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-hero-buttons {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    width: min(100%, 405px) !important;
-    gap: clamp(12px, 1.7vw, 16px) !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-primary-cta,
-  .wf-client-landing .wf-hero--client .wf-secondary-cta {
-    width: 100% !important;
-    min-width: 0 !important;
-    min-height: clamp(52px, 7.1vw, 68px) !important;
-    border-radius: 14px !important;
-    padding: 0 clamp(16px, 2.5vw, 28px) !important;
-    justify-content: center !important;
-    gap: clamp(9px, 1.4vw, 14px) !important;
-    font-size: clamp(15px, 2.25vw, 22px) !important;
-    font-weight: 900 !important;
-    line-height: 1.1 !important;
-    white-space: nowrap !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-primary-cta .wf-icon {
-    width: clamp(24px, 3.6vw, 34px) !important;
-    height: clamp(24px, 3.6vw, 34px) !important;
-  }
+  
 
-  .wf-client-landing .wf-play {
-    width: clamp(30px, 4.4vw, 43px) !important;
-    min-width: clamp(30px, 4.4vw, 43px) !important;
-    height: clamp(30px, 4.4vw, 43px) !important;
-    background: #ff1726 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client,
-  .wf-client-landing .wf-client-hero-visual-final {
-    grid-column: 2 !important;
-    grid-row: 1 / span 5 !important;
-    order: initial !important;
-    position: absolute !important;
-    top: clamp(-10px, -0.4vw, 0px) !important;
-    right: clamp(-28px, -2.3vw, -12px) !important;
-    width: min(56vw, 530px) !important;
-    max-width: none !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    z-index: 2 !important;
-    pointer-events: none !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client picture,
-  .wf-client-landing .wf-hero-visual--client img,
-  .wf-client-landing .wf-client-hero-visual-final picture,
-  .wf-client-landing .wf-client-hero-visual-final img {
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    height: auto !important;
-    max-height: none !important;
-    object-fit: contain !important;
-    object-position: right top !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    clip-path: none !important;
-    transform: none !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line {
-    grid-column: 1 / -1 !important;
-    position: relative !important;
-    z-index: 4 !important;
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: clamp(30px, 5vw, 43px) 0 0 !important;
-    gap: clamp(10px, 3.3vw, 36px) !important;
-    color: #07135d !important;
-    font-size: clamp(12px, 1.8vw, 17px) !important;
-    font-weight: 900 !important;
-    line-height: 1.16 !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line > span {
-    display: grid !important;
-    grid-template-columns: clamp(34px, 4.8vw, 46px) minmax(0, 1fr) !important;
-    align-items: center !important;
-    justify-items: start !important;
-    gap: clamp(8px, 1.5vw, 14px) !important;
-    text-align: left !important;
-    white-space: normal !important;
-    overflow-wrap: normal !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client .wf-feature-line .wf-icon,
-  .wf-client-landing .wf-feature-line .wf-icon--shield,
-  .wf-client-landing .wf-feature-line .wf-icon--lock,
-  .wf-client-landing .wf-feature-line .wf-icon--check {
-    width: clamp(34px, 4.8vw, 46px) !important;
-    min-width: clamp(34px, 4.8vw, 46px) !important;
-    height: clamp(34px, 4.8vw, 46px) !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: clamp(14px, 2.1vw, 22px) !important;
-    margin-top: clamp(16px, 2.2vw, 24px) !important;
-    position: relative !important;
-    z-index: 5 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card {
-    min-height: clamp(112px, 15vw, 142px) !important;
-    display: grid !important;
-    grid-template-columns: clamp(62px, 9vw, 88px) minmax(0, 1fr) clamp(18px, 2.8vw, 28px) !important;
-    grid-template-rows: auto !important;
-    align-items: center !important;
-    gap: clamp(11px, 1.7vw, 18px) !important;
-    padding: clamp(14px, 2.1vw, 22px) !important;
-    border-radius: 15px !important;
-    box-shadow: 0 10px 24px rgba(8, 20, 95, .045) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-    width: clamp(62px, 9vw, 88px) !important;
-    height: clamp(62px, 9vw, 88px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon .wf-icon,
-  .wf-client-landing .wf-action-card__icon .wf-icon--image {
-    width: clamp(62px, 8.6vw, 82px) !important;
-    height: clamp(62px, 8.6vw, 82px) !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__body {
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-    min-width: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card strong {
-    margin: 0 0 clamp(6px, .9vw, 10px) !important;
-    color: #07135d !important;
-    font-size: clamp(15px, 2.05vw, 20px) !important;
-    line-height: 1.15 !important;
-    font-weight: 950 !important;
-    overflow-wrap: normal !important;
-    word-break: normal !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card small {
-    color: #07135d !important;
-    font-size: clamp(12.5px, 1.65vw, 16px) !important;
-    line-height: 1.35 !important;
-    font-weight: 560 !important;
-    overflow-wrap: normal !important;
-    word-break: normal !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__arrow {
-    grid-column: 3 !important;
-    grid-row: 1 !important;
-    align-self: center !important;
-    justify-self: end !important;
-    font-size: clamp(36px, 5.3vw, 52px) !important;
-    line-height: 1 !important;
-  }
+  
 
-  .wf-client-landing .wf-info-row {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: clamp(18px, 2.8vw, 28px) !important;
-    margin-top: clamp(18px, 2.6vw, 24px) !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card {
-    display: grid !important;
-    grid-template-columns: minmax(0, 48%) minmax(0, 1fr) !important;
-    align-items: center !important;
-    gap: clamp(18px, 4vw, 38px) !important;
-    min-height: clamp(138px, 19vw, 178px) !important;
-    padding: clamp(12px, 1.8vw, 18px) clamp(16px, 2.5vw, 26px) !important;
-    border: 1px solid #d6dff0 !important;
-    border-radius: 15px !important;
-    background: #fff !important;
-    box-shadow: 0 8px 20px rgba(8, 20, 95, .035) !important;
-    text-align: left !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card img {
-    width: 100% !important;
-    height: auto !important;
-    max-height: clamp(110px, 16vw, 150px) !important;
-    object-fit: contain !important;
-    object-position: left center !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card h2 {
-    margin: 0 0 clamp(6px, 1.2vw, 12px) !important;
-    color: #07135d !important;
-    font-size: clamp(18px, 2.65vw, 26px) !important;
-    line-height: 1.16 !important;
-    font-weight: 950 !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card p {
-    margin: 0 !important;
-    color: #07135d !important;
-    font-size: clamp(13px, 1.85vw, 18px) !important;
-    line-height: 1.45 !important;
-    font-weight: 520 !important;
-  }
+  
 
-  .wf-client-landing .wf-why-card {
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
+  
 
-  .wf-client-landing .wf-why-card h2 {
-    margin: 0 0 clamp(14px, 2.1vw, 20px) !important;
-    padding-left: clamp(4px, .8vw, 12px) !important;
-    color: #07135d !important;
-    font-size: clamp(21px, 3.1vw, 31px) !important;
-    line-height: 1.1 !important;
-    font-weight: 950 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span,
-  .wf-client-landing .wf-mini-features span:nth-child(2n),
-  .wf-client-landing .wf-mini-features span:last-child {
-    min-height: clamp(84px, 11vw, 104px) !important;
-    display: grid !important;
-    grid-template-columns: clamp(44px, 6vw, 58px) minmax(0, 1fr) !important;
-    column-gap: clamp(8px, 1.3vw, 14px) !important;
-    row-gap: 4px !important;
-    align-items: center !important;
-    justify-items: start !important;
-    align-content: center !important;
-    padding: clamp(4px, 1.2vw, 10px) clamp(10px, 1.8vw, 18px) !important;
-    border-right: 1px solid #d7dff0 !important;
-    border-bottom: 0 !important;
-    text-align: left !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span:first-child {
-    padding-left: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span:last-child {
-    border-right: 0 !important;
-    padding-right: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features .wf-icon--image,
-  .wf-client-landing .wf-mini-features .wf-icon--benefit-practicality,
-  .wf-client-landing .wf-mini-features .wf-icon--benefit-security,
-  .wf-client-landing .wf-mini-features .wf-icon--benefit-speed,
-  .wf-client-landing .wf-mini-features .wf-icon--benefit-follow {
-    grid-row: 1 / span 2 !important;
-    width: clamp(44px, 6vw, 58px) !important;
-    height: clamp(44px, 6vw, 58px) !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features strong {
-    align-self: end !important;
-    color: #07135d !important;
-    font-size: clamp(12px, 1.52vw, 15px) !important;
-    line-height: 1.15 !important;
-    font-weight: 950 !important;
-    overflow-wrap: normal !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features small {
-    align-self: start !important;
-    margin: 2px 0 0 !important;
-    color: #07135d !important;
-    font-size: clamp(11px, 1.35vw, 13.5px) !important;
-    line-height: 1.32 !important;
-    font-weight: 560 !important;
-    overflow-wrap: normal !important;
-  }
+  
 
-  .wf-client-landing .wf-footer {
-    position: relative !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr) clamp(68px, 10vw, 96px) !important;
-    gap: 0 clamp(16px, 3.5vw, 42px) !important;
-    align-items: center !important;
-    margin: clamp(16px, 2.4vw, 24px) 0 0 !important;
-    padding: 0 0 calc(clamp(18px, 3vw, 28px) + env(safe-area-inset-bottom)) !important;
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
+  
 
-  .wf-client-landing .wf-footer .wf-logo {
-    display: none !important;
-  }
+  
 
-  .wf-client-landing .wf-footer strong {
-    order: 1 !important;
-    grid-column: 1 !important;
-    min-height: clamp(76px, 9vw, 90px) !important;
-    width: 100% !important;
-    display: grid !important;
-    grid-template-columns: clamp(44px, 6.2vw, 60px) minmax(0, 1fr) !important;
-    gap: clamp(10px, 1.6vw, 18px) !important;
-    align-items: center !important;
-    margin: 0 !important;
-    padding: clamp(10px, 1.7vw, 18px) 0 clamp(10px, 1.7vw, 18px) clamp(16px, 2.5vw, 24px) !important;
-    border: 1px solid #d7dff0 !important;
-    border-right: 0 !important;
-    border-radius: 15px 0 0 15px !important;
-    color: #07135d !important;
-    text-align: left !important;
-    font-size: clamp(14px, 2.1vw, 21px) !important;
-    line-height: 1.18 !important;
-    font-weight: 950 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer strong .wf-icon--footer-security {
-    width: clamp(44px, 6.2vw, 60px) !important;
-    height: clamp(44px, 6.2vw, 60px) !important;
-    flex: 0 0 auto !important;
-  }
+  
 
-  .wf-client-landing .wf-footer p {
-    order: 1 !important;
-    grid-column: 2 !important;
-    min-height: clamp(76px, 9vw, 90px) !important;
-    width: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    margin: 0 !important;
-    padding: clamp(10px, 1.7vw, 18px) clamp(12px, 2vw, 20px) !important;
-    border-block: 1px solid #d7dff0 !important;
-    color: #07135d !important;
-    text-align: left !important;
-    font-size: clamp(12.5px, 1.72vw, 17px) !important;
-    line-height: 1.4 !important;
-    font-weight: 650 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer p::before {
-    content: '' !important;
-    width: 1px !important;
-    align-self: stretch !important;
-    margin-right: clamp(12px, 2vw, 20px) !important;
-    background: #d7dff0 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer-lock {
-    order: 1 !important;
-    grid-column: 3 !important;
-    min-height: clamp(76px, 9vw, 90px) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin: 0 !important;
-    padding: 0 clamp(14px, 2vw, 24px) 0 0 !important;
-    border: 1px solid #d7dff0 !important;
-    border-left: 0 !important;
-    border-radius: 0 15px 15px 0 !important;
-    color: #9d071f !important;
-  }
+  
 
-  .wf-client-landing .wf-footer-lock .wf-icon,
-  .wf-client-landing .wf-footer-lock svg {
-    width: clamp(34px, 5vw, 48px) !important;
-    height: clamp(34px, 5vw, 48px) !important;
-  }
+  
 
-  .wf-client-landing .wf-footer button {
-    order: 2 !important;
-    min-height: clamp(34px, 5.5vw, 46px) !important;
-    margin-top: clamp(10px, 1.8vw, 18px) !important;
-    padding: 0 clamp(12px, 2.6vw, 30px) !important;
-    border: 0 !important;
-    background: transparent !important;
-    color: #0358ff !important;
-    font-size: clamp(13px, 1.7vw, 16px) !important;
-    font-weight: 700 !important;
-    text-align: center !important;
-    justify-self: center !important;
-    white-space: nowrap !important;
-  }
+  
 
-  .wf-client-landing .wf-footer button + button {
-    border-left: 1px solid #d7dff0 !important;
-  }
+  
 }
 
 @media (max-width: 620px) {
-  .wf-client-landing .wf-hero--client,
-  .wf-client-landing .wf-hero--client-final {
-    grid-template-columns: minmax(0, 57%) minmax(0, 43%) !important;
-    min-height: 540px !important;
-  }
+  
 
-  .wf-client-landing .wf-hero-visual--client,
-  .wf-client-landing .wf-client-hero-visual-final {
-    top: 46px !important;
-    right: -18px !important;
-    width: 51vw !important;
-  }
+  
 
-  .wf-client-landing .wf-hero--client h1 {
-    font-size: clamp(29px, 8vw, 38px) !important;
-    letter-spacing: -0.04em !important;
-  }
+  
 
-  .wf-client-landing .wf-actions-grid--client {
-    gap: 10px !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card {
-    grid-template-columns: clamp(44px, 11vw, 60px) minmax(0, 1fr) 14px !important;
-    padding: 11px !important;
-  }
+  
 
-  .wf-client-landing .wf-action-card__icon,
-  .wf-client-landing .wf-action-card__icon .wf-icon,
-  .wf-client-landing .wf-action-card__icon .wf-icon--image {
-    width: clamp(44px, 11vw, 60px) !important;
-    height: clamp(44px, 11vw, 60px) !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 12px 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-mini-features span:nth-child(2n) {
-    border-right: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer {
-    grid-template-columns: minmax(0, 1fr) clamp(52px, 12vw, 64px) !important;
-    gap: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer strong {
-    grid-column: 1 !important;
-    border-radius: 15px 0 0 0 !important;
-    border-right: 0 !important;
-    border-bottom: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer p {
-    grid-column: 1 / -1 !important;
-    grid-row: 2 !important;
-    min-height: auto !important;
-    border: 1px solid #d7dff0 !important;
-    border-top: 0 !important;
-    border-radius: 0 0 15px 15px !important;
-    padding-left: clamp(16px, 3vw, 24px) !important;
-  }
+  
 
-  .wf-client-landing .wf-footer p::before {
-    display: none !important;
-  }
+  
 
-  .wf-client-landing .wf-footer-lock {
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-    border-radius: 0 15px 0 0 !important;
-    border-bottom: 0 !important;
-  }
+  
 
-  .wf-client-landing .wf-footer button {
-    padding-inline: 8px !important;
-    font-size: clamp(12px, 3.1vw, 14px) !important;
-  }
+  
 }
 
 @media (max-width: 380px) {
-  .wf-client-landing .wf-actions-grid--client {
-    grid-template-columns: 1fr !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card {
-    grid-template-columns: 1fr !important;
-    text-align: left !important;
-  }
+  
 
-  .wf-client-landing .wf-house-card img {
-    max-height: 122px !important;
-  }
+  
 }

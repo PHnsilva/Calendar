@@ -48,7 +48,7 @@ type ClientProfileMenuProps = {
 function readClientNavbarSnapshot(): ClientNavbarSnapshot {
   const verification = getStoredPhoneVerification();
   const profile = getStoredClientProfile();
-  const isVerified = Boolean(verification);
+  const isVerified = Boolean(profile?.name || profile?.phone || profile?.email || verification);
   const firstName = profile?.name?.split(/\s+/)[0];
   const phone = profile?.phone || verification?.phone;
 
@@ -160,12 +160,9 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
   const snapshot = useClientNavbarSnapshot();
   const profileLabel = snapshot.isVerified ? 'Perfil' : (isHome ? 'Olá! Visitante' : 'Cliente');
   const handleProfileAction = () => {
-    if (snapshot.isVerified) {
-      onProfile?.();
-      return;
-    }
-    onConfirmPhone?.();
+    onProfile?.();
   };
+  void onConfirmPhone;
 
   const desktopProfileLabel = <><NavbarIcon name="user" /> <span>{profileLabel}</span></>;
 

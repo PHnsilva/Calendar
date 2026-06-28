@@ -16,6 +16,7 @@ export type ServicoRequest = {
   clientState: string;
   clientLatitude?: number;
   clientLongitude?: number;
+  reservedPhonePassword?: string;
 };
 
 export type ServicoResponse = {

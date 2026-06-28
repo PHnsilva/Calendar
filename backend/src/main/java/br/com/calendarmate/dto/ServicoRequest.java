@@ -60,6 +60,8 @@ public class ServicoRequest {
     private Double clientLatitude;
     private Double clientLongitude;
 
+    private String reservedPhonePassword;
+
     public String getServiceType() { return serviceType; }
     public void setServiceType(String serviceType) { this.serviceType = serviceType; }
 
@@ -110,4 +112,7 @@ public class ServicoRequest {
 
     public Double getClientLongitude() { return clientLongitude; }
     public void setClientLongitude(Double clientLongitude) { this.clientLongitude = clientLongitude; }
+
+    public String getReservedPhonePassword() { return reservedPhonePassword; }
+    public void setReservedPhonePassword(String reservedPhonePassword) { this.reservedPhonePassword = reservedPhonePassword; }
 }

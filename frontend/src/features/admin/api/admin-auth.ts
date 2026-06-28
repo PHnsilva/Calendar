@@ -19,6 +19,15 @@ export function resendAdminLogin(verificationId: string) {
   });
 }
 
+export async function loginAdminWithPassword(phone: string, password: string) {
+  const response = await apiPost<AdminAuthConfirmResponse>("/api/admin/auth/password", {
+    phone: normalizePhone(phone),
+    password,
+  });
+  saveAdminSession(response.sessionToken, response.admin);
+  return response;
+}
+
 export async function confirmAdminLogin(verificationId: string, code: string) {
   const response = await apiPost<AdminAuthConfirmResponse>("/api/admin/auth/confirm", {
     verificationId,

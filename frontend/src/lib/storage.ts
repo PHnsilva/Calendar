@@ -28,6 +28,7 @@ export type StoredClientProfile = {
   name?: string;
   phone?: string;
   email?: string;
+  city?: string;
   updatedAt: string;
   phoneVerifiedAt?: string;
   recoveredCount?: number;
@@ -183,14 +184,16 @@ export function getStoredClientProfile(): StoredClientProfile | null {
   const email = cleanOptionalEmail(profile.email);
   const phone = profile.phone ? normalizeBrazilianPhone(profile.phone) : undefined;
   const validPhone = phone && isValidBrazilianPhone(phone) ? phone : undefined;
+  const city = cleanOptionalText(profile.city);
 
-  if (!name && !validPhone && !email) return null;
+  if (!name && !validPhone && !email && !city) return null;
 
   return {
     ...profile,
     ...(name ? { name } : {}),
     ...(validPhone ? { phone: validPhone } : {}),
     ...(email ? { email } : {}),
+    ...(city ? { city } : {}),
   };
 }
 
@@ -202,13 +205,15 @@ export function saveClientProfile(patch: ClientProfilePatch): StoredClientProfil
   const email = cleanOptionalEmail(patch.email) ?? current?.email;
   const phoneVerifiedAt = patch.phoneVerifiedAt ?? current?.phoneVerifiedAt;
   const recoveredCount = patch.recoveredCount ?? current?.recoveredCount;
+  const city = cleanOptionalText(patch.city) ?? current?.city;
 
-  if (!name && !validPhone && !email) return current;
+  if (!name && !validPhone && !email && !city) return current;
 
   const profile: StoredClientProfile = {
     ...(name ? { name } : {}),
     ...(validPhone ? { phone: validPhone } : {}),
     ...(email ? { email } : {}),
+    ...(city ? { city } : {}),
     ...(phoneVerifiedAt ? { phoneVerifiedAt } : {}),
     ...(typeof recoveredCount === "number" ? { recoveredCount } : {}),
     updatedAt: new Date().toISOString(),

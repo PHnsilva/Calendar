@@ -108,7 +108,7 @@ import {
 } from '../../lib/storage';
 import type { AdminAuthConfirmResponse, AdminProviderResponse, AdminWorkspaceContext, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
-import { confirmAdminLogin, listAdminProviders, resendAdminLogin, startAdminLogin } from '../../features/admin/api/admin-auth';
+import { confirmAdminLogin, listAdminProviders, loginAdminWithPassword, resendAdminLogin, startAdminLogin } from '../../features/admin/api/admin-auth';
 import { updateAdminBooking } from '../../features/admin/api/update-admin-booking';
 import { exportBudgetPdf, exportBudgetXls } from '../../features/admin/services/budget-export';
 import { ApiError } from '../../lib/api-client';
@@ -116,13 +116,22 @@ import { ALLOWED_CITIES } from '../../data/allowed-cities';
 import { getAllowedCities, getBookingDurationMinutesByCity, getDefaultCity, getDefaultState, getMaxFutureMonthsAhead, getSlotMinutes } from '../../lib/bootstrap-config';
 import { confirmRecovery, resendRecovery } from '../../features/recovery/api/confirm-recovery';
 import { startRecovery } from '../../features/recovery/api/start-recovery';
-import { isOwnerAdminPhone, isValidPhone, normalizePhone, resolveUserRoleByPhone, type UserRole } from '../../lib/authRole';
+import { isOwnerAdminPhone, isValidMobilePhone, isValidPhone, normalizePhone, resolveUserRoleByPhone, type UserRole } from '../../lib/authRole';
 import { buildMailtoUrl } from '../../lib/mailto';
 import { OTP_CODE_LENGTH, applyOtpInput, codeToOtpDigits } from '../../lib/otp';
 import ModalShell from '../../shared/ui/ModalShell';
 import PageTitle from '../../shared/ui/PageTitle';
 import ResponsiveAsset from '../../shared/ui/ResponsiveAsset';
 
+const TEMP_ADMIN_PROVIDER_PASSWORD = '#052430Vs';
+
+function isProtectedStaffPhone(value: string): boolean {
+  return isValidPhone(value) && resolveUserRoleByPhone(value) === 'admin';
+}
+
+function isProtectedPhonePasswordValid(value: string): boolean {
+  return value.trim() === TEMP_ADMIN_PROVIDER_PASSWORD;
+}
 
 export type ModalKind =
   | 'create-client'
@@ -1256,6 +1265,7 @@ export function ClientBookings() {
   const [modal, setModal] = useState<ModalKind>(null);
   const [context, setContext] = useState<ModalContext>({});
   const profile = useClientProfileSnapshot();
+  void profile;
   const { bookings, isLoading, isError, hasTokens } = useClientBookingsData();
   const openDetails = (booking: BookingItem) => { setContext({ booking }); setModal('client-details'); };
   const openCreate = (date?: string) => { setContext(date ? { createDate: date } : {}); setModal('create-client'); };
@@ -1264,18 +1274,18 @@ export function ClientBookings() {
     <>
       <AppointmentsPageShell
         pageClassName="wf-page wf-page--list"
-        clientNavbar={{ page: 'my', onCreate: openCreate, onConfirmPhone: () => setModal('confirm-phone'), onProfile: () => setModal('client-profile') }}
+        clientNavbar={{ page: 'my', onCreate: openCreate, onConfirmPhone: () => setModal('client-profile'), onProfile: () => setModal('client-profile') }}
         mobileFilters={<FiltersBar className="wf-filters-bar--mobile" />}
         calendar={<CalendarBoard bookings={bookings} onCreate={openCreate} />}
       >
         <div className="wf-booking-tools">
-          <button type="button" onClick={() => setModal(profile.verified ? 'client-profile' : 'confirm-phone')}><Icon name={profile.verified ? 'user' : 'shield-check'} /> {profile.verified ? 'Perfil' : 'Confirmar telefone'}</button>
+          <button type="button" onClick={() => setModal('client-profile')}><Icon name="user" /> Perfil</button>
         </div>
         <FiltersBar className="wf-filters-bar--desktop" />
         <div className="wf-booking-stack">
           {isLoading ? <EmptyState title="Carregando agendamentos" text="Buscando seus dados reais no sistema." /> : null}
-          {isError ? <EmptyState title="Não foi possível carregar" text="Confira sua conexão ou confirme novamente seu telefone." action="Confirmar telefone" onAction={() => setModal('confirm-phone')} /> : null}
-          {!isLoading && !isError && bookings.length === 0 ? <EmptyState title="Nenhum agendamento encontrado" text={hasTokens ? 'Você ainda não possui agendamentos vinculados aos tokens salvos.' : 'Confirme seu telefone ou crie um novo agendamento para acompanhar por aqui.'} action="Criar agendamento" onAction={openCreate} /> : null}
+          {isError ? <EmptyState title="Não foi possível carregar" text="Confira sua conexão ou tente novamente em instantes." action="Criar agendamento" onAction={openCreate} /> : null}
+          {!isLoading && !isError && bookings.length === 0 ? <EmptyState title="Nenhum agendamento encontrado" text={hasTokens ? 'Você ainda não possui agendamentos vinculados aos tokens salvos.' : 'Crie um novo agendamento para acompanhar por aqui.'} action="Criar agendamento" onAction={openCreate} /> : null}
           {bookings.map((booking) => <BookingCard key={booking.id} booking={booking} onDetails={() => openDetails(booking)} onEdit={openCreate} />)}
         </div>
       </AppointmentsPageShell>
@@ -2202,7 +2212,7 @@ export function CalendarMateModal({
   return (
     <ModalShell open={Boolean(modal)} dataModal={modal} className={modalClass} onClose={closeModal} closeIcon={<Icon name="close" />}>
         {modal === 'create-client' ? <CreateBookingModal initialDate={context.createDate} onClose={closeModal} /> : null}
-        {modal === 'confirm-phone' ? <ConfirmPhoneModal onClose={closeModal} /> : null}
+        {modal === 'confirm-phone' ? <ClientProfileModal onClose={closeModal} /> : null}
         {modal === 'client-profile' ? <ClientProfileModal onClose={closeModal} /> : null}
         {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={closeModal} /> : null}
         {modal === 'contact' ? <ContactModal onClose={closeModal} /> : null}
@@ -2338,6 +2348,7 @@ const modalTimeOptions = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', 
 type CreateBookingField =
   | 'fullName'
   | 'phone'
+  | 'protectedPassword'
   | 'email'
   | 'city'
   | 'address'
@@ -2359,6 +2370,8 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
   const maxFutureMonthsAhead = getMaxFutureMonthsAhead(bootstrap);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [reservedPhonePassword, setReservedPhonePassword] = useState('');
+  const [forceReservedPhonePassword, setForceReservedPhonePassword] = useState(false);
   const [email, setEmail] = useState('');
   const [city, setCity] = useState(defaultCity);
   const [addressInput, setAddressInput] = useState('');
@@ -2379,7 +2392,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
   const bookingDurationMinutes = getBookingDurationMinutesByCity(bootstrap, selectedCity);
   const createBookingMutation = useCreateBooking();
   const storedProfile = useMemo(() => getStoredClientProfile(), []);
-  const profileHasReusableData = Boolean(storedProfile?.name || storedProfile?.phone || storedProfile?.email);
+  const profileHasReusableData = Boolean(storedProfile?.name || storedProfile?.phone || storedProfile?.email || storedProfile?.city);
   const monthAvailability = useAvailableMonthDates(monthStart, true, selectedCity, slotMinutes, bookingDurationMinutes, maxFutureMonthsAhead);
   const availableDateOptions = useMemo(
     () => monthAvailability.availableDates.map((date) => ({ value: date, label: formatDateOptionLabel(date) })),
@@ -2396,6 +2409,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
     Boolean(activeSelectedDate),
   );
   const needsManualHouseNumber = shouldShowManualHouseNumber(selectedAddress);
+  const requiresReservedPhonePassword = forceReservedPhonePassword || isProtectedStaffPhone(phone);
 
   useEffect(() => {
     if (defaultCity && !city) setCity(defaultCity);
@@ -2414,7 +2428,8 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
     if (storedProfile.name) setFullName(storedProfile.name);
     if (storedProfile.phone) setPhone(formatPhoneInput(storedProfile.phone));
     if (storedProfile.email) setEmail(storedProfile.email);
-    setFieldErrors((current) => ({ ...current, fullName: undefined, phone: undefined, email: undefined }));
+    if (storedProfile.city) setCity(storedProfile.city);
+    setFieldErrors((current) => ({ ...current, fullName: undefined, phone: undefined, protectedPassword: undefined, email: undefined }));
     setBackendError('');
   };
 
@@ -2459,8 +2474,11 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
     if (!firstName || !lastName || firstName === lastName) {
       nextErrors.fullName = 'Nome completo: informe nome e sobrenome. Exemplo: Pedro Silva.';
     }
-    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-      nextErrors.phone = 'Telefone: informe DDD + numero com 10 ou 11 digitos. Exemplos: (31) 99999-9999 ou 31 3333-4444.';
+    if (!isValidMobilePhone(phone)) {
+      nextErrors.phone = 'Telefone: informe um celular brasileiro válido com DDD. Exemplo: (31) 99999-9999.';
+    }
+    if (requiresReservedPhonePassword && !isProtectedPhonePasswordValid(reservedPhonePassword)) {
+      nextErrors.protectedPassword = 'Senha obrigatória para usar telefone de administrador ou prestador.';
     }
     if (!isEmailValid(email)) {
       nextErrors.email = 'E-mail: use @ e dominio valido. Exemplo: voce@email.com.';
@@ -2512,12 +2530,14 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         clientState: cleanFormText(selectedAddress.stateCode || selectedAddress.state || defaultState).slice(0, 2).toUpperCase(),
         clientLatitude: selectedAddress.lat ?? selectedAddress.latitude,
         clientLongitude: selectedAddress.lon ?? selectedAddress.longitude,
+        reservedPhonePassword: reservedPhonePassword.trim() || undefined,
       });
 
       saveClientProfile({
         name: cleanFormText(fullName),
         phone: phoneDigits,
         email: cleanFormText(email),
+        city: selectedCity,
       });
       saveManageToken(response.manageToken, response.servico.eventId);
       saveLocalCalendarEvent(mapCreatedServicoToCalendarEvent(response.servico));
@@ -2531,7 +2551,12 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         navigate('/meus-agendamentos');
       }, 700);
     } catch (error) {
-      setBackendError((error as Error).message || 'Nao foi possivel criar o agendamento.');
+      const message = (error as Error).message || 'Nao foi possivel criar o agendamento.';
+      if (message.toLowerCase().includes('senha')) {
+        setForceReservedPhonePassword(true);
+        setFieldErrors((current) => ({ ...current, protectedPassword: 'Senha obrigatória para usar telefone de administrador ou prestador.' }));
+      }
+      setBackendError(message);
     }
   };
 
@@ -2544,7 +2569,8 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
       </div>
       <div className="wf-create-booking-form wf-create-booking-form--wireframe">
         <ModalField className="wf-create-field wf-create-field--name" label="Nome completo" icon="user" placeholder="Digite seu nome completo" required value={fullName} onChange={setFullName} error={fieldErrors.fullName} />
-        <ModalField className="wf-create-field wf-create-field--phone" label="Telefone" icon="phone" placeholder="(11) 99999-9999" required value={phone} inputMode="tel" onChange={(value) => setPhone(formatPhoneInput(value))} error={fieldErrors.phone} />
+        <ModalField className="wf-create-field wf-create-field--phone" label="Telefone" icon="phone" placeholder="(11) 99999-9999" required value={phone} inputMode="tel" onChange={(value) => { setPhone(formatPhoneInput(value)); setReservedPhonePassword(''); setForceReservedPhonePassword(false); setFieldErrors((current) => ({ ...current, phone: undefined, protectedPassword: undefined })); }} error={fieldErrors.phone} />
+        {requiresReservedPhonePassword ? <ModalField className="wf-create-field wf-create-field--protected-password" label="Senha da equipe" icon="lock" placeholder="Senha para telefone de admin/prestador" required value={reservedPhonePassword} type="password" onChange={setReservedPhonePassword} error={fieldErrors.protectedPassword} /> : null}
         <ModalField className="wf-create-field wf-create-field--email" label="E-mail" icon="mail" placeholder="seu@email.com" required value={email} type="email" onChange={setEmail} error={fieldErrors.email} />
         <CitySelectField selectedCity={selectedCity} cities={allowedCities} open={cityPickerOpen} onOpenChange={setCityPickerOpen} onSelect={handleCityChange} />
         {fieldErrors.city ? <small className="wf-field-error wf-span-2">{fieldErrors.city}</small> : null}
@@ -2618,7 +2644,7 @@ function isAdminUnauthorized(error: unknown): boolean {
   return error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 404);
 }
 
-function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
+export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
   const stored = getStoredPhoneVerification();
   const storedProfile = getStoredClientProfile();
   const navigate = useNavigate();
@@ -2936,21 +2962,69 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const verification = getStoredPhoneVerification();
   const profile = getStoredClientProfile();
-  const name = profile?.name || 'Cliente';
-  const phone = profile?.phone || verification?.phone || '';
-  const email = profile?.email || '';
-  const city = getDefaultCity();
-  const phoneStatus = verification ? 'Telefone verificado' : 'Telefone pendente';
+  const [name, setName] = useState(profile?.name || '');
+  const [email, setEmail] = useState(profile?.email || '');
+  const [phone, setPhone] = useState(profile?.phone ? formatPhoneForDisplay(profile.phone) : verification?.phone ? formatPhoneForDisplay(verification.phone) : '');
+  const [city, setCity] = useState(profile?.city || getDefaultCity());
+  const [staffPassword, setStaffPassword] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const phoneDigits = normalizePhone(phone);
+  const hasValidPhone = isValidPhone(phone);
+  const detectedProtectedPhone = isProtectedStaffPhone(phone);
+  const phoneStatus = verification || profile?.phoneVerifiedAt ? 'Telefone verificado' : hasValidPhone ? 'Telefone informado' : 'Telefone pendente';
+  const displayName = cleanFormText(name) || 'Cliente';
 
   const goToBookings = () => {
     onClose();
     navigate('/meus-agendamentos');
   };
 
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setError('');
+    setMessage('');
+    try {
+      if (phone && !hasValidPhone) {
+        setError('Informe um telefone válido com DDD.');
+        return;
+      }
+      if (email && !isEmailValid(email)) {
+        setError('Informe um e-mail válido.');
+        return;
+      }
+      if (detectedProtectedPhone && !isProtectedPhonePasswordValid(staffPassword)) {
+        setError('Senha obrigatória para usar telefone de administrador ou prestador.');
+        return;
+      }
+      if (staffPassword.trim()) {
+        const adminResponse = await loginAdminWithPassword(phoneDigits, staffPassword);
+        setMessage('Acesso administrativo validado. Abrindo painel...');
+        window.setTimeout(() => {
+          onClose();
+          navigate(adminResponse.admin.role === 'OWNER' ? '/admin/dashboard?view=agendamentos' : '/admin/dashboard?view=agendamentos');
+        }, 350);
+        return;
+      }
+      saveClientProfile({
+        name: cleanFormText(name),
+        email: cleanFormText(email),
+        phone: phoneDigits || undefined,
+        city: cleanFormText(city),
+      });
+      setMessage('Perfil salvo neste dispositivo.');
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Não foi possível salvar o perfil.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <section className="wf-client-profile-modal" aria-labelledby="client-profile-title">
+      <span className="wf-client-profile-modal__handle" aria-hidden="true" />
       <div className="wf-client-profile-modal__header">
-        <span className="wf-client-profile-modal__eyebrow">Área do cliente</span>
         <h2 id="client-profile-title">Meu perfil</h2>
       </div>
 
@@ -2959,7 +3033,7 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
           <img src={clientProfileAvatarIcon} alt="Avatar do perfil" />
         </figure>
         <div className="wf-client-profile-modal__identity">
-          <strong>{name}</strong>
+          <strong>{displayName}</strong>
           <small>Perfil do cliente</small>
         </div>
       </div>
@@ -2971,33 +3045,31 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="wf-client-profile-modal__section-title">Informações pessoais</div>
-      <dl className="wf-client-profile-modal__details">
-        <div>
-          <dt><Icon name="user" /> Nome</dt>
-          <dd>{name}</dd>
-          <button type="button" aria-label="Editar nome" onClick={() => notifyUnavailable('Editar nome')}><Icon name="edit" /></button>
-        </div>
-        <div>
-          <dt><Icon name="mail" /> E-mail</dt>
-          <dd>{email || 'E-mail ainda não salvo'}</dd>
-          <button type="button" aria-label="Editar e-mail" onClick={() => notifyUnavailable('Editar e-mail')}><Icon name="edit" /></button>
-        </div>
-        <div>
-          <dt><Icon name="phone" /> Telefone</dt>
-          <dd>{phone ? formatPhoneForDisplay(phone) : 'Telefone não informado'}</dd>
-          <button type="button" aria-label="Editar telefone" onClick={() => notifyUnavailable('Editar telefone')}><Icon name="edit" /></button>
-        </div>
-        <div>
-          <dt><Icon name="location" /> Cidade</dt>
-          <dd>{city || 'Cidade não informada'}</dd>
-          <button type="button" aria-label="Editar cidade" onClick={() => notifyUnavailable('Editar cidade')}><Icon name="edit" /></button>
-        </div>
-      </dl>
+      <div className="wf-client-profile-modal__form">
+        <ModalField className="wf-client-profile-modal__field" label="Nome" icon="user" placeholder="Digite seu nome" value={name} onChange={setName} />
+        <ModalField className="wf-client-profile-modal__field" label="E-mail" icon="mail" placeholder="seu@email.com" value={email} type="email" onChange={setEmail} />
+        <ModalField className="wf-client-profile-modal__field" label="Telefone" icon="phone" placeholder="(31) 99999-9999" value={phone} inputMode="tel" onChange={(value) => { setPhone(formatPhoneInput(value)); setStaffPassword(''); setError(''); }} />
+        <ModalField className="wf-client-profile-modal__field" label="Cidade" icon="location" placeholder="Cidade" value={city} onChange={setCity} />
+        {hasValidPhone ? (
+          <ModalField
+            className="wf-client-profile-modal__field wf-client-profile-modal__field--staff-password"
+            label="Senha da equipe"
+            icon="lock"
+            placeholder={detectedProtectedPhone ? 'Obrigatória para este telefone' : 'Somente admin/prestador'}
+            value={staffPassword}
+            type="password"
+            onChange={setStaffPassword}
+          />
+        ) : null}
+      </div>
+
+      {message ? <p className="wf-auth-feedback wf-auth-feedback--success">{message}</p> : null}
+      {error ? <p className="wf-auth-feedback wf-auth-feedback--error">{error}</p> : null}
 
       <div className="wf-client-profile-modal__actions">
-        <button type="button" className="wf-client-profile-modal__primary" onClick={() => notifyUnavailable('Editar perfil')}>
+        <button type="button" className="wf-client-profile-modal__primary" onClick={handleSaveProfile} disabled={saving}>
           <Icon name="user-edit" />
-          <span>Editar perfil</span>
+          <span>{saving ? 'Salvando...' : staffPassword.trim() ? 'Validar acesso' : 'Salvar perfil'}</span>
         </button>
         <button type="button" className="wf-client-profile-modal__secondary" onClick={goToBookings}>
           <Icon name="calendar-blue" />
@@ -3009,7 +3081,7 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <p className="wf-client-profile-modal__hint"><Icon name="lock" /> Seus dados estão protegidos e seguros.</p>
+      <p className="wf-client-profile-modal__hint"><Icon name="lock" /> Seus dados estão protegidos neste dispositivo.</p>
     </section>
   );
 }

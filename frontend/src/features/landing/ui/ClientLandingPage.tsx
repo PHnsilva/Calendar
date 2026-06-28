@@ -15,7 +15,7 @@ export function ClientLandingPage() {
 
   return (
     <PageShell className="wf-page wf-client-landing">
-      <ClientNavbar onCreate={() => setModal("create-client")} onConfirmPhone={() => setModal("confirm-phone")} onProfile={() => setModal("client-profile")} />
+      <ClientNavbar onCreate={() => setModal("create-client")} onConfirmPhone={() => setModal("client-profile")} onProfile={() => setModal("client-profile")} />
       <main className="wf-landing-main">
         <ClientLandingHeroBlock setModal={setModal} />
         <ClientLandingActions profile={profile} setModal={setModal} />

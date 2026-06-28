@@ -102,14 +102,12 @@ public class ServicoService {
         String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
 
         String phoneDigits = normalizePhone(req.getClientPhone());
-        if (adminAuthService.isAdminPhoneBestEffort(phoneDigits)) {
-            throw new ReservedAdminPhoneException("Use o acesso administrativo para este telefone.");
+        if (adminAuthService.isAdminPhoneBestEffort(phoneDigits)
+                && !adminAuthService.isReservedPhonePasswordValid(req.getReservedPhonePassword())) {
+            throw new ReservedAdminPhoneException("Senha obrigatoria para usar telefone de administrador ou prestador.");
         }
 
         cleanupExpiredPendings();
-        if (props.isBlockOtherBookingsWhenPending() && hasActivePendingForPhone(phoneDigits)) {
-            throw new ConflictException("Você já tem um agendamento pendente de confirmação");
-        }
 
         BookingWindow window = resolveBookingWindow(req.getDate(), req.getTime(), req.getClientCity());
         Instant start = window.blockStart();
@@ -127,8 +125,6 @@ public class ServicoService {
         if (busy != null && !busy.isEmpty()) {
             throw new ConflictException("Horário indisponível");
         }
-
-        Instant pendingExpiresAt = Instant.now().plus(props.getPendingTtl());
 
         Servico s = new Servico();
         s.setId(UUID.randomUUID().toString());
@@ -157,38 +153,25 @@ public class ServicoService {
         s.setClientLatitude(req.getClientLatitude());
         s.setClientLongitude(req.getClientLongitude());
 
-        s.setStatus("PENDING_PHONE");
-        s.setPendingExpiresAt(pendingExpiresAt);
+        s.setStatus("CONFIRMED");
+        s.setPhoneVerifiedAt(Instant.now());
+        s.setPendingExpiresAt(null);
 
         Event created = calendar.createEvent(s);
 
         String token = tokenUtil.generate(created.getId(), req.getClientEmail());
-
-        VerificationService.StartResult otp;
-        try {
-            otp = verificationService.start(
-                    token,
-                    phoneDigits);
-        } catch (IOException | RuntimeException ex) {
-            pendingStore.deleteByEventId(created.getId());
-            try {
-                calendar.deleteEvent(created.getId());
-            } catch (IOException cleanupEx) {
-                ex.addSuppressed(cleanupEx);
-            }
-            throw ex;
-        }
+        pendingStore.deleteByEventId(created.getId());
 
         ServicoResponse servico = mapEventToResponse(created);
-        servico.setStatus("PENDING_PHONE");
+        servico.setStatus("CONFIRMED");
 
         ServicoCreateResponse out = new ServicoCreateResponse();
         out.setServico(servico);
         out.setManageToken(token);
-        out.setVerificationId(otp.verificationId());
-        out.setExpiresInSeconds(otp.expiresInSeconds());
-        out.setResendAfterSeconds(otp.resendAfterSeconds());
-        out.setPendingExpiresAt(pendingExpiresAt);
+        out.setVerificationId("");
+        out.setExpiresInSeconds(0);
+        out.setResendAfterSeconds(0);
+        out.setPendingExpiresAt(null);
 
         return out;
     }
@@ -679,10 +662,6 @@ public class ServicoService {
         validateAdminBusyWindow(existing, start, end);
 
         String phoneDigits = normalizePhone(req.getClientPhone());
-        if (adminAuthService.isAdminPhoneBestEffort(phoneDigits)) {
-            throw new ReservedAdminPhoneException("Use o acesso administrativo para este telefone.");
-        }
-
         Map<String, String> ext0 = privateExt(existing);
         Servico s = new Servico();
         s.setEventId(eventId);

@@ -5,6 +5,7 @@ import br.com.calendarmate.dto.AdminAuthConfirmResponse;
 import br.com.calendarmate.dto.AdminAuthStartRequest;
 import br.com.calendarmate.dto.AdminAuthStartResponse;
 import br.com.calendarmate.dto.AdminMeResponse;
+import br.com.calendarmate.dto.AdminPasswordLoginRequest;
 import br.com.calendarmate.dto.AdminProviderResponse;
 import br.com.calendarmate.model.AdminPrincipal;
 import br.com.calendarmate.service.AdminAuthService;
@@ -35,6 +36,11 @@ public class AdminAuthController {
     @PostMapping("/confirm")
     public AdminAuthConfirmResponse confirm(@Valid @RequestBody AdminAuthConfirmRequest req) {
         return adminAuthService.confirm(req.getVerificationId(), req.getCode());
+    }
+
+    @PostMapping("/password")
+    public AdminAuthConfirmResponse password(@Valid @RequestBody AdminPasswordLoginRequest req) {
+        return adminAuthService.passwordLogin(req.getPhone(), req.getPassword());
     }
 
     @GetMapping("/me")

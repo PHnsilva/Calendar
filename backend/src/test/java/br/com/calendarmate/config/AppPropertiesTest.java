@@ -64,6 +64,13 @@ class AppPropertiesTest {
     }
 
     @Test
+    void exposesDefaultTemporaryAdminProviderPasswordFromConfig() {
+        AppProperties props = new AppProperties();
+
+        assertEquals("#052430Vs", props.getAdminTempPassword());
+    }
+
+    @Test
     void configuredProviderByIdOverridesDefaultPlaceholderPhone() throws Exception {
         AppProperties props = new AppProperties();
         set(props, "adminUsersCsv", "31988887777|Prestador Real|PROVIDER|provider-1");

@@ -102,6 +102,31 @@ describe("admin API authentication", () => {
     expect(new Headers(fetchMock.mock.calls[1]?.[1]?.headers).get("X-ADMIN-SESSION")).toBe("confirmed-token");
   });
 
+  it("persists a temporary password login through the same admin session storage", async () => {
+    const confirmed: AdminAuthConfirmResponse = { sessionToken: "password-token", admin };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(confirmed), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(admin), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { loginAdminWithPassword, getAdminMe } = await import("./admin-auth");
+
+    await loginAdminWithPassword("31999999999", "team-password");
+    await getAdminMe();
+
+    expect(new URL(String(fetchMock.mock.calls[0]?.[0])).pathname).toBe("/api/admin/auth/password");
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
+      phone: "31999999999",
+      password: "team-password",
+    });
+    expect(new Headers(fetchMock.mock.calls[1]?.[1]?.headers).get("X-ADMIN-SESSION")).toBe("password-token");
+  });
+
   it("sends provider workspace headers with authenticated admin requests", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("[]", {
       status: 200,

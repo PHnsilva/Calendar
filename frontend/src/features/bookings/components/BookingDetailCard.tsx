@@ -41,6 +41,7 @@ function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [form, setForm] = useState<ServicoRequest>(() => toFormState(booking));
+  const [reservedPhonePassword, setReservedPhonePassword] = useState("");
   const { updateBooking, deleteBooking, isUpdating, isDeleting, updateError, deleteError } = useBookingMutations();
 
   const lockedByTime = isWithinTwoHours(booking.startsAt);
@@ -52,7 +53,14 @@ function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
 
   const submitUpdate = async () => {
     if (!token) return;
-    await updateBooking({ eventId: booking.id, token, payload: form });
+    await updateBooking({
+      eventId: booking.id,
+      token,
+      payload: {
+        ...form,
+        reservedPhonePassword: reservedPhonePassword.trim() || undefined,
+      },
+    });
     setIsEditing(false);
   };
 
@@ -91,6 +99,7 @@ function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
             <label><span>E-mail</span><input value={form.clientEmail} onChange={(e) => onChange("clientEmail", e.target.value)} /></label>
             <label><span>Telefone</span><input value={form.clientPhone} onChange={(e) => onChange("clientPhone", e.target.value)} /></label>
           </div>
+          <label><span>Senha da equipe</span><input type="password" value={reservedPhonePassword} onChange={(e) => setReservedPhonePassword(e.target.value)} placeholder="Somente admin/prestador" /></label>
           <div className="booking-detail__form-grid">
             <label><span>CEP</span><input value={form.clientCep} onChange={(e) => onChange("clientCep", e.target.value)} /></label>
             <label><span>Número</span><input value={form.clientNumber} onChange={(e) => onChange("clientNumber", e.target.value)} /></label>

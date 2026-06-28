@@ -67,6 +67,9 @@ public class AppProperties {
     @Value("${app.admin.session.ttlDays:${ADMIN_SESSION_TTL_DAYS:7}}")
     private long adminSessionTtlDays;
 
+    @Value("${app.admin.tempPassword:${ADMIN_TEMP_PASSWORD:#052430Vs}}")
+    private String adminTempPassword;
+
     @Value("${app.admin.users:${ADMIN_USERS:}}")
     private String adminUsersCsv;
 
@@ -334,6 +337,7 @@ public class AppProperties {
     public Duration getOtpResendAfter() { return Duration.ofSeconds(otpResendAfterSeconds); }
     public int getAdminBulkCancelMaxItems() { return Math.max(1, Math.min(adminBulkCancelMaxItems, 1000)); }
     public Duration getAdminSessionTtl() { return Duration.ofDays(Math.max(1, Math.min(adminSessionTtlDays, 30))); }
+    public String getAdminTempPassword() { return cleanOrDefault(adminTempPassword, "#052430Vs"); }
     public String getAdminUsersCsv() {
         return mergeAdminUserSeeds(
                 AdminUserRegistryDefaults.DEFAULT_SEED,

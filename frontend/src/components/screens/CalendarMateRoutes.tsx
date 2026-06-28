@@ -109,6 +109,7 @@ import {
 import type { AdminAuthConfirmResponse, AdminProviderResponse, AdminWorkspaceContext, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
 import { confirmAdminLogin, listAdminProviders, loginAdminWithPassword, resendAdminLogin, startAdminLogin } from '../../features/admin/api/admin-auth';
+import { ADMIN_BOOKINGS_ROUTE, applyAdminLoginDestination, resolveAdminLoginDestination } from '../../features/admin/services/admin-workspace-flow';
 import { updateAdminBooking } from '../../features/admin/api/update-admin-booking';
 import { exportBudgetPdf, exportBudgetXls } from '../../features/admin/services/budget-export';
 import { ApiError } from '../../lib/api-client';
@@ -116,21 +117,15 @@ import { ALLOWED_CITIES } from '../../data/allowed-cities';
 import { getAllowedCities, getBookingDurationMinutesByCity, getDefaultCity, getDefaultState, getMaxFutureMonthsAhead, getSlotMinutes } from '../../lib/bootstrap-config';
 import { confirmRecovery, resendRecovery } from '../../features/recovery/api/confirm-recovery';
 import { startRecovery } from '../../features/recovery/api/start-recovery';
-import { isOwnerAdminPhone, isValidMobilePhone, isValidPhone, normalizePhone, resolveUserRoleByPhone, type UserRole } from '../../lib/authRole';
+import { isValidMobilePhone, isValidPhone, normalizePhone, resolveUserRoleByPhone, type UserRole } from '../../lib/authRole';
 import { buildMailtoUrl } from '../../lib/mailto';
 import { OTP_CODE_LENGTH, applyOtpInput, codeToOtpDigits } from '../../lib/otp';
 import ModalShell from '../../shared/ui/ModalShell';
 import PageTitle from '../../shared/ui/PageTitle';
 import ResponsiveAsset from '../../shared/ui/ResponsiveAsset';
 
-const TEMP_ADMIN_PROVIDER_PASSWORD = '#052430Vs';
-
 function isProtectedStaffPhone(value: string): boolean {
   return isValidPhone(value) && resolveUserRoleByPhone(value) === 'admin';
-}
-
-function isProtectedPhonePasswordValid(value: string): boolean {
-  return value.trim() === TEMP_ADMIN_PROVIDER_PASSWORD;
 }
 
 export type ModalKind =
@@ -1343,21 +1338,11 @@ function getAdminAuthErrorMessage(error: unknown, step: 'start' | 'confirm'): st
 }
 
 async function loadAdminWorkspaceProviders(response: AdminAuthConfirmResponse): Promise<AdminProviderResponse[]> {
-  if (!isConfirmedOwnerAdmin(response)) return [];
+  if (resolveAdminLoginDestination(response).kind !== 'choose-workspace') return [];
   try {
     return await listAdminProviders();
   } catch {
     return [];
-  }
-}
-
-function isConfirmedOwnerAdmin(response: AdminAuthConfirmResponse, fallbackPhone = ''): boolean {
-  return response.admin.role === 'OWNER' || isOwnerAdminPhone(response.admin.phone || fallbackPhone);
-}
-
-function setDefaultWorkspaceForAdmin(response: AdminAuthConfirmResponse) {
-  if (response.admin.role === 'PROVIDER') {
-    setAdminWorkspace({ mode: 'PROVIDER', providerId: response.admin.id, providerName: response.admin.name });
   }
 }
 
@@ -1494,7 +1479,7 @@ export function AdminLanding() {
     return <Navigate to="/" replace />;
   }
   if (session.role === 'OWNER' && !session.workspace) {
-    return <AdminWorkspaceSelectionGate onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
+    return <AdminWorkspaceSelectionGate onDone={() => navigate(ADMIN_BOOKINGS_ROUTE, { replace: true })} />;
   }
   const workspace = getStoredAdminWorkspace();
   const providerWorkspace = workspace?.mode === 'PROVIDER';
@@ -1571,7 +1556,7 @@ export function AdminDashboard() {
     return <Navigate to="/" replace />;
   }
   if (session.role === 'OWNER' && !session.workspace) {
-    return <AdminWorkspaceSelectionGate onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
+    return <AdminWorkspaceSelectionGate onDone={() => navigate(ADMIN_BOOKINGS_ROUTE, { replace: true })} />;
   }
 
   const selectAdminView = (nextView: AdminView) => {
@@ -2079,7 +2064,7 @@ export function AdminBookingDetails() {
     return <Navigate to="/" replace />;
   }
   if (session?.role === 'OWNER' && !session.workspace) {
-    return <AdminWorkspaceSelectionGate onDone={() => navigate('/admin/dashboard?view=agendamentos', { replace: true })} />;
+    return <AdminWorkspaceSelectionGate onDone={() => navigate(ADMIN_BOOKINGS_ROUTE, { replace: true })} />;
   }
 
   const openBudget = () => {
@@ -2477,7 +2462,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
     if (!isValidMobilePhone(phone)) {
       nextErrors.phone = 'Telefone: informe um celular brasileiro válido com DDD. Exemplo: (31) 99999-9999.';
     }
-    if (requiresReservedPhonePassword && !isProtectedPhonePasswordValid(reservedPhonePassword)) {
+    if (requiresReservedPhonePassword && !reservedPhonePassword.trim()) {
       nextErrors.protectedPassword = 'Senha obrigatória para usar telefone de administrador ou prestador.';
     }
     if (!isEmailValid(email)) {
@@ -2820,14 +2805,14 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
         const confirmedPhone = response.admin.phone || normalizedPhone;
         setSessionPhone(confirmedPhone);
         await queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
-        if (isConfirmedOwnerAdmin(response, normalizedPhone)) {
+        const destination = applyAdminLoginDestination(response, normalizedPhone);
+        if (destination.kind === 'choose-workspace') {
           setPendingWorkspaceSelection(true);
           setAvailableWorkspaces(await loadAdminWorkspaceProviders(response));
           return;
         }
-        setDefaultWorkspaceForAdmin(response);
         onClose();
-        navigate('/admin/dashboard?view=agendamentos', { replace: false });
+        navigate(destination.to, { replace: false });
         return;
       }
 
@@ -2869,7 +2854,7 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
         onSelectWorkspace={setSelectedWorkspace}
         onDone={() => {
           onClose();
-          navigate('/admin/dashboard?view=agendamentos', { replace: false });
+          navigate(ADMIN_BOOKINGS_ROUTE, { replace: false });
         }}
       />
     );
@@ -2960,6 +2945,7 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
 
 function ClientProfileModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const verification = getStoredPhoneVerification();
   const profile = getStoredClientProfile();
   const [name, setName] = useState(profile?.name || '');
@@ -2970,6 +2956,10 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [pendingWorkspaceSelection, setPendingWorkspaceSelection] = useState(false);
+  const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
+  const [selectedWorkspace, setSelectedWorkspace] = useState('');
+  const [sessionPhone, setSessionPhone] = useState('');
   const phoneDigits = normalizePhone(phone);
   const hasValidPhone = isValidPhone(phone);
   const detectedProtectedPhone = isProtectedStaffPhone(phone);
@@ -2994,16 +2984,25 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
         setError('Informe um e-mail válido.');
         return;
       }
-      if (detectedProtectedPhone && !isProtectedPhonePasswordValid(staffPassword)) {
+      if (detectedProtectedPhone && !staffPassword.trim()) {
         setError('Senha obrigatória para usar telefone de administrador ou prestador.');
         return;
       }
       if (staffPassword.trim()) {
         const adminResponse = await loginAdminWithPassword(phoneDigits, staffPassword);
+        const destination = applyAdminLoginDestination(adminResponse, phoneDigits);
+        setSessionPhone(adminResponse.admin.phone || phoneDigits);
+        await queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
+        if (destination.kind === 'choose-workspace') {
+          setAvailableWorkspaces(await loadAdminWorkspaceProviders(adminResponse));
+          setPendingWorkspaceSelection(true);
+          setMessage('Acesso validado. Escolha a área para continuar.');
+          return;
+        }
         setMessage('Acesso administrativo validado. Abrindo painel...');
         window.setTimeout(() => {
           onClose();
-          navigate(adminResponse.admin.role === 'OWNER' ? '/admin/dashboard?view=agendamentos' : '/admin/dashboard?view=agendamentos');
+          navigate(destination.to);
         }, 350);
         return;
       }
@@ -3020,6 +3019,22 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
       setSaving(false);
     }
   };
+
+  if (pendingWorkspaceSelection) {
+    return (
+      <AdminWorkspaceSelectionModal
+        embedded
+        providers={availableWorkspaces}
+        sessionPhone={sessionPhone}
+        selectedWorkspace={selectedWorkspace}
+        onSelectWorkspace={setSelectedWorkspace}
+        onDone={() => {
+          onClose();
+          navigate(ADMIN_BOOKINGS_ROUTE);
+        }}
+      />
+    );
+  }
 
   return (
     <section className="wf-client-profile-modal" aria-labelledby="client-profile-title">

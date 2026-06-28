@@ -30,7 +30,6 @@ import java.util.UUID;
 public class AdminAuthService {
     private static final Logger log = LoggerFactory.getLogger(AdminAuthService.class);
     private static final String SCOPE_PREFIX = "admin:";
-    private static final String TEMP_ADMIN_PROVIDER_PASSWORD = "#052430Vs";
 
     private final AdminUserStore adminUserStore;
     private final AdminSessionStore adminSessionStore;
@@ -134,7 +133,7 @@ public class AdminAuthService {
         if (user == null) {
             throw new ForbiddenException("Telefone administrativo nao autorizado");
         }
-        if (!TEMP_ADMIN_PROVIDER_PASSWORD.equals(passwordRaw == null ? "" : passwordRaw.trim())) {
+        if (!isReservedPhonePasswordValid(passwordRaw)) {
             throw new ForbiddenException("Senha administrativa invalida");
         }
         log.info("Admin password login accepted phone={} role={}", maskedPhone, user.getRole());
@@ -142,7 +141,7 @@ public class AdminAuthService {
     }
 
     public boolean isReservedPhonePasswordValid(String passwordRaw) {
-        return TEMP_ADMIN_PROVIDER_PASSWORD.equals(passwordRaw == null ? "" : passwordRaw.trim());
+        return props.getAdminTempPassword().equals(passwordRaw == null ? "" : passwordRaw.trim());
     }
 
     private AdminAuthConfirmResponse createSessionResponse(AdminUser user) {

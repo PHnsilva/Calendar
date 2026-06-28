@@ -48,6 +48,7 @@ type EditDraft = {
   date: string;
   time: string;
   addressLine: string;
+  reservedPhonePassword: string;
 };
 
 function toLocalDate(dateString: string): Date {
@@ -221,6 +222,7 @@ function buildUpdatePayload(servico: ServicoResponse, draft: EditDraft): Servico
     clientNeighborhood: parsedAddress.clientNeighborhood,
     clientCep: parsedAddress.clientCep,
     clientComplement: parsedAddress.clientComplement,
+    reservedPhonePassword: draft.reservedPhonePassword.trim() || undefined,
   };
 }
 
@@ -253,7 +255,7 @@ export default function HomeBookingsTimeline({
   const [detailError, setDetailError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [editDraft, setEditDraft] = useState<EditDraft>({ date: "", time: "", addressLine: "" });
+  const [editDraft, setEditDraft] = useState<EditDraft>({ date: "", time: "", addressLine: "", reservedPhonePassword: "" });
   const [editTimes, setEditTimes] = useState<string[]>([]);
   const [editLoadingTimes, setEditLoadingTimes] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -321,6 +323,7 @@ export default function HomeBookingsTimeline({
           date: response.start.slice(0, 10),
           time: response.start.slice(11, 16),
           addressLine: extractAddressDraft(response),
+          reservedPhonePassword: "",
         });
       })
       .catch((error) => {
@@ -637,6 +640,7 @@ export default function HomeBookingsTimeline({
                   <button type="button" className="booking-preview-modal__close" onClick={() => setEditOpen(false)} aria-label="Fechar edição">×</button>
                 </div>
                 <div className="booking-detail-modal__edit-grid">
+                  <label className="booking-detail-modal__field booking-detail-modal__field--full"><span>Senha da equipe</span><input type="password" value={editDraft.reservedPhonePassword} placeholder="Somente admin/prestador" onChange={(event) => setEditDraft((current) => ({ ...current, reservedPhonePassword: event.target.value }))} /></label>
                   <label className="booking-detail-modal__field"><span>Data</span><input type="date" value={editDraft.date} min={todayIso} onChange={(event) => setEditDraft((current) => ({ ...current, date: event.target.value }))} /></label>
                   <label className="booking-detail-modal__field"><span>Horário</span><select value={editDraft.time} onChange={(event) => setEditDraft((current) => ({ ...current, time: event.target.value }))} disabled={editLoadingTimes || editTimes.length === 0}>{editTimes.map((time) => <option key={time} value={time}>{time} - {addMinutes(time, slotMinutes)}</option>)}</select></label>
                   <label className="booking-detail-modal__field"><span>Cidade</span><input type="text" value={bookingDetails?.clientCity ?? activeEvent.city ?? ""} readOnly /></label>

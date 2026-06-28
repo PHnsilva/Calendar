@@ -102,10 +102,7 @@ public class ServicoService {
         String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
 
         String phoneDigits = normalizePhone(req.getClientPhone());
-        if (adminAuthService.isAdminPhoneBestEffort(phoneDigits)
-                && !adminAuthService.isReservedPhonePasswordValid(req.getReservedPhonePassword())) {
-            throw new ReservedAdminPhoneException("Senha obrigatoria para usar telefone de administrador ou prestador.");
-        }
+        validateReservedPhonePassword(phoneDigits, req.getReservedPhonePassword());
 
         cleanupExpiredPendings();
 
@@ -353,6 +350,7 @@ public class ServicoService {
         }
 
         String phoneDigits = normalizePhone(req.getClientPhone());
+        validateReservedPhonePassword(phoneDigits, req.getReservedPhonePassword());
 
         Servico s = new Servico();
         s.setEventId(eventId);
@@ -885,6 +883,13 @@ public class ServicoService {
 
     private String normalizePhone(String phone) {
         return PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phone);
+    }
+
+    private void validateReservedPhonePassword(String phoneDigits, String password) {
+        if (adminAuthService.isAdminPhoneBestEffort(phoneDigits)
+                && !adminAuthService.isReservedPhonePasswordValid(password)) {
+            throw new ReservedAdminPhoneException("Senha obrigatoria para usar telefone de administrador ou prestador.");
+        }
     }
 
     private Map<String, String> privateExt(Event e) {

@@ -3,10 +3,13 @@ package br.com.calendarmate.service;
 import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.dto.AvailabilityBlockCreateRequest;
 import br.com.calendarmate.dto.AvailableSlotResponse;
+import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
+import br.com.calendarmate.dto.ServicoResponse;
 import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.exception.ForbiddenException;
+import br.com.calendarmate.exception.ReservedAdminPhoneException;
 import br.com.calendarmate.google.DummyCalendarClient;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.AdminPrincipal;
@@ -16,6 +19,7 @@ import br.com.calendarmate.model.AdminUser;
 import br.com.calendarmate.model.Servico;
 import br.com.calendarmate.service.store.AdminSessionStore;
 import br.com.calendarmate.service.store.AdminUserStore;
+import br.com.calendarmate.service.store.InMemoryAdminUserStore;
 import br.com.calendarmate.service.store.InMemoryBookingHistoryStore;
 import br.com.calendarmate.service.store.InMemoryPendingStore;
 import br.com.calendarmate.service.store.VerificationStore;
@@ -45,7 +49,7 @@ class ServicoServiceTest {
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
 
     @Test
-    void createCleansPendingEventAndVerificationSessionWhenOtpSendFails() throws IOException {
+    void createPersistsNoSmsConfirmedBookingWithoutVerificationSession() throws IOException {
         AppProperties props = new AppProperties();
         DummyCalendarClient calendar = new DummyCalendarClient();
         InMemoryPendingStore pendingStore = new InMemoryPendingStore();
@@ -70,14 +74,19 @@ class ServicoServiceTest {
                 adminAuthService,
                 new InMemoryBookingHistoryStore());
 
-        assertThrows(ExternalServiceException.class, () -> service.create(validRequest(nextAvailableDate(calendar, props))));
+        ServicoCreateResponse created = service.create(validRequest(nextAvailableDate(calendar, props)));
 
+        assertEquals("CONFIRMED", created.getServico().getStatus());
+        assertEquals("", created.getVerificationId());
+        assertEquals(0, created.getExpiresInSeconds());
+        assertEquals(0, created.getResendAfterSeconds());
+        assertNull(created.getPendingExpiresAt());
         assertTrue(pendingStore.listByPhone("31999999999").isEmpty());
         assertNull(verificationStore.get("vfy_create"));
-        assertTrue(calendar.listEventsByPhone(
+        assertEquals(1, calendar.listEventsByPhone(
                 new DateTime(Date.from(LocalDate.now(ZONE).minusDays(1).atStartOfDay(ZONE).toInstant())),
                 new DateTime(Date.from(LocalDate.now(ZONE).plusMonths(2).atStartOfDay(ZONE).toInstant())),
-                "31999999999").isEmpty());
+                "31999999999").size());
     }
 
     @Test
@@ -203,10 +212,82 @@ class ServicoServiceTest {
         assertDoesNotThrow(() -> service.requireActiveAdminAccess(providerTwo.getId(), ownerAsProvider));
     }
 
+    @Test
+    void rejectsReservedAdminOrProviderPhoneWithoutTemporaryPassword() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        AdminAuthService adminAuthService = adminAuthServiceWithUsers("+55 31 98888-8888|Provider|PROVIDER|provider-1");
+        ServicoService service = serviceWith(calendar, props, adminAuthService);
+        ServicoRequest request = validRequest(nextAvailableDate(calendar, props));
+        request.setClientPhone("+55 31 98888-8888");
+
+        assertThrows(ReservedAdminPhoneException.class, () -> service.create(request));
+
+        request.setReservedPhonePassword("wrong-password");
+        assertThrows(ReservedAdminPhoneException.class, () -> service.create(request));
+
+        request.setReservedPhonePassword(props.getAdminTempPassword());
+        ServicoCreateResponse created = service.create(request);
+
+        assertEquals("CONFIRMED", created.getServico().getStatus());
+        assertEquals("31988888888", created.getServico().getClientPhone());
+    }
+
+    @Test
+    void updateByTokenRejectsReservedAdminOrProviderPhoneWithoutTemporaryPassword() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        AdminAuthService adminAuthService = adminAuthServiceWithUsers("+55 31 97777-7777|Provider|PROVIDER|provider-2");
+        ServicoService service = serviceWith(calendar, props, adminAuthService);
+        LocalDate date = nextAvailableDate(calendar, props);
+        ServicoCreateResponse created = service.create(validRequest(date));
+        ServicoRequest update = validRequest(date);
+        update.setClientPhone("+55 31 97777-7777");
+
+        assertThrows(ReservedAdminPhoneException.class, () -> service.updateByToken(
+                created.getServico().getEventId(),
+                created.getManageToken(),
+                update));
+
+        update.setReservedPhonePassword(props.getAdminTempPassword());
+        ServicoResponse updated = service.updateByToken(
+                created.getServico().getEventId(),
+                created.getManageToken(),
+                update);
+
+        assertEquals("31977777777", updated.getClientPhone());
+    }
+
+    @Test
+    void noSmsPublicBookingIsVisibleToAdminQueriesWithConfirmedStatus() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        LocalDate date = nextAvailableDate(calendar, props);
+        ServicoCreateResponse created = service.create(validRequest(date));
+        AdminPrincipal owner = principal("owner-1", AdminRole.OWNER);
+
+        List<ServicoResponse> visible = service.listAllAdmin(owner, date, date, null, null);
+        List<ServicoResponse> confirmed = service.listAllAdmin(owner, date, date, "CONFIRMED", null);
+
+        assertTrue(visible.stream().anyMatch(booking -> created.getServico().getEventId().equals(booking.getEventId())));
+        ServicoResponse booking = confirmed.stream()
+                .filter(item -> created.getServico().getEventId().equals(item.getEventId()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("CONFIRMED", booking.getStatus());
+        assertEquals("Pedro", booking.getClientFirstName());
+        assertEquals("31999999999", booking.getClientPhone());
+        assertEquals("Visita tecnica", booking.getServiceType());
+    }
+
     private static ServicoService serviceWith(DummyCalendarClient calendar, AppProperties props) {
+        return serviceWith(calendar, props, adminAuthServiceWithoutAdmins());
+    }
+
+    private static ServicoService serviceWith(DummyCalendarClient calendar, AppProperties props, AdminAuthService adminAuthService) {
         TokenUtil tokenUtil = new TokenUtil("test-secret", 600);
         InMemoryPendingStore pendingStore = new InMemoryPendingStore();
-        AdminAuthService adminAuthService = adminAuthServiceWithoutAdmins();
         VerificationService verificationService = new VerificationService(
                 calendar,
                 tokenUtil,
@@ -296,6 +377,15 @@ class ServicoServiceTest {
     private static AdminAuthService adminAuthServiceWithoutAdmins() {
         return new AdminAuthService(
                 new NoAdminUserStore(),
+                new NoopAdminSessionStore(),
+                new TrackingVerificationStore(),
+                new NoopOtpDeliveryClient(),
+                new AppProperties());
+    }
+
+    private static AdminAuthService adminAuthServiceWithUsers(String usersCsv) {
+        return new AdminAuthService(
+                new InMemoryAdminUserStore(usersCsv),
                 new NoopAdminSessionStore(),
                 new TrackingVerificationStore(),
                 new NoopOtpDeliveryClient(),

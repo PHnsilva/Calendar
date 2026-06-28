@@ -87,6 +87,32 @@ class AdminAuthServiceTest {
     }
 
     @Test
+    void passwordLoginCreatesReusableOwnerAndProviderSessionsWithConfiguredPassword() {
+        InMemoryAdminUserStore userStore = new InMemoryAdminUserStore(
+                "+55 31 99999-9999|Owner|OWNER|owner-1;+55 31 98888-8888|Provider|PROVIDER|provider-1");
+        InMemoryAdminSessionStore sessionStore = new InMemoryAdminSessionStore();
+        AdminAuthService service = new AdminAuthService(
+                userStore,
+                sessionStore,
+                new InMemoryVerificationStore(),
+                new RecordingOtpDeliveryClient(),
+                new CustomPasswordProperties("team-password"));
+
+        AdminAuthConfirmResponse owner = service.passwordLogin("+55 31 99999-9999", "team-password");
+        AdminAuthConfirmResponse provider = service.passwordLogin("+55 31 98888-8888", "team-password");
+
+        assertTrue(owner.getSessionToken().startsWith("adm_"));
+        assertEquals("OWNER", owner.getAdmin().getRole());
+        assertTrue(service.require(owner.getSessionToken()).isOwner());
+        assertTrue(provider.getSessionToken().startsWith("adm_"));
+        assertEquals("PROVIDER", provider.getAdmin().getRole());
+        assertEquals("provider-1", service.require(provider.getSessionToken()).getId());
+        assertThrows(ForbiddenException.class, () -> service.passwordLogin("+55 31 99999-9999", "#052430Vs"));
+        assertFalse(service.isReservedPhonePasswordValid("#052430Vs"));
+        assertTrue(service.isReservedPhonePasswordValid("team-password"));
+    }
+
+    @Test
     void providerCannotListProvidersButOwnerCan() {
         InMemoryAdminUserStore userStore = new InMemoryAdminUserStore(
                 "+55 31 99999-9999|Owner|OWNER;+55 31 98888-8888|Provider|PROVIDER");
@@ -277,6 +303,19 @@ class AdminAuthServiceTest {
         @Override
         public Duration getOtpResendAfter() {
             return Duration.ZERO;
+        }
+    }
+
+    private static class CustomPasswordProperties extends TestAppProperties {
+        private final String password;
+
+        CustomPasswordProperties(String password) {
+            this.password = password;
+        }
+
+        @Override
+        public String getAdminTempPassword() {
+            return password;
         }
     }
 }

@@ -3913,3 +3913,21 @@ html body .wf-client-landing .wf-services-showcase__viewport:active {
     max-width: clamp(320px, 40vw, 520px) !important;
   }
 }
+
+/* phase9 services CTA PNG icon replacement. */
+.wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon .wf-icon,
+.wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon .wf-icon img {
+  width: clamp(22px, 1.75vw, 30px) !important;
+  height: clamp(22px, 1.75vw, 30px) !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+
+.wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon {
+  width: clamp(28px, 2.2vw, 36px) !important;
+  height: clamp(28px, 2.2vw, 36px) !important;
+  padding: 2px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, .95) !important;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, .18) !important;
+}

@@ -10,6 +10,7 @@ import footerInstagramWireframeIcon from "../../../../assets/wireframes/icons/fo
 import footerEmailWireframeIcon from "../../../../assets/wireframes/icons/footer-email-wireframe.png";
 import footerPhoneWireframeIcon from "../../../../assets/footer/contact-phone-chat-green.svg";
 import footerMapWireframeIcon from "../../../../assets/footer/contact-location-red.svg";
+import serviceOverviewIcon from "../../../../assets/wireframes/icons/services/pequenos-reparos.png";
 import { SvgWrapper } from "../../../../components/layout/ResponsivePrimitives";
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -27,6 +28,7 @@ export function LandingIcon({ name }: { name: string }) {
     "footer-email-social": footerEmailWireframeIcon,
     "footer-phone-wireframe": footerPhoneWireframeIcon,
     "footer-map-wireframe": footerMapWireframeIcon,
+    "services": serviceOverviewIcon,
   };
   const imageIcon = imageIcons[name];
   if (imageIcon) {

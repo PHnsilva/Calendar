@@ -36,14 +36,15 @@ import cityItabiritoIcon from '../../assets/wireframes/icons/city-itabirito.svg'
 import cityOuroPretoIcon from '../../assets/wireframes/icons/city-ouro-preto.svg';
 import cityMoedaIcon from '../../assets/wireframes/icons/city-moeda.svg';
 import cityNovaLimaIcon from '../../assets/wireframes/icons/city-nova-lima.svg';
-import serviceMontagemIcon from '../../assets/wireframes/icons/services/montagem.svg';
-import serviceEletricaIcon from '../../assets/wireframes/icons/services/eletrica.svg';
-import serviceHidraulicaIcon from '../../assets/wireframes/icons/services/hidraulica.svg';
-import serviceInstalacoesIcon from '../../assets/wireframes/icons/services/instalacoes.svg';
-import servicePequenosReparosIcon from '../../assets/wireframes/icons/services/pequenos-reparos.svg';
-import servicePinturaIcon from '../../assets/wireframes/icons/services/pintura.svg';
-import serviceJardinagemIcon from '../../assets/wireframes/icons/services/jardinagem.svg';
-import serviceOrcamentoIcon from '../../assets/wireframes/icons/services/orcamento.svg';
+import serviceMontagemIcon from '../../assets/wireframes/icons/services/montagem.png';
+import serviceEletricaIcon from '../../assets/wireframes/icons/services/eletrica.png';
+import serviceHidraulicaIcon from '../../assets/wireframes/icons/services/hidraulica.png';
+import serviceInstalacoesIcon from '../../assets/wireframes/icons/services/instalacoes.png';
+import servicePequenosReparosIcon from '../../assets/wireframes/icons/services/pequenos-reparos.png';
+import servicePinturaIcon from '../../assets/wireframes/icons/services/pintura.png';
+import serviceJardinagemIcon from '../../assets/wireframes/icons/services/jardinagem.png';
+import serviceOrcamentoIcon from '../../assets/wireframes/icons/services/orcamento.png';
+import serviceScheduleIcon from '../../assets/wireframes/icons/services/agendar-servico.png';
 import bookingActionEyeIcon from '../../assets/wireframes/icons/booking-action-eye.svg';
 import bookingActionPencilIcon from '../../assets/wireframes/icons/booking-action-pencil.svg';
 import bookingActionWhatsAppIcon from '../../assets/wireframes/icons/booking-action-whatsapp.svg';
@@ -614,6 +615,7 @@ function Icon({ name }: { name: string }) {
     'service-pintura': servicePinturaIcon,
     'service-jardinagem': serviceJardinagemIcon,
     'service-orcamento': serviceOrcamentoIcon,
+    'service-schedule': serviceScheduleIcon,
     'confirm-phone-security': confirmPhoneSecurityIllustration,
     'email-illustration': emailIllustrationAsset,
   };
@@ -3107,7 +3109,7 @@ function ServicesInfoModal({ onSchedule }: { onSchedule: () => void }) {
         ))}
       </div>
       <button type="button" className="wf-services-info__cta" onClick={onSchedule}>
-        <Icon name="calendar-create" />
+        <Icon name="service-schedule" />
         <span>Agendar pelo site</span>
       </button>
     </section>

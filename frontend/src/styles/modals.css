@@ -3716,3 +3716,44 @@
     height: 50px !important;
   }
 }
+
+/* phase9 service modal PNG icon assets. */
+.wf-modal.wf-modal--services-info .wf-services-card__icon .wf-icon,
+.wf-modal.wf-modal--services-info .wf-services-card__icon .wf-icon img {
+  display: block !important;
+  width: clamp(62px, 5vw, 76px) !important;
+  height: clamp(62px, 5vw, 76px) !important;
+  object-fit: contain !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card__icon {
+  width: clamp(62px, 5vw, 76px) !important;
+  height: clamp(62px, 5vw, 76px) !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card {
+  grid-template-columns: clamp(62px, 5vw, 76px) minmax(0, 1fr) !important;
+  column-gap: clamp(18px, 1.7vw, 26px) !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__cta .wf-icon,
+.wf-modal.wf-modal--services-info .wf-services-info__cta .wf-icon img {
+  display: inline-grid !important;
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: contain !important;
+}
+
+@media (max-width: 520px) {
+  .wf-modal.wf-modal--services-info .wf-services-card__icon,
+  .wf-modal.wf-modal--services-info .wf-services-card__icon .wf-icon,
+  .wf-modal.wf-modal--services-info .wf-services-card__icon .wf-icon img {
+    width: 58px !important;
+    height: 58px !important;
+  }
+
+  .wf-modal.wf-modal--services-info .wf-services-card {
+    grid-template-columns: 58px minmax(0, 1fr) !important;
+    column-gap: 14px !important;
+  }
+}

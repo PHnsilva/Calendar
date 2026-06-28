@@ -1,14 +1,1 @@
-@import "../styles/globals.css";
-@import "../styles/landing.css";
-@import "../styles/admin.css";
-@import "../styles/modals.css";
-@import "../styles/charts.css";
-@import "../styles/navbar.css";
-@import "../styles/landing-responsive.css";
-@import "../styles/admin-responsive.css";
-@import "../styles/modals-responsive.css";
-@import "../styles/charts-responsive.css";
-@import "../styles/navbar-responsive.css";
-@import "../styles/responsive-foundation.css";
-@import "../styles/appointments-wireframe-overrides.css";
-@import "../styles/landing-client-wireframe-final.css";
+@import "../styles/index.css";

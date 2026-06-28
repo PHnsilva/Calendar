@@ -1,8 +1,9 @@
 import type { ServicoResponse } from "../../../types/api";
+import type { BookingListEntry } from "../types";
 import { BookingListItem } from "./BookingListItem";
 
 type BookingListProps = {
-  bookings: ServicoResponse[];
+  bookings: BookingListEntry[];
   selectedEventId?: string;
   onSelect: (booking: ServicoResponse) => void;
 };
@@ -14,14 +15,16 @@ export function BookingList({ bookings, selectedEventId, onSelect }: BookingList
 
   return (
     <div className="my-bookings__list">
-      {bookings.map((booking) => (
-        <BookingListItem
-          key={booking.eventId}
-          booking={booking}
-          isActive={booking.eventId === selectedEventId}
-          onSelect={onSelect}
-        />
-      ))}
+      {bookings.map(({ model, legacy }) => {
+        return (
+          <BookingListItem
+            key={model.id}
+            booking={model}
+            isActive={model.id === selectedEventId}
+            onSelect={() => onSelect(legacy)}
+          />
+        );
+      })}
     </div>
   );
 }

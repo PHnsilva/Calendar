@@ -189,6 +189,14 @@ export type AvailabilityBlockPreviewResponse = {
 };
 
 export type AdminRole = "OWNER" | "PROVIDER";
+export type AdminWorkspaceMode = "ADMIN" | "PROVIDER";
+
+export type AdminWorkspaceContext = {
+  mode: AdminWorkspaceMode;
+  providerId?: string;
+  providerName?: string;
+  impersonatedByOwner?: boolean;
+};
 
 export type AdminMeResponse = {
   id: string;

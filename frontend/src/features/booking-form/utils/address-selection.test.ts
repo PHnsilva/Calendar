@@ -55,7 +55,8 @@ describe("address selection helpers", () => {
       houseNumber: "72",
     });
 
-    expect(buildSuggestionInputValue(item)).toContain("Domani");
+    expect(buildSuggestionInputValue(item)).toContain("Rua Joao Pessoa");
+    expect(buildSuggestionInputValue(item)).toContain("Centro");
     expect(buildSuggestionStreetLine(item)).toBe("Rua Joao Pessoa");
   });
 });

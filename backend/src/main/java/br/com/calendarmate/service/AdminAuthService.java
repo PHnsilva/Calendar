@@ -10,6 +10,7 @@ import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.AdminPrincipal;
+import br.com.calendarmate.model.AdminRole;
 import br.com.calendarmate.model.AdminSession;
 import br.com.calendarmate.model.AdminUser;
 import br.com.calendarmate.service.store.AdminSessionStore;
@@ -52,8 +53,8 @@ public class AdminAuthService {
     }
 
     public AdminAuthStartResponse start(String phoneRaw) {
-        String phone = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneRaw);
-        String maskedPhone = maskBrazilianPhone(phone);
+        String phone = PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phoneRaw);
+        String maskedPhone = PhoneNumberNormalizer.maskBrazilianPhone(phone);
         log.info("Admin auth start requested phone={}", maskedPhone);
 
         AdminUser user = findActiveAdminByPhone(phone, maskedPhone);
@@ -62,7 +63,13 @@ public class AdminAuthService {
         }
 
         VerificationStore.Session session = createVerificationSession(user, phone, maskedPhone);
-        sendOtp(phone, session.code);
+        try {
+            sendOtp(phone, session.code);
+        } catch (RuntimeException ex) {
+            verificationStore.delete(session.verificationId);
+            throw ex;
+        }
+        log.info("Verification flow started flow=admin_login phone={} verificationId={}", maskedPhone, session.verificationId);
         return new AdminAuthStartResponse(
                 session.verificationId,
                 props.getOtpTtl().toSeconds(),
@@ -88,6 +95,7 @@ public class AdminAuthService {
         }
 
         sendOtp(session.phoneDigits, session.code);
+        log.info("Verification flow resend flow=admin_login phone={} verificationId={}", PhoneNumberNormalizer.maskBrazilianPhone(session.phoneDigits), session.verificationId);
         return new AdminAuthStartResponse(
                 session.verificationId,
                 Math.max(0, session.expiresAtEpochSec - Instant.now().getEpochSecond()),
@@ -135,6 +143,10 @@ public class AdminAuthService {
     }
 
     public AdminPrincipal require(String sessionToken) {
+        return require(sessionToken, null, null);
+    }
+
+    public AdminPrincipal require(String sessionToken, String workspaceMode, String providerId) {
         String token = cleanToken(sessionToken);
         if (token.isBlank()) {
             throw new ForbiddenException("Sessao administrativa ausente");
@@ -149,12 +161,20 @@ public class AdminAuthService {
             throw new ForbiddenException("Administrador desativado");
         }
         adminSessionStore.touch(session.getSessionId(), now);
+        AdminPrincipal scoped = resolveWorkspacePrincipal(user, session, workspaceMode, providerId);
+        if (scoped != null) {
+            return scoped;
+        }
         return new AdminPrincipal(user, session);
     }
 
     public AdminPrincipal requireOwner(String sessionToken) {
-        AdminPrincipal principal = require(sessionToken);
-        if (!principal.isOwner()) {
+        return requireOwner(sessionToken, null, null);
+    }
+
+    public AdminPrincipal requireOwner(String sessionToken, String workspaceMode, String providerId) {
+        AdminPrincipal principal = require(sessionToken, workspaceMode, providerId);
+        if (!principal.isOwner() || principal.isWorkspaceScoped()) {
             throw new ForbiddenException("Acesso permitido apenas ao OWNER");
         }
         return principal;
@@ -169,7 +189,33 @@ public class AdminAuthService {
 
     public boolean isAdminPhone(String phoneRaw) {
         String phone = PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(phoneRaw);
-        return !phone.isBlank() && findActiveAdminByPhone(phone, maskBrazilianPhone(phone)) != null;
+        return !phone.isBlank() && findActiveAdminByPhone(phone, PhoneNumberNormalizer.maskBrazilianPhone(phone)) != null;
+    }
+
+    public boolean isAdminPhoneBestEffort(String phoneRaw) {
+        String phone = PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(phoneRaw);
+        if (phone.isBlank()) {
+            return false;
+        }
+        String maskedPhone = PhoneNumberNormalizer.maskBrazilianPhone(phone);
+        try {
+            return findActiveAdminByPhone(phone, maskedPhone) != null;
+        } catch (ExternalServiceException ex) {
+            log.warn(
+                    "Admin phone best-effort lookup skipped phone={} code={} dependency={} status={}",
+                    maskedPhone,
+                    ex.getErrorCode(),
+                    ex.getProviderName() == null ? "admin_user_store" : ex.getProviderName(),
+                    ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus());
+            return false;
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Admin phone best-effort lookup skipped phone={} exceptionClass={} exceptionMessage={}",
+                    maskedPhone,
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            return false;
+        }
     }
 
     public List<AdminProviderResponse> listProviders(AdminPrincipal principal) {
@@ -177,6 +223,7 @@ public class AdminAuthService {
             throw new ForbiddenException("Acesso permitido apenas ao OWNER");
         }
         return adminUserStore.listActive().stream()
+                .filter(user -> user.getRole() == AdminRole.PROVIDER)
                 .map(user -> new AdminProviderResponse(
                         user.getId(),
                         user.getName(),
@@ -191,6 +238,9 @@ public class AdminAuthService {
         if (user == null) {
             throw new BadRequestException("Prestador nao encontrado");
         }
+        if (user.getRole() != AdminRole.PROVIDER) {
+            throw new BadRequestException("Usuario informado nao e prestador");
+        }
         return user;
     }
 
@@ -203,6 +253,40 @@ public class AdminAuthService {
         out.setPermissions(principal.permissions());
         out.setSessionExpiresAt(principal.getSession() == null ? 0L : principal.getSession().getExpiresAtEpochSec());
         return out;
+    }
+
+    private AdminPrincipal resolveWorkspacePrincipal(AdminUser authenticated, AdminSession session, String workspaceMode, String providerId) {
+        String mode = workspaceMode == null ? "" : workspaceMode.trim().toUpperCase(java.util.Locale.ROOT);
+        String selectedProviderId = providerId == null ? "" : providerId.trim();
+
+        if ("ADMIN".equals(mode)) {
+            if (!authenticated.isOwner()) {
+                throw new ForbiddenException("Acesso permitido apenas ao OWNER");
+            }
+            return new AdminPrincipal(authenticated, session);
+        }
+
+        if ("PROVIDER".equals(mode)) {
+            AdminUser provider = selectedProviderId.isBlank()
+                    ? authenticated
+                    : adminUserStore.findActiveById(selectedProviderId);
+            if (provider == null || provider.getRole() != AdminRole.PROVIDER) {
+                throw new ForbiddenException("Prestador nao autorizado");
+            }
+            if (!authenticated.isOwner() && !authenticated.getId().equals(provider.getId())) {
+                throw new ForbiddenException("Prestador nao autorizado para este workspace");
+            }
+            return new AdminPrincipal(authenticated, provider, session);
+        }
+
+        if (!authenticated.isOwner()) {
+            if (!selectedProviderId.isBlank() && !authenticated.getId().equals(selectedProviderId)) {
+                throw new ForbiddenException("Prestador nao autorizado para este workspace");
+            }
+            return new AdminPrincipal(authenticated, session);
+        }
+
+        return null;
     }
 
     private String generateToken() {
@@ -233,6 +317,7 @@ public class AdminAuthService {
     }
 
     private void sendOtp(String phone, String code) {
+        logOtpCodeIfEnabled("admin_auth", phone, code);
         try {
             otpDeliveryClient.sendCode(phone, code);
         } catch (BadRequestException ex) {
@@ -242,6 +327,17 @@ public class AdminAuthService {
         } catch (RuntimeException ex) {
             throw new ExternalServiceException("Nao foi possivel enviar o codigo agora", ex);
         }
+    }
+
+    private void logOtpCodeIfEnabled(String flow, String phone, String code) {
+        if (!props.isOtpDebugLoggingEnabled()) {
+            return;
+        }
+        log.info(
+                "OTP debug flow={} phone={} code={}",
+                flow,
+                PhoneNumberNormalizer.maskBrazilianPhone(phone),
+                code == null ? "" : code.trim());
     }
 
     private AdminUser findActiveAdminByPhone(String phone, String maskedPhone) {
@@ -293,18 +389,6 @@ public class AdminAuthService {
                     safeExceptionMessage(ex));
             throw ExternalServiceException.authDependencyUnavailable("verification_store", ex);
         }
-    }
-
-    private static String maskBrazilianPhone(String phoneDigits) {
-        String digits = PhoneNumberNormalizer.digitsOnly(phoneDigits);
-        if (digits.length() == 10 || digits.length() == 11) {
-            digits = "55" + digits;
-        }
-        if (digits.length() <= 4) {
-            return "****";
-        }
-        int prefixLength = Math.min(4, digits.length() - 4);
-        return "+" + digits.substring(0, prefixLength) + "*****" + digits.substring(digits.length() - 4);
     }
 
     private static String safeExceptionMessage(Exception ex) {

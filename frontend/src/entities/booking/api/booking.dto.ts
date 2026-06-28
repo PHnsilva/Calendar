@@ -1,0 +1,27 @@
+export type BookingDto = {
+  eventId: string | null;
+  eventLink: string | null;
+  serviceType: string | null;
+  serviceNotes: string | null;
+  start: string | null;
+  end: string | null;
+  clientFirstName: string | null;
+  clientLastName: string | null;
+  clientEmail: string | null;
+  clientPhone: string | null;
+  clientCep: string | null;
+  clientStreet: string | null;
+  clientNeighborhood: string | null;
+  clientNumber: string | null;
+  clientComplement?: string | null;
+  clientCity: string | null;
+  clientState: string | null;
+  clientLatitude?: number | null;
+  clientLongitude?: number | null;
+  clientAddressLine: string | null;
+  status: string | null;
+  manageToken?: string | null;
+  assignedProviderId?: string | null;
+  assignedProviderName?: string | null;
+  assignedProviderPhone?: string | null;
+};

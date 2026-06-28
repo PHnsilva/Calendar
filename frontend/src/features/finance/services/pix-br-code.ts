@@ -26,9 +26,10 @@ function crc16(payload: string): string {
   return crc.toString(16).toUpperCase().padStart(4, "0");
 }
 
-export function buildPixPayload(config: PixPayloadConfig, amount: number): string {
+export function buildPixPayload(config: PixPayloadConfig, amount?: number | null): string {
   const key = config.key.trim();
-  if (!key || amount <= 0) return "";
+  if (!key) return "";
+  const hasFixedAmount = typeof amount === "number" && Number.isFinite(amount) && amount > 0;
 
   const description = sanitizePixText(config.description ?? "Comissao socio", "COMISSAO SOCIO", 25);
   const merchantAccount = emv("00", "br.gov.bcb.pix") + emv("01", key) + emv("02", description);
@@ -37,7 +38,7 @@ export function buildPixPayload(config: PixPayloadConfig, amount: number): strin
     emv("26", merchantAccount),
     emv("52", "0000"),
     emv("53", "986"),
-    emv("54", amount.toFixed(2)),
+    ...(hasFixedAmount ? [emv("54", amount!.toFixed(2))] : []),
     emv("58", "BR"),
     emv("59", sanitizePixText(config.recipientName, "SG PEQUENOS REPAROS", 25)),
     emv("60", sanitizePixText(config.recipientCity, "BELO HORIZONTE", 15)),

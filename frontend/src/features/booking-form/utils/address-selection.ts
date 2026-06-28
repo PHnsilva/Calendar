@@ -2,7 +2,7 @@ import type { GeoapifyAddressSuggestion } from "../../../types/api";
 
 type AddressLike = Pick<
   GeoapifyAddressSuggestion,
-  "addressLine1" | "addressLine2" | "formatted" | "houseNumber" | "label" | "street"
+  "addressLine1" | "addressLine2" | "formatted" | "houseNumber" | "label" | "neighborhood" | "postcode" | "street"
 > & {
   raw?: Record<string, unknown>;
 };
@@ -25,15 +25,25 @@ export function shouldShowManualHouseNumber(suggestion?: AddressLike | null): bo
 }
 
 export function buildSuggestionInputValue(suggestion: AddressLike): string {
-  return clean(suggestion.formatted)
-    || [suggestion.addressLine1, suggestion.addressLine2].map(clean).filter(Boolean).join(", ")
+  const street = buildSuggestionStreetLine(suggestion);
+  const neighborhood = clean(suggestion.neighborhood) || clean(suggestion.addressLine2);
+  const postcode = clean(suggestion.postcode).replace(/\D/g, "").slice(0, 8);
+  return [street, neighborhood, postcode ? `CEP ${postcode}` : ""].filter(Boolean).join(", ")
+    || clean(suggestion.formatted)
     || clean(suggestion.label)
     || clean(suggestion.street);
 }
 
 export function buildSuggestionStreetLine(suggestion: AddressLike): string {
-  return clean(suggestion.street)
-    || clean(suggestion.addressLine1)
+  const street = clean(suggestion.street);
+  if (street) return street;
+
+  const addressLine1 = clean(suggestion.addressLine1);
+  if (addressLine1) {
+    return addressLine1.replace(/\s*,\s*\d+[a-z]?([-/]\d+)?$/i, "").trim();
+  }
+
+  return clean(suggestion.label)
     || clean(suggestion.formatted)
-    || clean(suggestion.label);
+    || "";
 }

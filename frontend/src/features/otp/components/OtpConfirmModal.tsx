@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef, type ChangeEvent, type ClipboardEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useOtpFlow } from "../hooks/useOtpFlow";
+import { OTP_CODE_LENGTH, applyOtpBackspace, applyOtpInput, codeToOtpDigits } from "../../../lib/otp";
 
 type WindowWithOtpCredential = Window & {
   OTPCredential?: unknown;
@@ -16,7 +17,15 @@ type OtpConfirmModalProps = {
 };
 
 function onlyDigits(value: string) {
-  return value.replace(/\D/g, "").slice(0, 3);
+  return value.replace(/\D/g, "").slice(0, OTP_CODE_LENGTH);
+}
+
+function focusOtpInput(refs: Array<HTMLInputElement | null>, index: number) {
+  window.requestAnimationFrame(() => {
+    const input = refs[index];
+    input?.focus();
+    input?.select();
+  });
 }
 
 function canUseWebOtp() {
@@ -54,6 +63,9 @@ export default function OtpConfirmModal({
     initialExpiresInSeconds: expiresInSeconds,
     onVerified,
   });
+  const codeDigits = codeToOtpDigits(code, OTP_CODE_LENGTH);
+  const codeInputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const autoSubmitRef = useRef("");
 
 
   useEffect(() => {
@@ -89,6 +101,24 @@ export default function OtpConfirmModal({
 
   useEffect(() => {
     if (!open) return;
+    autoSubmitRef.current = "";
+    focusOtpInput(codeInputRefs.current, 0);
+  }, [open, verificationId]);
+
+  useEffect(() => {
+    if (!open || code.length < OTP_CODE_LENGTH) {
+      autoSubmitRef.current = "";
+      return;
+    }
+    if (!canConfirm) return;
+    const attemptKey = `${verificationId}:${code}`;
+    if (autoSubmitRef.current === attemptKey) return;
+    autoSubmitRef.current = attemptKey;
+    submitConfirm();
+  }, [canConfirm, code, open, submitConfirm, verificationId]);
+
+  useEffect(() => {
+    if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -101,6 +131,43 @@ export default function OtpConfirmModal({
   }, [open, onClose]);
 
   if (!open) return null;
+
+  const handleCodeChange = (index: number, event: ChangeEvent<HTMLInputElement>) => {
+    const next = applyOtpInput(codeDigits, index, event.target.value);
+    setCode(next.digits.join(""));
+    focusOtpInput(codeInputRefs.current, next.focusIndex);
+  };
+
+  const handleCodeKeyDown = (index: number, event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Backspace") {
+      if (!codeDigits[index] && index === 0) return;
+      event.preventDefault();
+      const next = applyOtpBackspace(codeDigits, index);
+      setCode(next.digits.join(""));
+      focusOtpInput(codeInputRefs.current, next.focusIndex);
+      return;
+    }
+
+    if (event.key === "ArrowLeft" && index > 0) {
+      event.preventDefault();
+      focusOtpInput(codeInputRefs.current, index - 1);
+      return;
+    }
+
+    if (event.key === "ArrowRight" && index < OTP_CODE_LENGTH - 1) {
+      event.preventDefault();
+      focusOtpInput(codeInputRefs.current, index + 1);
+    }
+  };
+
+  const handleCodePaste = (index: number, event: ClipboardEvent<HTMLInputElement>) => {
+    const pasted = event.clipboardData.getData("text");
+    if (!pasted) return;
+    event.preventDefault();
+    const next = applyOtpInput(codeDigits, index, pasted);
+    setCode(next.digits.join(""));
+    focusOtpInput(codeInputRefs.current, next.focusIndex);
+  };
 
   return (
     <div className="booking-preview-modal otp-modal" role="dialog" aria-modal="true">
@@ -135,17 +202,29 @@ export default function OtpConfirmModal({
             <small>O código expira em {expiresLabel}.</small>
           </div>
 
-          <label className="booking-form__field">
+          <div className="booking-form__field">
             <span>Código</span>
-            <input
-              value={code}
-              onChange={(event: any) => setCode(onlyDigits(event.target.value))}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="123"
-              className="booking-form__input booking-form__input--otp"
-            />
-          </label>
+            <div className="wf-confirm-code-fields">
+              {[0, 1, 2].map((index) => (
+                <input
+                  key={index}
+                  ref={(element) => {
+                    codeInputRefs.current[index] = element;
+                  }}
+                  value={codeDigits[index] ?? ""}
+                  onChange={(event) => handleCodeChange(index, event)}
+                  onKeyDown={(event) => handleCodeKeyDown(index, event)}
+                  onPaste={(event) => handleCodePaste(index, event)}
+                  onFocus={(event) => event.currentTarget.select()}
+                  inputMode="numeric"
+                  autoComplete={index === 0 ? "one-time-code" : "off"}
+                  maxLength={1}
+                  placeholder="0"
+                  className="booking-form__input booking-form__input--otp"
+                />
+              ))}
+            </div>
+          </div>
 
           {feedbackMessage ? <p className="booking-form__feedback booking-form__feedback--success">{feedbackMessage}</p> : null}
           {confirmError ? (

@@ -1,0 +1,110 @@
+.backdrop {
+  align-items: center;
+  background: rgba(7, 19, 93, 0.42);
+  container: shared-dialog / inline-size;
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: clamp(12px, 3vw, 32px);
+  position: fixed;
+  z-index: 1000;
+}
+
+.dialog {
+  background: var(--cm-color-surface);
+  border: 1px solid var(--cm-color-border);
+  border-radius: var(--cm-radius-xl);
+  box-shadow: var(--cm-shadow-modal);
+  color: var(--cm-color-text);
+  display: grid;
+  gap: var(--cm-space-5);
+  max-height: min(88dvh, 820px);
+  max-width: 100%;
+  overflow: auto;
+  padding: clamp(20px, 4vw, 32px);
+  position: relative;
+  width: min(100%, 720px);
+}
+
+.close {
+  align-items: center;
+  background: var(--cm-color-surface-soft);
+  border: 1px solid var(--cm-color-border);
+  border-radius: var(--cm-radius-pill);
+  color: var(--cm-color-text);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 900;
+  height: 40px;
+  justify-content: center;
+  justify-self: end;
+  line-height: 1;
+  position: sticky;
+  right: 0;
+  top: 0;
+  width: 40px;
+}
+
+.close:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--cm-color-blue) 26%, transparent);
+  outline-offset: 2px;
+}
+
+.header,
+.body {
+  min-width: 0;
+}
+
+.header {
+  display: grid;
+  gap: var(--cm-space-2);
+}
+
+.title {
+  font-size: clamp(1.25rem, 3vw, 1.6rem);
+  line-height: 1.15;
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.description {
+  color: var(--cm-color-text-soft);
+  line-height: 1.5;
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cm-space-3);
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.visuallyHidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+@container shared-dialog (max-width: 480px) {
+  .dialog {
+    border-radius: var(--cm-radius-lg);
+    padding: var(--cm-space-5);
+  }
+
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

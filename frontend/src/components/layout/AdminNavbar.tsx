@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import BaseNavbar, { NavbarButton, NavbarIcon, type NavbarIconName } from './BaseNavbar';
+import BaseNavbar, { NavbarIcon, type NavbarIconName } from './BaseNavbar';
 import NavbarMenu from '../../shared/ui/NavbarMenu';
 
 export type AdminNavView = 'agenda' | 'agendamentos' | 'bloqueios' | 'historico' | 'extrato';
@@ -13,7 +13,6 @@ type AdminNavbarProps = {
   onEmailClick?: () => void;
   onMobileAdminClick?: () => void;
   onMobileMenu?: () => void;
-  onNotificationsClick?: () => void;
   onView?: (view: AdminNavView) => void;
   owner?: boolean;
 };
@@ -26,44 +25,46 @@ type AdminTab = {
 };
 
 type ProfileMenuItem = {
-  action: 'notifications' | 'email' | 'budget' | 'logout';
+  action: 'email' | 'budget' | 'logout';
   icon: NavbarIconName;
   label: string;
   onClick?: () => void;
   danger?: boolean;
 };
 
+function cx(...classes: Array<string | false | null | undefined>): string {
+  return classes.filter(Boolean).join(' ');
+}
+
 const adminTabs: AdminTab[] = [
-  { key: 'agendamentos', label: 'Agendamentos', icon: 'calendar' },
+  { key: 'agendamentos', label: 'Agenda', icon: 'calendar' },
   { key: 'bloqueios', label: 'Bloqueios', icon: 'lock', ownerOnly: true },
   { key: 'historico', label: 'Histórico', icon: 'clock' },
   { key: 'extrato', label: 'Extrato', icon: 'chart', ownerOnly: true },
 ];
 
-function getAdminGreeting(adminName?: string): string {
-  const name = adminName?.trim() || 'Admin';
-  return name.toLowerCase().startsWith('olá') ? name : `Olá, ${name}`;
+function getAdminFirstName(adminName?: string): string {
+  const normalized = adminName?.trim() || 'Admin';
+  const sanitized = normalized.replace(/^olá,\s*/i, '').trim();
+  return sanitized.split(/\s+/)[0] || 'Admin';
 }
 
 function AdminProfileMenu({
   compact = false,
-  greeting,
+  firstName,
   labelContent,
   onBudgetClick,
   onEmailClick,
   onLogout,
-  onNotificationsClick,
 }: {
   compact?: boolean;
-  greeting: string;
+  firstName: string;
   labelContent?: ReactNode;
   onBudgetClick?: () => void;
   onEmailClick?: () => void;
   onLogout?: () => void;
-  onNotificationsClick?: () => void;
 }) {
   const menuItems: ProfileMenuItem[] = [
-    { action: 'notifications', icon: 'bell', label: 'Notificações', onClick: onNotificationsClick },
     { action: 'email', icon: 'mail', label: 'Email', onClick: onEmailClick },
     { action: 'budget', icon: 'budget', label: 'Orçamento', onClick: onBudgetClick },
     { action: 'logout', icon: 'user', label: 'Sair', onClick: onLogout, danger: true },
@@ -72,23 +73,25 @@ function AdminProfileMenu({
   return (
     <NavbarMenu
       ariaLabel="Opções do administrador"
+      className="cm-admin-profile-menu-wrap"
+      menuClassName="cm-admin-profile-menu"
       trigger={({ toggle }) => (
-        <NavbarButton
-          compact={compact}
+        <button
+          type="button"
           onClick={toggle}
-          ariaLabel="Abrir opções do administrador"
+          aria-label="Abrir opções do administrador"
           title="Abrir opções do administrador"
-          className="wf-admin-profile-trigger"
+          className={cx('cm-admin-profile-trigger', compact && 'cm-admin-profile-trigger--compact')}
         >
-          {labelContent ?? <><NavbarIcon name="user" /> <span>{greeting}</span> <NavbarIcon name="chevron" /></>}
-        </NavbarButton>
+          {labelContent ?? <><NavbarIcon name="user" /> <span>{firstName}</span> <NavbarIcon name="chevron" /></>}
+        </button>
       )}
     >
       {({ close }) => menuItems.map((item) => (
         <button
           key={item.label}
           type="button"
-          className={['wf-profile-menu-item', item.danger ? 'is-danger' : ''].filter(Boolean).join(' ')}
+          className={cx('cm-admin-profile-menu-item', 'wf-profile-menu-item', item.danger && 'is-danger')}
           data-menu-action={item.action}
           aria-label={item.label}
           title={item.label}
@@ -115,41 +118,41 @@ export default function AdminNavbar({
   onEmailClick,
   onMobileAdminClick,
   onMobileMenu,
-  onNotificationsClick,
   onView,
   owner = false,
 }: AdminNavbarProps) {
   const visibleTabs = adminTabs.filter((tab) => owner || !tab.ownerOnly);
-  const greeting = getAdminGreeting(adminName);
+  const firstName = getAdminFirstName(adminName);
   const openEmail = onEmailClick ?? (() => undefined);
+  const logout = onMobileAdminClick ?? onAdminClick;
 
   const desktopActions = (
     <>
+      <button type="button" className="cm-admin-create-button" onClick={onCreate}>
+        <NavbarIcon name="plus" /> <span>Novo agendamento</span>
+      </button>
       <AdminProfileMenu
-        greeting={greeting}
+        firstName={firstName}
         onBudgetClick={onBudgetClick}
         onEmailClick={openEmail}
         onLogout={onAdminClick}
-        onNotificationsClick={onNotificationsClick}
       />
-      <NavbarButton variant="orange" onClick={onCreate}><span>Novo agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
     </>
   );
 
   const mobileActions = (
     <>
+      <button type="button" className="cm-admin-menu-button" onClick={onMobileMenu} aria-label="Abrir menu administrativo" title="Menu">
+        <NavbarIcon name="menu" />
+      </button>
       <AdminProfileMenu
         compact
-        greeting={greeting}
-        labelContent={<NavbarIcon name="user" />}
+        firstName={firstName}
+        labelContent={<><NavbarIcon name="user" /> <span>{firstName}</span></>}
         onBudgetClick={onBudgetClick}
         onEmailClick={openEmail}
-        onLogout={onMobileAdminClick ?? onAdminClick}
-        onNotificationsClick={onNotificationsClick}
+        onLogout={logout}
       />
-      <NavbarButton variant="orange" compact onClick={onCreate ?? onMobileMenu} ariaLabel="Novo agendamento" title="Novo agendamento">
-        <NavbarIcon name="plus" />
-      </NavbarButton>
     </>
   );
 

@@ -1,9 +1,22 @@
-import { apiClient } from "../../../lib/api-client";
+import { ApiError, apiClient } from "../../../lib/api-client";
+import { getAuthFlowErrorMessage } from "../../../lib/api-error-messages";
+import { normalizePhone } from "../../../lib/authRole";
 import type { VerifyStartResponse } from "../../../types/api";
 
-export function startVerification(payload: { token: string; phone: string }) {
-  return apiClient<VerifyStartResponse>("/api/verify/start", {
-    method: "POST",
-    body: payload,
-  });
+export async function startVerification(payload: { token: string; phone: string }) {
+  try {
+    return await apiClient<VerifyStartResponse>("/api/verify/start", {
+      method: "POST",
+      body: { ...payload, phone: normalizePhone(payload.phone) },
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(getAuthFlowErrorMessage(error, { step: "start", audience: "client" }), error.status, error.payload, {
+        code: error.code,
+        method: error.method,
+        url: error.url,
+      });
+    }
+    throw error;
+  }
 }

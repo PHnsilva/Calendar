@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import '../../../app/booking-modal-day-picker.css';
+import '../../../styles/components/booking-modal-day-picker.css';
 import { useAvailableSlots } from '../../calendar/hooks/useAvailableSlots';
 import { useAvailableMonthDates } from '../../calendar/hooks/useAvailableMonthDates';
 import type { CalendarEvent } from '../../calendar/types';
@@ -30,6 +30,7 @@ import cityNovaLimaIcon from '../../../assets/wireframes/icons/city-nova-lima.sv
 import cityOuroPretoIcon from '../../../assets/wireframes/icons/city-ouro-preto.svg';
 import { buildSuggestionInputValue, buildSuggestionStreetLine, getSuggestionHouseNumber, shouldShowManualHouseNumber } from '../utils/address-selection';
 import { getBookingDayButtonClassName } from '../utils/day-picker';
+import { formatPhoneInput as formatBrazilianPhoneInput, isValidMobilePhone, normalizePhone } from '../../../lib/authRole';
 
 type BookingFormModalProps = {
   open: boolean;
@@ -178,10 +179,7 @@ function formatDate(dateString: string): string {
 }
 
 function formatPhoneInput(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  return formatBrazilianPhoneInput(value);
 }
 
 function digitsOnly(value: string) {
@@ -248,8 +246,8 @@ function validateForm(
   if (!normalizeText(values.clientFirstName)) errors.clientFirstName = 'Nome: informe seu primeiro nome. Exemplo: Pedro.';
   if (!normalizeText(values.clientLastName)) errors.clientLastName = 'Sobrenome: informe pelo menos um sobrenome. Exemplo: Silva.';
   if (!isEmailValid(values.clientEmail)) errors.clientEmail = 'E-mail: use um e-mail valido com @ e dominio. Exemplo: voce@email.com.';
-  const phoneDigits = digitsOnly(values.clientPhone);
-  if (phoneDigits.length < 10 || phoneDigits.length > 11) errors.clientPhone = 'Telefone: informe DDD + numero com 10 ou 11 digitos. Exemplos: (31) 99999-9999 ou 31 3333-4444.';
+  const phoneDigits = normalizePhone(values.clientPhone);
+  if (!isValidMobilePhone(phoneDigits)) errors.clientPhone = 'Telefone: informe um celular com DDD + 9 digitos. Exemplo: (31) 99999-9999.';
   if (!selectedSlot) errors.draftSlot = 'Horario: selecione um dos horarios disponiveis.';
   if (!isServiceNotesValid(values.serviceNotes)) errors.serviceNotes = 'Observacao: explique o que precisa de servico com pelo menos 10 caracteres. Exemplo: trocar tomada da sala.';
 
@@ -429,7 +427,7 @@ export default function BookingFormModal({
   );
 
   const confirmedUnavailable = Boolean(confirmedDate && (confirmedDate < todayIso || confirmedDate > maxDate || disabledDateSet.has(confirmedDate)));
-  const { data: availableSlots = [], isLoading: isLoadingSlots, error: slotsError } = useAvailableSlots(
+  const { data: availableSlots = [], isLoading: isLoadingSlots, error: slotsError, refetch: refetchAvailableSlots } = useAvailableSlots(
     effectiveDate,
     effectiveCity,
     slotMinutes,
@@ -644,7 +642,7 @@ export default function BookingFormModal({
         clientFirstName: normalizeText(formValues.clientFirstName),
         clientLastName: normalizeText(formValues.clientLastName),
         clientEmail: normalizeText(formValues.clientEmail),
-        clientPhone: digitsOnly(formValues.clientPhone),
+        clientPhone: normalizePhone(formValues.clientPhone),
         clientCep: digitsOnly(formValues.clientCep).slice(0, 8),
         clientStreet: normalizeText(formValues.clientStreet),
         clientNeighborhood: normalizeText(formValues.clientNeighborhood),
@@ -742,8 +740,8 @@ export default function BookingFormModal({
                 <div className="booking-day-picker__month-label">{monthTitle}</div>
                 {monthAvailability.isLoading ? <div className="booking-preview-modal__empty"><strong>Carregando dias disponiveis...</strong></div> : null}
                 {monthAvailability.hasError ? (
-                  <AlertNotice variant="warning" title="Falha ao carregar dias" compact>
-                    <p>Confira a conexao e tente novamente.</p>
+                  <AlertNotice variant="warning" title="Falha ao carregar dias" compact actionLabel="Tentar novamente" onAction={() => void monthAvailability.refetch()}>
+                    <p>{monthAvailability.error instanceof Error ? monthAvailability.error.message : 'Confira a conexao com o backend e tente novamente.'}</p>
                   </AlertNotice>
                 ) : null}
                 <div className="booking-day-picker__weekdays">
@@ -839,8 +837,8 @@ export default function BookingFormModal({
                   ) : null}
                   {isLoadingSlots ? <div className="booking-preview-modal__empty"><strong>Carregando horários...</strong></div> : null}
                   {slotsError ? (
-                    <AlertNotice variant="danger" title="Falha ao carregar horários" compact>
-                      <p>{slotsError.message}</p>
+                    <AlertNotice variant="danger" title="Falha ao carregar horários" compact actionLabel="Tentar novamente" onAction={() => void refetchAvailableSlots()}>
+                      <p>{slotsError instanceof Error ? slotsError.message : "Não foi possível carregar os horários."}</p>
                     </AlertNotice>
                   ) : null}
                   {!isLoadingSlots && availableSlots.length === 0 ? (

@@ -15,15 +15,15 @@
   }
 
   .wf-navbar--client.wf-header {
-    grid-template-columns: minmax(210px, clamp(230px, 22vw, 360px)) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(240px, clamp(270px, 24vw, 390px)) minmax(0, 1fr) !important;
   }
 
   .wf-page .wf-navbar.wf-navbar--client.wf-header {
-    grid-template-columns: minmax(210px, clamp(230px, 22vw, 360px)) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(240px, clamp(270px, 24vw, 390px)) minmax(0, 1fr) !important;
   }
 
   .wf-navbar--admin.wf-header {
-    grid-template-columns: minmax(150px, clamp(180px, 17vw, 270px)) minmax(0, 1fr) auto !important;
+    grid-template-columns: minmax(220px, clamp(250px, 22vw, 360px)) minmax(0, 1fr) auto !important;
   }
 
   .wf-navbar--provider.wf-header {
@@ -34,37 +34,37 @@
 @media (min-width: 800px) and (max-width: 1023px) {
   .wf-navbar.wf-header,
   .wf-navbar--admin.wf-header {
-    min-height: 72px !important;
+    min-height: 82px !important;
     padding-inline: 16px !important;
     padding-block: 7px !important;
     gap: 10px !important;
   }
 
   .wf-navbar .wf-logo img {
-    height: 54px !important;
-    max-width: 150px !important;
+    height: 76px !important;
+    max-width: 226px !important;
   }
 
   .wf-navbar--client .wf-logo img {
-    height: clamp(72px, 8vw, 82px) !important;
-    max-width: clamp(200px, 24vw, 250px) !important;
+    height: clamp(88px, 10vw, 104px) !important;
+    max-width: clamp(248px, 27vw, 324px) !important;
   }
 
   .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    height: clamp(72px, 8vw, 82px) !important;
-    max-width: clamp(200px, 24vw, 250px) !important;
+    height: clamp(88px, 10vw, 104px) !important;
+    max-width: clamp(248px, 27vw, 324px) !important;
   }
 
   .wf-navbar .wf-header-actions {
-    gap: 7px !important;
+    gap: 8px !important;
   }
 
   .wf-navbar .wf-top-btn {
-    min-height: 44px !important;
+    min-height: 48px !important;
     border-radius: 10px !important;
-    padding-inline: 10px !important;
+    padding-inline: 13px !important;
     gap: 6px !important;
-    font-size: 12px !important;
+    font-size: 12.5px !important;
   }
 
   .wf-navbar .wf-top-btn .wf-icon {
@@ -115,7 +115,7 @@
   .wf-navbar.wf-header,
   .wf-navbar--admin.wf-header {
     width: 100% !important;
-    min-height: clamp(64px, 17vw, 84px) !important;
+    min-height: clamp(70px, 18vw, 92px) !important;
     height: auto !important;
     grid-template-columns: minmax(0, auto) minmax(0, 1fr) !important;
     align-items: center !important;
@@ -146,33 +146,33 @@
   }
 
   .wf-navbar .wf-logo img {
-    height: clamp(44px, 14vw, 64px) !important;
-    max-width: clamp(120px, 39vw, 190px) !important;
+    height: clamp(60px, 16vw, 80px) !important;
+    max-width: clamp(170px, 46vw, 238px) !important;
   }
 
   .wf-navbar--client .wf-logo img {
-    height: clamp(62px, 17vw, 78px) !important;
-    max-width: clamp(148px, 45vw, 220px) !important;
+    height: clamp(78px, 20vw, 98px) !important;
+    max-width: clamp(194px, 52vw, 272px) !important;
   }
 
   .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    height: clamp(62px, 17vw, 78px) !important;
-    max-width: clamp(148px, 45vw, 220px) !important;
+    height: clamp(78px, 20vw, 98px) !important;
+    max-width: clamp(194px, 52vw, 272px) !important;
   }
 
   .wf-navbar--client.wf-navbar--has-mobile-leading .wf-logo img,
   .wf-page .wf-navbar.wf-navbar--client.wf-navbar--has-mobile-leading.wf-header .wf-logo img {
-    width: clamp(130px, 36vw, 164px) !important;
-    max-width: clamp(130px, 36vw, 164px) !important;
+    width: clamp(148px, 40vw, 186px) !important;
+    max-width: clamp(148px, 40vw, 186px) !important;
     height: auto !important;
   }
 
   .wf-navbar .wf-top-btn {
-    min-height: clamp(44px, 13vw, 56px) !important;
+    min-height: clamp(46px, 13vw, 58px) !important;
     border-radius: clamp(10px, 3vw, 14px) !important;
-    padding-inline: clamp(9px, 3vw, 14px) !important;
+    padding-inline: clamp(10px, 3vw, 15px) !important;
     gap: 6px !important;
-    font-size: clamp(11px, 3vw, 13px) !important;
+    font-size: clamp(11.5px, 3.1vw, 13.4px) !important;
   }
 
   .wf-navbar .wf-top-btn--compact {
@@ -196,13 +196,8 @@
     gap: 8px !important;
   }
 
-  .wf-navbar--admin .wf-mobile-actions .wf-top-btn:not(.wf-top-btn--compact) {
-    max-width: min(52vw, 210px);
-    min-width: 44px;
-  }
-
-  .wf-navbar--admin .wf-mobile-actions .wf-top-btn:not(.wf-top-btn--compact) span {
-    max-width: 130px;
+  .wf-navbar--admin .wf-mobile-actions {
+    gap: clamp(4px, 1.8vw, 8px) !important;
   }
 }
 
@@ -213,20 +208,15 @@
   }
 
   .wf-navbar .wf-logo img {
-    max-width: 136px !important;
+    max-width: 170px !important;
   }
 
   .wf-navbar--client .wf-logo img {
-    max-width: 176px !important;
+    max-width: 210px !important;
   }
 
   .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    max-width: 176px !important;
-  }
-
-  .wf-navbar--admin .wf-mobile-actions .wf-top-btn:not(.wf-top-btn--compact) span,
-  .wf-navbar--provider .wf-mobile-actions .wf-top-btn:not(.wf-top-btn--compact) span {
-    display: none;
+    max-width: 210px !important;
   }
 
   .wf-navbar--client.wf-navbar--has-mobile-leading .wf-logo img,
@@ -244,21 +234,21 @@
   }
 
   .wf-navbar .wf-logo img {
-    max-width: 118px !important;
+    max-width: 146px !important;
   }
 
   .wf-navbar--client .wf-logo img {
-    max-width: 148px !important;
+    max-width: 180px !important;
   }
 
   .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    max-width: 148px !important;
+    max-width: 180px !important;
   }
 
   .wf-navbar--client.wf-navbar--has-mobile-leading .wf-logo img,
   .wf-page .wf-navbar.wf-navbar--client.wf-navbar--has-mobile-leading.wf-header .wf-logo img {
-    width: 128px !important;
-    max-width: 128px !important;
+    width: 142px !important;
+    max-width: 142px !important;
   }
 
   .wf-navbar--client .wf-client-mobile-user span,
@@ -291,8 +281,8 @@
 
 @media (min-width: 1920px) {
   .wf-navbar .wf-logo img {
-    height: clamp(72px, 4.2vw, 96px);
-    max-width: clamp(220px, 14vw, 330px);
+    height: clamp(82px, 4.6vw, 108px);
+    max-width: clamp(258px, 15vw, 372px);
   }
 
   .wf-navbar .wf-top-btn {
@@ -301,31 +291,31 @@
   }
 
   .wf-navbar--client .wf-logo img {
-    height: clamp(72px, 4.2vw, 96px);
-    max-width: clamp(220px, 14vw, 330px);
+    height: clamp(82px, 4.6vw, 108px);
+    max-width: clamp(258px, 15vw, 372px);
   }
 
   .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    height: clamp(72px, 4.2vw, 96px);
-    max-width: clamp(220px, 14vw, 330px);
+    height: clamp(82px, 4.6vw, 108px);
+    max-width: clamp(258px, 15vw, 372px);
   }
 }
 
 /* Final logo pass from mobile wireframes. */
 @media (min-width: 800px) {
   .wf-navbar--admin.wf-header {
-    grid-template-columns: minmax(220px, clamp(240px, 18vw, 330px)) minmax(0, 1fr) auto !important;
+    grid-template-columns: minmax(240px, clamp(268px, 19vw, 360px)) minmax(0, 1fr) auto !important;
   }
 
   .wf-navbar--admin .wf-logo img {
-    height: clamp(72px, 5.4vw, 96px) !important;
-    max-width: clamp(220px, 18vw, 330px) !important;
+    height: clamp(82px, 5.8vw, 110px) !important;
+    max-width: clamp(258px, 19vw, 372px) !important;
   }
 
   .wf-navbar--client .wf-logo img,
   .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    height: clamp(72px, 5.4vw, 96px) !important;
-    max-width: clamp(220px, 18vw, 330px) !important;
+    height: clamp(84px, 5.8vw, 112px) !important;
+    max-width: clamp(266px, 19vw, 380px) !important;
   }
 }
 
@@ -338,8 +328,8 @@
   }
 
   .wf-navbar--admin .wf-logo img {
-    height: clamp(68px, 18vw, 94px) !important;
-    max-width: clamp(170px, 48vw, 248px) !important;
+    height: clamp(76px, 19vw, 100px) !important;
+    max-width: clamp(186px, 52vw, 268px) !important;
   }
 
   .wf-navbar--admin .wf-mobile-actions {
@@ -361,8 +351,8 @@
 
   .wf-navbar--client .wf-logo img,
   .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    height: clamp(68px, 18vw, 94px) !important;
-    max-width: clamp(170px, 48vw, 248px) !important;
+    height: clamp(80px, 20vw, 104px) !important;
+    max-width: clamp(198px, 54vw, 282px) !important;
   }
 }
 
@@ -372,7 +362,7 @@
   }
 
   .wf-navbar--admin .wf-logo img {
-    max-width: clamp(166px, 44vw, 190px) !important;
+    max-width: clamp(176px, 46vw, 206px) !important;
   }
 
   .wf-navbar--admin .wf-mobile-actions .wf-top-btn--compact {
@@ -383,13 +373,13 @@
 
   .wf-navbar--client .wf-logo img,
   .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    max-width: clamp(166px, 44vw, 190px) !important;
+    max-width: clamp(188px, 48vw, 220px) !important;
   }
 }
 
 @media (max-width: 360px) {
   .wf-navbar--admin .wf-logo img {
-    max-width: 150px !important;
+    max-width: 162px !important;
   }
 
   .wf-navbar--admin .wf-mobile-actions {
@@ -404,6 +394,96 @@
 
   .wf-navbar--client .wf-logo img,
   .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    max-width: 150px !important;
+    max-width: 172px !important;
+  }
+}
+
+/* 2026-06-12 desktop client navbar collision fix.
+   Keeps mobile rules untouched and prevents button overlap from 901px upward. */
+@media (min-width: 901px) {
+  .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  .wf-navbar.wf-navbar--client.wf-header {
+    width: min(1540px, calc(100vw - clamp(48px, 5vw, 96px))) !important;
+    grid-template-columns: minmax(220px, clamp(240px, 22vw, 380px)) minmax(0, 1fr) !important;
+    gap: clamp(14px, 1.6vw, 28px) !important;
+    overflow: visible !important;
+  }
+
+  .wf-navbar--client .wf-header-actions {
+    display: grid !important;
+    grid-template-columns: minmax(160px, 1fr) minmax(156px, .92fr) minmax(154px, .86fr) !important;
+    width: min(100%, clamp(560px, 55vw, 760px)) !important;
+    justify-self: end !important;
+    align-items: center !important;
+    gap: clamp(10px, 1vw, 18px) !important;
+    min-width: 0 !important;
+  }
+
+  .wf-navbar--client .wf-header-actions > * {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .wf-navbar--client .wf-top-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: clamp(52px, 4vw, 66px) !important;
+    padding-inline: clamp(12px, 1.15vw, 22px) !important;
+    border-radius: clamp(12px, 1vw, 15px) !important;
+    border: 1px solid rgba(255, 255, 255, .32) !important;
+    box-shadow:
+      0 12px 26px rgba(3, 34, 150, .18),
+      inset 0 1px 0 rgba(255, 255, 255, .28) !important;
+    outline: 1px solid rgba(4, 91, 245, .08) !important;
+  }
+
+  .wf-navbar--client .wf-top-btn--orange {
+    border-color: rgba(255, 120, 40, .45) !important;
+    box-shadow:
+      0 12px 26px rgba(221, 45, 0, .20),
+      inset 0 1px 0 rgba(255, 255, 255, .34) !important;
+    outline-color: rgba(255, 75, 11, .13) !important;
+  }
+
+  .wf-navbar--client .wf-top-btn span {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1120px) {
+  .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  .wf-navbar.wf-navbar--client.wf-header {
+    width: calc(100vw - 32px) !important;
+    grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .wf-navbar--client .wf-header-actions {
+    grid-template-columns: minmax(130px, 1fr) minmax(130px, 1fr) minmax(130px, .92fr) !important;
+    width: min(100%, 610px) !important;
+    gap: 8px !important;
+  }
+
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img,
+  .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: clamp(58px, 6.2vw, 74px) !important;
+    max-width: 220px !important;
+  }
+
+  .wf-navbar--client .wf-top-btn {
+    min-height: 48px !important;
+    padding-inline: 9px !important;
+    font-size: clamp(11px, 1.35vw, 14px) !important;
+    gap: 6px !important;
+  }
+
+  .wf-navbar--client .wf-top-btn .wf-icon {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
   }
 }

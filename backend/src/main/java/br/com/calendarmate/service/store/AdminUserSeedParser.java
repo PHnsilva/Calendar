@@ -37,7 +37,10 @@ final class AdminUserSeedParser {
             AdminRole role = parts.length > 2 ? AdminRole.from(parts[2]) : AdminRole.PROVIDER;
             String fallbackName = role == AdminRole.OWNER ? "Administrador" : "Prestador";
             String name = parts.length > 1 && !parts[1].isBlank() ? parts[1].trim() : fallbackName;
-            String id = "adm_" + UUID.nameUUIDFromBytes((phone + ":" + name.toLowerCase(Locale.ROOT)).getBytes());
+            String configuredId = parts.length > 3 ? parts[3].trim() : "";
+            String id = configuredId.isBlank()
+                    ? "adm_" + UUID.nameUUIDFromBytes((phone + ":" + name.toLowerCase(Locale.ROOT)).getBytes())
+                    : configuredId;
 
             users.add(new AdminUser(id, phone, name, role, true, now, 0L));
         }

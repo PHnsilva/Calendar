@@ -67,13 +67,14 @@ on conflict (id) do update set
   role = excluded.role,
   active = excluded.active;
 
--- Example providers. Replace ids/numbers/names before running.
--- insert into public.admin_users (id, phone_digits, name, role, active)
--- values
---   ('provider-1', '31988888888', 'Prestador 1', 'PROVIDER', true),
---   ('provider-2', '31977777777', 'Prestador 2', 'PROVIDER', true)
--- on conflict (id) do update set
---   phone_digits = excluded.phone_digits,
---   name = excluded.name,
---   role = excluded.role,
---   active = excluded.active;
+-- Provider registry. Replace phone_digits with the real provider phones before production.
+insert into public.admin_users (id, phone_digits, name, role, active)
+values
+  ('provider-1', '31900000001', 'Prestador 1', 'PROVIDER', true),
+  ('provider-2', '31900000002', 'Prestador 2', 'PROVIDER', true),
+  ('provider-3', '31900000003', 'Prestador 3', 'PROVIDER', true)
+on conflict (id) do update set
+  phone_digits = excluded.phone_digits,
+  name = excluded.name,
+  role = excluded.role,
+  active = excluded.active;

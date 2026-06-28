@@ -22,26 +22,32 @@ public class AdminFinanceController {
     @GetMapping("/statement")
     public AdminStatementResponse statement(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to
     ) {
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         return service.statement(from, to);
     }
 
     @GetMapping("/health")
     public AdminHealthResponse health(
-            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId
     ) {
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         return service.health();
     }
 
     @GetMapping("/config")
     public AdminFinanceConfigResponse config(
-            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId
     ) {
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         return service.config();
     }
 }

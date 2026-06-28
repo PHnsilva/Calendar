@@ -5,11 +5,14 @@ import br.com.calendarmate.dto.RecoverConfirmResponse;
 import br.com.calendarmate.dto.ServicoResponse;
 import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ExternalServiceException;
+import br.com.calendarmate.exception.ReservedAdminPhoneException;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
 import br.com.calendarmate.model.HistoryRecord;
 import br.com.calendarmate.service.store.HistoryStore;
 import br.com.calendarmate.service.store.VerificationStore;
 import br.com.calendarmate.util.PhoneNumberNormalizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -17,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class RecoveryService {
+    private static final Logger log = LoggerFactory.getLogger(RecoveryService.class);
 
     public record StartResult(String verificationId, long expiresInSeconds, long resendAfterSeconds) {}
 
@@ -47,9 +51,10 @@ public class RecoveryService {
     }
 
     public StartResult start(String phoneRaw) {
-        String phoneDigits = PhoneNumberNormalizer.normalizeBrazilianPhone(phoneRaw);
-        if (adminAuthService.isAdminPhone(phoneDigits)) {
-            throw new BadRequestException("Use o acesso administrativo para este telefone");
+        String phoneDigits = PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phoneRaw);
+        String maskedPhone = PhoneNumberNormalizer.maskBrazilianPhone(phoneDigits);
+        if (adminAuthService.isAdminPhoneBestEffort(phoneDigits)) {
+            throw new ReservedAdminPhoneException("Use o acesso administrativo para este telefone.");
         }
 
         VerificationStore.Session sess = verificationStore.create(
@@ -59,7 +64,13 @@ public class RecoveryService {
                 props.getOtpResendAfter().toSeconds()
         );
 
-        sendOtp(phoneDigits, sess.code);
+        try {
+            sendOtp(phoneDigits, sess.code);
+        } catch (RuntimeException ex) {
+            verificationStore.delete(sess.verificationId);
+            throw ex;
+        }
+        log.info("Verification flow started flow=client_recovery phone={} verificationId={}", maskedPhone, sess.verificationId);
         historyStore.append(new HistoryRecord(
                 "h_" + UUID.randomUUID(),
                 "RECOVER_START",
@@ -90,6 +101,7 @@ public class RecoveryService {
         }
 
         sendOtp(sess.phoneDigits, sess.code);
+        log.info("Verification flow resend flow=client_recovery phone={} verificationId={}", PhoneNumberNormalizer.maskBrazilianPhone(sess.phoneDigits), sess.verificationId);
         return new StartResult(sess.verificationId, Math.max(0, sess.expiresAtEpochSec - Instant.now().getEpochSecond()), props.getOtpResendAfter().toSeconds());
     }
 
@@ -127,6 +139,7 @@ public class RecoveryService {
     }
 
     private void sendOtp(String phone, String code) {
+        logOtpCodeIfEnabled("client_recovery", phone, code);
         try {
             otpDeliveryClient.sendCode(phone, code);
         } catch (BadRequestException | ExternalServiceException ex) {
@@ -134,5 +147,16 @@ public class RecoveryService {
         } catch (RuntimeException ex) {
             throw new ExternalServiceException("Falha de comunicacao com servico externo.", ex);
         }
+    }
+
+    private void logOtpCodeIfEnabled(String flow, String phone, String code) {
+        if (!props.isOtpDebugLoggingEnabled()) {
+            return;
+        }
+        log.info(
+                "OTP debug flow={} phone={} code={}",
+                flow,
+                PhoneNumberNormalizer.maskBrazilianPhone(phone),
+                code == null ? "" : code.trim());
     }
 }

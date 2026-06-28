@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/brand/logowithname.png';
+import adminLogoMark from '../../assets/brand/admin-logo-mark.png';
+import adminLogoWordmark from '../../assets/brand/admin-logo-wordmark.png';
 
 type NavbarProfile = 'client' | 'admin' | 'provider';
 type NavbarButtonVariant = 'blue' | 'orange' | 'ghost';
@@ -136,8 +138,10 @@ export function NavbarIcon({ name }: { name: NavbarIconName }) {
     ),
     user: (
       <svg {...common}>
-        <circle cx="32" cy="22" r="10" {...line} />
-        <path d="M14 55c3.7-12.2 9.7-18.3 18-18.3S46.3 42.8 50 55" {...line} />
+        <circle cx="32" cy="32" r="27" fill="currentColor" opacity="0.16" />
+        <circle cx="32" cy="24" r="10.5" fill="currentColor" />
+        <path d="M14 55c2.7-12.5 9.1-18.8 18-18.8S47.3 42.5 50 55" fill="currentColor" />
+        <path d="M15.5 55c3.2-11.3 8.9-17 16.5-17s13.3 5.7 16.5 17" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.45" />
       </svg>
     ),
   };
@@ -183,8 +187,28 @@ export default function BaseNavbar({
   mobileActions,
   profile,
 }: BaseNavbarProps) {
+  if (profile === 'admin') {
+    return (
+      <header className={cx('cm-admin-navbar', className)} data-admin-navbar>
+        <div className="cm-admin-navbar__top">
+          <Link to={logoTo} className="cm-admin-navbar__brand" aria-label={logoLabel}>
+            <span className="cm-admin-navbar__mark" aria-hidden="true">
+              <img src={adminLogoMark} alt="" />
+            </span>
+            <span className="cm-admin-navbar__wordmark">
+              <img src={adminLogoWordmark} alt={logoLabel} />
+            </span>
+          </Link>
+          {actions ? <nav className="cm-admin-navbar__actions" aria-label="Ações principais">{actions}</nav> : null}
+          {mobileActions ? <nav className="cm-admin-navbar__mobile-actions" aria-label="Ações rápidas">{mobileActions}</nav> : null}
+        </div>
+        {children ? <nav className="cm-admin-navbar__tabs" aria-label="Navegação administrativa">{children}</nav> : null}
+      </header>
+    );
+  }
+
   return (
-    <header className={cx('wf-header', 'wf-navbar', `wf-navbar--${profile}`, profile === 'client' && 'wf-header--public', profile === 'admin' && 'wf-header--admin', Boolean(children) && 'wf-navbar--has-nav', Boolean(mobileLeadingAction) && 'wf-navbar--has-mobile-leading', className)}>
+    <header className={cx('wf-header', 'wf-navbar', `wf-navbar--${profile}`, profile === 'client' && 'wf-header--public', Boolean(children) && 'wf-navbar--has-nav', Boolean(mobileLeadingAction) && 'wf-navbar--has-mobile-leading', className)}>
       {mobileLeadingAction ? <nav className="wf-navbar__mobile-leading" aria-label="Menu">{mobileLeadingAction}</nav> : null}
       <Link to={logoTo} className="wf-logo wf-navbar__logo">
         <img src={logo} alt={logoLabel} />

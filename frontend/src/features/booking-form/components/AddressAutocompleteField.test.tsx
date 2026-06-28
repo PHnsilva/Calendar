@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import type { AddressSuggestion } from "../hooks/useAddressSuggestions";
 
@@ -12,7 +12,51 @@ beforeEach(() => {
   vi.unstubAllGlobals();
 });
 
+afterEach(() => {
+  cleanup();
+});
+
 describe("AddressAutocompleteField", () => {
+  it("does not resolve city context until the user actually starts typing an address", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { default: AddressAutocompleteField } = await import("./AddressAutocompleteField");
+
+    function Harness() {
+      const [value, setValue] = useState("");
+      return (
+        <AddressAutocompleteField
+          value={value}
+          selectedCity="Itabirito"
+          selectedState="MG"
+          onChange={setValue}
+          onSelectSuggestion={() => {}}
+        />
+      );
+    }
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness />
+      </QueryClientProvider>,
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const input = screen.getByRole("textbox");
+    await userEvent.click(input);
+    await userEvent.type(input, "ru");
+
+    await waitFor(() => {
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
   it("renders valid suggestions from the selected city and selects one", async () => {
     const selected: AddressSuggestion[] = [];
     const fetchMock = vi.fn()
@@ -102,7 +146,7 @@ describe("AddressAutocompleteField", () => {
         <Harness />
       </QueryClientProvider>,
     );
-    const input = screen.getByPlaceholderText(/cidade selecionada: Itabirito\/MG/i) as HTMLInputElement;
+    const input = screen.getByRole("textbox") as HTMLInputElement;
 
     await userEvent.click(input);
     await userEvent.type(input, "rua");

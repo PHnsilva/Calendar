@@ -1,6 +1,7 @@
 package br.com.calendarmate.config;
 
 import br.com.calendarmate.util.LocationNormalizer;
+import br.com.calendarmate.util.PhoneNumberNormalizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
@@ -74,6 +75,27 @@ public class AppProperties {
 
     @Value("${app.admin.booking.maxFutureMonthsAhead:${ADMIN_BOOKING_MAX_FUTURE_MONTHS_AHEAD:6}}")
     private int adminBookingMaxFutureMonthsAhead;
+
+    @Value("${app.debug.otpCode:${DEBUG_OTP_CODE:false}}")
+    private boolean debugOtpCode;
+
+    @Value("${app.debug.devAdminEnabled:${DEBUG_ADMIN_ENABLED:true}}")
+    private boolean debugDevAdminEnabled;
+
+    @Value("${app.debug.devAdminPhone:${DEBUG_ADMIN_PHONE:31995438467}}")
+    private String debugDevAdminPhone;
+
+    @Value("${app.debug.devAdminName:${DEBUG_ADMIN_NAME:Admin Debug}}")
+    private String debugDevAdminName;
+
+    @Value("${app.debug.devAdminRole:${DEBUG_ADMIN_ROLE:OWNER}}")
+    private String debugDevAdminRole;
+
+    @Value("${spring.profiles.active:${SPRING_PROFILES_ACTIVE:}}")
+    private String springProfilesActive;
+
+    @Value("${app.env:${APP_ENV:}}")
+    private String appEnv;
 
     @Value("${frontend.url:${FRONTEND_URL:}}")
     private String frontendUrl;
@@ -313,8 +335,10 @@ public class AppProperties {
     public int getAdminBulkCancelMaxItems() { return Math.max(1, Math.min(adminBulkCancelMaxItems, 1000)); }
     public Duration getAdminSessionTtl() { return Duration.ofDays(Math.max(1, Math.min(adminSessionTtlDays, 30))); }
     public String getAdminUsersCsv() {
-        String value = adminUsersCsv == null ? "" : adminUsersCsv.trim();
-        return value;
+        return mergeAdminUserSeeds(
+                AdminUserRegistryDefaults.DEFAULT_SEED,
+                adminUsersCsv,
+                buildDebugAdminSeedEntry());
     }
     public int getAdminBookingActivePastDays() { return Math.max(0, Math.min(adminBookingActivePastDays, 90)); }
     public int getAdminBookingMaxFutureMonthsAhead() { return Math.max(1, Math.min(adminBookingMaxFutureMonthsAhead, 24)); }
@@ -393,5 +417,92 @@ public class AppProperties {
     private String cleanOrDefault(String value, String fallback) {
         String cleaned = clean(value);
         return cleaned.isBlank() ? fallback : cleaned;
+    }
+
+    public boolean isOtpDebugLoggingEnabled() {
+        return debugOtpCode && isLocalDebugProfile();
+    }
+
+    private String buildDebugAdminSeedEntry() {
+        if (!debugDevAdminEnabled || !isLocalDebugProfile()) {
+            return "";
+        }
+        String phone = clean(debugDevAdminPhone);
+        if (phone.isBlank()) {
+            return "";
+        }
+        String name = cleanOrDefault(debugDevAdminName, "Admin Debug");
+        String role = cleanOrDefault(debugDevAdminRole, "OWNER").toUpperCase(Locale.ROOT);
+        return phone + "|" + name + "|" + role;
+    }
+
+    private String mergeAdminUserSeeds(String... configs) {
+        List<AdminUserSeedEntry> entries = new ArrayList<>();
+        for (String config : configs) {
+            for (String rawEntry : splitAdminUserSeedEntries(config)) {
+                AdminUserSeedEntry entry = AdminUserSeedEntry.from(rawEntry);
+                if (entry == null) {
+                    continue;
+                }
+                entries.removeIf(existing -> existing.conflictsWith(entry));
+                entries.add(entry);
+            }
+        }
+        return entries.stream()
+                .map(AdminUserSeedEntry::raw)
+                .collect(Collectors.joining(";"));
+    }
+
+    private List<String> splitAdminUserSeedEntries(String config) {
+        String raw = clean(config);
+        if (raw.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(raw.split(";"))
+                .map(String::trim)
+                .filter(entry -> !entry.isBlank())
+                .toList();
+    }
+
+    private record AdminUserSeedEntry(String raw, String phone, String id) {
+        static AdminUserSeedEntry from(String raw) {
+            String[] parts = raw.split("\\|");
+            String phone = parts.length > 0 ? PhoneNumberNormalizer.normalizeBrazilianPhoneOrBlank(parts[0]) : "";
+            if (phone.isBlank()) {
+                return null;
+            }
+            String id = parts.length > 3 ? parts[3].trim() : "";
+            return new AdminUserSeedEntry(raw.trim(), phone, id);
+        }
+
+        boolean conflictsWith(AdminUserSeedEntry other) {
+            return phone.equals(other.phone) || (!id.isBlank() && id.equals(other.id));
+        }
+    }
+
+    private boolean isLocalDebugProfile() {
+        String merged = (clean(springProfilesActive) + "," + clean(appEnv)).toLowerCase(Locale.ROOT);
+        List<String> profiles = Arrays.stream(merged.split("[,;\\s]+"))
+                .map(String::trim)
+                .filter(token -> !token.isBlank())
+                .toList();
+        if (!profiles.isEmpty()) {
+            return profiles.stream()
+                    .anyMatch(token -> token.equals("local") || token.equals("dev") || token.equals("development") || token.equals("test"));
+        }
+        return isDefaultLocalDebugConfiguration();
+    }
+
+    private boolean isDefaultLocalDebugConfiguration() {
+        boolean dummyVerification = "DUMMY".equalsIgnoreCase(getVerificationChannel());
+        boolean frontendLooksLocal = getFrontendUrl().isBlank()
+                || containsLocalhost(getFrontendUrl())
+                || containsLocalhost(getPublicDomain());
+        return dummyVerification && frontendLooksLocal && !isSupabaseEnabled();
+    }
+
+    private boolean containsLocalhost(String value) {
+        String normalized = clean(value).toLowerCase(Locale.ROOT);
+        return normalized.contains("localhost") || normalized.contains("127.0.0.1");
     }
 }

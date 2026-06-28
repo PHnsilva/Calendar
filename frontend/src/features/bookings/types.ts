@@ -1,6 +1,12 @@
+import type { Booking } from "../../entities/booking";
 import type { ServicoRequest, ServicoResponse } from "../../types/api";
 
 export type BookingItem = ServicoResponse;
+
+export type BookingListEntry = {
+  model: Booking;
+  legacy: ServicoResponse;
+};
 
 export type UpdateBookingInput = {
   eventId: string;

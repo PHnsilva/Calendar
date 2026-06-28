@@ -1,5 +1,5 @@
-import { ClientLanding } from "../../../components/screens/CalendarMateRoutes";
+import ClientLandingPage from "./ClientLandingPage";
 
 export default function LandingPage() {
-  return <ClientLanding />;
+  return <ClientLandingPage />;
 }

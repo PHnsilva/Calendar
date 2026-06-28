@@ -4,11 +4,10 @@ import { startRecovery } from '../../recovery/api/start-recovery';
 import {
   formatPhoneForDisplay,
   getStoredPhoneVerification,
-  isValidBrazilianPhone,
-  normalizeBrazilianPhone,
   savePhoneVerification,
   saveRecoveredBookings,
 } from '../../../lib/storage';
+import { formatPhoneInput, isValidMobilePhone, normalizePhone } from '../../../lib/authRole';
 import type { RecoverConfirmResponse, ServicoResponse } from '../../../types/api';
 
 type HomeMobileProfileSheetProps = {
@@ -170,10 +169,10 @@ export default function HomeMobileProfileSheet({
 
   const startPhoneVerification = async (event?: FormEvent) => {
     event?.preventDefault();
-    const phoneToSend = normalizeBrazilianPhone(phone);
+    const phoneToSend = normalizePhone(phone);
 
-    if (!isValidBrazilianPhone(phoneToSend)) {
-      setErrorMessage('Informe um telefone válido com DDD. O prefixo 55 é aceito.');
+    if (!isValidMobilePhone(phoneToSend)) {
+      setErrorMessage('Informe um celular valido com DDD. O prefixo 55 e aceito.');
       return;
     }
 
@@ -182,7 +181,7 @@ export default function HomeMobileProfileSheet({
       setErrorMessage('');
       const response = await startRecovery(phoneToSend);
       setNormalizedPhone(phoneToSend);
-      setPhone(formatPhoneForDisplay(phoneToSend));
+      setPhone(formatPhoneInput(phoneToSend));
       setVerificationId(response.verificationId);
       setExpiresIn(response.expiresInSeconds);
       setResendAfter(response.resendAfterSeconds);
@@ -236,7 +235,7 @@ export default function HomeMobileProfileSheet({
   };
 
   const handlePhoneChange = (value: string) => {
-    setPhone(formatPhoneForDisplay(value));
+    setPhone(formatPhoneInput(value));
     setErrorMessage('');
   };
 

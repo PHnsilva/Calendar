@@ -31,7 +31,7 @@ public class DummyStatementProvider implements StatementProvider {
     private Item mk(LocalDate d, int k) {
         String id = "dummy-" + UUID.nameUUIDFromBytes((d.toString() + ":" + k).getBytes());
         String date = d.toString();
-        String desc = "PIX recebido (dummy) " + (k + 1);
+        String desc = "PIX recebido " + (k + 1);
         String amount = "R$ " + (100 + (d.getDayOfMonth() * 7) + (k * 25)) + ",00";
         return new Item(id, date, desc, amount);
     }

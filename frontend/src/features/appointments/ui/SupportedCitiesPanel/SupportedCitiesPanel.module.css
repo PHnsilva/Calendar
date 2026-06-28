@@ -41,13 +41,13 @@
 
 .list {
   display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)) !important;
   gap: 12px !important;
   min-width: 0 !important;
 }
 
 .cityPill {
-  min-width: 0 !important;
+  min-width: max-content !important;
   min-height: 48px !important;
   padding: 0 12px !important;
   border-radius: 10px !important;
@@ -60,7 +60,7 @@
   line-height: 1 !important;
   font-weight: 850 !important;
   box-shadow: 0 8px 18px rgba(8, 20, 95, .11) !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 
 .cityPill img {
@@ -73,8 +73,8 @@
 
 .cityPill span {
   min-width: 0 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
   white-space: nowrap !important;
 }
 
@@ -106,6 +106,73 @@
   .list {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 10px !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1199px) {
+  .root {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .media {
+    display: none !important;
+  }
+
+  .content h3 {
+    margin-bottom: 8px !important;
+    font-size: clamp(15px, 1.6vw, 18px) !important;
+    line-height: 1.08 !important;
+  }
+
+  .list {
+    grid-template-columns: repeat(2, minmax(128px, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .cityPill {
+    min-height: 34px !important;
+    padding: 0 7px !important;
+    border-radius: 8px !important;
+    gap: 4px !important;
+    font-size: clamp(9.5px, 1.05vw, 11px) !important;
+  }
+
+  .cityPill img {
+    width: 14px !important;
+    min-width: 14px !important;
+    height: 14px !important;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1439px) {
+  .root {
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+
+  .content h3 {
+    font-size: clamp(16px, 1.35vw, 20px) !important;
+  }
+
+  .list {
+    grid-template-columns: repeat(3, minmax(132px, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .cityPill {
+    min-height: 38px !important;
+    padding: 0 7px !important;
+    gap: 5px !important;
+    font-size: clamp(10px, .9vw, 12px) !important;
+  }
+
+  .cityPill img {
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
   }
 }
 
@@ -151,5 +218,246 @@
 @media (max-width: 340px) {
   .list {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* 2026-06-14: stabilize city grid across desktop widths. */
+.root,
+.content,
+.list,
+.cityPill,
+.cityPill span {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.list {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr)) !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  gap: clamp(8px, .85vw, 12px) !important;
+  overflow: visible !important;
+}
+
+.cityPill {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: clamp(38px, 2.8vw, 48px) !important;
+  padding-inline: clamp(8px, .85vw, 14px) !important;
+  box-shadow: 0 12px 22px rgba(8, 20, 95, .13) !important;
+}
+
+.cityPill span {
+  display: inline-block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+@media (min-width: 901px) and (max-width: 1199px) {
+  .root {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .media {
+    display: none !important;
+  }
+
+  .list {
+    grid-template-columns: repeat(auto-fit, minmax(min(112px, 100%), 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .cityPill {
+    min-height: 34px !important;
+    padding-inline: 7px !important;
+    font-size: clamp(9.5px, 1.03vw, 11.5px) !important;
+  }
+}
+
+
+/* 2026-06-14: keep desktop city pills within one line when space allows,
+   and never more than two lines in compact desktop widths. */
+@media (min-width: 901px) {
+  .root {
+    grid-template-columns: clamp(50px, 5vw, 76px) minmax(0, 1fr) !important;
+    gap: clamp(8px, .85vw, 12px) !important;
+    padding: clamp(10px, 1vw, 14px) !important;
+    overflow: visible !important;
+  }
+
+  .media {
+    display: inline-flex !important;
+    width: clamp(50px, 5vw, 76px) !important;
+    min-width: clamp(50px, 5vw, 76px) !important;
+    height: clamp(46px, 4.5vw, 68px) !important;
+  }
+
+  .content {
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .content h3 {
+    margin-bottom: clamp(8px, .8vw, 12px) !important;
+    font-size: clamp(16px, 1.35vw, 24px) !important;
+    line-height: 1.05 !important;
+  }
+
+  .list {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: clamp(5px, .65vw, 9px) !important;
+    overflow: visible !important;
+  }
+
+  .cityPill {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: clamp(32px, 2.4vw, 42px) !important;
+    padding: 0 clamp(5px, .6vw, 10px) !important;
+    gap: clamp(3px, .4vw, 6px) !important;
+    border-radius: clamp(7px, .7vw, 10px) !important;
+    font-size: clamp(8.2px, .82vw, 12.5px) !important;
+    line-height: 1.05 !important;
+    box-shadow: 0 10px 20px rgba(8, 20, 95, .14) !important;
+    overflow: hidden !important;
+  }
+
+  .cityPill img {
+    width: clamp(11px, .95vw, 16px) !important;
+    min-width: clamp(11px, .95vw, 16px) !important;
+    height: clamp(11px, .95vw, 16px) !important;
+  }
+
+  .cityPill span {
+    display: block !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1199px) {
+  .root {
+    grid-template-columns: clamp(44px, 5vw, 58px) minmax(0, 1fr) !important;
+    padding: 9px !important;
+    gap: 8px !important;
+  }
+
+  .media {
+    width: clamp(44px, 5vw, 58px) !important;
+    min-width: clamp(44px, 5vw, 58px) !important;
+    height: clamp(40px, 4.5vw, 52px) !important;
+  }
+
+  .content h3 {
+    margin-bottom: 7px !important;
+    font-size: clamp(14px, 1.35vw, 17px) !important;
+  }
+
+  .list {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .cityPill {
+    min-height: 31px !important;
+    padding: 0 5px !important;
+    gap: 3px !important;
+    font-size: clamp(8px, .88vw, 10px) !important;
+  }
+
+  .cityPill img {
+    width: 11px !important;
+    min-width: 11px !important;
+    height: 11px !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .list {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+}
+
+
+/* 2026-06-14: final correction - show full city names, never ellipsis.
+   Prefer one row on large desktop and at most two rows on compact desktop. */
+@media (min-width: 901px) {
+  .list {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: clamp(5px, .58vw, 8px) !important;
+    overflow: visible !important;
+  }
+
+  .cityPill {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: clamp(32px, 2.35vw, 40px) !important;
+    padding: 4px clamp(4px, .52vw, 8px) !important;
+    gap: clamp(3px, .34vw, 5px) !important;
+    font-size: clamp(7.8px, .72vw, 11.5px) !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    text-align: center !important;
+    overflow: visible !important;
+  }
+
+  .cityPill img {
+    width: clamp(10px, .78vw, 14px) !important;
+    min-width: clamp(10px, .78vw, 14px) !important;
+    height: clamp(10px, .78vw, 14px) !important;
+  }
+
+  .cityPill span {
+    display: inline !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1199px) {
+  .list {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .cityPill {
+    min-height: 30px !important;
+    padding: 3px 5px !important;
+    font-size: clamp(7.6px, .82vw, 9.6px) !important;
+  }
+
+  .cityPill img {
+    width: 10px !important;
+    min-width: 10px !important;
+    height: 10px !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .list {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   }
 }

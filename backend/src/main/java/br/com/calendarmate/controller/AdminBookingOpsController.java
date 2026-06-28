@@ -25,9 +25,11 @@ public class AdminBookingOpsController {
     @PostMapping("/bulk-cancel")
     public ResponseEntity<AdminBulkCancelResponse> bulkCancel(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @Valid @RequestBody AdminBulkCancelRequest req
     ) throws IOException {
-        adminAuthService.requireOwner(session);
+        adminAuthService.requireOwner(session, workspace, providerId);
         return ResponseEntity.ok(service.bulkCancel(req));
     }
 }

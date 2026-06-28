@@ -1,0 +1,45 @@
+.root {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--cm-radius-pill);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  justify-content: center;
+  line-height: 1.15;
+  min-height: 28px;
+  min-width: 0;
+  padding: 0 var(--cm-space-3);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.neutral {
+  background: var(--cm-color-surface-soft);
+  border-color: var(--cm-color-border);
+  color: var(--cm-color-text-soft);
+}
+
+.info {
+  background: color-mix(in srgb, var(--cm-color-blue) 10%, #ffffff);
+  border-color: color-mix(in srgb, var(--cm-color-blue) 22%, #ffffff);
+  color: var(--cm-color-blue-strong);
+}
+
+.success {
+  background: color-mix(in srgb, var(--cm-color-green) 12%, #ffffff);
+  border-color: color-mix(in srgb, var(--cm-color-green) 24%, #ffffff);
+  color: color-mix(in srgb, var(--cm-color-green) 72%, #000000);
+}
+
+.warning {
+  background: color-mix(in srgb, var(--cm-color-orange) 12%, #ffffff);
+  border-color: color-mix(in srgb, var(--cm-color-orange) 24%, #ffffff);
+  color: var(--cm-color-orange-strong);
+}
+
+.danger {
+  background: color-mix(in srgb, var(--cm-color-danger) 12%, #ffffff);
+  border-color: color-mix(in srgb, var(--cm-color-danger) 24%, #ffffff);
+  color: var(--cm-color-danger);
+}

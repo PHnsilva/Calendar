@@ -74,14 +74,25 @@ function useResolvedCityContext(selectedCity: string, selectedState: string, ena
     } as GeoapifyCityContext;
   }, [cityQuery.data, selectedCity, selectedState]);
 
+  const autocompleteUnavailable = Boolean(
+    cityQuery.data
+    && !cityContext
+    && typeof cityQuery.data.raw === "object"
+    && cityQuery.data.raw !== null
+    && "autocompleteReady" in cityQuery.data.raw
+    && (cityQuery.data.raw as { autocompleteReady?: unknown }).autocompleteReady === false,
+  );
+
   const cityError = !enabled
     ? null
     : !city
       ? "Cidade: selecione uma cidade antes de buscar o endereco."
       : cityQuery.error
         ? ((cityQuery.error as Error).message || "Cidade: falha ao validar a cidade selecionada.")
+        : autocompleteUnavailable
+          ? "Endereco: a busca automatica nao esta disponivel agora. Digite rua, bairro e numero manualmente."
         : cityQuery.data && !cityContext
-          ? "Cidade: nao foi possivel restringir o autocomplete para a cidade selecionada."
+          ? "Cidade: nao foi possivel preparar a busca de enderecos para a cidade escolhida."
           : null;
 
   return {
@@ -102,7 +113,8 @@ export function useAddressSuggestions(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [debug, setDebug] = useState<GeoapifyAddressSearchDebug | null>(null);
-  const { cityContext, isResolvingCity, cityError } = useResolvedCityContext(selectedCity, selectedState, enabled);
+  const shouldResolveCity = enabled && shouldSearch && query.trim().length >= 3;
+  const { cityContext, isResolvingCity, cityError } = useResolvedCityContext(selectedCity, selectedState, shouldResolveCity);
 
   useEffect(() => {
     if (!enabled || !shouldSearch) {

@@ -1,0 +1,8 @@
+/*
+ * Appointment/admin booking legacy cascade.
+ *
+ * Kept separate from the landing group so it can be isolated or replaced without
+ * adding more global imports.
+ */
+
+@import "../appointments-wireframe-overrides.css";

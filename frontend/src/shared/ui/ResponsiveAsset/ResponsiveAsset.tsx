@@ -6,12 +6,18 @@ type ResponsiveAssetProps = {
   children?: ReactNode;
   className?: string;
   desktopSrc: string;
+  desktopSrcSet?: string;
   imageClassName?: string;
   mobileBreakpoint?: number;
+  mobileSizes?: string;
   mobileSrc?: string;
+  mobileSrcSet?: string;
   pictureClassName?: string;
+  sizes?: string;
   smallMobileBreakpoint?: number;
+  smallMobileSizes?: string;
   smallMobileSrc?: string;
+  smallMobileSrcSet?: string;
 };
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -23,19 +29,33 @@ export function ResponsiveAsset({
   children,
   className,
   desktopSrc,
+  desktopSrcSet,
   imageClassName,
   mobileBreakpoint = 767,
+  mobileSizes,
   mobileSrc,
+  mobileSrcSet,
   pictureClassName,
+  sizes,
   smallMobileBreakpoint = 500,
+  smallMobileSizes,
   smallMobileSrc,
+  smallMobileSrcSet,
 }: ResponsiveAssetProps) {
   return (
     <div className={cx(styles.root, className)}>
       <picture className={cx(styles.picture, pictureClassName)}>
-        {smallMobileSrc ? <source media={`(max-width: ${smallMobileBreakpoint}px)`} srcSet={smallMobileSrc} /> : null}
-        {mobileSrc ? <source media={`(max-width: ${mobileBreakpoint}px)`} srcSet={mobileSrc} /> : null}
-        <img className={cx(styles.image, imageClassName)} src={desktopSrc} alt={alt} />
+        {smallMobileSrc || smallMobileSrcSet ? (
+          <source
+            media={`(max-width: ${smallMobileBreakpoint}px)`}
+            srcSet={smallMobileSrcSet ?? smallMobileSrc}
+            sizes={smallMobileSizes ?? mobileSizes}
+          />
+        ) : null}
+        {mobileSrc || mobileSrcSet ? (
+          <source media={`(max-width: ${mobileBreakpoint}px)`} srcSet={mobileSrcSet ?? mobileSrc} sizes={mobileSizes} />
+        ) : null}
+        <img className={cx(styles.image, imageClassName)} src={desktopSrc} srcSet={desktopSrcSet} sizes={sizes} alt={alt} />
       </picture>
       {children}
     </div>

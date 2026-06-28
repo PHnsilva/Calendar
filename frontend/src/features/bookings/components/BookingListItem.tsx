@@ -1,26 +1,38 @@
 import { BookingStatusBadge } from "./BookingStatusBadge";
+import type { Booking } from "../../../entities/booking";
 import { formatDateTime } from "../../../lib/dates";
-import type { ServicoResponse } from "../../../types/api";
 
 type BookingListItemProps = {
-  booking: ServicoResponse;
+  booking: Booking;
   isActive: boolean;
-  onSelect: (booking: ServicoResponse) => void;
+  onSelect: () => void;
 };
+
+type BookingListItemDisplayProps = {
+  booking: Booking;
+};
+
+function BookingListItemDisplay({ booking }: BookingListItemDisplayProps) {
+  return (
+    <>
+      <div className="my-bookings__item-top">
+        <strong>{booking.serviceType}</strong>
+        <BookingStatusBadge status={booking.status} />
+      </div>
+      <span>{formatDateTime(booking.startsAt)}</span>
+      <small>{booking.client.address.formatted}</small>
+    </>
+  );
+}
 
 export function BookingListItem({ booking, isActive, onSelect }: BookingListItemProps) {
   return (
     <button
       type="button"
       className={["my-bookings__item", isActive ? "my-bookings__item--active" : ""].filter(Boolean).join(" ")}
-      onClick={() => onSelect(booking)}
+      onClick={onSelect}
     >
-      <div className="my-bookings__item-top">
-        <strong>{booking.serviceType}</strong>
-        <BookingStatusBadge status={booking.status} />
-      </div>
-      <span>{formatDateTime(booking.start)}</span>
-      <small>{booking.clientAddressLine || `${booking.clientStreet}, ${booking.clientNumber}`}</small>
+      <BookingListItemDisplay booking={booking} />
     </button>
   );
 }

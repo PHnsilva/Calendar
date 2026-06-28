@@ -1,6 +1,13 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useAddressSuggestions, type AddressSuggestion } from "../hooks/useAddressSuggestions";
+import { buildSuggestionStreetLine } from "../utils/address-selection";
+
+function buildSuggestionMeta(suggestion: AddressSuggestion): string {
+  const neighborhood = (suggestion.neighborhood || suggestion.addressLine2 || "").trim();
+  const postcode = String(suggestion.postcode ?? "").replace(/\D/g, "").slice(0, 8);
+  return [neighborhood, postcode ? `CEP ${postcode}` : ""].filter(Boolean).join(" • ");
+}
 
 type AddressAutocompleteFieldProps = {
   value: string;
@@ -21,7 +28,7 @@ export default function AddressAutocompleteField({
   const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
   const blurTimeoutRef = useRef<number | null>(null);
-  const debugEnabled = Boolean(import.meta.env.DEV && import.meta.env.MODE !== "test");
+  const debugEnabled = false;
   const { suggestions, isLoading, error, debug } = useAddressSuggestions(value, selectedCity, selectedState, Boolean(selectedCity), isFocused);
 
   const keepSearchOpen = () => {
@@ -100,7 +107,7 @@ export default function AddressAutocompleteField({
       {isLoading ? <div className="booking-address-autocomplete__status">Buscando enderecos...</div> : null}
       {!isLoading && error ? <div className="booking-address-autocomplete__status booking-address-autocomplete__status--error">{error}</div> : null}
       {!isLoading && !error && suggestions.length === 0 ? (
-        <div className="booking-address-autocomplete__status">Nenhum endereco encontrado nessa cidade.</div>
+        <div className="booking-address-autocomplete__status">Nenhum endereco parecido encontrado. Voce pode preencher rua, bairro e numero manualmente.</div>
       ) : null}
       {!isLoading && !error
         ? suggestions.map((suggestion) => (
@@ -114,7 +121,8 @@ export default function AddressAutocompleteField({
                 setIsFocused(false);
               }}
             >
-              <strong>{suggestion.label || suggestion.formatted || suggestion.addressLine1}</strong>
+              <strong>{buildSuggestionStreetLine(suggestion) || suggestion.label || suggestion.formatted || suggestion.addressLine1}</strong>
+              {buildSuggestionMeta(suggestion) ? <span>{buildSuggestionMeta(suggestion)}</span> : null}
             </button>
           ))
         : null}
@@ -139,17 +147,12 @@ export default function AddressAutocompleteField({
           }, 180);
         }}
         className="booking-form__input"
-        placeholder={`Digite rua, avenida ou praca; cidade selecionada: ${selectedCity}/${selectedState}`}
+        placeholder="Digite rua, avenida ou CEP"
         autoComplete="street-address"
         aria-invalid={Boolean(error)}
       />
 
       {shouldShowPanel ? createPortal(panel, document.body) : null}
-      {debugEnabled ? (
-        <small className="booking-address-autocomplete__debug">
-          Geoapify debug: raw={debug?.rawResultsCount ?? 0}, normalized={debug?.normalizedSuggestionCount ?? 0}, filtered={debug?.filteredSuggestionCount ?? 0}, state={suggestions.length}, open={shouldShowPanel ? "true" : "false"}
-        </small>
-      ) : null}
     </div>
   );
 }

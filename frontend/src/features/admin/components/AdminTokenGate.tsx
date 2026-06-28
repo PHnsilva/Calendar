@@ -31,9 +31,9 @@ export default function AdminTokenGate({ redirectTo = "/admin/dashboard", initia
     } catch (err) {
       clearAdminToken();
       if (err instanceof ApiError) {
-        setError(err.message || "Token administrativo inválido ou backend admin desabilitado.");
+        setError(err.message || "Token administrativo invalido ou indisponivel.");
       } else {
-        setError("Não foi possível validar o token administrativo.");
+        setError("Nao foi possivel validar o token administrativo.");
       }
     } finally {
       setLoading(false);

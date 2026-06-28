@@ -65,11 +65,14 @@ public class AdminFinanceService {
 
     public AdminHealthResponse health() {
         if (!props.isEnabled()) {
-            return new AdminHealthResponse(true, provider.name(), "disabled->dummy");
+            return new AdminHealthResponse(false, provider.name(), "Importe um OFX ou ative a integracao bancaria para carregar o extrato automatico.");
         }
 
         StatementProvider.Health h = provider.health();
-        return new AdminHealthResponse(h.ok(), h.provider(), h.message());
+        String message = h.ok()
+                ? "Integracao bancaria conectada."
+                : "Integracao bancaria indisponivel no momento.";
+        return new AdminHealthResponse(h.ok(), h.provider(), message);
     }
 
     public AdminFinanceConfigResponse config() {
@@ -91,7 +94,7 @@ public class AdminFinanceService {
 
     private void requireEnabled() {
         if (!props.isEnabled()) {
-            throw new ForbiddenException("Banking desabilitado");
+            throw new ForbiddenException("O extrato automatico nao esta disponivel nesta configuracao.");
         }
     }
 

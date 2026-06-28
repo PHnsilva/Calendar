@@ -29,4 +29,23 @@ describe("getAvailableSlots", () => {
     expect(url.searchParams.get("city")).toBe("Itabirito");
     expect(slots.map((slot) => slot.startTime)).toEqual(["09:00", "13:00"]);
   });
+
+  it("maps a missing availability route to a user-facing message", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      status: 404,
+      error: "NOT_FOUND",
+      message: "Not Found",
+      path: "/api/servicos/available",
+    }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    })));
+
+    const { getAvailableSlots } = await import("./get-available-slots");
+
+    await expect(getAvailableSlots("2026-06-10", "Itabirito", 60, 60)).rejects.toMatchObject({
+      status: 404,
+      message: expect.stringContaining("horarios nao estao disponiveis"),
+    });
+  });
 });

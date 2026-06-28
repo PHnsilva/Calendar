@@ -1,0 +1,38 @@
+/*
+ * Global CSS cascade entrypoint.
+ *
+ * src/app/styles.css must import only this file. Keep the public landing/footer
+ * cascade grouped here while legacy page overrides are being retired gradually.
+ */
+
+/* 1. Foundation */
+@import "./globals.css";
+@import "./site-preparation.css";
+
+/* 2. Core page baselines */
+@import "./landing.css";
+@import "./admin.css";
+@import "./modals.css";
+@import "./charts.css";
+@import "./navbar.css";
+
+/* 3. Responsive baselines */
+@import "./landing-responsive.css";
+@import "./admin-responsive.css";
+@import "./modals-responsive.css";
+@import "./charts-responsive.css";
+@import "./navbar-responsive.css";
+@import "./responsive-foundation.css";
+
+/* 4. Page-specific legacy cascades. */
+@import "./pages/appointments.css";
+
+/* 5. Admin navigation tail. */
+@import "./admin-week-agenda.css";
+@import "./admin-navbar.css";
+@import "./admin-navbar-stable.css";
+
+/* 6. Client landing authority.
+   Keep this last while legacy global CSS is still being retired: the landing
+   rules are scoped to .wf-client-landing and must win only there. */
+@import "./pages/client-landing.css";

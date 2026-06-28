@@ -12,6 +12,7 @@ import type { HomeSelectedSlot } from "../../home/types";
 import { formatDurationLabel, getAllowedCities, getBookingDurationMinutesByCity, getDefaultCity, getDefaultState, getSlotMinutes } from "../../../lib/bootstrap-config";
 import { usePublicBootstrap } from "../../public-config/hooks/usePublicBootstrap";
 import AlertNotice from '../../../components/ui/AlertNotice';
+import { formatPhoneInput as formatBrazilianPhoneInput, isValidMobilePhone, normalizePhone } from "../../../lib/authRole";
 
 type BookingFormModalProps = {
   open: boolean;
@@ -59,10 +60,7 @@ function formatDate(dateString: string): string {
 }
 
 function formatPhoneInput(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  return formatBrazilianPhoneInput(value);
 }
 
 function digitsOnly(value: string) {
@@ -118,8 +116,8 @@ function validateForm(values: BookingFormValues, addressInput: string, selectedC
   if (!normalizeText(values.clientFirstName)) errors.clientFirstName = "Informe seu nome.";
   if (!normalizeText(values.clientLastName)) errors.clientLastName = "Informe seu sobrenome.";
   if (!isEmailValid(values.clientEmail)) errors.clientEmail = "Informe um e-mail válido.";
-  const phoneDigits = digitsOnly(values.clientPhone);
-  if (phoneDigits.length < 10 || phoneDigits.length > 11) errors.clientPhone = "Informe um telefone válido com DDD.";
+  const phoneDigits = normalizePhone(values.clientPhone);
+  if (!isValidMobilePhone(phoneDigits)) errors.clientPhone = "Informe um celular válido com DDD.";
   if (!selectedSlot) errors.draftSlot = "Selecione um horário para continuar.";
 
   const cepDigits = digitsOnly(values.clientCep);
@@ -340,7 +338,7 @@ export default function BookingFormModal({
         clientFirstName: normalizeText(formValues.clientFirstName),
         clientLastName: normalizeText(formValues.clientLastName),
         clientEmail: normalizeText(formValues.clientEmail),
-        clientPhone: digitsOnly(formValues.clientPhone),
+        clientPhone: normalizePhone(formValues.clientPhone),
         clientCep: digitsOnly(formValues.clientCep).slice(0, 8),
         clientStreet: normalizeText(formValues.clientStreet),
         clientNeighborhood: normalizeText(formValues.clientNeighborhood),
@@ -426,7 +424,7 @@ export default function BookingFormModal({
                 {isLoadingSlots ? <div className="booking-preview-modal__empty"><strong>Carregando horários...</strong></div> : null}
                 {slotsError ? (
                   <AlertNotice variant="danger" title="Falha ao carregar horários" compact>
-                    <p>{slotsError.message}</p>
+                    <p>{slotsError instanceof Error ? slotsError.message : "Não foi possível carregar os horários."}</p>
                   </AlertNotice>
                 ) : null}
                 {!isLoadingSlots && availableSlots.length === 0 ? (

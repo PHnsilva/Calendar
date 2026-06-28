@@ -36,9 +36,11 @@ public class RoutesController {
     @PostMapping("/admin/compute")
     public RouteComputeResponse computeAdmin(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @Valid @RequestBody RouteAdminComputeRequest req
     ) throws IOException {
-        AdminPrincipal principal = adminAuthService.require(session);
+        AdminPrincipal principal = adminAuthService.require(session, workspace, providerId);
         servicoService.requireActiveAdminAccess(req.getEventId(), principal);
         return routesService.computeByEventIdAdmin(req.getEventId(), req.getOriginLat(), req.getOriginLng());
     }

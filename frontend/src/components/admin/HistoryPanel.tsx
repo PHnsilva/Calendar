@@ -157,7 +157,7 @@ export function HistoryPanel() {
             <strong>Mais recentes</strong>
           </div>
 
-          {query.isFetching ? <p className="admin-transaction-empty">Carregando histórico do backend.</p> : null}
+          {query.isFetching ? <p className="admin-transaction-empty">Carregando historico.</p> : null}
           {!hasAdminToken ? <p className="admin-transaction-empty">Faça login administrativo para carregar o histórico.</p> : null}
           {!query.isFetching && filteredBookings.length === 0 ? <p className="admin-transaction-empty">Nenhum agendamento encontrado para os filtros selecionados.</p> : null}
 

@@ -3257,3 +3257,462 @@
 @keyframes booking-day-picker-spin {
   to { transform: rotate(360deg); }
 }
+
+/* phase9 modal corrective: compact contact email and restore city picker sizing. */
+.wf-contact-option__text--mobile {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .wf-contact-option .wf-contact-option__text--full {
+    display: none !important;
+  }
+
+  .wf-contact-option .wf-contact-option__text--mobile {
+    display: inline !important;
+  }
+}
+
+.booking-form__field .booking-city-picker.booking-city-picker--submodal {
+  display: block !important;
+  width: 100% !important;
+  grid-template-columns: none !important;
+}
+
+.booking-form__field .booking-city-choice.booking-city-choice--launcher {
+  width: 100% !important;
+  min-height: 56px !important;
+  height: 56px !important;
+  max-height: 64px !important;
+  aspect-ratio: auto !important;
+  border-radius: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  padding: 0 16px !important;
+  overflow: hidden !important;
+  font-size: 0.95rem !important;
+  line-height: 1 !important;
+}
+
+.booking-form__field .booking-city-choice.booking-city-choice--launcher .booking-city-choice__icon {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  border-radius: 9px !important;
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 32px !important;
+  aspect-ratio: 1 / 1 !important;
+  overflow: hidden !important;
+}
+
+.booking-form__field .booking-city-choice.booking-city-choice--launcher .booking-city-choice__icon img {
+  width: 21px !important;
+  height: 21px !important;
+  max-width: 21px !important;
+  max-height: 21px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+.booking-city-submodal .booking-city-submodal__option {
+  min-height: 58px !important;
+  height: auto !important;
+  aspect-ratio: auto !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.booking-city-submodal .booking-city-submodal__icon {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  flex: 0 0 30px !important;
+}
+
+.booking-city-submodal .booking-city-submodal__icon img {
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  object-fit: contain !important;
+}
+
+/* phase9 final corrective: services modal, city picker sizing. */
+.wf-modal.wf-modal--services-info {
+  width: min(940px, calc(100vw - 36px)) !important;
+  max-height: min(92dvh, 760px) !important;
+  padding: clamp(22px, 3vw, 36px) !important;
+  border-radius: clamp(18px, 2.4vw, 28px) !important;
+  background: #fff !important;
+  overflow-y: auto !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-modal-close {
+  width: 44px !important;
+  height: 44px !important;
+  top: clamp(18px, 2.4vw, 30px) !important;
+  right: clamp(18px, 2.4vw, 30px) !important;
+  border-radius: 50% !important;
+  background: #f4f8ff !important;
+  color: #07135d !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid #dfe8f8 !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info--cards {
+  display: grid !important;
+  gap: clamp(18px, 2.3vw, 28px) !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__hero {
+  display: grid !important;
+  gap: 6px !important;
+  padding-right: 64px !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__hero span {
+  color: #ff4b0b !important;
+  font-size: clamp(11px, 1.3vw, 14px) !important;
+  line-height: 1.1 !important;
+  font-weight: 950 !important;
+  text-transform: uppercase !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__hero h2 {
+  margin: 0 !important;
+  color: #07135d !important;
+  font-size: clamp(34px, 4.2vw, 48px) !important;
+  line-height: .96 !important;
+  letter-spacing: -0.055em !important;
+  font-weight: 760 !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__hero p {
+  max-width: 720px !important;
+  margin: 6px 0 0 !important;
+  color: #394a78 !important;
+  font-size: clamp(13px, 1.35vw, 16px) !important;
+  line-height: 1.4 !important;
+  font-weight: 680 !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: clamp(12px, 1.7vw, 18px) !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card {
+  min-width: 0 !important;
+  min-height: 156px !important;
+  padding: clamp(16px, 1.8vw, 22px) !important;
+  border: 1px solid #dbe6f8 !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, #f8fbff 0%, #f3f7fc 100%) !important;
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) !important;
+  align-items: start !important;
+  gap: clamp(14px, 1.6vw, 18px) !important;
+  box-shadow: none !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card__icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 48px !important;
+  color: var(--service-color, #0358ff) !important;
+  background: color-mix(in srgb, var(--service-color, #0358ff) 14%, #fff 86%) !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card__icon .wf-icon,
+.wf-modal.wf-modal--services-info .wf-services-card__icon svg {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card__content {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 12px !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card h3 {
+  margin: 0 !important;
+  color: #07135d !important;
+  font-size: clamp(17px, 1.7vw, 21px) !important;
+  line-height: 1.15 !important;
+  font-weight: 760 !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card ul {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card li {
+  margin: 0 !important;
+  color: #33466f !important;
+  font-size: clamp(13px, 1.3vw, 16px) !important;
+  line-height: 1.18 !important;
+  font-weight: 850 !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card li::before {
+  content: none !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card--orange { --service-color: #f59e0b; }
+.wf-modal.wf-modal--services-info .wf-services-card--red { --service-color: #ff4b0b; }
+.wf-modal.wf-modal--services-info .wf-services-card--blue { --service-color: #0358ff; }
+.wf-modal.wf-modal--services-info .wf-services-card--green { --service-color: #0aa65f; }
+.wf-modal.wf-modal--services-info .wf-services-card--purple { --service-color: #7c3aed; }
+.wf-modal.wf-modal--services-info .wf-services-card--cyan { --service-color: #0891b2; }
+.wf-modal.wf-modal--services-info .wf-services-card--gray { --service-color: #35415f; }
+
+.wf-modal.wf-modal--services-info .wf-services-info__cta {
+  justify-self: center !important;
+  min-height: 54px !important;
+  min-width: min(280px, 100%) !important;
+  padding: 0 28px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, #1027a9 0%, #071a82 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 14px 32px rgba(7, 19, 93, .24) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 11px !important;
+  font-size: 17px !important;
+  font-weight: 950 !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__cta .wf-icon {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.wf-modal.wf-modal--create .wf-city-select-launcher,
+.wf-modal.wf-modal--create .booking-city-choice.booking-city-choice--launcher,
+.booking-form__field .booking-city-choice.booking-city-choice--launcher {
+  min-height: 56px !important;
+  height: 56px !important;
+  max-height: 60px !important;
+  width: 100% !important;
+  aspect-ratio: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  padding: 0 16px !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+
+.wf-modal.wf-modal--create .wf-city-select-launcher > .wf-icon,
+.wf-modal.wf-modal--create .wf-city-submodal__button > .wf-icon,
+.wf-modal.wf-modal--create .booking-city-choice--launcher .booking-city-choice__icon,
+.wf-modal.wf-modal--create .booking-city-submodal__icon,
+.booking-form__field .booking-city-choice--launcher .booking-city-choice__icon {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  flex: 0 0 32px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 10px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+}
+
+.wf-modal.wf-modal--create .wf-city-select-launcher > .wf-icon svg,
+.wf-modal.wf-modal--create .wf-city-select-launcher > .wf-icon img,
+.wf-modal.wf-modal--create .wf-city-submodal__button > .wf-icon svg,
+.wf-modal.wf-modal--create .wf-city-submodal__button > .wf-icon img,
+.wf-modal.wf-modal--create .booking-city-choice--launcher .booking-city-choice__icon img,
+.wf-modal.wf-modal--create .booking-city-submodal__icon img,
+.booking-form__field .booking-city-choice--launcher .booking-city-choice__icon img {
+  width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  max-height: 22px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+.wf-modal.wf-modal--create .wf-city-select-launcher > span,
+.wf-modal.wf-modal--create .booking-city-choice--launcher > span:not(.booking-city-choice__icon),
+.booking-form__field .booking-city-choice--launcher > span:not(.booking-city-choice__icon) {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  text-align: left !important;
+}
+
+.wf-modal.wf-modal--create .wf-city-submodal,
+.wf-modal.wf-modal--create .booking-city-submodal {
+  width: min(420px, calc(100vw - 28px)) !important;
+  max-height: min(76dvh, 520px) !important;
+  overflow-y: auto !important;
+}
+
+.wf-modal.wf-modal--create .wf-city-submodal__grid,
+.wf-modal.wf-modal--create .booking-city-submodal__grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.wf-modal.wf-modal--create .wf-city-submodal__button,
+.wf-modal.wf-modal--create .booking-city-submodal__option {
+  min-height: 58px !important;
+  height: auto !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+}
+
+@media (max-width: 520px) {
+  .wf-modal.wf-modal--services-info {
+    width: min(94vw, 420px) !important;
+    padding: 22px 18px !important;
+  }
+
+  .wf-modal.wf-modal--services-info .wf-services-info__hero {
+    padding-right: 48px !important;
+  }
+
+  .wf-modal.wf-modal--services-info .wf-services-info__hero h2 {
+    font-size: clamp(28px, 8vw, 38px) !important;
+  }
+
+  .wf-modal.wf-modal--services-info .wf-services-info__hero p {
+    display: none !important;
+  }
+
+  .wf-modal.wf-modal--services-info .wf-services-info__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .wf-modal.wf-modal--services-info .wf-services-card {
+    min-height: 126px !important;
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    padding: 15px !important;
+  }
+
+  .wf-modal.wf-modal--services-info .wf-services-card__icon {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .wf-modal.wf-modal--create .wf-city-submodal__grid,
+  .wf-modal.wf-modal--create .booking-city-submodal__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .wf-modal.wf-modal--create .wf-city-submodal__button,
+  .wf-modal.wf-modal--create .booking-city-submodal__option {
+    min-height: 54px !important;
+    padding: 9px !important;
+    font-size: 11.5px !important;
+  }
+}
+
+
+/* phase9 services-modal final: dedicated service icon assets and site scheduling CTA. */
+.wf-modal.wf-modal--services-info .wf-services-info--cards {
+  gap: clamp(16px, 2vw, 24px) !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__hero {
+  gap: 4px !important;
+  padding-right: clamp(54px, 7vw, 76px) !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__hero h2 {
+  max-width: 760px !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__hero p {
+  display: none !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card__icon {
+  width: clamp(52px, 4.4vw, 64px) !important;
+  height: clamp(52px, 4.4vw, 64px) !important;
+  border-radius: 18px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card__icon .wf-icon,
+.wf-modal.wf-modal--services-info .wf-services-card__icon .wf-icon img,
+.wf-modal.wf-modal--services-info .wf-services-card__icon svg {
+  width: clamp(52px, 4.4vw, 64px) !important;
+  height: clamp(52px, 4.4vw, 64px) !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-card {
+  grid-template-columns: clamp(52px, 4.4vw, 64px) minmax(0, 1fr) !important;
+  align-items: start !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__cta {
+  min-width: min(300px, 100%) !important;
+  min-height: 54px !important;
+  background: linear-gradient(180deg, #1235d8 0%, #071a91 100%) !important;
+}
+
+.wf-modal.wf-modal--services-info .wf-services-info__cta .wf-icon,
+.wf-modal.wf-modal--services-info .wf-services-info__cta .wf-icon svg,
+.wf-modal.wf-modal--services-info .wf-services-info__cta .wf-icon img {
+  width: 26px !important;
+  height: 26px !important;
+}
+
+@media (max-width: 520px) {
+  .wf-modal.wf-modal--services-info .wf-services-info__hero {
+    padding-right: 48px !important;
+  }
+
+  .wf-modal.wf-modal--services-info .wf-services-card {
+    grid-template-columns: 50px minmax(0, 1fr) !important;
+    min-height: 118px !important;
+  }
+
+  .wf-modal.wf-modal--services-info .wf-services-card__icon,
+  .wf-modal.wf-modal--services-info .wf-services-card__icon .wf-icon,
+  .wf-modal.wf-modal--services-info .wf-services-card__icon .wf-icon img,
+  .wf-modal.wf-modal--services-info .wf-services-card__icon svg {
+    width: 50px !important;
+    height: 50px !important;
+  }
+}

@@ -167,17 +167,33 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
     onConfirmPhone?.();
   };
 
+  const desktopProfileLabel = <><NavbarIcon name="user" /> <span>{profileLabel}</span></>;
+
   const desktopActions = isHome ? (
     <>
-      <NavbarButton to={CLIENT_BOOKINGS_PATH}><NavbarIcon name="calendar" /> <span>Meus agendamentos</span></NavbarButton>
-      <ClientProfileMenu page={page} profileLabel={profileLabel} onProfileAction={handleProfileAction} onCreate={onCreate} />
-      <NavbarButton variant="orange" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
+      <NavbarButton to={CLIENT_BOOKINGS_PATH} className="wf-client-bookings-trigger"><NavbarIcon name="calendar" /> <span>Meus agendamentos</span></NavbarButton>
+      <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
+      <ClientProfileMenu
+        page={page}
+        profileLabel={profileLabel}
+        labelContent={desktopProfileLabel}
+        triggerClassName="wf-client-profile-desktop"
+        onProfileAction={handleProfileAction}
+        onCreate={onCreate}
+      />
     </>
   ) : (
     <>
-      <NavbarButton to="/"><NavbarIcon name="home" /> <span>Página inicial</span></NavbarButton>
-      <ClientProfileMenu page={page} profileLabel={profileLabel} onProfileAction={handleProfileAction} onCreate={onCreate} />
-      <NavbarButton variant="orange" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
+      <NavbarButton to="/" className="wf-client-bookings-trigger"><NavbarIcon name="home" /> <span>Página inicial</span></NavbarButton>
+      <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
+      <ClientProfileMenu
+        page={page}
+        profileLabel={profileLabel}
+        labelContent={desktopProfileLabel}
+        triggerClassName="wf-client-profile-desktop"
+        onProfileAction={handleProfileAction}
+        onCreate={onCreate}
+      />
     </>
   );
 

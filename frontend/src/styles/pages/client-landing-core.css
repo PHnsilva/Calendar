@@ -3599,3 +3599,317 @@ html body .wf-client-landing .wf-house-card__route {
     bottom: 6px !important;
   }
 }
+
+/* phase9 final mobile location card/profile corrective. */
+@media (max-width: 599px) {
+  html body .wf-client-landing .wf-info-row {
+    gap: clamp(10px, 3vw, 14px) !important;
+  }
+
+  html body .wf-client-landing .wf-house-card {
+    width: 100% !important;
+    min-height: clamp(136px, 38vw, 172px) !important;
+    padding: clamp(12px, 3.4vw, 16px) clamp(12px, 3.4vw, 16px) !important;
+    grid-template-columns: minmax(118px, 46%) minmax(0, 1fr) !important;
+    gap: clamp(12px, 3vw, 16px) !important;
+    align-items: center !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__image {
+    width: min(100%, 150px) !important;
+    justify-self: start !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__copy {
+    padding-right: clamp(28px, 8vw, 42px) !important;
+    min-width: 0 !important;
+  }
+
+  html body .wf-client-landing .wf-house-card h2 {
+    max-width: 11.2em !important;
+    margin-bottom: clamp(5px, 1.5vw, 8px) !important;
+    font-size: clamp(14px, 3.9vw, 17px) !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.055em !important;
+  }
+
+  html body .wf-client-landing .wf-house-card p {
+    font-size: clamp(9.4px, 2.75vw, 11.2px) !important;
+    line-height: 1.28 !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__route {
+    width: clamp(34px, 10vw, 46px) !important;
+    max-width: 18% !important;
+    right: 4px !important;
+    bottom: 5px !important;
+    opacity: .95 !important;
+  }
+}
+
+@media (max-width: 380px) {
+  html body .wf-client-landing .wf-house-card {
+    grid-template-columns: minmax(108px, 44%) minmax(0, 1fr) !important;
+    padding: 11px 12px !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__image {
+    width: min(100%, 132px) !important;
+  }
+
+  html body .wf-client-landing .wf-house-card h2 {
+    font-size: clamp(13px, 3.75vw, 15px) !important;
+  }
+
+  html body .wf-client-landing .wf-house-card p {
+    font-size: clamp(8.8px, 2.55vw, 10.2px) !important;
+  }
+}
+
+html body .wf-client-landing .wf-action-card--green .wf-icon--user svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* phase9 final corrective: services CTA, mobile location card and landing navbar. */
+html body .wf-client-landing .wf-secondary-cta .wf-services-cta-icon {
+  width: clamp(20px, 1.6vw, 30px) !important;
+  height: clamp(20px, 1.6vw, 30px) !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  flex: 0 0 auto !important;
+}
+
+html body .wf-client-landing .wf-secondary-cta .wf-services-cta-icon .wf-icon,
+html body .wf-client-landing .wf-secondary-cta .wf-services-cta-icon svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (min-width: 900px) {
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header {
+    --wf-client-nav-actions-width: clamp(440px, 42vw, 620px) !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: var(--wf-client-nav-actions-width) !important;
+    max-width: var(--wf-client-nav-actions-width) !important;
+    grid-template-columns: minmax(152px, 1fr) minmax(104px, .68fr) minmax(152px, 1fr) !important;
+    gap: clamp(8px, .8vw, 13px) !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    height: clamp(38px, 2.9vw, 46px) !important;
+    min-height: clamp(38px, 2.9vw, 46px) !important;
+    padding: 0 clamp(14px, 1.3vw, 22px) !important;
+    border-radius: clamp(10px, .85vw, 14px) !important;
+    font-size: clamp(11px, .82vw, 13.5px) !important;
+    font-weight: 900 !important;
+    color: #fff !important;
+    border: 1px solid rgba(0, 0, 0, .35) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.48), inset 0 -9px 12px rgba(0,0,0,.19), 0 8px 18px rgba(7,19,93,.24) !important;
+    background: linear-gradient(180deg, #1465e6 0%, #0331b5 56%, #001b78 100%) !important;
+    justify-content: center !important;
+    gap: clamp(8px, .7vw, 11px) !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn--orange {
+    background: linear-gradient(180deg, #ff7a26 0%, #eb3c00 56%, #9d1f00 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -9px 12px rgba(93,19,0,.28), 0 8px 18px rgba(190,54,0,.24) !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon {
+    width: clamp(20px, 1.45vw, 25px) !important;
+    min-width: clamp(20px, 1.45vw, 25px) !important;
+    height: clamp(20px, 1.45vw, 25px) !important;
+    border-radius: 999px !important;
+    background: #fff !important;
+    color: #07135d !important;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.55), 0 2px 5px rgba(0,0,0,.18) !important;
+    display: inline-grid !important;
+    place-items: center !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon svg {
+    width: 64% !important;
+    height: 64% !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    max-width: 150px !important;
+    justify-self: center !important;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header {
+    --wf-client-nav-actions-width: clamp(390px, 54vw, 520px) !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    grid-template-columns: minmax(138px, 1fr) minmax(94px, .66fr) minmax(138px, 1fr) !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    height: 38px !important;
+    min-height: 38px !important;
+    font-size: 10.5px !important;
+    padding-inline: 10px !important;
+  }
+}
+
+@media (max-width: 599px) {
+  html body .wf-client-landing .wf-house-card {
+    width: 100% !important;
+    min-height: clamp(132px, 36vw, 168px) !important;
+    padding: clamp(10px, 3vw, 14px) clamp(10px, 3vw, 14px) !important;
+    grid-template-columns: minmax(118px, 44%) minmax(0, 1fr) !important;
+    gap: clamp(12px, 3.2vw, 18px) !important;
+    align-items: center !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__image {
+    width: min(100%, 150px) !important;
+    max-width: 150px !important;
+    justify-self: start !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__copy {
+    padding-right: clamp(24px, 7vw, 36px) !important;
+    min-width: 0 !important;
+  }
+
+  html body .wf-client-landing .wf-house-card h2 {
+    max-width: none !important;
+    margin-bottom: 5px !important;
+    font-size: clamp(14px, 3.8vw, 17px) !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.052em !important;
+  }
+
+  html body .wf-client-landing .wf-house-card p {
+    font-size: clamp(9px, 2.62vw, 11px) !important;
+    line-height: 1.24 !important;
+    letter-spacing: -0.03em !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__route {
+    width: clamp(30px, 9vw, 42px) !important;
+    max-width: 16% !important;
+    right: 3px !important;
+    bottom: 4px !important;
+    opacity: .92 !important;
+  }
+}
+
+@media (max-width: 380px) {
+  html body .wf-client-landing .wf-house-card {
+    grid-template-columns: minmax(116px, 45%) minmax(0, 1fr) !important;
+    padding: 10px !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__image {
+    width: min(100%, 138px) !important;
+  }
+
+  html body .wf-client-landing .wf-house-card h2 {
+    font-size: clamp(13px, 3.7vw, 15px) !important;
+  }
+
+  html body .wf-client-landing .wf-house-card p {
+    font-size: clamp(8.4px, 2.35vw, 9.8px) !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__route {
+    width: 30px !important;
+    right: 2px !important;
+    bottom: 3px !important;
+  }
+}
+
+
+/* phase9 service CTA icon visibility. */
+.wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon,
+.wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon .wf-icon,
+.wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon svg {
+  width: clamp(18px, 1.55vw, 24px) !important;
+  height: clamp(18px, 1.55vw, 24px) !important;
+  display: inline-grid !important;
+  place-items: center !important;
+}
+
+.wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon {
+  color: #fff !important;
+  background: rgba(255, 255, 255, .18) !important;
+  border-radius: 7px !important;
+  padding: 3px !important;
+}
+
+/* Phase 9 final landing corrections: desktop house-card copy width and carousel drag affordance. */
+html body .wf-client-landing .wf-services-showcase,
+html body .wf-client-landing .wf-services-showcase__viewport,
+html body .wf-client-landing .wf-services-showcase__image {
+  cursor: grab !important;
+}
+
+html body .wf-client-landing .wf-services-showcase:active,
+html body .wf-client-landing .wf-services-showcase__viewport:active {
+  cursor: grabbing !important;
+}
+
+@media (min-width: 900px) {
+  html body .wf-client-landing .wf-house-card {
+    grid-template-columns: minmax(245px, 37%) minmax(0, 1fr) !important;
+    column-gap: clamp(18px, 2.2vw, 38px) !important;
+    align-items: center !important;
+    padding-right: clamp(96px, 8.5vw, 138px) !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__copy {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  html body .wf-client-landing .wf-house-card h2 {
+    max-width: clamp(360px, 28vw, 560px) !important;
+    font-size: clamp(24px, 1.85vw, 38px) !important;
+    line-height: 1.04 !important;
+  }
+
+  html body .wf-client-landing .wf-house-card p {
+    max-width: clamp(390px, 31vw, 620px) !important;
+    font-size: clamp(16px, 1.08vw, 21px) !important;
+    line-height: 1.42 !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__route {
+    right: clamp(12px, 1.4vw, 24px) !important;
+    bottom: clamp(8px, 1vw, 18px) !important;
+    width: clamp(74px, 5.8vw, 108px) !important;
+    max-width: 18% !important;
+    opacity: .95 !important;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  html body .wf-client-landing .wf-house-card {
+    grid-template-columns: minmax(205px, 36%) minmax(0, 1fr) !important;
+    padding-right: clamp(76px, 8vw, 112px) !important;
+  }
+
+  html body .wf-client-landing .wf-house-card h2 {
+    max-width: clamp(300px, 35vw, 430px) !important;
+    font-size: clamp(22px, 2.6vw, 30px) !important;
+  }
+
+  html body .wf-client-landing .wf-house-card p {
+    max-width: clamp(320px, 40vw, 520px) !important;
+  }
+}

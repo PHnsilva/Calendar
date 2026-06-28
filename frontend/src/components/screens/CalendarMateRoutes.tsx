@@ -36,6 +36,14 @@ import cityItabiritoIcon from '../../assets/wireframes/icons/city-itabirito.svg'
 import cityOuroPretoIcon from '../../assets/wireframes/icons/city-ouro-preto.svg';
 import cityMoedaIcon from '../../assets/wireframes/icons/city-moeda.svg';
 import cityNovaLimaIcon from '../../assets/wireframes/icons/city-nova-lima.svg';
+import serviceMontagemIcon from '../../assets/wireframes/icons/services/montagem.svg';
+import serviceEletricaIcon from '../../assets/wireframes/icons/services/eletrica.svg';
+import serviceHidraulicaIcon from '../../assets/wireframes/icons/services/hidraulica.svg';
+import serviceInstalacoesIcon from '../../assets/wireframes/icons/services/instalacoes.svg';
+import servicePequenosReparosIcon from '../../assets/wireframes/icons/services/pequenos-reparos.svg';
+import servicePinturaIcon from '../../assets/wireframes/icons/services/pintura.svg';
+import serviceJardinagemIcon from '../../assets/wireframes/icons/services/jardinagem.svg';
+import serviceOrcamentoIcon from '../../assets/wireframes/icons/services/orcamento.svg';
 import bookingActionEyeIcon from '../../assets/wireframes/icons/booking-action-eye.svg';
 import bookingActionPencilIcon from '../../assets/wireframes/icons/booking-action-pencil.svg';
 import bookingActionWhatsAppIcon from '../../assets/wireframes/icons/booking-action-whatsapp.svg';
@@ -598,6 +606,14 @@ function Icon({ name }: { name: string }) {
     'city-moeda': cityMoedaIcon,
     'city-belo-horizonte': cityBeloHorizonteIcon,
     'city-nova-lima': cityNovaLimaIcon,
+    'service-montagem': serviceMontagemIcon,
+    'service-eletrica': serviceEletricaIcon,
+    'service-hidraulica': serviceHidraulicaIcon,
+    'service-instalacoes': serviceInstalacoesIcon,
+    'service-pequenos-reparos': servicePequenosReparosIcon,
+    'service-pintura': servicePinturaIcon,
+    'service-jardinagem': serviceJardinagemIcon,
+    'service-orcamento': serviceOrcamentoIcon,
     'confirm-phone-security': confirmPhoneSecurityIllustration,
     'email-illustration': emailIllustrationAsset,
   };
@@ -1260,7 +1276,7 @@ export function ClientBookings() {
           {bookings.map((booking) => <BookingCard key={booking.id} booking={booking} onDetails={() => openDetails(booking)} onEdit={openCreate} />)}
         </div>
       </AppointmentsPageShell>
-      <CalendarMateModal modal={modal} context={context} onClose={() => setModal(null)} />
+      <CalendarMateModal modal={modal} context={context} onClose={() => setModal(null)} onOpenModal={setModal} />
     </>
   );
 }
@@ -1513,7 +1529,7 @@ export function AdminLanding() {
         </section>
         <LandingFooter admin setModal={setModal} />
       </main>
-      <CalendarMateModal modal={modal} onClose={() => setModal(null)} />
+      <CalendarMateModal modal={modal} onClose={() => setModal(null)} onOpenModal={setModal} />
     </PageShell>
   );
 }
@@ -1584,7 +1600,7 @@ export function AdminDashboard() {
         {effectiveView === 'historico' ? <AdminHistoryView /> : null}
         {effectiveView === 'extrato' ? <AdminFinanceView importedDashboard={importedFinanceDashboard} onOpenOfx={() => setModal('ofx-admin')} /> : null}
       </main>
-      <CalendarMateModal modal={modal} context={context} onClose={() => setModal(null)} onOfxImported={setImportedFinanceDashboard} />
+      <CalendarMateModal modal={modal} context={context} onClose={() => setModal(null)} onOpenModal={setModal} onOfxImported={setImportedFinanceDashboard} />
     </PageShell>
   );
 }
@@ -2122,7 +2138,7 @@ export function AdminBookingDetails() {
           </div>
         ) : null}
       </main>
-      <CalendarMateModal modal={modal} context={modal === 'email-admin' ? context : booking ? { booking } : {}} onClose={() => setModal(null)} />
+      <CalendarMateModal modal={modal} context={modal === 'email-admin' ? context : booking ? { booking } : {}} onClose={() => setModal(null)} onOpenModal={setModal} />
     </PageShell>
   );
 }
@@ -2153,11 +2169,13 @@ export function CalendarMateModal({
   context = {},
   onClose,
   onOfxImported,
+  onOpenModal,
 }: {
   modal: ModalKind;
   context?: ModalContext;
   onClose: () => void;
   onOfxImported?: (dashboard: FinancialDashboardDTO) => void;
+  onOpenModal?: (modal: ModalKind) => void;
 }) {
   const closeModal = useModalBrowserBack(Boolean(modal), `root-${modal ?? 'none'}`, onClose);
   if (!modal) return null;
@@ -2185,7 +2203,7 @@ export function CalendarMateModal({
         {modal === 'client-profile' ? <ClientProfileModal onClose={closeModal} /> : null}
         {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={closeModal} /> : null}
         {modal === 'contact' ? <ContactModal onClose={closeModal} /> : null}
-        {modal === 'services-info' ? <ServicesInfoModal /> : null}
+        {modal === 'services-info' ? <ServicesInfoModal onSchedule={() => onOpenModal ? onOpenModal('create-client') : onClose()} /> : null}
         {modal === 'help-contact' ? <HelpContactModal /> : null}
         {modal === 'block-admin' ? <AdminBlockModal onClose={closeModal} /> : null}
         {modal === 'assign-provider' ? <AssignProviderModal booking={context.booking} onClose={closeModal} /> : null}
@@ -2328,6 +2346,7 @@ type CreateBookingField =
 type CreateBookingErrors = Partial<Record<CreateBookingField, string>>;
 
 function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: string; onClose: () => void }) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: bootstrap } = usePublicBootstrap(true);
   const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
@@ -2503,8 +2522,11 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         queryClient.invalidateQueries({ queryKey: ['my-bookings'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-bookings'] }),
       ]);
-      setSuccessMessage('Agendamento criado. Confirme seu telefone para acompanhar o atendimento.');
-      window.setTimeout(onClose, 700);
+      setSuccessMessage('Agendamento criado. Abrindo seus agendamentos...');
+      window.setTimeout(() => {
+        onClose();
+        navigate('/meus-agendamentos');
+      }, 700);
     } catch (error) {
       setBackendError((error as Error).message || 'Nao foi possivel criar o agendamento.');
     }
@@ -3021,8 +3043,20 @@ function ClientDetailsModal({ booking, onClose }: { booking?: BookingItem; onClo
   );
 }
 
-function ContactOption({ icon, title, text, color, onClick }: { icon: string; title: string; text: string; color: Accent; onClick: () => void }) {
-  return <button type="button" onClick={onClick} className={cx('wf-contact-option', `wf-contact-option--${color}`)}><Icon name={icon} /><span><strong>{title}</strong><small>{text}</small></span><b>›</b></button>;
+function ContactOption({ icon, title, text, mobileText, color, onClick }: { icon: string; title: string; text: string; mobileText?: string; color: Accent; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={cx('wf-contact-option', `wf-contact-option--${color}`)}>
+      <Icon name={icon} />
+      <span>
+        <strong>{title}</strong>
+        <small>
+          <span className="wf-contact-option__text wf-contact-option__text--full">{text}</span>
+          <span className="wf-contact-option__text wf-contact-option__text--mobile">{mobileText ?? text}</span>
+        </small>
+      </span>
+      <b>›</b>
+    </button>
+  );
 }
 
 function ContactModal({ onClose }: { onClose: () => void }) {
@@ -3034,7 +3068,7 @@ function ContactModal({ onClose }: { onClose: () => void }) {
         <ContactOption icon="contact-whatsapp" title="WhatsApp" text={`Atendimento pelo número ${supportPhoneDisplay}.`} color="green" onClick={openSupportWhatsApp} />
         <ContactOption icon="contact-instagram" title="Instagram" text="Acompanhe e envie mensagem pelo perfil oficial." color="purple" onClick={() => openExternal(supportInstagramUrl)} />
         <ContactOption icon="contact-phone" title="Telefone" text={`Ligue para ${supportPhoneDisplay}.`} color="blue" onClick={openSupportPhone} />
-        <ContactOption icon="contact-email" title="E-mail" text={supportEmail} color="orange" onClick={openSupportEmail} />
+        <ContactOption icon="contact-email" title="E-mail" text={supportEmail} mobileText={supportEmail.replace('@gmail.com', '')} color="orange" onClick={openSupportEmail} />
       </div>
       
     </>
@@ -3042,37 +3076,41 @@ function ContactModal({ onClose }: { onClose: () => void }) {
 }
 
 const serviceCategories = [
-  { title: 'Elétrica básica', items: ['troca de tomadas e interruptores', 'instalação de luminárias', 'chuveiros', 'disjuntores simples'] },
-  { title: 'Hidráulica', items: ['torneiras', 'sifões', 'vazamentos simples', 'descargas', 'registros', 'caixas acopladas'] },
-  { title: 'Montagem e instalação', items: ['móveis', 'prateleiras', 'suportes de TV', 'varões', 'nichos', 'quadros e espelhos'] },
-  { title: 'Serviços de pedreiro', items: ['rebocos e correções pontuais', 'assentamento e troca de pisos', 'ajustes em alvenaria', 'pequenos reparos estruturais'] },
-  { title: 'Serviços de pintor', items: ['pintura interna e externa', 'retoques em paredes e tetos', 'preparação de superfícies', 'acabamentos e textura simples'] },
-  { title: 'Filmagem com drone', items: ['captação aérea de imóveis', 'registros para obras e terrenos', 'conteúdo promocional', 'imagens para inspeção visual'] },
-  { title: 'Desenvolvimento de sistemas e aplicações web', items: ['sites institucionais', 'landing pages', 'sistemas sob medida', 'manutenção e melhorias em aplicações web'] },
-  { title: 'Visita técnica', items: ['avaliação do problema', 'orçamento', 'orientação sobre materiais e execução'] },
+  { title: 'Montagem', icon: 'service-montagem', color: 'orange', items: ['Montagem de móveis', 'Mesas, cadeiras e armários', 'Ajustes e reforços simples'] },
+  { title: 'Elétrica', icon: 'service-eletrica', color: 'red', items: ['Troca de tomadas e interruptores', 'Instalação de luminárias', 'Pequenos reparos elétricos'] },
+  { title: 'Hidráulica', icon: 'service-hidraulica', color: 'blue', items: ['Vazamentos e torneiras', 'Troca de torneiras e chuveiros', 'Ajustes em descargas'] },
+  { title: 'Instalações', icon: 'service-instalacoes', color: 'green', items: ['Suportes, prateleiras e nichos', 'Quadros, espelhos e acessórios', 'Itens residenciais diversos'] },
+  { title: 'Pequenos reparos', icon: 'service-pequenos-reparos', color: 'red', items: ['Consertos do dia a dia', 'Manutenção residencial', 'Correções rápidas'] },
+  { title: 'Pintura', icon: 'service-pintura', color: 'purple', items: ['Pintura de paredes internas', 'Correções e acabamentos', 'Renovação de pequenos ambientes'] },
+  { title: 'Jardinagem', icon: 'service-jardinagem', color: 'cyan', items: ['Poda e manutenção básica', 'Limpeza de jardim', 'Cuidados simples com áreas verdes'] },
+  { title: 'Orçamento', icon: 'service-orcamento', color: 'gray', items: ['Avaliação do serviço', 'Estimativa de materiais', 'Definição do atendimento'] },
 ];
 
-function ServicesInfoModal() {
+function ServicesInfoModal({ onSchedule }: { onSchedule: () => void }) {
   return (
-    <>
-      <section className="wf-services-info wf-services-info--plain">
-        <header className="wf-services-info__header">
-          <div className="wf-services-info__logo"><LogoMark /></div>
-          <div className="wf-services-info__title-block">
-            <h2>Serviços prestados</h2>
-          </div>
-        </header>
-        <div className="wf-services-info__grid">
-          {serviceCategories.map((category) => (
-            <article key={category.title}>
-              <strong>{category.title}</strong>
+    <section className="wf-services-info wf-services-info--cards">
+      <header className="wf-services-info__hero">
+        <span>ATENDIMENTO SOB SOLICITAÇÃO</span>
+        <h2>Serviços prestados</h2>
+      </header>
+      <div className="wf-services-info__grid" role="list">
+        {serviceCategories.map((category) => (
+          <article key={category.title} className={cx('wf-services-card', `wf-services-card--${category.color}`)} role="listitem">
+            <span className="wf-services-card__icon"><Icon name={category.icon} /></span>
+            <div className="wf-services-card__content">
+              <h3>{category.title}</h3>
               <ul>
-                {category.items.map((item) => <li key={item}>{item}</li>)}</ul>
-            </article>
-          ))}
-        </div>
-      </section>
-    </>
+                {category.items.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </div>
+          </article>
+        ))}
+      </div>
+      <button type="button" className="wf-services-info__cta" onClick={onSchedule}>
+        <Icon name="calendar-create" />
+        <span>Agendar pelo site</span>
+      </button>
+    </section>
   );
 }
 

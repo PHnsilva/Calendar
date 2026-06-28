@@ -138,8 +138,10 @@ export function NavbarIcon({ name }: { name: NavbarIconName }) {
     ),
     user: (
       <svg {...common}>
-        <circle cx="32" cy="22" r="10" {...line} />
-        <path d="M14 55c3.7-12.2 9.7-18.3 18-18.3S46.3 42.8 50 55" {...line} />
+        <circle cx="32" cy="32" r="27" fill="currentColor" opacity="0.16" />
+        <circle cx="32" cy="24" r="10.5" fill="currentColor" />
+        <path d="M14 55c2.7-12.5 9.1-18.8 18-18.8S47.3 42.5 50 55" fill="currentColor" />
+        <path d="M15.5 55c3.2-11.3 8.9-17 16.5-17s13.3 5.7 16.5 17" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.45" />
       </svg>
     ),
   };

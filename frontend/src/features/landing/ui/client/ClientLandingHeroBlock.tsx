@@ -13,8 +13,8 @@ export function ClientLandingHeroBlock({ setModal }: { setModal: (modal: ModalKi
       onSecondaryAction={() => setModal("services-info")}
       primaryIcon={<LandingIcon name="calendar" />}
       primaryLabel="Criar agendamento"
-      secondaryIcon={<span className="wf-play"><LandingIcon name="play" /></span>}
-      secondaryLabel="Como funciona?"
+      secondaryIcon={<span className="wf-services-cta-icon"><LandingIcon name="services" /></span>}
+      secondaryLabel="Serviços prestados"
       title="Organize seus agendamentos e pequenos reparos com"
       mobileTitle={<>Organize seus<br />agendamentos e<br />pequenos reparos<br />com <span>facilidade.</span></>}
     />

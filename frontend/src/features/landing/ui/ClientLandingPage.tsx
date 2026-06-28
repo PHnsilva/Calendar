@@ -22,7 +22,7 @@ export function ClientLandingPage() {
         <ClientLandingInfoRow />
         <ClientLandingFooterBlock setModal={setModal} />
       </main>
-      <CalendarMateModal modal={modal} onClose={() => setModal(null)} />
+      <CalendarMateModal modal={modal} onClose={() => setModal(null)} onOpenModal={setModal} />
     </PageShell>
   );
 }

@@ -10,6 +10,7 @@ import clientCreateCalendarIcon from '../../assets/wireframes/icons/client-creat
 import clientFollowCalendarIcon from '../../assets/wireframes/icons/client-follow-calendar.png';
 import clientPhoneIcon from '../../assets/wireframes/icons/client-phone.png';
 import clientChatIcon from '../../assets/wireframes/icons/client-chat.png';
+import clientProfileAvatarIcon from '../../assets/wireframes/icons/client-profile-avatar-unisex.png';
 import contactWhatsAppIcon from '../../assets/wireframes/icons/contact-whatsapp.png';
 import contactInstagramIcon from '../../assets/wireframes/icons/contact-instagram.png';
 import contactPhoneIcon from '../../assets/wireframes/icons/contact-phone.png';
@@ -44,7 +45,6 @@ import servicePequenosReparosIcon from '../../assets/wireframes/icons/services/p
 import servicePinturaIcon from '../../assets/wireframes/icons/services/pintura.png';
 import serviceJardinagemIcon from '../../assets/wireframes/icons/services/jardinagem.png';
 import serviceOrcamentoIcon from '../../assets/wireframes/icons/services/orcamento.png';
-import serviceScheduleIcon from '../../assets/wireframes/icons/services/agendar-servico.png';
 import bookingActionEyeIcon from '../../assets/wireframes/icons/booking-action-eye.svg';
 import bookingActionPencilIcon from '../../assets/wireframes/icons/booking-action-pencil.svg';
 import bookingActionWhatsAppIcon from '../../assets/wireframes/icons/booking-action-whatsapp.svg';
@@ -66,7 +66,6 @@ import emailIllustrationAsset from '../../assets/wireframes/modals/email-illustr
 import { FinancialStatementPanel } from '../admin/FinancialStatementPanel';
 import { HistoryPanel } from '../admin/HistoryPanel';
 import AdminNavbar, { type AdminNavView } from '../layout/AdminNavbar';
-import ClientNavbar from '../layout/ClientNavbar';
 import ProviderNavbar from '../layout/ProviderNavbar';
 import { PageShell, SvgWrapper } from '../layout/ResponsivePrimitives';
 import AppointmentCard from '../../features/appointments/ui/AppointmentCard';
@@ -615,7 +614,6 @@ function Icon({ name }: { name: string }) {
     'service-pintura': servicePinturaIcon,
     'service-jardinagem': serviceJardinagemIcon,
     'service-orcamento': serviceOrcamentoIcon,
-    'service-schedule': serviceScheduleIcon,
     'confirm-phone-security': confirmPhoneSecurityIllustration,
     'email-illustration': emailIllustrationAsset,
   };
@@ -706,6 +704,9 @@ function Icon({ name }: { name: string }) {
     'send-outline': <svg {...common}><path d="M9 31.5 55 10 43 54 31.5 41.5 20 47 23.5 35 9 31.5Z" {...line}/><path d="M24 35 55 10M31.5 41.5 40 31" {...line}/></svg>,
     'info-circle': <svg {...common}><circle cx="32" cy="32" r="24" {...line}/><path d="M32 29v15" {...line}/><path d="M32 20h.01" {...line}/></svg>,
     'user-blue-solid': <svg {...common}><circle cx="32" cy="21" r="9" fill="#07135d"/><path d="M13 56c3.4-12 9.7-18 19-18s15.6 6 19 18" fill="#07135d"/></svg>,
+    'user-edit': <svg {...common}><circle cx="25" cy="22" r="8" {...line}/><path d="M10 52c3-10 8-15 15-15 4.4 0 8 1.8 10.8 5.3" {...line}/><path d="M41 50v7h7l10-10-7-7-10 10Z" {...line}/><path d="m49 42 7 7" {...line}/></svg>,
+    logout: <svg {...common}><path d="M27 14H15v36h12" {...line}/><path d="M35 22 45 32 35 42" {...line}/><path d="M45 32H22" {...line}/></svg>,
+    location: <svg {...common}><path d="M32 58s19-17 19-34A19 19 0 1 0 13 24c0 17 19 34 19 34Z" {...line}/><circle cx="32" cy="24" r="6" {...line}/></svg>,
     'phone-blue-outline': <svg {...common}><path d="M22 13 29 25l-5 5c4 8 10 14 18 18l5-5 12 7c1.3.8 1.8 2.3 1.3 3.8-1.4 4.4-5.1 6.7-9.7 6.7C27.2 60.5 3.5 36.8 3.5 13.4c0-4.6 2.3-8.3 6.7-9.7 1.5-.5 3 .1 3.8 1.3l8 8Z" stroke="#07135d" strokeWidth="4.3" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     send: <svg {...common}><defs><linearGradient id={`${uid}-send`} x1="8" y1="12" x2="56" y2="52"><stop stopColor="#ff8a33"/><stop offset="1" stopColor="#ff4b0b"/></linearGradient></defs><path d="M8 31.5 55 10 43 54 31.5 41.5 20 47 23.5 35 8 31.5Z" fill={`url(#${uid}-send)`}/><path d="M24 35 55 10M31.5 41.5 40 31" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" opacity=".96"/></svg>,
     shield: <svg {...common}><path d="M32 8 53 16.5v14.8c0 13.1-8.6 21.2-21 25.1-12.4-3.9-21-12-21-25.1V16.5L32 8Z" {...line}/><path d="m22 32 7 7 15-17" {...line}/></svg>,
@@ -2932,43 +2933,84 @@ function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
 }
 
 function ClientProfileModal({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
   const verification = getStoredPhoneVerification();
   const profile = getStoredClientProfile();
-  const name = profile?.name || 'Nome não informado';
+  const name = profile?.name || 'Cliente';
   const phone = profile?.phone || verification?.phone || '';
   const email = profile?.email || '';
+  const city = getDefaultCity();
+  const phoneStatus = verification ? 'Telefone verificado' : 'Telefone pendente';
+
+  const goToBookings = () => {
+    onClose();
+    navigate('/meus-agendamentos');
+  };
 
   return (
-    <>
-      <ModalTitle icon="user" title="Perfil" text="Dados salvos para agilizar seus próximos agendamentos." />
-      <section className="wf-client-profile-modal">
-        <div className="wf-client-profile-modal__hero">
-          <Avatar name={name} large />
-          <div>
-            <strong>{name}</strong>
-            <small>{verification ? 'Telefone confirmado' : 'Telefone ainda não confirmado'}</small>
-          </div>
+    <section className="wf-client-profile-modal" aria-labelledby="client-profile-title">
+      <div className="wf-client-profile-modal__header">
+        <span className="wf-client-profile-modal__eyebrow">Área do cliente</span>
+        <h2 id="client-profile-title">Meu perfil</h2>
+      </div>
+
+      <div className="wf-client-profile-modal__hero">
+        <figure className="wf-client-profile-modal__avatar">
+          <img src={clientProfileAvatarIcon} alt="Avatar do perfil" />
+        </figure>
+        <div className="wf-client-profile-modal__identity">
+          <strong>{name}</strong>
+          <small>Perfil do cliente</small>
         </div>
-        <dl className="wf-client-profile-modal__details">
-          <div>
-            <dt><Icon name="user" /> Nome</dt>
-            <dd>{name}</dd>
-          </div>
-          <div>
-            <dt><Icon name="phone" /> Telefone</dt>
-            <dd>{phone ? formatPhoneForDisplay(phone) : 'Telefone não informado'}</dd>
-          </div>
-          <div>
-            <dt><Icon name="mail" /> E-mail</dt>
-            <dd>{email || 'E-mail ainda não salvo'}</dd>
-          </div>
-        </dl>
-        {!email ? (
-          <p className="wf-client-profile-modal__hint"><Icon name="mail" /> O e-mail será salvo automaticamente quando você criar um agendamento.</p>
-        ) : null}
-      </section>
-      <ModalActions primary="Fechar" primaryIcon="check" onPrimary={onClose} />
-    </>
+      </div>
+
+      <div className="wf-client-profile-modal__status" aria-label="Resumo do perfil">
+        <span><Icon name="shield-check" /> <strong>Conta ativa</strong></span>
+        <span><Icon name="phone" /> <strong>{phoneStatus}</strong></span>
+        <span><Icon name="user" /> <strong>Perfil do cliente</strong></span>
+      </div>
+
+      <div className="wf-client-profile-modal__section-title">Informações pessoais</div>
+      <dl className="wf-client-profile-modal__details">
+        <div>
+          <dt><Icon name="user" /> Nome</dt>
+          <dd>{name}</dd>
+          <button type="button" aria-label="Editar nome" onClick={() => notifyUnavailable('Editar nome')}><Icon name="edit" /></button>
+        </div>
+        <div>
+          <dt><Icon name="mail" /> E-mail</dt>
+          <dd>{email || 'E-mail ainda não salvo'}</dd>
+          <button type="button" aria-label="Editar e-mail" onClick={() => notifyUnavailable('Editar e-mail')}><Icon name="edit" /></button>
+        </div>
+        <div>
+          <dt><Icon name="phone" /> Telefone</dt>
+          <dd>{phone ? formatPhoneForDisplay(phone) : 'Telefone não informado'}</dd>
+          <button type="button" aria-label="Editar telefone" onClick={() => notifyUnavailable('Editar telefone')}><Icon name="edit" /></button>
+        </div>
+        <div>
+          <dt><Icon name="location" /> Cidade</dt>
+          <dd>{city || 'Cidade não informada'}</dd>
+          <button type="button" aria-label="Editar cidade" onClick={() => notifyUnavailable('Editar cidade')}><Icon name="edit" /></button>
+        </div>
+      </dl>
+
+      <div className="wf-client-profile-modal__actions">
+        <button type="button" className="wf-client-profile-modal__primary" onClick={() => notifyUnavailable('Editar perfil')}>
+          <Icon name="user-edit" />
+          <span>Editar perfil</span>
+        </button>
+        <button type="button" className="wf-client-profile-modal__secondary" onClick={goToBookings}>
+          <Icon name="calendar-blue" />
+          <span>Meus agendamentos</span>
+        </button>
+        <button type="button" className="wf-client-profile-modal__logout" onClick={onClose}>
+          <Icon name="logout" />
+          <span>Sair</span>
+        </button>
+      </div>
+
+      <p className="wf-client-profile-modal__hint"><Icon name="lock" /> Seus dados estão protegidos e seguros.</p>
+    </section>
   );
 }
 
@@ -3109,7 +3151,7 @@ function ServicesInfoModal({ onSchedule }: { onSchedule: () => void }) {
         ))}
       </div>
       <button type="button" className="wf-services-info__cta" onClick={onSchedule}>
-        <Icon name="service-schedule" />
+        <Icon name="calendar-create" />
         <span>Agendar pelo site</span>
       </button>
     </section>

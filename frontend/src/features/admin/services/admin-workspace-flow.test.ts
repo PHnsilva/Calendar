@@ -31,7 +31,7 @@ describe("admin workspace login flow", () => {
 
   it("stores provider workspace for provider login results", async () => {
     const { saveAdminSession, getStoredAdminSession } = await import("../../../lib/storage");
-    const { applyAdminLoginDestination, ADMIN_BOOKINGS_ROUTE } = await import("./admin-workspace-flow");
+    const { applyAdminLoginDestination, PROVIDER_BOOKINGS_ROUTE } = await import("./admin-workspace-flow");
     const admin: AdminMeResponse = {
       id: "provider-1",
       name: "Prestador 1",
@@ -46,7 +46,7 @@ describe("admin workspace login flow", () => {
 
     expect(destination).toEqual({
       kind: "navigate",
-      to: ADMIN_BOOKINGS_ROUTE,
+      to: PROVIDER_BOOKINGS_ROUTE,
       workspace: { mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1" },
     });
     expect(getStoredAdminSession()?.workspace).toEqual({

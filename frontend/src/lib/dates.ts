@@ -46,7 +46,7 @@ export function isPastIsoDate(value: string): boolean {
 }
 
 export function isBookableDate(value: Date | string): boolean {
-  return !isDateBeforeToday(value);
+  return toIsoDatePart(value) > getTodayIso();
 }
 
 export function isBookableIsoDate(value: string): boolean {

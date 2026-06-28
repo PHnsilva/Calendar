@@ -107,7 +107,7 @@ export default function AddressAutocompleteField({
       {isLoading ? <div className="booking-address-autocomplete__status">Buscando enderecos...</div> : null}
       {!isLoading && error ? <div className="booking-address-autocomplete__status booking-address-autocomplete__status--error">{error}</div> : null}
       {!isLoading && !error && suggestions.length === 0 ? (
-        <div className="booking-address-autocomplete__status">Nenhum endereco parecido encontrado. Voce pode preencher rua, bairro e numero manualmente.</div>
+        <div className="booking-address-autocomplete__status">Nenhum endereco parecido encontrado. Digite rua, bairro e numero manualmente.</div>
       ) : null}
       {!isLoading && !error
         ? suggestions.map((suggestion) => (
@@ -147,7 +147,7 @@ export default function AddressAutocompleteField({
           }, 180);
         }}
         className="booking-form__input"
-        placeholder="Digite rua, avenida ou CEP"
+        placeholder="Digite rua, bairro e numero"
         autoComplete="street-address"
         aria-invalid={Boolean(error)}
       />

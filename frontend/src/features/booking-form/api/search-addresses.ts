@@ -184,7 +184,10 @@ const STREET_PREFIX_PATTERN = /^(r\.?|rua|av\.?|avenida|alameda|travessa|praca|r
 function parseAddressLine2(value?: unknown): { street: string; houseNumber: string; neighborhood: string } {
   const parts = normalizeText(value).split(",").map((part) => part.trim()).filter(Boolean);
   const streetPartIndex = parts.findIndex((part) => STREET_PREFIX_PATTERN.test(part) || STREET_PREFIX_PATTERN.test(normalizeForMatch(part)));
-  const selectedIndex = streetPartIndex >= 0 ? streetPartIndex : 0;
+  if (streetPartIndex < 0) {
+    return { street: "", houseNumber: "", neighborhood: "" };
+  }
+  const selectedIndex = streetPartIndex;
   const streetPart = parts[selectedIndex] ?? "";
   const numberMatch = streetPart.match(/^(.+?)\s+(\d+[a-zA-Z]?(?:[-/]\d+)?)$/);
   const nextPart = parts[selectedIndex + 1] ?? "";
@@ -199,6 +202,13 @@ function parseAddressLine2(value?: unknown): { street: string; houseNumber: stri
 
 function buildDisplayLabel(street: string, houseNumber: string, neighborhood: string, fallback: string): string {
   return [street, houseNumber, neighborhood].filter(Boolean).join(", ").trim() || fallback;
+}
+
+function isGenericPlaceResult(properties: GeoapifyResult, street: string, neighborhood: string): boolean {
+  const resultType = normalizeForMatch(firstText(properties.result_type, properties.resultType, properties.type));
+  if (street) return false;
+  if (["city", "county", "state", "postcode", "district", "suburb"].includes(resultType)) return true;
+  return !neighborhood;
 }
 
 function dedupeSuggestions(suggestions: GeoapifyAddressSuggestion[]): GeoapifyAddressSuggestion[] {
@@ -263,11 +273,12 @@ export function toSuggestion(properties: GeoapifyResult): GeoapifyAddressSuggest
   const street = firstText(properties.street, parsedAddressLine2.street, properties.address_line1);
   const houseNumber = firstText(properties.housenumber, parsedAddressLine2.houseNumber);
   const neighborhood = firstText(properties.suburb, properties.district, properties.neighbourhood, parsedAddressLine2.neighborhood);
+  if (isGenericPlaceResult(properties, street, neighborhood)) return null;
   const formatted = buildDisplayLabel(street, houseNumber, neighborhood, rawFormatted);
   const city = firstText(properties.city, properties.town, properties.village);
   const stateCode = normalizeUf(firstText(properties.state_code, properties.state));
   const state = stateCode || normalizeText(properties.state).toUpperCase();
-  const postcode = normalizePostcode(properties.postcode);
+  const postcode = street ? normalizePostcode(properties.postcode) : "";
   const latitude = normalizeNumber(properties.lat);
   const longitude = normalizeNumber(properties.lon);
 
@@ -481,12 +492,12 @@ function buildGeoapifyCityUrl(cityName: string, state: string | undefined, apiKe
 async function parseGeoapifyResponse(response: Response, context: "city" | "address") {
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {
-      throw new GeoapifyDirectRequestError("Geoapify recusou a chave publica do autocomplete.", response.status);
+      throw new GeoapifyDirectRequestError("A busca automatica de endereco nao esta disponivel agora.", response.status);
     }
     if (response.status === 429) {
-      throw new GeoapifyDirectRequestError("Limite de consultas do autocomplete atingido.", response.status);
+      throw new GeoapifyDirectRequestError("A busca automatica de endereco esta temporariamente ocupada.", response.status);
     }
-    throw new Error(`Nao foi possivel buscar sugestoes de ${context === "city" ? "cidade" : "endereco"}. Geoapify retornou ${response.status}.`);
+    throw new GeoapifyDirectRequestError(`Nao foi possivel buscar sugestoes de ${context === "city" ? "cidade" : "endereco"}.`, response.status);
   }
 
   return (await response.json()) as GeoapifyAutocompleteResponse;
@@ -505,7 +516,7 @@ async function resolveCityDirectly(cityName: string, state?: string): Promise<Ge
   try {
     response = await fetch(url);
   } catch {
-    throw new GeoapifyDirectRequestError("Nao foi possivel conectar ao resolvedor de cidade do Geoapify.");
+    throw new GeoapifyDirectRequestError("Nao foi possivel validar a cidade agora.");
   }
 
   const payload = await parseGeoapifyResponse(response, "city");
@@ -585,7 +596,7 @@ async function fetchAddressSuggestionsFromUrl(
   try {
     response = await fetch(url);
   } catch {
-    throw new GeoapifyDirectRequestError("Nao foi possivel conectar ao autocomplete direto de endereco.");
+    throw new GeoapifyDirectRequestError("Nao foi possivel buscar enderecos agora.");
   }
 
   const payload = await parseGeoapifyResponse(response, "address");

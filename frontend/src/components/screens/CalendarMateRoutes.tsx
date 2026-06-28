@@ -109,7 +109,7 @@ import {
 import type { AdminAuthConfirmResponse, AdminProviderResponse, AdminWorkspaceContext, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
 import { confirmAdminLogin, listAdminProviders, loginAdminWithPassword, resendAdminLogin, startAdminLogin } from '../../features/admin/api/admin-auth';
-import { ADMIN_BOOKINGS_ROUTE, applyAdminLoginDestination, resolveAdminLoginDestination } from '../../features/admin/services/admin-workspace-flow';
+import { ADMIN_BOOKINGS_ROUTE, PROVIDER_BOOKINGS_ROUTE, applyAdminLoginDestination, resolveAdminLoginDestination } from '../../features/admin/services/admin-workspace-flow';
 import { updateAdminBooking } from '../../features/admin/api/update-admin-booking';
 import { exportBudgetPdf, exportBudgetXls } from '../../features/admin/services/budget-export';
 import { ApiError } from '../../lib/api-client';
@@ -359,6 +359,57 @@ function splitFullName(value: string): { firstName: string; lastName: string } {
 function formatDateOptionLabel(dateString: string): string {
   const date = toLocalDate(dateString);
   return `${ptWeekday.format(date).replace('.', '')}\n${date.getDate()}\n${ptMonth.format(date).replace('.', '')}`;
+}
+
+function isAtLeast24HoursAhead(dateString: string, timeString: string): boolean {
+  if (!dateString || !timeString) return false;
+  const appointment = new Date(`${dateString}T${timeString}:00`);
+  if (Number.isNaN(appointment.getTime())) return false;
+  return dateString > toIsoDate(new Date()) && appointment.getTime() - Date.now() >= 24 * 60 * 60 * 1000;
+}
+
+function parseManualBookingAddress(value: string, number: string, city: string) {
+  const parts = cleanFormText(value).split(',').map((part) => cleanFormText(part)).filter(Boolean);
+  const street = parts[0] ?? '';
+  const numberFromAddress = parts.slice(1).find((part) => isHouseNumberValid(part)) ?? '';
+  const neighborhood = parts.slice(1).find((part) => normalizeText(part) !== normalizeText(city) && part !== numberFromAddress && !/^\d/.test(part)) ?? '';
+  return {
+    street,
+    neighborhood,
+    number: normalizeHouseNumber(number || numberFromAddress),
+  };
+}
+
+function focusFirstCreateBookingError() {
+  window.requestAnimationFrame(() => {
+    const error = document.querySelector<HTMLElement>('.wf-create-booking-form .wf-field-error');
+    const target = error?.closest('label, .wf-choice-block, .wf-create-address-row')?.querySelector<HTMLElement>('input, textarea, button:not([disabled])');
+    (target ?? error)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    target?.focus();
+  });
+}
+
+function mapBookingCreateError(message: string): string {
+  const normalized = normalizeText(message);
+  if (normalized.includes('telefone') || normalized.includes('celular') || normalized.includes('phone')) {
+    return 'Digite um celular válido com DDD. Exemplo: (31) 95411-5323.';
+  }
+  if (normalized.includes('cidade') || normalized.includes('estado') || normalized.includes('state')) {
+    return 'Ainda não atendemos essa cidade. Escolha uma das cidades atendidas.';
+  }
+  if (normalized.includes('24 horas') || normalized.includes('anteced')) {
+    return 'Escolha uma data com pelo menos 24 horas de antecedência.';
+  }
+  if (normalized.includes('indispon') || normalized.includes('conflict') || normalized.includes('slot')) {
+    return 'Esse horário acabou de ficar indisponível. Escolha outro horário.';
+  }
+  if (normalized.includes('endereco') || normalized.includes('address') || normalized.includes('cep')) {
+    return 'Digite rua, número e bairro. Exemplo: Rua das Flores, 120, Centro.';
+  }
+  if (normalized.includes('senha')) {
+    return 'Digite a senha da equipe para usar esse telefone.';
+  }
+  return 'Não foi possível criar o agendamento. Revise os campos e tente novamente.';
 }
 
 function mapCreatedServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
@@ -1346,6 +1397,22 @@ async function loadAdminWorkspaceProviders(response: AdminAuthConfirmResponse): 
   }
 }
 
+function routeForAdminWorkspace(workspace: AdminWorkspaceContext): string {
+  return workspace.mode === 'PROVIDER' ? PROVIDER_BOOKINGS_ROUTE : ADMIN_BOOKINGS_ROUTE;
+}
+
+function getAdminWorkspaceBaseRoute(): '/admin' | '/prestador' {
+  return getStoredAdminWorkspace()?.mode === 'PROVIDER' ? '/prestador' : '/admin';
+}
+
+function adminDashboardRoute(view: AdminView): string {
+  return `${getAdminWorkspaceBaseRoute()}/dashboard?view=${view === 'agenda' ? 'agendamentos' : view}`;
+}
+
+function adminBookingRoute(eventId: string): string {
+  return `${getAdminWorkspaceBaseRoute()}/booking/${encodeURIComponent(eventId)}`;
+}
+
 function AdminWorkspaceSelectionModal({
   embedded = false,
   providers,
@@ -1425,7 +1492,7 @@ function AdminWorkspaceSelectionModal({
   );
 }
 
-function AdminWorkspaceSelectionGate({ onDone }: { onDone: () => void }) {
+function AdminWorkspaceSelectionGate({ onDone }: { onDone: (workspace: AdminWorkspaceContext) => void }) {
   const [pendingWorkspaceSelection] = useState(true);
   const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
   const [selectedWorkspace, setSelectedWorkspace] = useState('');
@@ -1470,16 +1537,16 @@ export function AdminLanding() {
   useDoubleBackToLeavePage();
   const session = getStoredAdminSession();
   const openView = (view: AdminView) => {
-    navigate(`/admin/dashboard?view=${view === 'agenda' ? 'agendamentos' : view}`);
+    navigate(adminDashboardRoute(view));
   };
   const openNavbarView = (view: AdminView) => {
-    navigate(`/admin/dashboard?view=${view === 'agenda' ? 'agendamentos' : view}`);
+    navigate(adminDashboardRoute(view));
   };
   if (!session) {
     return <Navigate to="/" replace />;
   }
   if (session.role === 'OWNER' && !session.workspace) {
-    return <AdminWorkspaceSelectionGate onDone={() => navigate(ADMIN_BOOKINGS_ROUTE, { replace: true })} />;
+    return <AdminWorkspaceSelectionGate onDone={(workspace) => navigate(routeForAdminWorkspace(workspace), { replace: true })} />;
   }
   const workspace = getStoredAdminWorkspace();
   const providerWorkspace = workspace?.mode === 'PROVIDER';
@@ -1556,13 +1623,13 @@ export function AdminDashboard() {
     return <Navigate to="/" replace />;
   }
   if (session.role === 'OWNER' && !session.workspace) {
-    return <AdminWorkspaceSelectionGate onDone={() => navigate(ADMIN_BOOKINGS_ROUTE, { replace: true })} />;
+    return <AdminWorkspaceSelectionGate onDone={(workspace) => navigate(routeForAdminWorkspace(workspace), { replace: true })} />;
   }
 
   const selectAdminView = (nextView: AdminView) => {
     const resolvedView = nextView === 'agenda' ? 'agendamentos' : nextView;
     setView(resolvedView);
-    navigate(`/admin/dashboard?view=${resolvedView}`);
+    navigate(adminDashboardRoute(resolvedView));
   };
 
   return (
@@ -1603,19 +1670,16 @@ export function AdminDashboard() {
   );
 }
 
-function getWeekStart(date = new Date()): Date {
+function getAdminWindowStart(date = new Date()): Date {
   const cursor = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const weekday = cursor.getDay();
-  const diff = weekday === 0 ? -6 : 1 - weekday;
-  cursor.setDate(cursor.getDate() + diff);
   cursor.setHours(0, 0, 0, 0);
   return cursor;
 }
 
-function getWeekEnd(date = new Date()): Date {
-  const start = getWeekStart(date);
+function getAdminWindowEnd(date = new Date()): Date {
+  const start = getAdminWindowStart(date);
   const end = new Date(start);
-  end.setDate(start.getDate() + 6);
+  end.setDate(start.getDate() + 7);
   end.setHours(23, 59, 59, 999);
   return end;
 }
@@ -1624,9 +1688,9 @@ function isSameIsoDate(a: string, b: string): boolean {
   return a === b;
 }
 
-function isCurrentWeek(booking: BookingItem, reference = new Date()): boolean {
+function isInAdminFutureWindow(booking: BookingItem, reference = new Date()): boolean {
   const date = toLocalDate(booking.date);
-  return date >= getWeekStart(reference) && date <= getWeekEnd(reference);
+  return date >= getAdminWindowStart(reference) && date <= getAdminWindowEnd(reference);
 }
 
 function getMonthRange(date = new Date()): { start: string; end: string } {
@@ -1635,9 +1699,9 @@ function getMonthRange(date = new Date()): { start: string; end: string } {
   return { start: toIsoDate(start), end: toIsoDate(end) };
 }
 
-function getWeekRangeLabel(reference = new Date()): string {
-  const start = getWeekStart(reference);
-  const end = getWeekEnd(reference);
+function getAdminWindowRangeLabel(reference = new Date()): string {
+  const start = getAdminWindowStart(reference);
+  const end = getAdminWindowEnd(reference);
   const startLabel = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(start).replace('.', '');
   const endLabel = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(end).replace('.', '');
   return `${startLabel} – ${endLabel}`;
@@ -1863,11 +1927,11 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
   const [calendarOpen, setCalendarOpen] = useState(false);
   const monthRange = getMonthRange();
   const weekBookings = useMemo(
-    () => bookings.filter((booking) => isCurrentWeek(booking)).filter((booking) => matchesAdminAgendaSearch(booking, search)),
+    () => bookings.filter((booking) => isInAdminFutureWindow(booking)).filter((booking) => matchesAdminAgendaSearch(booking, search)),
     [bookings, search],
   );
   const dayGroups = useMemo(() => groupBookingsByDate(weekBookings), [weekBookings]);
-  const missingProviderCount = useMemo(() => bookings.filter((booking) => isCurrentWeek(booking) && isWithoutProvider(booking)).length, [bookings]);
+  const missingProviderCount = useMemo(() => bookings.filter((booking) => isInAdminFutureWindow(booking) && isWithoutProvider(booking)).length, [bookings]);
   const monthBlocksCount = useMemo(() => blocks.filter((block) => {
     const start = block.start?.slice(0, 10) || block.end?.slice(0, 10) || '';
     return start >= monthRange.start && start <= monthRange.end;
@@ -1875,7 +1939,7 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
 
   const openDetails = (booking: BookingItem) => {
     setContext({ booking });
-    navigate(`/admin/booking/${booking.id}`);
+    navigate(adminBookingRoute(booking.id));
   };
   const openAssign = (booking: BookingItem) => { setContext({ booking }); setModal('assign-provider'); };
   const openEdit = (booking: BookingItem) => { setContext({ booking }); setModal('edit-admin'); };
@@ -1890,15 +1954,15 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
       <div className="wf-admin-week-agenda__hero">
         <div>
           <h1 id="wf-admin-week-agenda-title">Agendamentos</h1>
-          <p>Visão da semana</p>
+          <p>Visão dos próximos 7 dias</p>
         </div>
         {owner ? <button type="button" className="wf-admin-week-agenda__new wf-admin-week-agenda__new--desktop" onClick={() => openCreate()}><Icon name="plus" /> Novo agendamento</button> : null}
       </div>
 
       <div className="wf-admin-week-agenda__controls">
-        <button type="button" className="wf-admin-week-agenda__week"><Icon name="calendar" /> Esta semana <Icon name="chevron" /></button>
+        <button type="button" className="wf-admin-week-agenda__week"><Icon name="calendar" /> Próximos 7 dias <Icon name="chevron" /></button>
         <button type="button" className="wf-admin-week-agenda__calendar" onClick={() => setCalendarOpen(true)}><Icon name="calendar" /> Abrir calendário</button>
-        <span className="wf-admin-week-agenda__range"><Icon name="calendar" /> {getWeekRangeLabel()}</span>
+        <span className="wf-admin-week-agenda__range"><Icon name="calendar" /> {getAdminWindowRangeLabel()}</span>
         {owner ? <button type="button" className="wf-admin-week-agenda__new wf-admin-week-agenda__new--mobile" onClick={() => openCreate()}><Icon name="plus" /> Novo agendamento</button> : null}
       </div>
 
@@ -1912,14 +1976,14 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
 
       <div className="wf-admin-agenda-summary-grid">
         {owner ? <AdminAgendaSummaryCard tone="blue" icon="booking-field-user" title="Sem prestador" value={missingProviderCount} label="agendamentos" /> : null}
-        <AdminAgendaSummaryCard tone="orange" icon="calendar-create" title="Agendamentos" value={weekBookings.length} label="esta semana" />
+        <AdminAgendaSummaryCard tone="orange" icon="calendar-create" title="Agendamentos" value={weekBookings.length} label="próximos 7 dias" />
         {owner ? <AdminAgendaSummaryCard tone="green" icon="admin-blocks" title="Bloqueios do mês" value={monthBlocksCount} label="bloqueios" /> : null}
       </div>
 
       <div className="wf-admin-week-agenda__list">
-        {isLoading ? <EmptyState title="Carregando agendamentos" text="Buscando agendamentos reais do backend." /> : null}
-        {isError || !hasAdminToken ? <EmptyState title="Agendamentos não disponíveis" text="Faça login administrativo para carregar os dados reais do backend." /> : null}
-        {!isLoading && !isError && dayGroups.length === 0 ? <EmptyState title="Nenhum agendamento nesta semana" text={search ? 'Nenhum agendamento da semana corresponde à busca atual.' : 'A semana atual ainda não possui agendamentos retornados pela API administrativa.'} /> : null}
+        {isLoading ? <EmptyState title="Carregando agendamentos" text="Buscando agendamentos da agenda." /> : null}
+        {isError || !hasAdminToken ? <EmptyState title="Agendamentos não disponíveis" text="Faça login administrativo para carregar seus agendamentos." /> : null}
+        {!isLoading && !isError && dayGroups.length === 0 ? <EmptyState title="Nenhum agendamento nos próximos 7 dias" text={search ? 'Nenhum agendamento do período corresponde à busca atual.' : 'Os próximos 7 dias ainda não possuem agendamentos.'} /> : null}
         {dayGroups.map((group, index) => (
           <AdminWeekDayGroup
             key={group.date}
@@ -2003,9 +2067,9 @@ function AdminBlocksView({ setModal }: { setModal: (modal: ModalKind) => void })
                 </div>
               ))}
             </div>
-            {isLoading ? <EmptyState title="Carregando bloqueios" text="Buscando bloqueios reais do backend." /> : null}
+            {isLoading ? <EmptyState title="Carregando bloqueios" text="Buscando bloqueios da agenda." /> : null}
             {isError || !hasAdminToken ? <EmptyState title="Bloqueios não disponíveis" text="Faça login administrativo para carregar os bloqueios reais." /> : null}
-            {!isLoading && !isError && blocks.length === 0 ? <EmptyState title="Nenhum bloqueio encontrado" text="A API não retornou bloqueios para o período selecionado." action="Adicionar bloqueio" onAction={() => setModal('block-admin')} /> : null}
+            {!isLoading && !isError && blocks.length === 0 ? <EmptyState title="Nenhum bloqueio encontrado" text="Nao ha bloqueios para o periodo selecionado." action="Adicionar bloqueio" onAction={() => setModal('block-admin')} /> : null}
           </div>
         </div>
         <aside className="wf-blocks-sidebar">
@@ -2064,7 +2128,7 @@ export function AdminBookingDetails() {
     return <Navigate to="/" replace />;
   }
   if (session?.role === 'OWNER' && !session.workspace) {
-    return <AdminWorkspaceSelectionGate onDone={() => navigate(ADMIN_BOOKINGS_ROUTE, { replace: true })} />;
+    return <AdminWorkspaceSelectionGate onDone={(workspace) => navigate(routeForAdminWorkspace(workspace), { replace: true })} />;
   }
 
   const openBudget = () => {
@@ -2077,7 +2141,7 @@ export function AdminBookingDetails() {
   };
 
   const selectAdminView = (nextView: AdminView) => {
-    navigate(`/admin/dashboard?view=${nextView === 'agenda' ? 'agendamentos' : nextView}`);
+    navigate(adminDashboardRoute(nextView));
   };
 
   return (
@@ -2109,8 +2173,8 @@ export function AdminBookingDetails() {
       )}
       <main className="wf-details-main">
         <div className="wf-admin-title-row">
-          <Link to="/admin/dashboard?view=agendamentos" className="wf-back-btn"><Icon name="back" /></Link>
-          <div><h1>Detalhes do agendamento</h1><p>{booking ? `Agendamento #${booking.id}` : 'Dados reais do backend'}</p></div>
+          <Link to={adminDashboardRoute('agendamentos')} className="wf-back-btn"><Icon name="back" /></Link>
+          <div><h1>Detalhes do agendamento</h1><p>{booking ? `Agendamento #${booking.id}` : 'Selecione um agendamento existente'}</p></div>
         </div>
         {!hasAdminToken || (!booking && !isLoading) ? <EmptyState title="Agendamento não encontrado" text="Faça login administrativo ou selecione um agendamento existente." /> : null}
         {booking ? (
@@ -2393,7 +2457,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
     bookingDurationMinutes,
     Boolean(activeSelectedDate),
   );
-  const needsManualHouseNumber = shouldShowManualHouseNumber(selectedAddress);
+  const needsManualHouseNumber = !selectedAddress || shouldShowManualHouseNumber(selectedAddress);
   const requiresReservedPhonePassword = forceReservedPhonePassword || isProtectedStaffPhone(phone);
 
   useEffect(() => {
@@ -2454,13 +2518,19 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
     const cepDigits = digitsOnly(selectedAddress?.postcode ?? '');
     const houseNumberFromSuggestion = getSuggestionHouseNumber(selectedAddress);
     const effectiveHouseNumber = houseNumberFromSuggestion || houseNumber;
+    const manualAddress = parseManualBookingAddress(addressInput, effectiveHouseNumber, selectedCity);
+    const clientStreet = selectedAddress ? cleanFormText(buildSuggestionStreetLine(selectedAddress)) : manualAddress.street;
+    const clientNeighborhood = selectedAddress
+      ? cleanFormText(selectedAddress.neighborhood || selectedAddress.addressLine2 || manualAddress.neighborhood)
+      : manualAddress.neighborhood;
+    const clientNumber = normalizeHouseNumber(effectiveHouseNumber || manualAddress.number);
     const nextErrors: CreateBookingErrors = {};
 
     if (!firstName || !lastName || firstName === lastName) {
       nextErrors.fullName = 'Nome completo: informe nome e sobrenome. Exemplo: Pedro Silva.';
     }
     if (!isValidMobilePhone(phone)) {
-      nextErrors.phone = 'Telefone: informe um celular brasileiro válido com DDD. Exemplo: (31) 99999-9999.';
+      nextErrors.phone = 'Digite um celular válido com DDD. Exemplo: (31) 95411-5323.';
     }
     if (requiresReservedPhonePassword && !reservedPhonePassword.trim()) {
       nextErrors.protectedPassword = 'Senha obrigatória para usar telefone de administrador ou prestador.';
@@ -2469,19 +2539,21 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
       nextErrors.email = 'E-mail: use @ e dominio valido. Exemplo: voce@email.com.';
     }
     if (!selectedCity) {
-      nextErrors.city = 'Cidade: escolha uma das cidades atendidas.';
+      nextErrors.city = 'Ainda não atendemos essa cidade. Escolha uma das cidades atendidas.';
     }
-    if (!selectedAddress || cepDigits.length !== 8) {
-      nextErrors.address = 'Endereco: escolha uma sugestao da lista para validar rua, bairro e CEP. Exemplo: Rua Sao Jose, Centro.';
+    if (!clientStreet || !clientNeighborhood) {
+      nextErrors.address = 'Digite rua, número e bairro. Exemplo: Rua das Flores, 120, Centro.';
     }
-    if (!isHouseNumberValid(effectiveHouseNumber)) {
-      nextErrors.number = 'Numero: informe 123, 123A, Casa 2, Lote 5 ou S/N.';
+    if (!isHouseNumberValid(clientNumber)) {
+      nextErrors.number = 'Número: informe 123, 123A, Casa 2, Lote 5 ou S/N.';
     }
     if (!activeSelectedDate) {
-      nextErrors.date = 'Data: selecione um dia disponivel carregado pelo backend.';
+      nextErrors.date = 'Data: selecione um dia disponível.';
     }
     if (!selectedTime) {
       nextErrors.time = 'Horario: selecione um horario disponivel para a data escolhida.';
+    } else if (!isAtLeast24HoursAhead(activeSelectedDate, selectedTime)) {
+      nextErrors.time = 'Escolha uma data com pelo menos 24 horas de antecedência.';
     }
     if (!isServiceNotesValid(notes)) {
       nextErrors.notes = 'Observacao: explique o que precisa de servico com pelo menos 10 caracteres. Exemplo: trocar tomada da sala.';
@@ -2489,9 +2561,9 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
 
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
+      focusFirstCreateBookingError();
       return;
     }
-    if (!selectedAddress) return;
 
     setBackendError('');
     setSuccessMessage('');
@@ -2506,15 +2578,15 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         clientLastName: lastName,
         clientEmail: cleanFormText(email),
         clientPhone: phoneDigits,
-        clientCep: cepDigits.slice(0, 8),
-        clientStreet: cleanFormText(buildSuggestionStreetLine(selectedAddress)),
-        clientNeighborhood: cleanFormText(selectedAddress.neighborhood || selectedAddress.addressLine2 || selectedCity),
-        clientNumber: normalizeHouseNumber(effectiveHouseNumber),
+        clientCep: cepDigits.length === 8 ? cepDigits : '',
+        clientStreet,
+        clientNeighborhood,
+        clientNumber,
         clientComplement: cleanFormText([complement, referencePoint].filter(Boolean).join(' | ')) || undefined,
         clientCity: selectedCity,
-        clientState: cleanFormText(selectedAddress.stateCode || selectedAddress.state || defaultState).slice(0, 2).toUpperCase(),
-        clientLatitude: selectedAddress.lat ?? selectedAddress.latitude,
-        clientLongitude: selectedAddress.lon ?? selectedAddress.longitude,
+        clientState: cleanFormText(selectedAddress?.stateCode || selectedAddress?.state || defaultState).slice(0, 2).toUpperCase(),
+        clientLatitude: selectedAddress?.lat ?? selectedAddress?.latitude,
+        clientLongitude: selectedAddress?.lon ?? selectedAddress?.longitude,
         reservedPhonePassword: reservedPhonePassword.trim() || undefined,
       });
 
@@ -2536,12 +2608,13 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         navigate('/meus-agendamentos');
       }, 700);
     } catch (error) {
-      const message = (error as Error).message || 'Nao foi possivel criar o agendamento.';
+      const message = mapBookingCreateError((error as Error).message || 'Nao foi possivel criar o agendamento.');
       if (message.toLowerCase().includes('senha')) {
         setForceReservedPhonePassword(true);
         setFieldErrors((current) => ({ ...current, protectedPassword: 'Senha obrigatória para usar telefone de administrador ou prestador.' }));
       }
       setBackendError(message);
+      window.setTimeout(focusFirstCreateBookingError, 0);
     }
   };
 
@@ -2812,7 +2885,7 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
           return;
         }
         onClose();
-        navigate(destination.to, { replace: false });
+        navigate(destination.to, { replace: true });
         return;
       }
 
@@ -2852,9 +2925,9 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
         sessionPhone={sessionPhone}
         selectedWorkspace={selectedWorkspace}
         onSelectWorkspace={setSelectedWorkspace}
-        onDone={() => {
+        onDone={(workspace) => {
           onClose();
-          navigate(ADMIN_BOOKINGS_ROUTE, { replace: false });
+          navigate(routeForAdminWorkspace(workspace), { replace: true });
         }}
       />
     );
@@ -3000,10 +3073,8 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
           return;
         }
         setMessage('Acesso administrativo validado. Abrindo painel...');
-        window.setTimeout(() => {
-          onClose();
-          navigate(destination.to);
-        }, 350);
+        onClose();
+        navigate(destination.to, { replace: true });
         return;
       }
       saveClientProfile({
@@ -3028,9 +3099,9 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
         sessionPhone={sessionPhone}
         selectedWorkspace={selectedWorkspace}
         onSelectWorkspace={setSelectedWorkspace}
-        onDone={() => {
+        onDone={(workspace) => {
           onClose();
-          navigate(ADMIN_BOOKINGS_ROUTE);
+          navigate(routeForAdminWorkspace(workspace), { replace: true });
         }}
       />
     );
@@ -3367,7 +3438,7 @@ function EditAdminBookingModal({ booking, onClose }: { booking?: BookingItem; on
   return (
     <>
       <ModalTitle icon="edit" title="Editar agendamento" text="Ajuste data, horario e dados principais do atendimento." />
-      {!source ? <EmptyState title="Dados incompletos" text="Abra a edicao a partir de um agendamento real carregado do backend." /> : null}
+      {!source ? <EmptyState title="Dados incompletos" text="Abra a edicao a partir de um agendamento existente." /> : null}
       {source ? (
         <section className="wf-form-grid">
           <ModalField label="Servico" icon="edit" value={serviceType} onChange={setServiceType} />
@@ -3420,7 +3491,7 @@ function AssignProviderModal({ booking, onClose }: { booking?: BookingItem; onCl
       </section>
       <div className="wf-provider-list wf-provider-list--wireframe">
         {providersQuery.isLoading ? <EmptyState title="Carregando prestadores" text="Buscando prestadores cadastrados." /> : null}
-        {!providersQuery.isLoading && providers.length === 0 ? <EmptyState title="Nenhum prestador cadastrado" text="Cadastre os telefones em admin_users no Supabase." /> : null}
+        {!providersQuery.isLoading && providers.length === 0 ? <EmptyState title="Nenhum prestador cadastrado" text="Nenhum prestador ativo foi encontrado para designacao." /> : null}
         {providers.map((provider: AdminProviderResponse) => (
           <button key={provider.id} type="button" className={selectedProviderId === provider.id ? 'is-active' : ''} onClick={() => setSelectedProviderId(provider.id)}>
             <span className="wf-radio-dot" />

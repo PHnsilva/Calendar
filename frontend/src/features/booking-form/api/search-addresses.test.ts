@@ -54,6 +54,41 @@ describe("Geoapify address autocomplete", () => {
     expect(suggestions[0]?.lon).toBe(-43.8);
   });
 
+  it("drops city-level postcode suggestions so generic CEP is not displayed", async () => {
+    const { normalizeGeoapifySuggestions } = await import("./search-addresses");
+    const payload = {
+      results: [
+        {
+          place_id: "city-postcode",
+          formatted: "Itabirito, MG, 35450000, Brasil",
+          result_type: "postcode",
+          city: "Itabirito",
+          state_code: "MG",
+          postcode: "35450000",
+          lat: -20.25,
+          lon: -43.8,
+        },
+        {
+          place_id: "street-without-postcode",
+          formatted: "Rua Sao Jose, Centro, Itabirito - MG",
+          street: "Rua Sao Jose",
+          suburb: "Centro",
+          city: "Itabirito",
+          state_code: "MG",
+          postcode: "35450000",
+          lat: -20.26,
+          lon: -43.81,
+        },
+      ],
+    };
+
+    const suggestions = normalizeGeoapifySuggestions(payload);
+
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0]?.placeId).toBe("street-without-postcode");
+    expect(suggestions[0]?.postcode).toBe("35450000");
+  });
+
   it("uses filter=place when the selected city has place_id and keeps text as only the typed address", async () => {
     const { buildGeoapifyAddressUrl } = await import("./search-addresses");
     const url = new URL(buildGeoapifyAddressUrl("rua", itabiritoContext, "secret-key"));

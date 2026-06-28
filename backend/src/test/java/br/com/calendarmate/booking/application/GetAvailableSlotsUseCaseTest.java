@@ -21,6 +21,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -77,6 +78,59 @@ class GetAvailableSlotsUseCaseTest {
     }
 
     @Test
+    void itabiritoBookingBlocksOnlyOneHourlySlot() throws IOException {
+        Fixture fixture = new Fixture();
+        LocalDate date = nextAvailableDate(fixture.calendar, fixture.props);
+
+        fixture.calendar.createEvent(confirmedBooking(date, LocalTime.of(9, 0)));
+
+        List<AvailableSlotResponse> remaining = fixture.useCase.execute(date, "Itabirito", fixture.props.getBookingSlotMinutes());
+
+        assertFalse(hasSlot(remaining, "09:00"));
+        assertTrue(hasSlot(remaining, "10:00"));
+    }
+
+    @Test
+    void distantCityBookingBlocksTravelServiceAndReturnWindow() throws IOException {
+        Fixture fixture = new Fixture();
+        LocalDate date = nextAvailableDate(fixture.calendar, fixture.props);
+
+        fixture.calendar.createEvent(distantBooking(date, LocalTime.of(10, 0)));
+
+        List<AvailableSlotResponse> remaining = fixture.useCase.execute(date, "Itabirito", fixture.props.getBookingSlotMinutes());
+
+        assertFalse(hasSlot(remaining, "08:00"));
+        assertFalse(hasSlot(remaining, "09:00"));
+        assertFalse(hasSlot(remaining, "10:00"));
+        assertFalse(hasSlot(remaining, "11:00"));
+        assertFalse(hasSlot(remaining, "12:00"));
+        assertTrue(hasSlot(remaining, "13:00"));
+    }
+
+    @Test
+    void existingItabiritoBookingBlocksNearbyDistantCitySlot() throws IOException {
+        Fixture fixture = new Fixture();
+        LocalDate date = nextAvailableDate(fixture.calendar, fixture.props);
+
+        fixture.calendar.createEvent(confirmedBooking(date, LocalTime.of(9, 0)));
+
+        List<AvailableSlotResponse> distantSlots = fixture.useCase.execute(date, "Belo Horizonte", fixture.props.getBookingSlotMinutes());
+
+        assertFalse(hasSlot(distantSlots, "10:00"));
+    }
+
+    @Test
+    void emptyDistantCityDayStartsThreeHoursAfterNormalFirstSlot() throws IOException {
+        Fixture fixture = new Fixture();
+        LocalDate date = nextAvailableDate(fixture.calendar, fixture.props);
+
+        List<AvailableSlotResponse> slots = fixture.useCase.execute(date, "Belo Horizonte", fixture.props.getBookingSlotMinutes());
+
+        assertFalse(slots.isEmpty());
+        assertEquals("11:00", slots.get(0).getStartTime());
+    }
+
+    @Test
     void manualAvailabilityBlockRemovesSlot() throws IOException {
         Fixture fixture = new Fixture();
         AvailabilityBlockService blocks = new AvailabilityBlockService(
@@ -105,7 +159,7 @@ class GetAvailableSlotsUseCaseTest {
         LocalDate today = LocalDate.now(ZONE);
         YearMonth current = YearMonth.from(today);
         YearMonth next = current.plusMonths(1);
-        for (int offset = 1; offset <= 45; offset++) {
+        for (int offset = 2; offset <= 45; offset++) {
             LocalDate candidate = today.plusDays(offset);
             YearMonth candidateMonth = YearMonth.from(candidate);
             if ((candidateMonth.equals(current) || candidateMonth.equals(next)) && policy.hasAnyAvailability(candidate)) {
@@ -137,6 +191,22 @@ class GetAvailableSlotsUseCaseTest {
         servico.setClientCity("Itabirito");
         servico.setClientState("MG");
         return servico;
+    }
+
+    private static Servico distantBooking(LocalDate date, LocalTime appointmentTime) {
+        ZonedDateTime appointmentStart = ZonedDateTime.of(date, appointmentTime, ZONE);
+        ZonedDateTime blockStart = appointmentStart.minusHours(2);
+        Servico servico = confirmedBooking(date, appointmentTime);
+        servico.setStart(blockStart.toInstant());
+        servico.setEnd(appointmentStart.plusHours(3).toInstant());
+        servico.setAppointmentStart(appointmentStart.toInstant());
+        servico.setAppointmentEnd(appointmentStart.plusHours(1).toInstant());
+        servico.setClientCity("Belo Horizonte");
+        return servico;
+    }
+
+    private static boolean hasSlot(List<AvailableSlotResponse> slots, String time) {
+        return slots.stream().anyMatch(slot -> time.equals(slot.getStartTime()));
     }
 
     private static class Fixture {

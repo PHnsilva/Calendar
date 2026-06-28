@@ -1,5 +1,6 @@
 package br.com.calendarmate.service;
 
+import br.com.calendarmate.booking.domain.BookingWindow;
 import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.google.CalendarClient;
 import br.com.calendarmate.model.AvailabilityRuleMode;
@@ -71,6 +72,33 @@ public class AvailabilityPolicyService {
             }
         }
         return false;
+    }
+
+    public boolean isAppointmentAllowed(Instant appointmentStart, Instant appointmentEnd) throws IOException {
+        return isIntervalAllowed(appointmentStart, appointmentEnd);
+    }
+
+    public BookingWindow resolveBookingWindow(LocalDate date, LocalTime appointmentTime, String city, int slotMinutes) {
+        return BookingWindow.forTravelPolicy(
+                date,
+                appointmentTime,
+                ZONE,
+                slotMinutes,
+                props.isDistantBookingCity(city),
+                props.getDistantBookingBlockBeforeMinutes(),
+                props.getDistantBookingBlockAfterMinutes());
+    }
+
+    public LocalTime firstSlotForEmptyDistantDay(String city) {
+        LocalTime first = props.getWorkStart();
+        if (!props.isDistantBookingCity(city)) {
+            return first;
+        }
+        return first.plusMinutes(props.getDistantBookingEmptyDayStartDelayMinutes());
+    }
+
+    public boolean isBeforeEmptyDistantDayStart(LocalTime time, String city) {
+        return props.isDistantBookingCity(city) && time != null && time.isBefore(firstSlotForEmptyDistantDay(city));
     }
 
     public boolean hasAnyAvailability(LocalDate date) throws IOException {

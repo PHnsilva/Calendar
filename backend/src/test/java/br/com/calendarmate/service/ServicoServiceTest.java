@@ -28,6 +28,7 @@ import com.google.api.services.calendar.model.Event;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -117,6 +118,29 @@ class ServicoServiceTest {
     }
 
     @Test
+    void publicNoSmsBookingCannotBeCreatedForToday() {
+        AppProperties props = new AppProperties();
+        ServicoService service = serviceWith(new DummyCalendarClient(), props);
+        ServicoRequest request = validRequest(LocalDate.now(ZONE));
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> service.create(request));
+
+        assertTrue(ex.getMessage().contains("24 horas"));
+    }
+
+    @Test
+    void publicNoSmsBookingRequiresMinimumLeadTime() {
+        AppProperties props = new StrictLeadProperties();
+        ServicoService service = serviceWith(new DummyCalendarClient(), props);
+        ServicoRequest request = validRequest(LocalDate.now(ZONE).plusDays(1));
+        request.setTime(LocalTime.now(ZONE).withMinute(0).withSecond(0).withNano(0));
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> service.create(request));
+
+        assertTrue(ex.getMessage().contains("24 horas"));
+    }
+
+    @Test
     void createRejectsNonHourlyTimeBeforeCreatingCalendarEvent() throws IOException {
         AppProperties props = new AppProperties();
         DummyCalendarClient calendar = new DummyCalendarClient();
@@ -193,6 +217,46 @@ class ServicoServiceTest {
     }
 
     @Test
+    void adminDefaultWindowUsesTodayThroughNextSevenDays() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        LocalDate today = LocalDate.now(ZONE);
+        Event past = calendar.createEvent(confirmedBooking(today.minusDays(1), LocalTime.of(9, 0)));
+        Event todayBooking = calendar.createEvent(confirmedBooking(today, LocalTime.of(10, 0)));
+        Event seventhDay = calendar.createEvent(confirmedBooking(today.plusDays(7), LocalTime.of(11, 0)));
+        Event eighthDay = calendar.createEvent(confirmedBooking(today.plusDays(8), LocalTime.of(12, 0)));
+        AdminPrincipal owner = principal("owner-1", AdminRole.OWNER);
+
+        List<ServicoResponse> visible = service.listAllAdmin(owner, null, null, null, null);
+
+        assertFalse(visible.stream().anyMatch(item -> past.getId().equals(item.getEventId())));
+        assertTrue(visible.stream().anyMatch(item -> todayBooking.getId().equals(item.getEventId())));
+        assertTrue(visible.stream().anyMatch(item -> seventhDay.getId().equals(item.getEventId())));
+        assertFalse(visible.stream().anyMatch(item -> eighthDay.getId().equals(item.getEventId())));
+    }
+
+    @Test
+    void providerDoesNotSeeUnassignedBookingsWhileOwnerDoes() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        LocalDate date = LocalDate.now(ZONE).plusDays(2);
+        Event assigned = calendar.createEvent(confirmedBooking(date, LocalTime.of(9, 0), "provider-1"));
+        Event unassigned = calendar.createEvent(confirmedBooking(date, LocalTime.of(10, 0)));
+        AdminPrincipal owner = principal("owner-1", AdminRole.OWNER);
+        AdminPrincipal provider = principal("provider-1", AdminRole.PROVIDER);
+
+        List<ServicoResponse> ownerVisible = service.listAllAdmin(owner, date, date, null, null);
+        List<ServicoResponse> providerVisible = service.listAllAdmin(provider, date, date, null, null);
+
+        assertTrue(ownerVisible.stream().anyMatch(item -> assigned.getId().equals(item.getEventId())));
+        assertTrue(ownerVisible.stream().anyMatch(item -> unassigned.getId().equals(item.getEventId())));
+        assertEquals(1, providerVisible.size());
+        assertEquals(assigned.getId(), providerVisible.get(0).getEventId());
+    }
+
+    @Test
     void ownerProviderWorkspaceUsesSelectedProviderScopeForBookingAccess() throws IOException {
         AppProperties props = new AppProperties();
         DummyCalendarClient calendar = new DummyCalendarClient();
@@ -263,11 +327,11 @@ class ServicoServiceTest {
         AppProperties props = new AppProperties();
         DummyCalendarClient calendar = new DummyCalendarClient();
         ServicoService service = serviceWith(calendar, props);
-        LocalDate date = nextAvailableDate(calendar, props);
+        LocalDate date = nextAvailableDateWithinAdminWindow(calendar, props);
         ServicoCreateResponse created = service.create(validRequest(date));
         AdminPrincipal owner = principal("owner-1", AdminRole.OWNER);
 
-        List<ServicoResponse> visible = service.listAllAdmin(owner, date, date, null, null);
+        List<ServicoResponse> visible = service.listAllAdmin(owner, null, null, null, null);
         List<ServicoResponse> confirmed = service.listAllAdmin(owner, date, date, "CONFIRMED", null);
 
         assertTrue(visible.stream().anyMatch(booking -> created.getServico().getEventId().equals(booking.getEventId())));
@@ -312,7 +376,7 @@ class ServicoServiceTest {
         LocalDate today = LocalDate.now(ZONE);
         YearMonth current = YearMonth.from(today);
         YearMonth next = current.plusMonths(1);
-        for (int offset = 1; offset <= 45; offset++) {
+        for (int offset = 2; offset <= 45; offset++) {
             LocalDate candidate = today.plusDays(offset);
             YearMonth candidateMonth = YearMonth.from(candidate);
             if ((candidateMonth.equals(current) || candidateMonth.equals(next)) && policy.hasAnyAvailability(candidate)) {
@@ -320,6 +384,18 @@ class ServicoServiceTest {
             }
         }
         throw new IllegalStateException("No available test date in booking window");
+    }
+
+    private static LocalDate nextAvailableDateWithinAdminWindow(DummyCalendarClient calendar, AppProperties props) throws IOException {
+        AvailabilityPolicyService policy = new AvailabilityPolicyService(calendar, props);
+        LocalDate today = LocalDate.now(ZONE);
+        for (int offset = 2; offset <= 7; offset++) {
+            LocalDate candidate = today.plusDays(offset);
+            if (policy.hasAnyAvailability(candidate)) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("No available test date inside default admin window");
     }
 
     private static ServicoRequest validRequest(LocalDate date) {
@@ -390,6 +466,13 @@ class ServicoServiceTest {
                 new TrackingVerificationStore(),
                 new NoopOtpDeliveryClient(),
                 new AppProperties());
+    }
+
+    private static class StrictLeadProperties extends AppProperties {
+        @Override
+        public Duration getBookingMinLeadTime() {
+            return Duration.ofHours(24).plusSeconds(1);
+        }
     }
 
     private static class NoAdminUserStore implements AdminUserStore {

@@ -40,6 +40,15 @@ const applicationRoutes: RouteObject[] = [
     ],
   },
   {
+    path: "/prestador",
+    element: <AdminLayout />,
+    children: [
+      { index: true, element: <AdminDashboardPage /> },
+      { path: "dashboard", element: <AdminDashboardPage /> },
+      { path: "booking/:eventId", element: <AdminBookingPage /> },
+    ],
+  },
+  {
     path: "*",
     element: <NotFoundPage />,
   },

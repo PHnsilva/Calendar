@@ -1,6 +1,7 @@
 package br.com.calendarmate.service;
 
 import br.com.calendarmate.booking.application.GetAvailableSlotsUseCase;
+import br.com.calendarmate.booking.domain.BookingWindow;
 import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
@@ -44,14 +45,6 @@ public class ServicoService {
 
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
     private static final Set<Integer> ALLOWED_MINUTES = Set.of(0);
-
-    private record BookingWindow(
-            Instant blockStart,
-            Instant blockEnd,
-            Instant appointmentStart,
-            Instant appointmentEnd,
-            int blockMinutes) {
-    }
 
     public ServicoService(
             CalendarClient calendar,
@@ -98,6 +91,7 @@ public class ServicoService {
     public ServicoCreateResponse create(ServicoRequest req) throws IOException {
         validateDateWindow(req.getDate());
         validateTime(req.getTime());
+        validatePublicLeadTime(req.getDate(), req.getTime());
         validateServiceArea(req);
         String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
 
@@ -114,7 +108,7 @@ public class ServicoService {
             throw new BadRequestException("Horário inválido");
         }
 
-        validateRequestedWindowAvailable(start, end);
+        validateRequestedWindowAvailable(window, req.getClientCity());
 
         DateTime timeMin = new DateTime(Date.from(start));
         DateTime timeMax = new DateTime(Date.from(end));
@@ -286,6 +280,7 @@ public class ServicoService {
     public ServicoResponse updateByToken(String eventId, String token, ServicoRequest req) throws IOException {
         validateDateWindow(req.getDate());
         validateTime(req.getTime());
+        validatePublicLeadTime(req.getDate(), req.getTime());
         validateServiceArea(req);
         String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
 
@@ -322,7 +317,7 @@ public class ServicoService {
             throw new BadRequestException("Horário inválido");
         }
 
-        validateRequestedWindowAvailable(start, end);
+        validateRequestedWindowAvailable(window, req.getClientCity());
 
         DateTime timeMin = new DateTime(Date.from(start));
         DateTime timeMax = new DateTime(Date.from(end));
@@ -445,15 +440,14 @@ public class ServicoService {
             throws IOException {
         syncBookingHistory();
 
-        ZonedDateTime base = firstDayOfMonth(ZonedDateTime.now(ZONE));
-        LocalDate activeFrom = LocalDate.now(ZONE).minusDays(props.getAdminBookingActivePastDays());
+        LocalDate today = LocalDate.now(ZONE);
 
         LocalDate resolvedFrom;
         LocalDate resolvedTo;
 
         if (fromDate == null && toDate == null) {
-            resolvedFrom = activeFrom;
-            resolvedTo = base.plusMonths(2).toLocalDate().minusDays(1);
+            resolvedFrom = today;
+            resolvedTo = today.plusDays(7);
         } else {
             resolvedFrom = (fromDate != null) ? fromDate : toDate;
             resolvedTo = (toDate != null) ? toDate : fromDate;
@@ -656,7 +650,7 @@ public class ServicoService {
             throw new BadRequestException("Horario invalido");
         }
 
-        validateRequestedWindowAvailable(start, end);
+        validateRequestedWindowAvailable(window, req.getClientCity());
         validateAdminBusyWindow(existing, start, end);
 
         String phoneDigits = normalizePhone(req.getClientPhone());
@@ -707,39 +701,31 @@ public class ServicoService {
     }
 
     private BookingWindow resolveBookingWindow(LocalDate date, LocalTime appointmentTime, String city) {
-        int slotMinutes = props.getBookingSlotMinutes();
-        int blockMinutes = Math.max(slotMinutes, props.getBookingDurationMinutesForCity(city));
-
-        ZonedDateTime appointmentStartZ = ZonedDateTime.of(date, appointmentTime, ZONE);
-        ZonedDateTime appointmentEndZ = appointmentStartZ.plusMinutes(slotMinutes);
-
-        if (blockMinutes <= slotMinutes) {
-            return new BookingWindow(
-                    appointmentStartZ.toInstant(),
-                    appointmentEndZ.toInstant(),
-                    appointmentStartZ.toInstant(),
-                    appointmentEndZ.toInstant(),
-                    blockMinutes);
-        }
-
-        long minutesBefore = blockMinutes / 2L;
-        long minutesAfter = blockMinutes - minutesBefore;
-        ZonedDateTime blockStartZ = appointmentStartZ.minusMinutes(minutesBefore);
-        ZonedDateTime blockEndZ = appointmentStartZ.plusMinutes(minutesAfter);
-
-        return new BookingWindow(
-                blockStartZ.toInstant(),
-                blockEndZ.toInstant(),
-                appointmentStartZ.toInstant(),
-                appointmentEndZ.toInstant(),
-                blockMinutes);
+        return availabilityPolicyService.resolveBookingWindow(
+                date,
+                appointmentTime,
+                city,
+                props.getBookingSlotMinutes());
     }
 
-    private void validateRequestedWindowAvailable(Instant start, Instant end) throws IOException {
-        boolean allowed = availabilityPolicyService.isIntervalAllowed(start, end);
+    private void validateRequestedWindowAvailable(BookingWindow window, String city) throws IOException {
+        boolean allowed = availabilityPolicyService.isAppointmentAllowed(window.appointmentStart(), window.appointmentEnd());
+        LocalDate appointmentDate = window.appointmentStart().atZone(ZONE).toLocalDate();
+        LocalTime appointmentTime = window.appointmentStart().atZone(ZONE).toLocalTime();
         if (!allowed) {
             throw new BadRequestException("Horário indisponível");
         }
+        if (availabilityPolicyService.isBeforeEmptyDistantDayStart(appointmentTime, city)
+                && isBookingDayEmpty(appointmentDate)) {
+            throw new BadRequestException("Horario indisponivel");
+        }
+    }
+
+    private boolean isBookingDayEmpty(LocalDate date) throws IOException {
+        ZonedDateTime dayStart = date.atStartOfDay(ZONE);
+        ZonedDateTime dayEnd = dayStart.plusDays(1);
+        List<Event> events = listBookingEventsBetween(dayStart, dayEnd);
+        return events.isEmpty();
     }
 
     private String normalizeServiceNotes(String value) {
@@ -783,6 +769,17 @@ public class ServicoService {
 
         if (!ymReq.equals(ymNow) && !ymReq.equals(ymNext)) {
             throw new BadRequestException("Data inválida: apenas mês atual ou próximo");
+        }
+    }
+
+    private void validatePublicLeadTime(LocalDate requestedDate, LocalTime requestedTime) {
+        if (requestedDate == null || requestedTime == null) {
+            return;
+        }
+        ZonedDateTime appointmentStart = ZonedDateTime.of(requestedDate, requestedTime, ZONE);
+        ZonedDateTime minimumStart = ZonedDateTime.now(ZONE).plus(props.getBookingMinLeadTime());
+        if (!requestedDate.isAfter(LocalDate.now(ZONE)) || appointmentStart.isBefore(minimumStart)) {
+            throw new BadRequestException("Escolha uma data com pelo menos 24 horas de antecedencia.");
         }
     }
 

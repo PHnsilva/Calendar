@@ -22,6 +22,10 @@ function logAddressDebug(label: string, payload: Record<string, unknown>) {
   console.debug(`[CalendarMate] Address autocomplete ${label}`, payload);
 }
 
+function friendlyAddressLookupError() {
+  return "Digite rua, numero e bairro. Exemplo: Rua das Flores, 120, Centro.";
+}
+
 function toAddressSuggestion(item: GeoapifyAddressSuggestion): AddressSuggestion {
   return {
     ...item,
@@ -88,7 +92,7 @@ function useResolvedCityContext(selectedCity: string, selectedState: string, ena
     : !city
       ? "Cidade: selecione uma cidade antes de buscar o endereco."
       : cityQuery.error
-        ? ((cityQuery.error as Error).message || "Cidade: falha ao validar a cidade selecionada.")
+        ? "Nao foi possivel validar a cidade agora. Selecione uma cidade atendida e digite rua, bairro e numero."
         : autocompleteUnavailable
           ? "Endereco: a busca automatica nao esta disponivel agora. Digite rua, bairro e numero manualmente."
         : cityQuery.data && !cityContext
@@ -209,7 +213,7 @@ export function useAddressSuggestions(
         if (!active) return;
         setSuggestions([]);
         setDebug(null);
-        setError((requestError as Error).message);
+        setError(friendlyAddressLookupError());
         if (!hasWarnedGeoapifyRequestFailure) {
           hasWarnedGeoapifyRequestFailure = true;
           console.warn("[CalendarMate] Geoapify autocomplete request failed.", requestError);

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -66,9 +67,14 @@ public class GetAvailableSlotsUseCase {
             return Collections.emptyList();
         }
 
-        int blockDurationMinutes = props.getBookingDurationMinutesForCity(city);
-        ZonedDateTime dayStart = ZonedDateTime.of(date, props.getWorkStart(), ZONE);
-        ZonedDateTime dayEnd = ZonedDateTime.of(date, props.getWorkEnd(), ZONE);
+        ZonedDateTime dayStart = ZonedDateTime.of(date, LocalTime.MIDNIGHT, ZONE);
+        ZonedDateTime dayEnd = dayStart.plusDays(1);
+        ZonedDateTime workEnd = ZonedDateTime.of(date, props.getWorkEnd(), ZONE);
+        ZonedDateTime firstCandidate = ZonedDateTime.of(date, props.getWorkStart(), ZONE);
+        if (isEmptyBookingDay(date) && props.isDistantBookingCity(city)) {
+            firstCandidate = ZonedDateTime.of(date, availabilityPolicyService.firstSlotForEmptyDistantDay(city), ZONE);
+        }
+        Instant minLeadInstant = ZonedDateTime.now(ZONE).plus(props.getBookingMinLeadTime()).toInstant();
 
         DateTime timeMin = new DateTime(Date.from(dayStart.toInstant()));
         DateTime timeMax = new DateTime(Date.from(dayEnd.toInstant()));
@@ -79,19 +85,22 @@ public class GetAvailableSlotsUseCase {
         }
 
         List<AvailableSlotResponse> slots = new ArrayList<>();
-        ZonedDateTime current = dayStart;
+        ZonedDateTime current = firstCandidate;
 
-        while (!current.plusMinutes(slotMinutes).isAfter(dayEnd)) {
-            BookingWindow window = BookingWindow.forAppointment(
+        while (!current.plusMinutes(slotMinutes).isAfter(workEnd)) {
+            BookingWindow window = availabilityPolicyService.resolveBookingWindow(
                     date,
                     current.toLocalTime(),
-                    ZONE,
-                    slotMinutes,
-                    blockDurationMinutes);
+                    city,
+                    slotMinutes);
+            if (window.appointmentStart().isBefore(minLeadInstant)) {
+                current = current.plusMinutes(slotMinutes);
+                continue;
+            }
             Instant slotStart = window.blockStart();
             Instant slotEnd = window.blockEnd();
 
-            TimeWindow requested = new TimeWindow(slotStart, slotEnd);
+            TimeWindow requested = new TimeWindow(window.appointmentStart(), window.appointmentEnd());
             if (!isInsideAllowedWindows(requested, allowedWindows)) {
                 current = current.plusMinutes(slotMinutes);
                 continue;
@@ -117,7 +126,7 @@ public class GetAvailableSlotsUseCase {
                         date.toString(),
                         current.toLocalTime().toString(),
                         ZonedDateTime.ofInstant(window.appointmentEnd(), ZONE).toLocalTime().toString(),
-                        blockDurationMinutes));
+                        window.blockMinutes()));
             }
 
             current = current.plusMinutes(slotMinutes);
@@ -130,6 +139,15 @@ public class GetAvailableSlotsUseCase {
                 slotMinutes,
                 slots.size());
         return slots;
+    }
+
+    private boolean isEmptyBookingDay(LocalDate date) throws IOException {
+        ZonedDateTime dayStart = ZonedDateTime.of(date, LocalTime.MIDNIGHT, ZONE);
+        ZonedDateTime dayEnd = dayStart.plusDays(1);
+        List<Event> bookings = calendar.listBookingEvents(
+                new DateTime(Date.from(dayStart.toInstant())),
+                new DateTime(Date.from(dayEnd.toInstant())));
+        return bookings == null || bookings.isEmpty();
     }
 
     private static String normalizeLogValue(String value) {
@@ -147,6 +165,9 @@ public class GetAvailableSlotsUseCase {
         }
         if (requestedDate.isBefore(today)) {
             throw new BadRequestException("Data inv\u00e1lida: n\u00e3o pode ser no passado");
+        }
+        if (requestedDate.equals(today)) {
+            throw new BadRequestException("Escolha uma data com pelo menos 24 horas de anteced\u00eancia.");
         }
 
         YearMonth ymReq = YearMonth.from(requestedDate);

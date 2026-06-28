@@ -45,4 +45,37 @@ public record BookingWindow(
                 appointmentEndZ.toInstant(),
                 blockMinutes);
     }
+
+    public static BookingWindow forTravelPolicy(
+            LocalDate date,
+            LocalTime appointmentTime,
+            ZoneId zone,
+            int slotMinutes,
+            boolean distantCity,
+            int distantBlockBeforeMinutes,
+            int distantBlockAfterMinutes) {
+        ZonedDateTime appointmentStartZ = ZonedDateTime.of(date, appointmentTime, zone);
+        ZonedDateTime appointmentEndZ = appointmentStartZ.plusMinutes(slotMinutes);
+
+        if (!distantCity) {
+            return new BookingWindow(
+                    appointmentStartZ.toInstant(),
+                    appointmentEndZ.toInstant(),
+                    appointmentStartZ.toInstant(),
+                    appointmentEndZ.toInstant(),
+                    slotMinutes);
+        }
+
+        int before = Math.max(0, distantBlockBeforeMinutes);
+        int after = Math.max(slotMinutes, distantBlockAfterMinutes);
+        ZonedDateTime blockStartZ = appointmentStartZ.minusMinutes(before);
+        ZonedDateTime blockEndZ = appointmentStartZ.plusMinutes(after);
+
+        return new BookingWindow(
+                blockStartZ.toInstant(),
+                blockEndZ.toInstant(),
+                appointmentStartZ.toInstant(),
+                appointmentEndZ.toInstant(),
+                before + after);
+    }
 }

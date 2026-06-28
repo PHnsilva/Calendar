@@ -49,6 +49,21 @@ public class AppProperties {
     @Value("${app.booking.durationByCity:}")
     private String bookingDurationByCityCsv;
 
+    @Value("${app.booking.baseCity:Itabirito}")
+    private String bookingBaseCity = "Itabirito";
+
+    @Value("${app.booking.minLeadHours:24}")
+    private long bookingMinLeadHours = 24;
+
+    @Value("${app.booking.distant.blockBeforeHours:2}")
+    private int distantBookingBlockBeforeHours = 2;
+
+    @Value("${app.booking.distant.blockAfterHours:3}")
+    private int distantBookingBlockAfterHours = 3;
+
+    @Value("${app.booking.distant.emptyDayStartDelayHours:3}")
+    private int distantBookingEmptyDayStartDelayHours = 3;
+
     @Value("${app.pending.ttlMinutes:10}")
     private long pendingTtlMinutes;
 
@@ -74,10 +89,10 @@ public class AppProperties {
     private String adminUsersCsv;
 
     @Value("${app.admin.booking.activePastDays:${ADMIN_BOOKING_ACTIVE_PAST_DAYS:10}}")
-    private int adminBookingActivePastDays;
+    private int adminBookingActivePastDays = 10;
 
     @Value("${app.admin.booking.maxFutureMonthsAhead:${ADMIN_BOOKING_MAX_FUTURE_MONTHS_AHEAD:6}}")
-    private int adminBookingMaxFutureMonthsAhead;
+    private int adminBookingMaxFutureMonthsAhead = 6;
 
     @Value("${app.debug.otpCode:${DEBUG_OTP_CODE:false}}")
     private boolean debugOtpCode;
@@ -275,6 +290,23 @@ public class AppProperties {
             }
         }
         return 60;
+    }
+
+    public String getBookingBaseCity() { return cleanOrDefault(bookingBaseCity, "Itabirito"); }
+    public String getBookingBaseCityNormalized() { return LocationNormalizer.normalizeCity(getBookingBaseCity()); }
+    public boolean isDistantBookingCity(String city) {
+        String normalized = LocationNormalizer.normalizeCity(city);
+        return !normalized.isBlank() && !normalized.equals(getBookingBaseCityNormalized());
+    }
+    public Duration getBookingMinLeadTime() { return Duration.ofHours(Math.max(1, Math.min(bookingMinLeadHours, 168))); }
+    public int getDistantBookingBlockBeforeMinutes() {
+        return Math.max(0, Math.min(distantBookingBlockBeforeHours, 12)) * 60;
+    }
+    public int getDistantBookingBlockAfterMinutes() {
+        return Math.max(1, Math.min(distantBookingBlockAfterHours, 12)) * 60;
+    }
+    public int getDistantBookingEmptyDayStartDelayMinutes() {
+        return Math.max(0, Math.min(distantBookingEmptyDayStartDelayHours, 12)) * 60;
     }
 
     public int getHistoryRetentionMonths() { return (int) Math.ceil(getHistoryRetentionMonthsValue()); }

@@ -10,7 +10,6 @@ import footerInstagramWireframeIcon from "../../../../assets/wireframes/icons/fo
 import footerEmailWireframeIcon from "../../../../assets/wireframes/icons/footer-email-wireframe.png";
 import footerPhoneWireframeIcon from "../../../../assets/footer/contact-phone-chat-green.svg";
 import footerMapWireframeIcon from "../../../../assets/footer/contact-location-red.svg";
-import serviceOverviewIcon from "../../../../assets/wireframes/icons/services/pequenos-reparos.png";
 import { SvgWrapper } from "../../../../components/layout/ResponsivePrimitives";
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -28,7 +27,6 @@ export function LandingIcon({ name }: { name: string }) {
     "footer-email-social": footerEmailWireframeIcon,
     "footer-phone-wireframe": footerPhoneWireframeIcon,
     "footer-map-wireframe": footerMapWireframeIcon,
-    "services": serviceOverviewIcon,
   };
   const imageIcon = imageIcons[name];
   if (imageIcon) {
@@ -45,7 +43,7 @@ export function LandingIcon({ name }: { name: string }) {
   const icons: Record<string, ReactNode> = {
     calendar: <svg {...common}><rect x="12" y="14" width="40" height="38" rx="8" {...line}/><path d="M22 8v12M42 8v12M12 25h40" {...line}/><path d="M22 35h.01M32 35h.01M42 35h.01M22 44h.01M32 44h.01M42 44h.01" {...line}/></svg>,
     play: <svg {...common}><circle cx="32" cy="32" r="27" fill="#ff1d16"/><path d="M27 21 46 32 27 43V21Z" fill="#fff"/></svg>,
-    services: <svg {...common}><rect x="10" y="12" width="44" height="38" rx="10" fill="rgba(255,255,255,.18)" stroke="#fff" strokeWidth="4"/><path d="M20 24h24M20 33h18M20 42h14" stroke="#fff" strokeWidth="4" strokeLinecap="round"/><circle cx="45" cy="41" r="8" fill="#fff" opacity="0.22"/><path d="m41 41 3 3 6-7" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    services: <svg {...common}><path d="M17 16h30a5 5 0 0 1 5 5v26a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5V21a5 5 0 0 1 5-5Z" fill="currentColor" opacity="0.98"/><path d="M22 26h20M22 34h16M22 42h12" stroke="#07135d" strokeWidth="4.8" strokeLinecap="round"/><path d="M43.5 39.5a6.5 6.5 0 1 0 8.9 8.9l-3.6-3.6-2.3 2.3-2.2-2.2 2.3-2.3-3.1-3.1Z" fill="#ff4b0b"/><path d="m47.4 47.1 7.2 7.2" stroke="#ff4b0b" strokeWidth="4.6" strokeLinecap="round"/></svg>,
     user: <svg {...common}><circle cx="32" cy="32" r="27" fill="currentColor" opacity="0.16"/><circle cx="32" cy="24" r="10.5" fill="currentColor"/><path d="M14 55c2.7-12.5 9.1-18.8 18-18.8S47.3 42.5 50 55" fill="currentColor"/><path d="M15.5 55c3.2-11.3 8.9-17 16.5-17s13.3 5.7 16.5 17" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.45"/></svg>,
   };
 

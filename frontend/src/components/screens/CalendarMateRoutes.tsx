@@ -731,6 +731,17 @@ function Icon({ name }: { name: string }) {
     ),
     calendar: <svg {...common}><rect x="12" y="14" width="40" height="38" rx="8" {...line}/><path d="M22 8v12M42 8v12M12 25h40" {...line}/><path d="M22 35h.01M32 35h.01M42 35h.01M22 44h.01M32 44h.01M42 44h.01" {...line}/></svg>,
     'calendar-create': calendarBase('#ff4b0b'),
+    'site-schedule': <svg {...common}>
+      <defs>
+        <linearGradient id={`${uid}-site-schedule`} x1="10" y1="8" x2="54" y2="56"><stop stopColor="#ffffff"/><stop offset="1" stopColor="#e9efff"/></linearGradient>
+      </defs>
+      <rect x="11" y="13" width="42" height="39" rx="10" fill={`url(#${uid}-site-schedule)`}/>
+      <path d="M18 25h28" stroke="#07135d" strokeWidth="5" strokeLinecap="round"/>
+      <path d="M23 9v12M41 9v12" stroke="#07135d" strokeWidth="5" strokeLinecap="round"/>
+      <path d="M22 35h7M22 43h7M35 35h7" stroke="#07135d" strokeWidth="4" strokeLinecap="round"/>
+      <circle cx="46" cy="44" r="10" fill="#ff4b0b"/>
+      <path d="M46 38v12M40 44h12" stroke="#fff" strokeWidth="4" strokeLinecap="round"/>
+    </svg>,
     'calendar-blue': calendarBase('#0358ff'),
     'calendar-modal-blue': <svg {...common}>
       <defs><linearGradient id={`${uid}-modal-cal`} x1="13" y1="8" x2="52" y2="56"><stop stopColor="#7b6dff"/><stop offset="1" stopColor="#0358ff"/></linearGradient></defs>
@@ -3309,7 +3320,7 @@ function ServicesInfoModal({ onSchedule }: { onSchedule: () => void }) {
         ))}
       </div>
       <button type="button" className="wf-services-info__cta" onClick={onSchedule}>
-        <Icon name="calendar-create" />
+        <Icon name="site-schedule" />
         <span>Agendar pelo site</span>
       </button>
     </section>

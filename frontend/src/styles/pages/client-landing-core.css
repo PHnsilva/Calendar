@@ -3931,3 +3931,488 @@ html body .wf-client-landing .wf-services-showcase__viewport:active {
   background: rgba(255, 255, 255, .95) !important;
   box-shadow: 0 5px 10px rgba(0, 0, 0, .18) !important;
 }
+
+/* Final CTA icon cleanup: use clean inline SVGs without image tiles/background artifacts. */
+html body .wf-client-landing .wf-hero-buttons .wf-primary-cta .wf-icon,
+html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon,
+html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon .wf-icon,
+html body .wf-client-landing .wf-services-info__cta .wf-icon {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+html body .wf-client-landing .wf-hero-buttons .wf-primary-cta .wf-icon,
+html body .wf-client-landing .wf-hero-buttons .wf-primary-cta .wf-icon svg,
+html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon,
+html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon .wf-icon,
+html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon svg {
+  width: clamp(20px, 1.55vw, 28px) !important;
+  height: clamp(20px, 1.55vw, 28px) !important;
+  min-width: clamp(20px, 1.55vw, 28px) !important;
+  display: inline-grid !important;
+  place-items: center !important;
+}
+
+html body .wf-client-landing .wf-services-info__cta .wf-icon,
+html body .wf-client-landing .wf-services-info__cta .wf-icon svg {
+  width: clamp(24px, 1.7vw, 30px) !important;
+  height: clamp(24px, 1.7vw, 30px) !important;
+  min-width: clamp(24px, 1.7vw, 30px) !important;
+  display: inline-grid !important;
+  place-items: center !important;
+}
+
+@media (max-width: 599px) {
+  html body .wf-client-landing .wf-hero-buttons .wf-primary-cta .wf-icon,
+  html body .wf-client-landing .wf-hero-buttons .wf-primary-cta .wf-icon svg,
+  html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon,
+  html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon .wf-icon,
+  html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon svg {
+    width: clamp(15px, 4.2vw, 18px) !important;
+    height: clamp(15px, 4.2vw, 18px) !important;
+    min-width: clamp(15px, 4.2vw, 18px) !important;
+  }
+}
+
+
+/* Services CTA icon scale fix */
+html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon,
+html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon .wf-icon,
+html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon svg {
+  width: clamp(24px, 1.9vw, 32px) !important;
+  height: clamp(24px, 1.9vw, 32px) !important;
+  min-width: clamp(24px, 1.9vw, 32px) !important;
+}
+
+@media (max-width: 599px) {
+  html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon,
+  html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon .wf-icon,
+  html body .wf-client-landing .wf-hero-buttons .wf-secondary-cta .wf-services-cta-icon svg {
+    width: clamp(18px, 5vw, 22px) !important;
+    height: clamp(18px, 5vw, 22px) !important;
+    min-width: clamp(18px, 5vw, 22px) !important;
+  }
+}
+
+
+/* Final compact landing pass: compact desktop navbar and remove icon tiles from action cards. */
+@media (min-width: 900px) {
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header {
+    background: #fff !important;
+    --wf-client-nav-actions-width: auto !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: auto !important;
+    max-width: max-content !important;
+    grid-template-columns: auto auto auto !important;
+    gap: 12px !important;
+    justify-content: end !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 14px !important;
+    gap: 8px !important;
+    border-radius: 18px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-bookings-trigger { min-width: 210px !important; }
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-create-trigger { min-width: 218px !important; }
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) { min-width: 118px !important; max-width: 118px !important; }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-icon {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img {
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
+    background: transparent !important;
+    display: block !important;
+    object-fit: contain !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    gap: 12px !important;
+    width: auto !important;
+    grid-template-columns: repeat(3, auto) !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn--compact > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user > .wf-icon {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon img {
+    width: 28px !important;
+    height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-png-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-png-icon img {
+    display: none !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::before {
+    content: "+" !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(180deg, #ff7a26 0%, #ea4207 58%, #ad2100 100%) !important;
+    color: #fff !important;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    box-shadow: 0 2px 6px rgba(167,61,0,.22) !important;
+  }
+}
+
+/* Remove icon tile feeling from the action cards below the hero. */
+html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client > .wf-action-card .wf-action-card__icon,
+html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client > .wf-action-card .wf-action-card__icon .wf-icon {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client > .wf-action-card .wf-action-card__icon img,
+html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client > .wf-action-card .wf-action-card__icon svg {
+  filter: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+
+/* Final action-card icon cleanup: avoid a second tile behind already detailed icons. */
+html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client > .wf-action-card .wf-action-card__icon,
+html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client > .wf-action-card .wf-action-card__icon .wf-icon {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client > .wf-action-card .wf-action-card__icon img,
+html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client > .wf-action-card .wf-action-card__icon svg {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+@media (min-width: 900px) {
+  html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client > .wf-action-card .wf-action-card__icon {
+    width: clamp(58px, 4.4vw, 78px) !important;
+    min-width: clamp(58px, 4.4vw, 78px) !important;
+    height: clamp(58px, 4.4vw, 78px) !important;
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Landing navbar repair: mirror final navbar contract on landing page.        */
+/* -------------------------------------------------------------------------- */
+
+@media (min-width: 901px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: min(100%, 602px) !important;
+    max-width: 602px !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 214px 214px 126px !important;
+    gap: 18px !important;
+    align-items: center !important;
+    justify-content: end !important;
+    justify-self: end !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions > *,
+  html body .wf-navbar.wf-navbar--client .wf-profile-menu-wrap,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions > *,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-profile-menu-wrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex: initial !important;
+    display: flex !important;
+    justify-content: center !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 14px !important;
+    gap: 8px !important;
+    border-radius: 19px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon {
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    flex: 0 0 auto !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: transparent !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1160px) {
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: min(100%, 472px) !important;
+    max-width: 472px !important;
+    grid-template-columns: 168px 168px 104px !important;
+    gap: 10px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding-inline: 10px !important;
+    gap: 6px !important;
+    font-size: 10.5px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg {
+    width: 21px !important;
+    min-width: 21px !important;
+    height: 21px !important;
+    min-height: 21px !important;
+    max-width: 21px !important;
+    max-height: 21px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    width: auto !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, 34px) !important;
+    gap: 14px !important;
+    justify-content: end !important;
+    align-items: center !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    overflow: visible !important;
+    display: inline-grid !important;
+    place-items: center !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::before,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::before,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::after,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn--compact > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user > .wf-icon {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg {
+    width: 32px !important;
+    height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon {
+    color: #ff4b0b !important;
+  }
+}

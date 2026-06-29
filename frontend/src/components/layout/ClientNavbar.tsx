@@ -47,6 +47,17 @@ function ClientNavbarPngIcon({ name }: { name: ClientNavbarPngIconName }) {
   );
 }
 
+
+function ClientNavbarPlusIcon() {
+  return (
+    <span aria-hidden="true" className="wf-icon wf-client-nav-plus-icon">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M32 15v34M15 32h34" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
+      </svg>
+    </span>
+  );
+}
+
 type ProfileMenuItem = {
   action: 'home' | 'bookings' | 'profile' | 'create';
   icon: NavbarIconName;
@@ -179,18 +190,18 @@ function ClientProfileMenu({
 export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page = 'home' }: ClientNavbarProps) {
   const isHome = page === 'home';
   const snapshot = useClientNavbarSnapshot();
-  const profileLabel = 'Perfil';
+  const profileLabel = snapshot.isVerified ? 'Perfil' : (isHome ? 'Olá! Visitante' : 'Cliente');
   const handleProfileAction = () => {
     onProfile?.();
   };
   void onConfirmPhone;
 
-  const desktopProfileLabel = <><ClientNavbarPngIcon name="profile" /> <span>{profileLabel}</span></>;
+  const desktopProfileLabel = <><ClientNavbarPngIcon name="profile" /> <span>Perfil</span></>;
 
   const desktopActions = isHome ? (
     <>
       <NavbarButton to={CLIENT_BOOKINGS_PATH} className="wf-client-bookings-trigger"><ClientNavbarPngIcon name="calendar" /> <span>Meus agendamentos</span></NavbarButton>
-      <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><ClientNavbarPngIcon name="create" /> <span>Criar agendamento</span></NavbarButton>
+      <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><ClientNavbarPlusIcon /> <span>Criar agendamento</span></NavbarButton>
       <ClientProfileMenu
         page={page}
         profileLabel={profileLabel}
@@ -203,7 +214,7 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
   ) : (
     <>
       <NavbarButton to="/" className="wf-client-bookings-trigger"><ClientNavbarPngIcon name="home" /> <span>Página inicial</span></NavbarButton>
-      <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><ClientNavbarPngIcon name="create" /> <span>Criar agendamento</span></NavbarButton>
+      <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><ClientNavbarPlusIcon /> <span>Criar agendamento</span></NavbarButton>
       <ClientProfileMenu
         page={page}
         profileLabel={profileLabel}
@@ -248,7 +259,7 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
         ariaLabel="Criar agendamento"
         title="Criar agendamento"
       >
-        <ClientNavbarPngIcon name="create" />
+        <ClientNavbarPlusIcon />
       </NavbarButton>
       <NavbarButton
         compact

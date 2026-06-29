@@ -4791,13 +4791,13 @@ body {
   }
 
   .wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn--orange {
-    width: 48px !important;
-    min-width: 48px !important;
-    padding-inline: 0 !important;
+    width: auto !important;
+    min-width: 158px !important;
+    padding-inline: 10px !important;
   }
 
   .wf-page--list .wf-navbar.wf-navbar--client .wf-top-btn--orange > span:not(.wf-icon) {
-    display: none !important;
+    display: inline !important;
   }
 }
 

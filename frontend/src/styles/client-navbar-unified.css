@@ -1,51 +1,30 @@
 /*
-  Final client navbar contract.
-  Keep this file focused: BaseNavbar/ClientNavbar is shared by Landing and Meus Agendamentos.
-  Page CSS must not resize these buttons differently.
+  Client navbar final visual contract.
+  Uses PNG assets inside a white circular badge, with Sora + Inter typography.
+  Scope is intentionally restricted to .wf-navbar--client to avoid admin/provider regressions.
 */
 
-html body .wf-navbar.wf-navbar--client {
-  --cm-client-nav-blue-top: #164bcb;
-  --cm-client-nav-blue-mid: #072d9a;
-  --cm-client-nav-blue-bottom: #021956;
-  --cm-client-nav-orange-top: #ff7a20;
-  --cm-client-nav-orange-mid: #f04b0b;
-  --cm-client-nav-orange-bottom: #bb2600;
-  --cm-client-nav-height: clamp(44px, 2.8vw, 50px);
-  --cm-client-nav-radius: 999px;
-  --cm-client-nav-font: "Sora", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+.wf-navbar.wf-navbar--client,
+.wf-navbar.wf-navbar--client * {
+  box-sizing: border-box;
 }
 
-html body .wf-navbar.wf-navbar--client .wf-client-nav-png-icon {
-  position: relative !important;
-  z-index: 2 !important;
-  flex: 0 0 auto !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-  line-height: 0 !important;
+.wf-navbar.wf-navbar--client {
+  --client-nav-blue-top: #123fd6;
+  --client-nav-blue-mid: #092494;
+  --client-nav-blue-bottom: #06145f;
+  --client-nav-orange-top: #ff7627;
+  --client-nav-orange-mid: #ee3f05;
+  --client-nav-orange-bottom: #9f2203;
+  --client-nav-shell: rgba(229, 232, 238, .88);
+  --client-nav-shell-border: rgba(3, 17, 56, .08);
+  font-family: "Sora", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
 }
 
-html body .wf-navbar.wf-navbar--client .wf-client-nav-png-icon img {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  pointer-events: none !important;
-  user-select: none !important;
-}
-
-html body .wf-navbar.wf-navbar--client .wf-top-btn,
-html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger {
-  font-family: var(--cm-client-nav-font) !important;
-  letter-spacing: -0.03em !important;
-  text-rendering: geometricPrecision;
+.wf-navbar.wf-navbar--client .wf-client-nav-png-icon,
+.wf-navbar.wf-navbar--client .wf-client-nav-png-icon img {
+  pointer-events: none;
+  user-select: none;
 }
 
 @media (min-width: 901px) {
@@ -53,62 +32,40 @@ html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger {
   html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header,
   html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
-    width: min(1540px, calc(100vw - clamp(40px, 5vw, 96px))) !important;
+    width: min(1540px, calc(100vw - clamp(36px, 4vw, 84px))) !important;
     max-width: 1540px !important;
-    min-height: clamp(76px, 5.8vw, 108px) !important;
+    min-height: clamp(82px, 5.2vw, 104px) !important;
     height: auto !important;
-    margin-inline: auto !important;
-    padding: clamp(6px, .75vw, 12px) 0 !important;
+    margin: 0 auto !important;
+    padding: clamp(8px, .8vw, 12px) clamp(14px, 1.6vw, 24px) !important;
     display: grid !important;
-    grid-template-columns: minmax(260px, 1fr) minmax(500px, 560px) !important;
+    grid-template-columns: minmax(250px, 1fr) minmax(620px, 720px) !important;
     align-items: center !important;
-    justify-content: stretch !important;
-    gap: clamp(18px, 2.2vw, 36px) !important;
+    gap: clamp(18px, 2vw, 42px) !important;
     overflow: visible !important;
     position: relative !important;
-    z-index: 100 !important;
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
+    z-index: 110 !important;
+    border: 1px solid var(--client-nav-shell-border) !important;
+    border-radius: 0 0 22px 22px !important;
+    background: linear-gradient(180deg, rgba(249,250,252,.92) 0%, var(--client-nav-shell) 100%) !important;
+    box-shadow: 0 14px 34px rgba(7, 19, 93, .06) !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-navbar__logo,
   html body .wf-navbar.wf-navbar--client .wf-logo,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__logo,
   html body .wf-page .wf-navbar.wf-navbar--client .wf-logo {
     justify-self: start !important;
-    align-self: center !important;
-    width: min(100%, clamp(250px, 26vw, 430px)) !important;
-    max-width: min(100%, clamp(250px, 26vw, 430px)) !important;
+    width: min(100%, clamp(245px, 24vw, 390px)) !important;
+    max-width: min(100%, clamp(245px, 24vw, 390px)) !important;
     min-width: 0 !important;
-    margin: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    flex: none !important;
   }
 
   html body .wf-navbar.wf-navbar--client .wf-logo img,
-  html body .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-logo img {
     display: block !important;
     width: auto !important;
-    height: clamp(72px, 5.6vw, 104px) !important;
-    max-width: min(100%, clamp(250px, 26vw, 430px)) !important;
+    height: clamp(62px, 4.8vw, 92px) !important;
+    max-width: 100% !important;
     object-fit: contain !important;
-    object-position: left center !important;
-    margin: 0 !important;
-    transform: none !important;
-  }
-
-  html body .wf-navbar.wf-navbar--client .wf-navbar__nav,
-  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
-  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
-  html body .wf-navbar.wf-navbar--client .wf-mobile-actions,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__nav,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-mobile-actions {
-    display: none !important;
   }
 
   html body .wf-navbar.wf-navbar--client .wf-header-actions,
@@ -116,192 +73,160 @@ html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger {
   html body .wf-page .wf-navbar.wf-navbar--client .wf-header-actions,
   html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__actions {
     justify-self: end !important;
-    align-self: center !important;
-    width: min(100%, 560px) !important;
-    max-width: 560px !important;
+    width: min(100%, 720px) !important;
+    max-width: 720px !important;
     min-width: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
     display: grid !important;
-    grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) minmax(116px, 128px) !important;
+    grid-template-columns: minmax(210px, 1fr) minmax(210px, 1fr) minmax(145px, .7fr) !important;
     align-items: center !important;
-    justify-content: end !important;
-    gap: clamp(10px, .85vw, 14px) !important;
+    gap: clamp(14px, 1.2vw, 22px) !important;
     overflow: visible !important;
   }
 
   html body .wf-navbar.wf-navbar--client .wf-header-actions > *,
-  html body .wf-navbar.wf-navbar--client .wf-profile-menu-wrap,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-header-actions > *,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-profile-menu-wrap {
-    width: 100% !important;
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions > * {
     min-width: 0 !important;
-    max-width: none !important;
+    width: 100% !important;
+    display: flex !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger,
-  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger,
-  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-bookings-trigger,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-create-trigger,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-desktop {
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    --nav-icon-size: clamp(40px, 3.1vw, 50px);
     position: relative !important;
-    isolation: isolate !important;
     width: 100% !important;
     min-width: 0 !important;
-    max-width: none !important;
-    height: var(--cm-client-nav-height) !important;
-    min-height: var(--cm-client-nav-height) !important;
-    max-height: var(--cm-client-nav-height) !important;
-    padding: 0 clamp(12px, .95vw, 18px) 0 clamp(6px, .48vw, 8px) !important;
-    border-radius: var(--cm-client-nav-radius) !important;
-    border: 1px solid rgba(255, 255, 255, .46) !important;
-    outline: 1px solid rgba(0, 0, 0, .30) !important;
-    outline-offset: -2px !important;
+    height: clamp(44px, 3.1vw, 52px) !important;
+    min-height: clamp(44px, 3.1vw, 52px) !important;
+    padding: 0 clamp(14px, 1.1vw, 20px) !important;
+    border-radius: clamp(20px, 1.55vw, 26px) !important;
     display: inline-flex !important;
     align-items: center !important;
-    justify-content: flex-start !important;
-    gap: clamp(6px, .55vw, 9px) !important;
-    overflow: hidden !important;
+    justify-content: center !important;
+    gap: clamp(8px, .7vw, 12px) !important;
     color: #fff !important;
-    font-size: clamp(11px, .74vw, 13.5px) !important;
-    font-weight: 780 !important;
+    font-family: "Sora", "Inter", system-ui, sans-serif !important;
+    font-size: clamp(12px, .85vw, 15px) !important;
+    font-weight: 850 !important;
+    letter-spacing: -0.025em !important;
     line-height: 1 !important;
+    text-decoration: none !important;
     white-space: nowrap !important;
-    text-shadow: 0 1px 1px rgba(0, 10, 50, .30) !important;
+    overflow: visible !important;
+    border: 1px solid rgba(0, 0, 0, .52) !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.36) 0%, rgba(255,255,255,.10) 18%, rgba(255,255,255,0) 44%),
+      linear-gradient(180deg, var(--client-nav-blue-top) 0%, var(--client-nav-blue-mid) 52%, var(--client-nav-blue-bottom) 100%) !important;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .56),
-      inset 0 -10px 16px rgba(0, 0, 0, .18),
-      0 3px 0 rgba(0, 0, 0, .17),
-      0 9px 16px rgba(3, 24, 95, .22) !important;
+      inset 0 2px 0 rgba(255,255,255,.55),
+      inset 0 -9px 12px rgba(0, 0, 0, .26),
+      0 8px 16px rgba(2, 11, 56, .25) !important;
+    transform: translateZ(0);
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger,
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--orange,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn--orange {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.38) 0%, rgba(255,255,255,.12) 18%, rgba(255,255,255,0) 44%),
+      linear-gradient(180deg, var(--client-nav-orange-top) 0%, var(--client-nav-orange-mid) 54%, var(--client-nav-orange-bottom) 100%) !important;
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,.58),
+      inset 0 -9px 12px rgba(80, 13, 0, .28),
+      0 8px 16px rgba(190, 54, 0, .25) !important;
+  }
+
   html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-bookings-trigger,
   html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-desktop {
-    background: linear-gradient(180deg, var(--cm-client-nav-blue-top) 0%, var(--cm-client-nav-blue-mid) 50%, var(--cm-client-nav-blue-bottom) 100%) !important;
+    max-width: none !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,.08) 20%, rgba(255,255,255,0) 46%),
+      linear-gradient(180deg, #0d2d91 0%, #071b69 52%, #041246 100%) !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-create-trigger {
-    background: linear-gradient(180deg, var(--cm-client-nav-orange-top) 0%, var(--cm-client-nav-orange-mid) 51%, var(--cm-client-nav-orange-bottom) 100%) !important;
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger > .wf-icon,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-trigger > .wf-icon {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: var(--nav-icon-size) !important;
+    min-width: var(--nav-icon-size) !important;
+    height: var(--nav-icon-size) !important;
+    border-radius: 999px !important;
+    padding: 0 !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    background: radial-gradient(circle at 35% 25%, #ffffff 0%, #f3f5fa 58%, #d8deea 100%) !important;
+    border: 2px solid rgba(7, 13, 35, .88) !important;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .56),
-      inset 0 -10px 16px rgba(82, 15, 0, .24),
-      0 3px 0 rgba(83, 18, 0, .28),
-      0 9px 16px rgba(210, 59, 0, .23) !important;
+      inset 0 2px 5px rgba(255,255,255,.95),
+      0 2px 5px rgba(0, 0, 0, .26) !important;
+    overflow: hidden !important;
+    color: #06145f !important;
+    transform: none !important;
+    flex: 0 0 auto !important;
+    margin-right: clamp(8px, .75vw, 12px) !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger::before,
-  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger::before,
-  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop::before,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-bookings-trigger::before,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-create-trigger::before,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-desktop::before {
-    content: "" !important;
-    position: absolute !important;
-    inset: 2px 3px auto 3px !important;
-    height: 43% !important;
-    z-index: 0 !important;
-    border-radius: inherit !important;
-    background: linear-gradient(180deg, rgba(255,255,255,.46), rgba(255,255,255,.05)) !important;
-    pointer-events: none !important;
+  html body .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger .wf-client-nav-png-icon img {
+    width: 96% !important;
+    height: 96% !important;
+    object-fit: contain !important;
+    display: block !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger .wf-client-nav-png-icon,
-  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger .wf-client-nav-png-icon,
-  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop .wf-client-nav-png-icon,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-bookings-trigger .wf-client-nav-png-icon,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-create-trigger .wf-client-nav-png-icon,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-desktop .wf-client-nav-png-icon {
-    width: clamp(36px, 2.55vw, 46px) !important;
-    min-width: clamp(36px, 2.55vw, 46px) !important;
-    height: clamp(36px, 2.55vw, 46px) !important;
-    min-height: clamp(36px, 2.55vw, 46px) !important;
-    margin-left: clamp(-4px, -.28vw, -2px) !important;
+  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger .wf-client-nav-png-icon img {
+    width: 108% !important;
+    height: 108% !important;
+    max-width: none !important;
+    max-height: none !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop .wf-client-nav-png-icon {
-    width: clamp(34px, 2.35vw, 42px) !important;
-    min-width: clamp(34px, 2.35vw, 42px) !important;
-    height: clamp(34px, 2.35vw, 42px) !important;
-    min-height: clamp(34px, 2.35vw, 42px) !important;
-  }
-
-  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger span:not(.wf-icon),
-  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger span:not(.wf-icon),
-  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop span:not(.wf-icon),
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-bookings-trigger span:not(.wf-icon),
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-create-trigger span:not(.wf-icon),
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-desktop span:not(.wf-icon) {
-    position: relative !important;
-    z-index: 2 !important;
+  html body .wf-navbar.wf-navbar--client .wf-top-btn span:not(.wf-icon),
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger span:not(.wf-icon) {
     min-width: 0 !important;
-    max-width: 100% !important;
-    flex: 1 1 auto !important;
-    color: #fff !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
-    text-align: center !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-profile-menu {
-    margin-top: 8px !important;
-    min-width: min(260px, 88vw) !important;
-    border-radius: 18px !important;
-    padding: 8px !important;
-    background: #fff !important;
-    border: 1px solid rgba(4, 28, 96, .12) !important;
-    box-shadow: 0 18px 40px rgba(4, 20, 70, .18) !important;
+  html body .wf-navbar.wf-navbar--client .wf-mobile-actions {
+    display: none !important;
   }
 }
 
-@media (min-width: 901px) and (max-width: 1120px) {
+@media (min-width: 901px) and (max-width: 1160px) {
   html body .wf-navbar.wf-navbar--client.wf-header,
   html body .wf-page .wf-navbar.wf-navbar--client.wf-header {
-    width: calc(100vw - 28px) !important;
-    grid-template-columns: minmax(190px, 1fr) minmax(440px, 500px) !important;
-    gap: 10px !important;
+    width: calc(100vw - 24px) !important;
+    grid-template-columns: minmax(190px, 1fr) minmax(540px, 610px) !important;
+    gap: 12px !important;
+    padding-inline: 12px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo img {
+    height: clamp(58px, 6.4vw, 78px) !important;
   }
 
   html body .wf-navbar.wf-navbar--client .wf-header-actions,
-  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-header-actions,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__actions {
-    width: min(100%, 500px) !important;
-    grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(104px, 116px) !important;
-    gap: 8px !important;
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: min(100%, 610px) !important;
+    grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(132px, .7fr) !important;
+    gap: 10px !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-logo img,
-  html body .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    height: clamp(64px, 7vw, 84px) !important;
-    max-width: min(100%, 290px) !important;
-  }
-
-  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger,
-  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger,
-  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-bookings-trigger,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-create-trigger,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-desktop {
-    height: 40px !important;
-    min-height: 40px !important;
-    max-height: 40px !important;
-    font-size: 10.5px !important;
-    gap: 5px !important;
-    padding-right: 8px !important;
-  }
-
-  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger .wf-client-nav-png-icon,
-  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger .wf-client-nav-png-icon,
-  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop .wf-client-nav-png-icon {
-    width: 34px !important;
-    min-width: 34px !important;
-    height: 34px !important;
-    min-height: 34px !important;
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    --nav-icon-size: 40px;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding-left: 11px !important;
+    padding-right: 11px !important;
+    font-size: clamp(10.5px, .95vw, 12px) !important;
   }
 }
 
@@ -310,142 +235,1358 @@ html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger {
   html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
   html body .wf-client-landing .wf-navbar.wf-navbar--client.wf-header,
   html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
-    --cm-client-mobile-pad-x: clamp(8px, 3vw, 14px);
-    --cm-client-mobile-gap: clamp(5px, 1.6vw, 8px);
-    --cm-client-mobile-btn: clamp(38px, 10.8vw, 46px);
-    --cm-client-mobile-actions: calc((var(--cm-client-mobile-btn) * 3) + (var(--cm-client-mobile-gap) * 2));
+    --client-mobile-btn: clamp(38px, 10.6vw, 46px);
+    --client-mobile-gap: clamp(5px, 1.6vw, 8px);
     width: 100% !important;
     max-width: none !important;
-    min-height: clamp(58px, 15.5vw, 78px) !important;
+    min-height: clamp(62px, 15vw, 78px) !important;
     height: auto !important;
     margin: 0 auto !important;
-    padding: clamp(6px, 2vw, 10px) var(--cm-client-mobile-pad-x) !important;
+    padding: clamp(7px, 2vw, 10px) clamp(8px, 3vw, 14px) !important;
     display: grid !important;
-    grid-template-columns: minmax(0, calc(100vw - (var(--cm-client-mobile-pad-x) * 2) - var(--cm-client-mobile-actions) - var(--cm-client-mobile-gap))) var(--cm-client-mobile-actions) !important;
+    grid-template-columns: minmax(0, 1fr) calc((var(--client-mobile-btn) * 3) + (var(--client-mobile-gap) * 2)) !important;
     align-items: center !important;
-    justify-content: stretch !important;
-    column-gap: var(--cm-client-mobile-gap) !important;
-    overflow: visible !important;
+    column-gap: var(--client-mobile-gap) !important;
     position: relative !important;
-    z-index: 100 !important;
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
+    z-index: 110 !important;
+    overflow: visible !important;
+    border: 1px solid rgba(3, 17, 56, .06) !important;
+    border-radius: 0 0 18px 18px !important;
+    background: linear-gradient(180deg, rgba(249,250,252,.96) 0%, rgba(231,234,241,.90) 100%) !important;
+    box-shadow: 0 10px 22px rgba(7, 19, 93, .06) !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-navbar__nav,
-  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
-  html body .wf-navbar.wf-navbar--client .wf-header-actions,
-  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__nav,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-header-actions,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__actions {
-    display: none !important;
-  }
-
-  html body .wf-navbar.wf-navbar--client .wf-navbar__logo,
-  html body .wf-navbar.wf-navbar--client .wf-logo,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__logo,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-logo {
-    justify-self: start !important;
-    align-self: center !important;
-    width: 100% !important;
+  html body .wf-navbar.wf-navbar--client .wf-logo {
+    width: min(100%, clamp(138px, 43vw, 230px)) !important;
     min-width: 0 !important;
-    margin: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
+    justify-self: start !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-logo img,
-  html body .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+  html body .wf-navbar.wf-navbar--client .wf-logo img {
     display: block !important;
     width: auto !important;
-    height: clamp(50px, 14.6vw, 68px) !important;
-    max-width: min(100%, clamp(130px, 44vw, 220px)) !important;
+    height: clamp(46px, 12vw, 64px) !important;
+    max-width: 100% !important;
     object-fit: contain !important;
-    object-position: left center !important;
-    margin: 0 !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    display: none !important;
   }
 
   html body .wf-navbar.wf-navbar--client .wf-mobile-actions,
-  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-mobile-actions,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
     justify-self: end !important;
-    align-self: center !important;
-    width: var(--cm-client-mobile-actions) !important;
-    min-width: var(--cm-client-mobile-actions) !important;
-    max-width: var(--cm-client-mobile-actions) !important;
     display: grid !important;
-    grid-template-columns: repeat(3, var(--cm-client-mobile-btn)) !important;
-    gap: var(--cm-client-mobile-gap) !important;
+    grid-template-columns: repeat(3, var(--client-mobile-btn)) !important;
+    gap: var(--client-mobile-gap) !important;
     align-items: center !important;
-    justify-content: end !important;
-    margin: 0 !important;
+    width: calc((var(--client-mobile-btn) * 3) + (var(--client-mobile-gap) * 2)) !important;
+    max-width: 100% !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact {
+    width: var(--client-mobile-btn) !important;
+    min-width: var(--client-mobile-btn) !important;
+    height: var(--client-mobile-btn) !important;
+    min-height: var(--client-mobile-btn) !important;
     padding: 0 !important;
-    overflow: visible !important;
+    border-radius: clamp(11px, 3vw, 15px) !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    overflow: hidden !important;
+    color: #fff !important;
+    border: 1px solid rgba(0, 0, 0, .22) !important;
+    background: linear-gradient(180deg, #123fd6 0%, #092494 58%, #06145f 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.42), inset 0 -7px 9px rgba(0,0,0,.20), 0 7px 15px rgba(7,19,93,.22) !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
-  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create,
-  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-create,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-user {
-    width: var(--cm-client-mobile-btn) !important;
-    min-width: var(--cm-client-mobile-btn) !important;
-    max-width: var(--cm-client-mobile-btn) !important;
-    height: var(--cm-client-mobile-btn) !important;
-    min-height: var(--cm-client-mobile-btn) !important;
-    max-height: var(--cm-client-mobile-btn) !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border: 0 !important;
-    outline: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    overflow: visible !important;
-    text-shadow: none !important;
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact.wf-top-btn--orange,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create {
+    background: linear-gradient(180deg, #ff7627 0%, #ee3f05 58%, #9f2203 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.46), inset 0 -7px 9px rgba(80,13,0,.25), 0 7px 15px rgba(190,54,0,.24) !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav span:not(.wf-icon),
-  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create span:not(.wf-icon),
-  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon),
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-nav span:not(.wf-icon),
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-create span:not(.wf-icon),
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-user span:not(.wf-icon) {
-    display: none !important;
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact .wf-icon {
+    width: 88% !important;
+    height: 88% !important;
+    display: inline-grid !important;
+    place-items: center !important;
   }
 
-  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon,
-  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-png-icon,
-  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-png-icon,
-  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon {
-    width: calc(var(--cm-client-mobile-btn) * 1.16) !important;
-    min-width: calc(var(--cm-client-mobile-btn) * 1.16) !important;
-    height: calc(var(--cm-client-mobile-btn) * 1.16) !important;
-    min-height: calc(var(--cm-client-mobile-btn) * 1.16) !important;
-    margin: 0 !important;
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact .wf-client-nav-png-icon img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-png-icon img {
+    width: 108% !important;
+    height: 108% !important;
+    max-width: none !important;
+    max-height: none !important;
   }
 }
 
 @media (max-width: 360px) {
   html body .wf-navbar.wf-navbar--client.wf-header,
   html body .wf-page .wf-navbar.wf-navbar--client.wf-header {
-    --cm-client-mobile-pad-x: 7px;
-    --cm-client-mobile-gap: 4px;
-    --cm-client-mobile-btn: 38px;
+    --client-mobile-btn: 37px;
+    --client-mobile-gap: 5px;
+    padding-inline: 7px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo img {
+    height: 44px !important;
+  }
+}
+
+
+/* Navbar icon placement fix: keep icons inside the buttons without punching outside. */
+@media (min-width: 901px) {
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    justify-content: flex-start !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > span:not(.wf-icon),
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger > span:not(.wf-icon) {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger .wf-client-nav-png-icon img {
+    width: 78% !important;
+    height: 78% !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop .wf-client-nav-png-icon img {
+    width: 72% !important;
+    height: 72% !important;
+  }
+}
+
+
+/* Final desktop navbar icon contract: no white cutout/hole, icon sits directly on the button. */
+@media (min-width: 901px) {
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    gap: clamp(10px, .85vw, 14px) !important;
+    padding-left: clamp(16px, 1.2vw, 20px) !important;
+    padding-right: clamp(16px, 1.2vw, 20px) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger > .wf-icon,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-trigger > .wf-icon {
+    width: clamp(22px, 1.7vw, 28px) !important;
+    min-width: clamp(22px, 1.7vw, 28px) !important;
+    height: clamp(22px, 1.7vw, 28px) !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin-right: clamp(8px, .7vw, 12px) !important;
+    overflow: visible !important;
+    color: #ffffff !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger .wf-client-nav-png-icon img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+    filter: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > span:not(.wf-icon),
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger > span:not(.wf-icon) {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+  }
+}
+
+
+/* Final compact navbar pass: compact desktop buttons, clean mobile icon-only actions. */
+@media (min-width: 900px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header {
+    background: #fff !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: auto !important;
+    max-width: max-content !important;
+    grid-template-columns: auto auto auto !important;
+    justify-content: end !important;
+    gap: 12px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 14px !important;
+    gap: 8px !important;
+    border-radius: 18px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger { min-width: 210px !important; }
+  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger { min-width: 218px !important; }
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) { min-width: 118px !important; max-width: 118px !important; }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img {
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: transparent !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    gap: 12px !important;
+    width: auto !important;
+    grid-template-columns: repeat(3, auto) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user > .wf-icon {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    display: inline-grid !important;
+    place-items: center !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact .wf-client-nav-png-icon,
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact .wf-client-nav-png-icon img {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon img {
+    width: 28px !important;
+    height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-png-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-png-icon img {
+    display: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::before {
+    content: "+" !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(180deg, #ff7a26 0%, #ea4207 58%, #ad2100 100%) !important;
+    color: #fff !important;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    box-shadow: 0 2px 6px rgba(167,61,0,.22) !important;
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Final stable client navbar contract                                         */
+/* Same dimensions on landing and bookings pages. Keep profile wrapper compact. */
+/* -------------------------------------------------------------------------- */
+
+@media (min-width: 901px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: clamp(68px, 5vw, 92px) !important;
+    margin: 0 !important;
+    padding: clamp(10px, 1vw, 18px) clamp(24px, 3vw, 56px) !important;
+    display: grid !important;
+    grid-template-columns: minmax(150px, clamp(170px, 18vw, 310px)) minmax(0, 1fr) !important;
+    align-items: center !important;
+    column-gap: clamp(14px, 2vw, 44px) !important;
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-logo,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-logo {
+    width: auto !important;
+    max-width: clamp(160px, 18vw, 310px) !important;
+    justify-self: start !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
   }
 
   html body .wf-navbar.wf-navbar--client .wf-logo img,
-  html body .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
-    max-width: min(100%, 148px) !important;
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-logo img,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-logo img {
+    width: clamp(150px, 14.8vw, 280px) !important;
+    height: auto !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__nav {
+    display: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: clamp(10px, .85vw, 15px) !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions > *,
+  html body .wf-navbar.wf-navbar--client .wf-profile-menu-wrap,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions > *,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-profile-menu-wrap {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: max-content !important;
+    flex: 0 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: clamp(38px, 2.65vw, 44px) !important;
+    min-height: clamp(38px, 2.65vw, 44px) !important;
+    padding: 0 clamp(13px, .95vw, 18px) !important;
+    border-radius: clamp(17px, 1.3vw, 22px) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: clamp(6px, .55vw, 9px) !important;
+    font-family: "Sora", "Inter", system-ui, sans-serif !important;
+    font-size: clamp(11.5px, .78vw, 13.5px) !important;
+    font-weight: 850 !important;
+    line-height: 1 !important;
+    letter-spacing: -0.025em !important;
+    white-space: nowrap !important;
+    color: #fff !important;
+    border: 1px solid rgba(0, 0, 0, .36) !important;
+    text-decoration: none !important;
+    overflow: visible !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.40) 0%, rgba(255,255,255,.12) 18%, rgba(255,255,255,0) 44%),
+      linear-gradient(180deg, #1357e5 0%, #052fb1 54%, #00166d 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.52),
+      inset 0 -7px 11px rgba(0, 0, 0, .24),
+      0 8px 17px rgba(7, 19, 93, .20) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-bookings-trigger {
+    min-width: clamp(182px, 13.6vw, 218px) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-create-trigger {
+    min-width: clamp(178px, 13vw, 210px) !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.42) 0%, rgba(255,255,255,.13) 18%, rgba(255,255,255,0) 44%),
+      linear-gradient(180deg, #ff7421 0%, #e83d05 55%, #a11e00 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.58),
+      inset 0 -7px 11px rgba(92, 18, 0, .30),
+      0 8px 17px rgba(192, 56, 0, .20) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    min-width: clamp(112px, 8.3vw, 132px) !important;
+    max-width: clamp(112px, 8.3vw, 132px) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon {
+    width: clamp(24px, 1.7vw, 30px) !important;
+    min-width: clamp(24px, 1.7vw, 30px) !important;
+    height: clamp(24px, 1.7vw, 30px) !important;
+    min-height: clamp(24px, 1.7vw, 30px) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    flex: 0 0 auto !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    color: #fff !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: transparent !important;
+    filter: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > span:not(.wf-icon),
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > span:not(.wf-icon),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn > span:not(.wf-icon),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > span:not(.wf-icon) {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    text-align: left !important;
+    text-overflow: clip !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1160px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header {
+    padding-inline: 18px !important;
+    grid-template-columns: minmax(145px, clamp(150px, 20vw, 220px)) minmax(0, 1fr) !important;
+    column-gap: 10px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-logo img {
+    width: clamp(135px, 18vw, 210px) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    gap: 8px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-bookings-trigger,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-bookings-trigger { min-width: 160px !important; }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-create-trigger,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-create-trigger { min-width: 158px !important; }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    min-width: 98px !important;
+    max-width: 98px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding-inline: 10px !important;
+    gap: 5px !important;
+    font-size: 10.5px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon {
+    width: 22px !important;
+    min-width: 22px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    --client-mobile-icon: clamp(38px, 10.8vw, 46px);
+    width: 100% !important;
+    max-width: none !important;
+    min-height: clamp(62px, 15vw, 78px) !important;
+    margin: 0 !important;
+    padding: clamp(7px, 2.1vw, 10px) clamp(12px, 3.4vw, 18px) !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    column-gap: 10px !important;
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-logo {
+    justify-self: start !important;
+    width: min(100%, clamp(132px, 43vw, 220px)) !important;
+    margin: 0 !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-logo img {
+    width: clamp(132px, 43vw, 220px) !important;
+    height: auto !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__nav,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading {
+    display: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    justify-self: end !important;
+    align-self: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: clamp(12px, 3.7vw, 18px) !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user {
+    width: var(--client-mobile-icon) !important;
+    min-width: var(--client-mobile-icon) !important;
+    height: var(--client-mobile-icon) !important;
+    min-height: var(--client-mobile-icon) !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact::before,
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact::after,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav::before,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav::after,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create::before,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create::after,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user::before,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn--compact > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user > .wf-icon {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+    color: #ff5a12 !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon img {
+    width: calc(var(--client-mobile-icon) - 4px) !important;
+    height: calc(var(--client-mobile-icon) - 4px) !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-plus-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-plus-icon {
+    width: calc(var(--client-mobile-icon) - 4px) !important;
+    min-width: calc(var(--client-mobile-icon) - 4px) !important;
+    height: calc(var(--client-mobile-icon) - 4px) !important;
+    min-height: calc(var(--client-mobile-icon) - 4px) !important;
+    color: #ff5a12 !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-plus-icon svg,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-plus-icon svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header {
+    --client-mobile-icon: 38px;
+    padding-inline: 10px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    gap: 12px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-logo img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-logo img {
+    width: clamp(118px, 40vw, 150px) !important;
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Emergency navbar repair: one desktop grid, no duplicate mobile plus.        */
+/* -------------------------------------------------------------------------- */
+
+@media (min-width: 901px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: min(100%, 602px) !important;
+    max-width: 602px !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 214px 214px 126px !important;
+    gap: 18px !important;
+    align-items: center !important;
+    justify-content: end !important;
+    justify-self: end !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions > *,
+  html body .wf-navbar.wf-navbar--client .wf-profile-menu-wrap,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions > *,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-profile-menu-wrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex: initial !important;
+    display: flex !important;
+    justify-content: center !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 14px !important;
+    gap: 8px !important;
+    border-radius: 19px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-desktop,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon {
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    flex: 0 0 auto !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: transparent !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1160px) {
+  html body .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: min(100%, 472px) !important;
+    max-width: 472px !important;
+    grid-template-columns: 168px 168px 104px !important;
+    gap: 10px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact),
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding-inline: 10px !important;
+    gap: 6px !important;
+    font-size: 10.5px !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg {
+    width: 21px !important;
+    min-width: 21px !important;
+    height: 21px !important;
+    min-height: 21px !important;
+    max-width: 21px !important;
+    max-height: 21px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header,
+  html body .wf-page--list .wf-navbar.wf-navbar--client.wf-header {
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    width: auto !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, 34px) !important;
+    gap: 14px !important;
+    justify-content: end !important;
+    align-items: center !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    overflow: visible !important;
+    display: inline-grid !important;
+    place-items: center !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::before,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::before,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::after,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-top-btn--compact > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-top-btn--compact > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user > .wf-icon {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon img,
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg {
+    width: 32px !important;
+    height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon {
+    color: #ff4b0b !important;
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* 2026-06-29: client navbar parity on booking and landing pages.              */
+/* The bookings page had older page-specific rules collapsing the create        */
+/* button to a lone plus and reintroducing a colored mobile button background.  */
+/* These rules deliberately target .wf-page--list with higher specificity.      */
+/* -------------------------------------------------------------------------- */
+
+@media (min-width: 901px) {
+  html body .wf-page--list > .wf-navbar.wf-navbar--client.wf-header {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: clamp(68px, 5vw, 92px) !important;
+    margin: 0 !important;
+    padding: clamp(10px, 1vw, 18px) clamp(24px, 3vw, 56px) !important;
+    display: grid !important;
+    grid-template-columns: minmax(150px, clamp(170px, 18vw, 310px)) minmax(0, 1fr) !important;
+    align-items: center !important;
+    column-gap: clamp(14px, 2vw, 44px) !important;
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-logo {
+    width: auto !important;
+    max-width: clamp(160px, 18vw, 310px) !important;
+    justify-self: start !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-logo img {
+    width: clamp(150px, 14.8vw, 280px) !important;
+    height: auto !important;
+    max-width: none !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__nav {
+    display: none !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: min(100%, 602px) !important;
+    max-width: 602px !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    display: grid !important;
+    grid-template-columns: 214px 214px 126px !important;
+    align-items: center !important;
+    justify-content: end !important;
+    gap: 18px !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-header-actions > *,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__actions > *,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-profile-menu-wrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex: initial !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 14px !important;
+    border-radius: 19px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    color: #fff !important;
+    font-family: "Sora", "Inter", system-ui, sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+    line-height: 1 !important;
+    letter-spacing: -0.025em !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(0, 0, 0, .36) !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.40) 0%, rgba(255,255,255,.12) 18%, rgba(255,255,255,0) 44%),
+      linear-gradient(180deg, #1357e5 0%, #052fb1 54%, #00166d 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.52),
+      inset 0 -7px 11px rgba(0, 0, 0, .24),
+      0 8px 17px rgba(7, 19, 93, .20) !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-create-trigger,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-top-btn--orange {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0 14px !important;
+    color: #fff !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.42) 0%, rgba(255,255,255,.13) 18%, rgba(255,255,255,0) 44%),
+      linear-gradient(180deg, #ff7421 0%, #e83d05 55%, #a11e00 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.58),
+      inset 0 -7px 11px rgba(92, 18, 0, .30),
+      0 8px 17px rgba(192, 56, 0, .20) !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-create-trigger > span:not(.wf-icon),
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-top-btn--orange > span:not(.wf-icon),
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > span:not(.wf-icon) {
+    display: inline !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-align: left !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg {
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    color: #fff !important;
+    object-fit: contain !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img {
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1160px) {
+  html body .wf-page--list > .wf-navbar.wf-navbar--client.wf-header {
+    padding-inline: 18px !important;
+    grid-template-columns: minmax(145px, clamp(150px, 20vw, 220px)) minmax(0, 1fr) !important;
+    column-gap: 10px !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-logo img {
+    width: clamp(135px, 18vw, 210px) !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__actions {
+    width: min(100%, 472px) !important;
+    max-width: 472px !important;
+    grid-template-columns: 168px 168px 104px !important;
+    gap: 10px !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-top-btn,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding-inline: 10px !important;
+    gap: 6px !important;
+    font-size: 10.5px !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-top-btn > .wf-icon,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) > .wf-icon,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-top-btn .wf-client-nav-png-icon img,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-profile-trigger:not(.wf-top-btn--compact) .wf-client-nav-png-icon img {
+    width: 21px !important;
+    min-width: 21px !important;
+    height: 21px !important;
+    min-height: 21px !important;
+    max-width: 21px !important;
+    max-height: 21px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body .wf-page--list > .wf-navbar.wf-navbar--client.wf-header {
+    --client-mobile-icon: clamp(38px, 10.8vw, 46px);
+    width: 100% !important;
+    max-width: none !important;
+    min-height: clamp(62px, 15vw, 78px) !important;
+    margin: 0 !important;
+    padding: clamp(7px, 2.1vw, 10px) clamp(12px, 3.4vw, 18px) !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    column-gap: 10px !important;
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-logo {
+    justify-self: start !important;
+    width: min(100%, clamp(132px, 43vw, 220px)) !important;
+    margin: 0 !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-logo img {
+    width: clamp(132px, 43vw, 220px) !important;
+    height: auto !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-header-actions,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__actions,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__nav,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__mobile-leading {
+    display: none !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    justify-self: end !important;
+    align-self: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: clamp(12px, 3.7vw, 18px) !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-top-btn--compact,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-nav,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-create,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-user {
+    width: var(--client-mobile-icon) !important;
+    min-width: var(--client-mobile-icon) !important;
+    height: var(--client-mobile-icon) !important;
+    min-height: var(--client-mobile-icon) !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-create::before,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-create::after,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::before,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-top-btn--compact > .wf-icon,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-nav > .wf-icon,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-create > .wf-icon,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-user > .wf-icon {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-nav .wf-client-nav-png-icon img,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-user .wf-client-nav-png-icon img,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-nav-plus-icon svg {
+    width: 32px !important;
+    height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-client-mobile-create .wf-client-nav-plus-icon {
+    color: #ff4b0b !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-page--list > .wf-navbar.wf-navbar--client.wf-header {
+    --client-mobile-icon: 38px;
+    padding-inline: 10px !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-mobile-actions,
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-navbar__mobile-actions {
+    gap: 12px !important;
+  }
+
+  html body .wf-page--list > .wf-navbar.wf-navbar--client .wf-logo img {
+    width: clamp(118px, 40vw, 150px) !important;
   }
 }

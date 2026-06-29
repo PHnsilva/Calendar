@@ -1,9 +1,8 @@
 /*
  * Client landing cascade authority.
- *
- * Landing layout is loaded first. The client navbar contract is imported after
- * it so the shared navbar keeps the same button height, PNG icons and sizing
- * on Landing and Meus Agendamentos. Footer stays isolated and imported last.
+ * Landing layout owns page sections. Client navbar is imported after landing core
+ * so its compact cross-page contract stays identical on home and bookings pages.
+ * Footer remains last to preserve the current .cm-footer visual contract.
  */
 
 @import "./client-landing-core.css";

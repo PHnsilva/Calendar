@@ -1,13 +1,11 @@
 /*
  * Client landing cascade authority.
  *
- * Phase 7: landing-specific responsive layout is now defined in
- * client-landing-core.css. The old client navbar baseline remains imported
- * first only as compatibility for shared client navbar states; the landing core
- * imported after it owns the public landing layout. Footer stays isolated and
- * imported last to preserve the current .cm-footer visual contract.
+ * Landing layout is loaded first. The client navbar contract is imported after
+ * it so the shared navbar keeps the same button height, PNG icons and sizing
+ * on Landing and Meus Agendamentos. Footer stays isolated and imported last.
  */
 
-@import "../client-navbar-unified.css";
 @import "./client-landing-core.css";
+@import "../client-navbar-unified.css";
 @import "../components/client-footer.css";

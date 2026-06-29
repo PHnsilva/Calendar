@@ -1,6 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import BaseNavbar, { NavbarButton, NavbarIcon, type NavbarIconName } from './BaseNavbar';
 import NavbarMenu from '../../shared/ui/NavbarMenu';
+import navCalendarIcon from '../../assets/navbar/client-nav-calendar.png';
+import navCreateIcon from '../../assets/navbar/client-nav-create.png';
+import navHomeIcon from '../../assets/navbar/client-nav-home.png';
+import navProfileIcon from '../../assets/navbar/client-nav-profile.png';
 import {
   formatPhoneForDisplay,
   getClientProfileChangedEventName,
@@ -25,6 +29,23 @@ type ClientNavbarSnapshot = {
   label: string;
   summary?: string;
 };
+
+type ClientNavbarPngIconName = 'calendar' | 'create' | 'home' | 'profile';
+
+const CLIENT_NAVBAR_PNG_ICONS: Record<ClientNavbarPngIconName, string> = {
+  calendar: navCalendarIcon,
+  create: navCreateIcon,
+  home: navHomeIcon,
+  profile: navProfileIcon,
+};
+
+function ClientNavbarPngIcon({ name }: { name: ClientNavbarPngIconName }) {
+  return (
+    <span aria-hidden="true" className={`wf-icon wf-client-nav-png-icon wf-client-nav-png-icon--${name}`}>
+      <img src={CLIENT_NAVBAR_PNG_ICONS[name]} alt="" draggable={false} />
+    </span>
+  );
+}
 
 type ProfileMenuItem = {
   action: 'home' | 'bookings' | 'profile' | 'create';
@@ -158,18 +179,18 @@ function ClientProfileMenu({
 export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page = 'home' }: ClientNavbarProps) {
   const isHome = page === 'home';
   const snapshot = useClientNavbarSnapshot();
-  const profileLabel = snapshot.isVerified ? 'Perfil' : (isHome ? 'Olá! Visitante' : 'Cliente');
+  const profileLabel = 'Perfil';
   const handleProfileAction = () => {
     onProfile?.();
   };
   void onConfirmPhone;
 
-  const desktopProfileLabel = <><NavbarIcon name="user" /> <span>{profileLabel}</span></>;
+  const desktopProfileLabel = <><ClientNavbarPngIcon name="profile" /> <span>{profileLabel}</span></>;
 
   const desktopActions = isHome ? (
     <>
-      <NavbarButton to={CLIENT_BOOKINGS_PATH} className="wf-client-bookings-trigger"><NavbarIcon name="calendar" /> <span>Meus agendamentos</span></NavbarButton>
-      <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
+      <NavbarButton to={CLIENT_BOOKINGS_PATH} className="wf-client-bookings-trigger"><ClientNavbarPngIcon name="calendar" /> <span>Meus agendamentos</span></NavbarButton>
+      <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><ClientNavbarPngIcon name="create" /> <span>Criar agendamento</span></NavbarButton>
       <ClientProfileMenu
         page={page}
         profileLabel={profileLabel}
@@ -181,8 +202,8 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
     </>
   ) : (
     <>
-      <NavbarButton to="/" className="wf-client-bookings-trigger"><NavbarIcon name="home" /> <span>Página inicial</span></NavbarButton>
-      <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><span>Criar agendamento</span> <NavbarIcon name="plus" /></NavbarButton>
+      <NavbarButton to="/" className="wf-client-bookings-trigger"><ClientNavbarPngIcon name="home" /> <span>Página inicial</span></NavbarButton>
+      <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><ClientNavbarPngIcon name="create" /> <span>Criar agendamento</span></NavbarButton>
       <ClientProfileMenu
         page={page}
         profileLabel={profileLabel}
@@ -202,7 +223,7 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
       ariaLabel="Ir para agendamentos"
       title="Agendamentos"
     >
-      <NavbarIcon name="calendar" />
+      <ClientNavbarPngIcon name="calendar" />
     </NavbarButton>
   ) : (
     <NavbarButton
@@ -212,7 +233,7 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
       ariaLabel="Ir para início"
       title="Página inicial"
     >
-      <NavbarIcon name="home" />
+      <ClientNavbarPngIcon name="home" />
     </NavbarButton>
   );
 
@@ -221,23 +242,23 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
       {mobileNavigation}
       <NavbarButton
         compact
+        variant="orange"
+        className="wf-client-mobile-create"
+        onClick={onCreate}
+        ariaLabel="Criar agendamento"
+        title="Criar agendamento"
+      >
+        <ClientNavbarPngIcon name="create" />
+      </NavbarButton>
+      <NavbarButton
+        compact
         className="wf-client-mobile-user"
         onClick={handleProfileAction}
         ariaLabel={profileLabel}
         title={snapshot.summary ? `${profileLabel}: ${snapshot.summary}` : profileLabel}
       >
-        <NavbarIcon name="user" />
+        <ClientNavbarPngIcon name="profile" />
       </NavbarButton>
-      <ClientProfileMenu
-        compact
-        page={page}
-        profileLabel={profileLabel}
-        labelContent={<NavbarIcon name="menu" />}
-        triggerClassName="wf-client-more-options-trigger"
-        triggerVariant="orange"
-        onProfileAction={handleProfileAction}
-        onCreate={onCreate}
-      />
     </>
   );
 

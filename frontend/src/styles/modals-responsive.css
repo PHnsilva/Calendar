@@ -1203,3 +1203,299 @@
       grid-template-columns: 1fr;
     }
 }
+
+/* Create-booking mobile modal: compact full-screen flow without horizontal overflow. */
+@media (max-width: 730px) {
+  .booking-preview-modal:has(.booking-preview-modal__card--calendar-picker) {
+    align-items: stretch !important;
+    justify-items: stretch !important;
+    padding: 0 !important;
+    place-items: stretch !important;
+  }
+
+  .booking-preview-modal__card--calendar-picker {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    padding: max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .booking-preview-modal__card--calendar-picker .booking-preview-modal__header {
+    position: relative !important;
+    z-index: 2 !important;
+    margin: 0 !important;
+    padding: 2px 0 8px !important;
+    gap: 8px !important;
+    align-items: flex-start !important;
+    background: var(--app-surface-solid) !important;
+  }
+
+  .booking-preview-modal__card--calendar-picker .booking-preview-modal__eyebrow {
+    font-size: 10px !important;
+    letter-spacing: .08em !important;
+  }
+
+  .booking-preview-modal__card--calendar-picker .booking-preview-modal__title {
+    font-size: clamp(18px, 5vw, 23px) !important;
+    line-height: 1.05 !important;
+  }
+
+  .booking-preview-modal__card--calendar-picker .booking-preview-modal__close {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    border-radius: 12px !important;
+  }
+
+  .booking-preview-modal__body--calendar-picker {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 0 2px 2px !important;
+    overscroll-behavior: contain !important;
+  }
+
+  .booking-day-picker,
+  .booking-time-panel,
+  .booking-form-grid,
+  .booking-form-grid--compact,
+  .booking-address-composite,
+  .booking-address-composite--with-number {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+
+  .booking-day-picker {
+    align-content: start !important;
+  }
+
+  .booking-day-picker__intro {
+    gap: 5px !important;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+    background: color-mix(in srgb, var(--app-surface-soft) 88%, white 12%) !important;
+  }
+
+  .booking-day-picker__intro strong {
+    font-size: 13px !important;
+    line-height: 1.15 !important;
+  }
+
+  .booking-day-picker__intro span {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+
+  .booking-day-picker__expand {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 12px !important;
+    border-radius: 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  .booking-day-picker__card {
+    gap: 8px !important;
+    padding: 10px !important;
+    border-radius: 16px !important;
+  }
+
+  .booking-day-picker__hero {
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .booking-day-picker__hero strong {
+    font-size: clamp(27px, 8vw, 34px) !important;
+    line-height: 0.95 !important;
+  }
+
+  .booking-day-picker__hero span {
+    margin-top: 2px !important;
+    font-size: 12px !important;
+  }
+
+  .booking-day-picker__nav button {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+  }
+
+  .booking-day-picker__month-label {
+    font-size: 11px !important;
+  }
+
+  .booking-day-picker__weekdays,
+  .booking-day-picker__grid {
+    gap: 4px !important;
+  }
+
+  .booking-day-picker__weekdays span {
+    font-size: 10px !important;
+  }
+
+  .booking-day-picker__day {
+    min-height: 34px !important;
+    height: 34px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+  }
+
+  .booking-day-picker__actions {
+    gap: 8px !important;
+    padding-top: 2px !important;
+  }
+
+  .booking-day-picker__confirm,
+  .booking-day-picker__edit {
+    min-height: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+  }
+
+  .booking-day-picker__confirm {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 0 12px !important;
+  }
+
+  .booking-day-picker__edit {
+    width: 42px !important;
+    min-width: 42px !important;
+  }
+
+  .booking-preview-modal__summary--calendar-picker,
+  .booking-preview-modal__summary {
+    gap: 4px !important;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+  }
+
+  .booking-preview-modal__summary strong {
+    font-size: 13px !important;
+  }
+
+  .booking-preview-modal__summary span,
+  .booking-preview-modal__summary small {
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+
+  .booking-preview-modal__slots-grid,
+  .booking-preview-modal__slots-grid--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .booking-slot {
+    min-height: 42px !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+    padding: 5px 6px !important;
+    font-size: 12.5px !important;
+  }
+
+  .booking-form__field {
+    gap: 5px !important;
+    min-width: 0 !important;
+  }
+
+  .booking-form__field span {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+  }
+
+  .booking-form__input,
+  .booking-city-select,
+  .booking-city-select select {
+    min-height: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    padding-inline: 12px !important;
+    font-size: 13px !important;
+    box-sizing: border-box !important;
+  }
+
+  textarea.booking-form__input,
+  .booking-form__textarea {
+    min-height: 70px !important;
+    height: 70px !important;
+    padding: 10px 12px !important;
+    resize: vertical !important;
+  }
+
+  .booking-form__field .booking-city-choice.booking-city-choice--launcher,
+  .booking-city-choice--launcher {
+    min-height: 42px !important;
+    height: 42px !important;
+    max-height: 42px !important;
+    border-radius: 12px !important;
+    gap: 8px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+  }
+
+  .booking-form__field .booking-city-choice.booking-city-choice--launcher .booking-city-choice__icon,
+  .booking-city-choice--launcher .booking-city-choice__icon {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    flex-basis: 28px !important;
+  }
+
+  .booking-form__field .booking-city-choice.booking-city-choice--launcher .booking-city-choice__icon img,
+  .booking-city-choice--launcher .booking-city-choice__icon img {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .booking-preview-modal__footer,
+  .booking-preview-modal__footer--compact {
+    margin-top: 8px !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    background: var(--app-surface-solid) !important;
+  }
+
+  .booking-preview-modal__card--calendar-picker .booking-preview-modal__footer .primary-action,
+  .booking-preview-modal__card--calendar-picker .booking-preview-modal__footer .secondary-action {
+    min-height: 42px !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .booking-preview-modal__card--calendar-picker {
+    padding-inline: 9px !important;
+  }
+
+  .booking-preview-modal__slots-grid,
+  .booking-preview-modal__slots-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .booking-day-picker__day {
+    min-height: 31px !important;
+    height: 31px !important;
+    border-radius: 9px !important;
+    font-size: 11px !important;
+  }
+}

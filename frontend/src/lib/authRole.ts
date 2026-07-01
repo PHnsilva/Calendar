@@ -16,6 +16,15 @@ const configuredOwnerAdminPhones = [
   .filter((value): value is string => Boolean(value?.trim()))
   .join(',');
 
+const configuredProviderPhones = [
+  import.meta.env.VITE_PROVIDER_AUTH_PHONES,
+  import.meta.env.VITE_PROVIDER_PHONES,
+  import.meta.env.VITE_PRESTADOR_AUTH_PHONES,
+  import.meta.env.VITE_PRESTADOR_PHONES,
+]
+  .filter((value): value is string => Boolean(value?.trim()))
+  .join(',');
+
 export const adminPhoneConfigSource = configuredAdminPhones
   ? 'VITE_ADMIN_AUTH_PHONES/VITE_ADMIN_PHONES'
   : 'backend-admin-auth';
@@ -62,7 +71,9 @@ export function formatPhoneInput(value: string): string {
 }
 
 const adminPhoneSet = new Set(
-  configuredAdminPhones
+  [configuredAdminPhones, configuredProviderPhones]
+    .filter(Boolean)
+    .join(',')
     .split(',')
     .map((phone) => normalizePhone(phone.trim()))
     .filter(isValidPhone),

@@ -9313,3 +9313,189 @@ body {
 
   
 }
+
+/* Client bookings mobile: cards-first layout with calendar behind an explicit button. */
+.wf-mobile-bookings-header,
+.wf-mobile-calendar-toggle,
+.wf-mobile-calendar-overlay {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  html body .wf-page--list > .wf-two-column--bookings {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 clamp(12px, 4vw, 18px) 22px !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  html body .wf-page--list > .wf-two-column--bookings > .wf-calendar-panel {
+    display: none !important;
+  }
+
+  html body .wf-page--list .wf-booking-list-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-page--list .wf-mobile-bookings-header {
+    display: grid !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin: 0 0 12px !important;
+  }
+
+  html body .wf-page--list .wf-filters-bar--mobile {
+    display: grid !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  html body .wf-page--list .wf-filters-bar--desktop,
+  html body .wf-page--list .wf-booking-tools {
+    display: none !important;
+  }
+
+  html body .wf-page--list .wf-mobile-calendar-toggle {
+    width: 100% !important;
+    min-height: 46px !important;
+    border: 1px solid rgba(47, 125, 203, 0.18) !important;
+    border-radius: 16px !important;
+    background: linear-gradient(180deg, #ffffff, #eef5ff) !important;
+    color: #244667 !important;
+    box-shadow: 0 12px 26px rgba(31, 44, 68, 0.08) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 9px !important;
+    font-family: var(--font-display) !important;
+    font-size: 13px !important;
+    font-weight: 850 !important;
+  }
+
+  html body .wf-page--list .wf-mobile-calendar-toggle svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  html body .wf-page--list .wf-booking-stack {
+    display: grid !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .wf-mobile-calendar-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 180 !important;
+    display: grid !important;
+    align-items: end !important;
+    justify-items: stretch !important;
+    padding: 0 !important;
+  }
+
+  .wf-mobile-calendar-overlay__backdrop {
+    position: absolute !important;
+    inset: 0 !important;
+    border: 0 !important;
+    background: rgba(15, 23, 35, 0.54) !important;
+    backdrop-filter: blur(5px) !important;
+  }
+
+  .wf-mobile-calendar-overlay__card {
+    position: relative !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    max-height: 88dvh !important;
+    overflow: auto !important;
+    border-radius: 24px 24px 0 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.68) !important;
+    background: #f7f9fc !important;
+    box-shadow: 0 -20px 44px rgba(15, 23, 42, 0.22) !important;
+    padding: 14px clamp(12px, 4vw, 18px) max(16px, env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box !important;
+  }
+
+  .wf-mobile-calendar-overlay__header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .wf-mobile-calendar-overlay__header div {
+    display: grid !important;
+    gap: 3px !important;
+    min-width: 0 !important;
+  }
+
+  .wf-mobile-calendar-overlay__header span {
+    color: rgba(31, 44, 68, 0.58) !important;
+    font-size: 11px !important;
+    font-weight: 850 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+  }
+
+  .wf-mobile-calendar-overlay__header strong {
+    color: #1f2c44 !important;
+    font-size: clamp(16px, 4.6vw, 20px) !important;
+    line-height: 1.08 !important;
+  }
+
+  .wf-mobile-calendar-overlay__header button {
+    min-height: 38px !important;
+    padding: 0 12px !important;
+    border: 1px solid rgba(31, 44, 68, 0.1) !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    color: #244667 !important;
+    font-weight: 850 !important;
+  }
+
+  .wf-mobile-calendar-overlay__card .wf-calendar-panel {
+    display: grid !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 12px !important;
+    border-radius: 18px !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .wf-mobile-calendar-overlay__card .wf-calendar-grid {
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 5px !important;
+  }
+
+  .wf-mobile-calendar-overlay__card .wf-calendar-day {
+    min-height: 44px !important;
+    border-radius: 12px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body .wf-page--list .wf-mobile-calendar-toggle .wf-icon {
+    width: 20px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    display: inline-grid !important;
+    place-items: center !important;
+  }
+}

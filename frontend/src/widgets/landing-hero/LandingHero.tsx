@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 import heroClientDesktop901 from "../../assets/wireframes/landing/hero-tradesman-transparent-901w.png";
 import heroClientDesktop1024 from "../../assets/wireframes/landing/hero-tradesman-transparent-1024w.png";
 import heroClientDesktop1280 from "../../assets/wireframes/landing/hero-tradesman-transparent-1280w.png";
+import heroClientDesktop1440 from "../../assets/wireframes/landing/hero-tradesman-transparent-1440w.png";
 import heroClientDesktop1600 from "../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png";
+import heroClientDesktop1718 from "../../assets/wireframes/landing/hero-tradesman-transparent-1718w.png";
 import heroClientDesktop1920 from "../../assets/wireframes/landing/hero-tradesman-transparent-1920w.png";
 import heroClientDesktop2200 from "../../assets/wireframes/landing/hero-tradesman-transparent-2200w.png";
 import heroClientDesktop2500 from "../../assets/wireframes/landing/hero-tradesman-transparent-2500w.png";
@@ -19,7 +21,9 @@ const clientHeroDesktopSrcSet = [
   `${heroClientDesktop901} 901w`,
   `${heroClientDesktop1024} 1024w`,
   `${heroClientDesktop1280} 1280w`,
+  `${heroClientDesktop1440} 1440w`,
   `${heroClientDesktop1600} 1600w`,
+  `${heroClientDesktop1718} 1718w`,
   `${heroClientDesktop1920} 1920w`,
   `${heroClientDesktop2200} 2200w`,
   `${heroClientDesktop2500} 2500w`,
@@ -93,7 +97,7 @@ export function LandingHero({
         className="wf-media-frame wf-media-frame--hero wf-hero-visual wf-hero-visual--client wf-client-hero-visual-final"
         desktopSrc={heroClientDesktop1600}
         desktopSrcSet={clientHeroDesktopSrcSet}
-        sizes="(min-width: 901px) min(56vw, 900px), 100vw"
+        sizes="(min-width: 2200px) 1180px, (min-width: 1900px) 1040px, (min-width: 1400px) 900px, (min-width: 1161px) 770px, (min-width: 901px) 660px, 100vw"
         mobileSrc={heroClientMobile531}
         mobileSrcSet={clientHeroMobileSrcSet}
         mobileSizes="(max-width: 430px) min(58vw, 430px), (max-width: 900px) min(56vw, 560px), 100vw"

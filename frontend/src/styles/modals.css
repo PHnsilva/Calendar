@@ -4078,3 +4078,147 @@
     grid-column: 1 / -1;
   }
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Patch v10: client profile avatar picker and visible status SVGs.           */
+/* -------------------------------------------------------------------------- */
+
+.wf-client-profile-modal__avatar-edit {
+  margin: 8px auto 0;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(3, 88, 255, .18);
+  border-radius: 999px;
+  background: #f4f8ff;
+  color: #0358ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.wf-client-profile-modal__avatar-edit .wf-icon {
+  width: 19px;
+  height: 19px;
+}
+
+.wf-client-profile-modal__status-item .wf-icon,
+.wf-client-profile-modal__status-item .wf-icon svg {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.wf-client-profile-modal__status-item--active .wf-icon { color: #0a9f40 !important; }
+.wf-client-profile-modal__status-item--phone .wf-icon { color: #0358ff !important; }
+.wf-client-profile-modal__status-item--profile .wf-icon { color: #07135d !important; }
+
+.wf-client-avatar-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 19, 93, .34);
+  backdrop-filter: blur(5px);
+}
+
+.wf-client-avatar-picker__panel {
+  width: min(100%, 420px);
+  padding: 18px;
+  border: 1px solid rgba(7, 19, 93, .12);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 28px 70px rgba(7, 19, 93, .24);
+  color: var(--profile-navy, #07135d);
+}
+
+.wf-client-avatar-picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.wf-client-avatar-picker__header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -.03em;
+}
+
+.wf-client-avatar-picker__header button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(7, 19, 93, .1);
+  border-radius: 12px;
+  background: #fff;
+  color: #07135d;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.wf-client-avatar-picker__header .wf-icon {
+  width: 19px;
+  height: 19px;
+}
+
+.wf-client-avatar-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.wf-client-avatar-picker__option {
+  aspect-ratio: 1;
+  border: 1px dashed rgba(3, 88, 255, .34);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f8fbff, #eef5ff);
+  color: #0358ff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.wf-client-avatar-picker__option svg {
+  width: 54%;
+  height: 54%;
+}
+
+.wf-client-avatar-picker__option--selected {
+  border-style: solid;
+  border-color: #ff4b0b;
+  color: #ff4b0b;
+  box-shadow: inset 0 0 0 2px rgba(255, 75, 11, .12);
+}
+
+.wf-client-avatar-picker__panel p {
+  margin: 12px 0 0;
+  color: #687792;
+  font-size: 12px;
+  font-weight: 750;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .wf-client-avatar-picker {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .wf-client-avatar-picker__panel {
+    width: 100%;
+    border-radius: 24px 24px 18px 18px;
+  }
+}

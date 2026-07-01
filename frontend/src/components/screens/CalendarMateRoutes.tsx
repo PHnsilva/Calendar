@@ -1321,18 +1321,31 @@ function EmptyState({ title, text, action, onAction }: { title: string; text: st
 export function ClientBookings() {
   const [modal, setModal] = useState<ModalKind>(null);
   const [context, setContext] = useState<ModalContext>({});
+  const [mobileCalendarOpen, setMobileCalendarOpen] = useState(false);
   const profile = useClientProfileSnapshot();
   void profile;
   const { bookings, isLoading, isError, hasTokens } = useClientBookingsData();
   const openDetails = (booking: BookingItem) => { setContext({ booking }); setModal('client-details'); };
   const openCreate = (date?: string) => { setContext(date ? { createDate: date } : {}); setModal('create-client'); };
+  const openCreateFromMobileCalendar = (date?: string) => {
+    setMobileCalendarOpen(false);
+    openCreate(date);
+  };
 
   return (
     <>
       <AppointmentsPageShell
         pageClassName="wf-page wf-page--list"
         clientNavbar={{ page: 'my', onCreate: openCreate, onConfirmPhone: () => setModal('client-profile'), onProfile: () => setModal('client-profile') }}
-        mobileFilters={<FiltersBar className="wf-filters-bar--mobile" />}
+        mobileFilters={(
+          <div className="wf-mobile-bookings-header">
+            <FiltersBar className="wf-filters-bar--mobile" />
+            <button type="button" className="wf-mobile-calendar-toggle" onClick={() => setMobileCalendarOpen(true)}>
+              <Icon name="calendar" />
+              <span>Abrir calendário</span>
+            </button>
+          </div>
+        )}
         calendar={<CalendarBoard bookings={bookings} onCreate={openCreate} />}
       >
         <div className="wf-booking-tools">
@@ -1346,6 +1359,21 @@ export function ClientBookings() {
           {bookings.map((booking) => <BookingCard key={booking.id} booking={booking} onDetails={() => openDetails(booking)} onEdit={openCreate} />)}
         </div>
       </AppointmentsPageShell>
+      {mobileCalendarOpen ? (
+        <div className="wf-mobile-calendar-overlay" role="dialog" aria-modal="true" aria-label="Calendário de agendamentos">
+          <button type="button" className="wf-mobile-calendar-overlay__backdrop" aria-label="Fechar calendário" onClick={() => setMobileCalendarOpen(false)} />
+          <section className="wf-mobile-calendar-overlay__card">
+            <header className="wf-mobile-calendar-overlay__header">
+              <div>
+                <span>Calendário</span>
+                <strong>Escolha um dia para criar agendamento</strong>
+              </div>
+              <button type="button" onClick={() => setMobileCalendarOpen(false)}>Fechar</button>
+            </header>
+            <CalendarBoard bookings={bookings} onCreate={openCreateFromMobileCalendar} />
+          </section>
+        </div>
+      ) : null}
       <CalendarMateModal modal={modal} context={context} onClose={() => setModal(null)} onOpenModal={setModal} />
     </>
   );
@@ -3044,6 +3072,8 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
   const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
   const [selectedWorkspace, setSelectedWorkspace] = useState('');
   const [sessionPhone, setSessionPhone] = useState('');
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState(0);
   const phoneDigits = normalizePhone(phone);
   const hasValidPhone = isValidPhone(phone);
   const detectedProtectedPhone = isProtectedStaffPhone(phone);
@@ -3131,14 +3161,17 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
         </figure>
         <div className="wf-client-profile-modal__identity">
           <strong>{displayName}</strong>
-          <small>Perfil do cliente</small>
+          <button type="button" className="wf-client-profile-modal__avatar-edit" onClick={() => setAvatarPickerOpen(true)}>
+            <Icon name="user-edit" />
+            <span>Alterar avatar</span>
+          </button>
         </div>
       </div>
 
       <div className="wf-client-profile-modal__status" aria-label="Resumo do perfil">
-        <span><Icon name="shield-check" /> <strong>Conta ativa</strong></span>
-        <span><Icon name="phone" /> <strong>{phoneStatus}</strong></span>
-        <span><Icon name="user" /> <strong>Perfil do cliente</strong></span>
+        <span className="wf-client-profile-modal__status-item wf-client-profile-modal__status-item--active"><Icon name="shield-check" /> <strong>Conta ativa</strong></span>
+        <span className="wf-client-profile-modal__status-item wf-client-profile-modal__status-item--phone"><Icon name="phone-call" /> <strong>{phoneStatus}</strong></span>
+        <span className="wf-client-profile-modal__status-item wf-client-profile-modal__status-item--profile"><Icon name="user-blue-solid" /> <strong>Perfil do cliente</strong></span>
       </div>
 
       <div className="wf-client-profile-modal__section-title">Informações pessoais</div>
@@ -3147,7 +3180,7 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
         <ModalField className="wf-client-profile-modal__field" label="E-mail" icon="mail" placeholder="seu@email.com" value={email} type="email" onChange={setEmail} />
         <ModalField className="wf-client-profile-modal__field" label="Telefone" icon="phone" placeholder="(31) 99999-9999" value={phone} inputMode="tel" onChange={(value) => { setPhone(formatPhoneInput(value)); setStaffPassword(''); setError(''); }} />
         <ModalField className="wf-client-profile-modal__field" label="Cidade" icon="location" placeholder="Cidade" value={city} onChange={setCity} />
-        {hasValidPhone ? (
+        {detectedProtectedPhone ? (
           <ModalField
             className="wf-client-profile-modal__field wf-client-profile-modal__field--staff-password"
             label="Senha da equipe"
@@ -3162,6 +3195,41 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
 
       {message ? <p className="wf-auth-feedback wf-auth-feedback--success">{message}</p> : null}
       {error ? <p className="wf-auth-feedback wf-auth-feedback--error">{error}</p> : null}
+
+      {avatarPickerOpen ? (
+        <div className="wf-client-avatar-picker" role="presentation" onClick={() => setAvatarPickerOpen(false)}>
+          <section
+            className="wf-client-avatar-picker__panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="client-avatar-picker-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="wf-client-avatar-picker__header">
+              <h3 id="client-avatar-picker-title">Escolher avatar</h3>
+              <button type="button" aria-label="Fechar seleção de avatar" onClick={() => setAvatarPickerOpen(false)}><Icon name="close" /></button>
+            </header>
+            <div className="wf-client-avatar-picker__grid">
+              {Array.from({ length: 6 }, (_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={cx('wf-client-avatar-picker__option', selectedAvatar === index && 'wf-client-avatar-picker__option--selected')}
+                  onClick={() => { setSelectedAvatar(index); setAvatarPickerOpen(false); }}
+                  aria-label={`Selecionar avatar ${index + 1}`}
+                >
+                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="32" cy="32" r="24" stroke="currentColor" strokeWidth="3.8" strokeDasharray="5 6" />
+                    <path d="M22 45c2.2-7.2 5.6-10.8 10-10.8S39.8 37.8 42 45" stroke="currentColor" strokeWidth="3.8" strokeLinecap="round" />
+                    <circle cx="32" cy="24" r="6" stroke="currentColor" strokeWidth="3.8" />
+                  </svg>
+                </button>
+              ))}
+            </div>
+            <p>Espaços reservados para os PNGs dos avatares.</p>
+          </section>
+        </div>
+      ) : null}
 
       <div className="wf-client-profile-modal__actions">
         <button type="button" className="wf-client-profile-modal__primary" onClick={handleSaveProfile} disabled={saving}>

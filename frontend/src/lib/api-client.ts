@@ -1,10 +1,13 @@
 import { resolveApiBaseUrl } from "./env";
+import { extractApiErrorCode, normalizeApiError } from "./error-normalizer";
 import { getStoredAdminWorkspaceHeaders } from "./storage";
 
 export class ApiError extends Error {
   status: number;
   payload: unknown;
   code: string;
+  retryable: boolean;
+  field?: string;
   method: string;
   url: string;
 
@@ -12,7 +15,7 @@ export class ApiError extends Error {
     message: string,
     status: number,
     payload: unknown,
-    request: { method?: string; url?: string; code?: string } = {},
+    request: { method?: string; url?: string; code?: string; retryable?: boolean; field?: string } = {},
   ) {
     super(message);
     this.name = "ApiError";
@@ -24,6 +27,8 @@ export class ApiError extends Error {
           ? String((payload as { error?: unknown }).error ?? "")
           : ""
       );
+    this.retryable = Boolean(request.retryable);
+    this.field = request.field;
     this.method = request.method ?? "";
     this.url = request.url ?? "";
   }
@@ -98,27 +103,41 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
     });
   } catch (error) {
     const isTimeout = typeof error === "object" && error !== null && "name" in error && (error as { name?: unknown }).name === "AbortError";
-    const message = isTimeout
-      ? "A requisição demorou mais do que o esperado. Tente novamente."
-      : "Nao foi possivel conectar ao servico agora.";
     const status = isTimeout ? 408 : 0;
     const code = isTimeout ? "TIMEOUT_ERROR" : "NETWORK_ERROR";
+    const normalized = normalizeApiError({ status, code, message: error instanceof Error ? error.message : "" });
     logApiFailure(method, url, code, error);
-    throw new ApiError(message, status, null, { method, url, code });
+    throw new ApiError(normalized.message, status, null, {
+      method,
+      url,
+      code: normalized.code,
+      retryable: normalized.retryable,
+      field: normalized.field,
+    });
   }
 
   const payload = await parseResponse(response);
 
   if (!response.ok) {
-    const fallbackMessage = `Nao foi possivel concluir esta acao agora (erro ${response.status}).`;
-    const message =
-      typeof payload === "string"
-        ? payload
-        : typeof payload === "object" && payload !== null && "message" in payload
-          ? String((payload as { message?: unknown }).message ?? fallbackMessage)
-          : fallbackMessage;
+    const code = extractApiErrorCode(payload, response.status);
+    const normalized = normalizeApiError({
+      status: response.status,
+      code,
+      payload,
+      message: typeof payload === "object" && payload !== null && "message" in payload
+        ? String((payload as { message?: unknown }).message ?? "")
+        : typeof payload === "string"
+          ? payload
+          : "",
+    });
     logApiFailure(method, url, response.status, payload);
-    throw new ApiError(message, response.status, payload, { method, url });
+    throw new ApiError(normalized.message, response.status, payload, {
+      method,
+      url,
+      code: normalized.code,
+      retryable: normalized.retryable,
+      field: normalized.field,
+    });
   }
 
   return payload as T;

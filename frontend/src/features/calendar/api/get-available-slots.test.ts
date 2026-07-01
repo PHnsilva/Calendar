@@ -45,7 +45,7 @@ describe("getAvailableSlots", () => {
 
     await expect(getAvailableSlots("2026-06-10", "Itabirito", 60, 60)).rejects.toMatchObject({
       status: 404,
-      message: expect.stringContaining("horarios nao estao disponiveis"),
+      message: "Os horários não estão disponíveis agora. Tente novamente em instantes.",
     });
   });
 });

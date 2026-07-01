@@ -14,7 +14,9 @@ const ModalDetalhesServico = ({ servico, onClose }) => {
         const res = await getUserProfile();
         setUsuario(res);
       } catch (error) {
-        console.error("Erro ao buscar perfil do usuário:", error);
+        if (import.meta.env.DEV) {
+          console.error("Erro ao buscar perfil do usuário:", error);
+        }
       }
     })();
   }, []);

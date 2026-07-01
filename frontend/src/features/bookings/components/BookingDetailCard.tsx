@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { Booking } from "../../../entities/booking";
 import type { ServicoRequest } from "../../../types/api";
 import { formatDateTime, isWithinTwoHours } from "../../../lib/dates";
+import { normalizeApiErrorMessage } from "../../../lib/errors";
 import { resolveManageToken } from "../../../lib/storage";
 import { BookingActions } from "./BookingActions";
 import { BookingStatusBadge } from "./BookingStatusBadge";
@@ -81,7 +82,7 @@ function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
       </div>
 
       {lockedByTime ? <p className="booking-detail__notice">Alterações só podem ser feitas com pelo menos 2 horas de antecedência.</p> : null}
-      {!token ? <p className="booking-detail__notice">Esse atendimento não tem token salvo neste navegador. Use a recuperação para restaurar o acesso.</p> : null}
+      {!token ? <p className="booking-detail__notice">Esse atendimento não tem código de acesso salvo neste navegador. Use a recuperação para restaurar o acesso.</p> : null}
 
       {isEditing ? (
         <div className="booking-detail__form">
@@ -111,7 +112,7 @@ function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
             <label><span>Cidade</span><input value={form.clientCity} readOnly /></label>
             <label><span>Estado</span><input value={form.clientState} readOnly /></label>
           </div>
-          {updateError ? <p className="booking-detail__error">{(updateError as Error).message}</p> : null}
+          {updateError ? <p className="booking-detail__error">{normalizeApiErrorMessage(updateError, { context: "editBooking" })}</p> : null}
           <div className="booking-detail__actions">
             <button type="button" className="secondary-action" onClick={() => setIsEditing(false)}>Fechar edição</button>
             <button type="button" className="primary-action" onClick={() => void submitUpdate()} disabled={!canManage || isUpdating}>
@@ -140,7 +141,7 @@ function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
       {confirmCancel ? (
         <div className="booking-detail__confirm">
           <p>Deseja cancelar este agendamento?</p>
-          {deleteError ? <p className="booking-detail__error">{(deleteError as Error).message}</p> : null}
+          {deleteError ? <p className="booking-detail__error">{normalizeApiErrorMessage(deleteError, { context: "cancelBooking" })}</p> : null}
           <div className="booking-detail__actions">
             <button type="button" className="secondary-action" onClick={() => setConfirmCancel(false)}>Voltar</button>
             <button type="button" className="primary-action primary-action--danger" onClick={() => void submitDelete()} disabled={!canManage || isDeleting}>

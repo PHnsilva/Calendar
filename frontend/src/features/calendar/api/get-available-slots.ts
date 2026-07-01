@@ -97,6 +97,8 @@ export async function getAvailableSlots(date: string, city = "", slotMinutes = 6
     if (error instanceof ApiError) {
       throw new ApiError(getAvailabilityErrorMessage(error), error.status, error.payload, {
         code: error.code,
+        retryable: error.retryable,
+        field: error.field,
         method: error.method,
         url: error.url,
       });

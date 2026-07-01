@@ -23,6 +23,7 @@ import {
 } from '../../../lib/bootstrap-config';
 import { usePublicBootstrap } from '../../public-config/hooks/usePublicBootstrap';
 import AlertNotice from '../../../components/ui/AlertNotice';
+import { normalizeApiErrorMessage } from '../../../lib/errors';
 import cityBeloHorizonteIcon from '../../../assets/wireframes/icons/city-belo-horizonte.svg';
 import cityItabiritoIcon from '../../../assets/wireframes/icons/city-itabirito.svg';
 import cityMoedaIcon from '../../../assets/wireframes/icons/city-moeda.svg';
@@ -276,13 +277,15 @@ function validateForm(
 }
 
 function isPendingConfirmationConflict(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  const status = 'status' in error ? Number((error as { status?: unknown }).status) : 0;
-  return status === 409 && error.message.toLowerCase().includes('pendente de confirmação');
+  if (typeof error !== 'object' || error === null) return false;
+  const status = Number((error as { status?: unknown }).status ?? 0);
+  const code = String((error as { code?: unknown }).code ?? '');
+  return status === 409 && code === 'PENDING_CONFIRMATION_EXISTS';
 }
 
-function mapCreateError(errorMessage: string): string {
-  const normalized = errorMessage.toLowerCase();
+function mapCreateError(error: unknown): string {
+  const message = normalizeApiErrorMessage(error, { context: 'createBooking' });
+  const normalized = message.toLowerCase();
   if (
     normalized.includes('cidade') ||
     normalized.includes('cep') ||
@@ -295,7 +298,7 @@ function mapCreateError(errorMessage: string): string {
   ) {
     return GENERIC_ADDRESS_ERROR;
   }
-  return errorMessage;
+  return message;
 }
 
 type CityVisual = {
@@ -676,7 +679,7 @@ export default function BookingFormModal({
         return;
       }
 
-      const message = mapCreateError((error as Error).message || 'Erro ao criar agendamento.');
+      const message = mapCreateError(error);
       setValidationErrors((current) => ({ ...current, addressInput: message === GENERIC_ADDRESS_ERROR ? message : current.addressInput }));
     }
   };
@@ -689,7 +692,7 @@ export default function BookingFormModal({
   };
 
   const submitDisabled = createBookingMutation.isPending || !confirmedDate || isLoadingSlots;
-  const backendError = createBookingMutation.error ? mapCreateError(createBookingMutation.error.message) : null;
+  const createBookingErrorMessage = createBookingMutation.error ? mapCreateError(createBookingMutation.error) : null;
   const shouldShowComplementField = Boolean(selectedAddress);
   const shouldShowNumberField = shouldShowManualHouseNumber(selectedAddress);
   const durationLabel = formatDurationLabel(bookingDurationMinutes);
@@ -718,7 +721,7 @@ export default function BookingFormModal({
               <div className="booking-day-picker__intro">
                 <div>
                   <strong>Selecione um dia no calendário</strong>
-                  <span>Nenhum dia vem pre-selecionado; os dias ativos vem do backend.</span>
+                  <span>Nenhum dia vem pré-selecionado; os dias ativos aparecem conforme a agenda disponível.</span>
                 </div>
                 <button type="button" className="booking-day-picker__expand" onClick={() => setCalendarExpanded((current) => !current)}>
                   {calendarExpanded ? 'Reduzir calendário' : 'Aumentar calendário'}
@@ -741,7 +744,7 @@ export default function BookingFormModal({
                 {monthAvailability.isLoading ? <div className="booking-preview-modal__empty"><strong>Carregando dias disponiveis...</strong></div> : null}
                 {monthAvailability.hasError ? (
                   <AlertNotice variant="warning" title="Falha ao carregar dias" compact actionLabel="Tentar novamente" onAction={() => void monthAvailability.refetch()}>
-                    <p>{monthAvailability.error instanceof Error ? monthAvailability.error.message : 'Confira a conexao com o backend e tente novamente.'}</p>
+                    <p>{normalizeApiErrorMessage(monthAvailability.error, { context: 'availability' })}</p>
                   </AlertNotice>
                 ) : null}
                 <div className="booking-day-picker__weekdays">
@@ -838,7 +841,7 @@ export default function BookingFormModal({
                   {isLoadingSlots ? <div className="booking-preview-modal__empty"><strong>Carregando horários...</strong></div> : null}
                   {slotsError ? (
                     <AlertNotice variant="danger" title="Falha ao carregar horários" compact actionLabel="Tentar novamente" onAction={() => void refetchAvailableSlots()}>
-                      <p>{slotsError instanceof Error ? slotsError.message : "Não foi possível carregar os horários."}</p>
+                      <p>{normalizeApiErrorMessage(slotsError, { context: 'availability' })}</p>
                     </AlertNotice>
                   ) : null}
                   {!isLoadingSlots && availableSlots.length === 0 ? (
@@ -964,9 +967,9 @@ export default function BookingFormModal({
                 </label>
               </div>
 
-              {backendError && backendError !== GENERIC_ADDRESS_ERROR ? (
+              {createBookingErrorMessage && createBookingErrorMessage !== GENERIC_ADDRESS_ERROR ? (
                 <AlertNotice variant="danger" title="Não foi possível concluir o agendamento" compact>
-                  <p>{backendError}</p>
+                  <p>{createBookingErrorMessage}</p>
                 </AlertNotice>
               ) : null}
             </section>

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useHomeBookingSelection } from "../../../app/home-booking-provider";
 import { getCityTone } from "../../../data/allowed-cities";
 import { apiClient } from "../../../lib/api-client";
+import { normalizeApiErrorMessage } from "../../../lib/errors";
 import {
   getManageTokenByEventId,
   getManageTokens,
@@ -308,7 +309,7 @@ export default function HomeBookingsTimeline({
     if (!activeEvent || isAdminMode) return;
     if (!manageToken) {
       setBookingDetails(null);
-      setDetailError("Não foi possível localizar o token correto deste agendamento na navegação.");
+      setDetailError("Não foi possível localizar o código de acesso deste agendamento neste navegador.");
       return;
     }
     let cancelled = false;
@@ -329,7 +330,7 @@ export default function HomeBookingsTimeline({
       .catch((error) => {
         if (cancelled) return;
         setBookingDetails(null);
-        setDetailError(error instanceof Error ? error.message : "Não foi possível carregar os detalhes desse atendimento.");
+        setDetailError(normalizeApiErrorMessage(error, { context: "bookingDetails" }));
       })
       .finally(() => {
         if (!cancelled) setDetailLoading(false);
@@ -367,7 +368,7 @@ export default function HomeBookingsTimeline({
       .catch((error) => {
         if (cancelled) return;
         setEditTimes([]);
-        setEditError(error instanceof Error ? error.message : "Não foi possível carregar os horários disponíveis.");
+        setEditError(normalizeApiErrorMessage(error, { context: "availability" }));
       })
       .finally(() => {
         if (!cancelled) setEditLoadingTimes(false);
@@ -477,7 +478,7 @@ export default function HomeBookingsTimeline({
       setBookingDetails(updated);
       setEditOpen(false);
     } catch (error) {
-      setEditError(error instanceof Error ? error.message : "Não foi possível salvar a edição.");
+      setEditError(normalizeApiErrorMessage(error, { context: "editBooking" }));
     } finally {
       setActionLoading(false);
     }
@@ -494,7 +495,7 @@ export default function HomeBookingsTimeline({
       setActiveEvent(null);
       setBookingDetails(null);
     } catch (error) {
-      setDetailError(error instanceof Error ? error.message : "Não foi possível cancelar esse atendimento.");
+      setDetailError(normalizeApiErrorMessage(error, { context: "cancelBooking" }));
     } finally {
       setActionLoading(false);
     }
@@ -524,7 +525,7 @@ export default function HomeBookingsTimeline({
                       ? "Você ainda pode editar ou cancelar este atendimento."
                       : "Esse atendimento só pode ser alterado com pelo menos 2 horas de antecedência."}
                   </strong>
-                  {!manageToken ? <span>{detailError ?? "Não foi possível localizar o token correto deste agendamento na navegação."}</span> : null}
+                  {!manageToken ? <span>{detailError ?? "Não foi possível localizar o código de acesso deste agendamento neste navegador."}</span> : null}
                   {manageToken && detailError && !detailLoading ? <span>{detailError}</span> : null}
                 </div>
               ) : null}
@@ -566,7 +567,7 @@ export default function HomeBookingsTimeline({
             </div>
 
             {locationPreview.isLoading ? <div className="booking-preview-modal__empty"><strong>Buscando localização do endereço...</strong></div> : null}
-            {locationPreview.error ? <p className="booking-form__feedback booking-form__feedback--error">{locationPreview.error instanceof Error ? locationPreview.error.message : "Não foi possível localizar o endereço no mapa."}</p> : null}
+            {locationPreview.error ? <p className="booking-form__feedback booking-form__feedback--error">{normalizeApiErrorMessage(locationPreview.error, { context: "address", fallbackMessage: "Não foi possível localizar o endereço no mapa." })}</p> : null}
             {!locationPreview.isLoading && placeMapUrl ? (
               <div className="route-map-card route-map-card--place">
                 <img src={placeMapUrl} alt="Mapa do endereço do atendimento" className="route-map-card__image" />
@@ -614,7 +615,7 @@ export default function HomeBookingsTimeline({
               {locationError ? <p className="booking-form__feedback booking-form__feedback--error">{locationError}</p> : null}
               {isLocating ? <div className="booking-preview-modal__empty"><strong>Buscando sua localização...</strong></div> : null}
               {routeQuery.isLoading ? <div className="booking-preview-modal__empty"><strong>Calculando rota...</strong></div> : null}
-              {routeQuery.error ? <p className="booking-form__feedback booking-form__feedback--error">{routeQuery.error instanceof Error ? routeQuery.error.message : "Não foi possível calcular a rota."}</p> : null}
+              {routeQuery.error ? <p className="booking-form__feedback booking-form__feedback--error">{normalizeApiErrorMessage(routeQuery.error, { context: "route" })}</p> : null}
               {primaryRoute ? <RouteSummaryCard route={primaryRoute} /> : null}
               {staticMapUrl ? <div className="route-map-card"><img src={staticMapUrl} alt="Mapa da rota calculada" className="route-map-card__image" /><small className="route-map-card__caption">Powered by Geoapify, OpenStreetMap e OpenMapTiles</small></div> : null}
             </div>

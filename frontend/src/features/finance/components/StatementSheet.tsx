@@ -106,8 +106,8 @@ export default function StatementSheet({ open, onClose, bookings = [] }: Stateme
 
         <div className="statement-sheet__health">
           <strong>{healthQuery.data?.ok ? 'Financeiro online' : 'Financeiro indisponível'}</strong>
-          <span>{healthQuery.data?.provider ?? 'Backend financeiro não retornou status'}</span>
-          <small>{healthQuery.data?.message ?? 'Nenhum lançamento financeiro foi carregado.'}</small>
+          <span>{healthQuery.data?.ok ? 'Conexão financeira ativa' : 'Não foi possível atualizar o financeiro agora.'}</span>
+          <small>{healthQuery.data?.ok ? 'Os lançamentos disponíveis foram carregados.' : 'Tente novamente em alguns instantes.'}</small>
         </div>
 
         <div className="admin-bottom-sheet__body statement-sheet__list">

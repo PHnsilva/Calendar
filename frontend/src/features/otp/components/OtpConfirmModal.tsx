@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ChangeEvent, type ClipboardEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useOtpFlow } from "../hooks/useOtpFlow";
+import { normalizeApiErrorMessage } from "../../../lib/errors";
 import { OTP_CODE_LENGTH, applyOtpBackspace, applyOtpInput, codeToOtpDigits } from "../../../lib/otp";
 
 type WindowWithOtpCredential = Window & {
@@ -228,10 +229,10 @@ export default function OtpConfirmModal({
 
           {feedbackMessage ? <p className="booking-form__feedback booking-form__feedback--success">{feedbackMessage}</p> : null}
           {confirmError ? (
-            <p className="booking-form__feedback booking-form__feedback--error">{confirmError.message}</p>
+            <p className="booking-form__feedback booking-form__feedback--error">{normalizeApiErrorMessage(confirmError, { context: "verification" })}</p>
           ) : null}
           {resendError ? (
-            <p className="booking-form__feedback booking-form__feedback--error">{resendError.message}</p>
+            <p className="booking-form__feedback booking-form__feedback--error">{normalizeApiErrorMessage(resendError, { context: "verification" })}</p>
           ) : null}
           {expiresIn <= 0 ? (
             <p className="booking-form__feedback booking-form__feedback--error">

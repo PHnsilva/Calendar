@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { ServicoResponse, AvailabilityBlockResponse } from '../../../types/api';
 import { previewAdminBlocks, type AdminBlockMode, type AdminBlockEntry } from '../api/manage-admin-blocks';
 import AlertNotice from '../../../components/ui/AlertNotice';
+import { normalizeApiErrorMessage } from '../../../lib/errors';
 
 type AdminSelectionModalMode = 'block' | 'cancel' | 'view';
 
@@ -245,7 +246,10 @@ export default function AdminSelectionModal({
               {previewQuery.isError ? (
                 <div className="admin-selection-modal__empty">
                   <strong>Não foi possível gerar a prévia</strong>
-                  <span>{previewQuery.error instanceof Error ? previewQuery.error.message : 'Falha ao consultar conflitos.'}</span>
+                  <span>{normalizeApiErrorMessage(previewQuery.error, {
+                    context: 'admin',
+                    fallbackMessage: 'Não foi possível consultar conflitos. Tente novamente.',
+                  })}</span>
                 </div>
               ) : null}
 

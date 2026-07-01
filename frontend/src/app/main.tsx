@@ -7,8 +7,6 @@ import router from './router';
 import './styles.css';
 import '../styles/site-preparation.css';
 
-console.log('import.meta.env.VITE_SITE_HOLDING_PAGE', import.meta.env.VITE_SITE_HOLDING_PAGE);
-
 const app =
   import.meta.env.VITE_SITE_HOLDING_PAGE === 'true' ? (
     <SitePreparationPage />

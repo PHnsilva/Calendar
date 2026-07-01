@@ -113,6 +113,7 @@ import { ADMIN_BOOKINGS_ROUTE, PROVIDER_BOOKINGS_ROUTE, applyAdminLoginDestinati
 import { updateAdminBooking } from '../../features/admin/api/update-admin-booking';
 import { exportBudgetPdf, exportBudgetXls } from '../../features/admin/services/budget-export';
 import { ApiError } from '../../lib/api-client';
+import { normalizeApiErrorMessage } from '../../lib/errors';
 import { ALLOWED_CITIES } from '../../data/allowed-cities';
 import { getAllowedCities, getBookingDurationMinutesByCity, getDefaultCity, getDefaultState, getMaxFutureMonthsAhead, getSlotMinutes } from '../../lib/bootstrap-config';
 import { confirmRecovery, resendRecovery } from '../../features/recovery/api/confirm-recovery';
@@ -389,7 +390,8 @@ function focusFirstCreateBookingError() {
   });
 }
 
-function mapBookingCreateError(message: string): string {
+function mapBookingCreateError(error: unknown): string {
+  const message = normalizeApiErrorMessage(error, { context: 'createBooking' });
   const normalized = normalizeText(message);
   if (normalized.includes('telefone') || normalized.includes('celular') || normalized.includes('phone')) {
     return 'Digite um celular válido com DDD. Exemplo: (31) 95411-5323.';
@@ -1355,7 +1357,7 @@ export function ClientBookings() {
         <div className="wf-booking-stack">
           {isLoading ? <EmptyState title="Carregando agendamentos" text="Buscando seus dados reais no sistema." /> : null}
           {isError ? <EmptyState title="Não foi possível carregar" text="Confira sua conexão ou tente novamente em instantes." action="Criar agendamento" onAction={openCreate} /> : null}
-          {!isLoading && !isError && bookings.length === 0 ? <EmptyState title="Nenhum agendamento encontrado" text={hasTokens ? 'Você ainda não possui agendamentos vinculados aos tokens salvos.' : 'Crie um novo agendamento para acompanhar por aqui.'} action="Criar agendamento" onAction={openCreate} /> : null}
+          {!isLoading && !isError && bookings.length === 0 ? <EmptyState title="Nenhum agendamento encontrado" text={hasTokens ? 'Você ainda não possui agendamentos vinculados aos códigos de acesso salvos.' : 'Crie um novo agendamento para acompanhar por aqui.'} action="Criar agendamento" onAction={openCreate} /> : null}
           {bookings.map((booking) => <BookingCard key={booking.id} booking={booking} onDetails={() => openDetails(booking)} onEdit={openCreate} />)}
         </div>
       </AppointmentsPageShell>
@@ -1416,7 +1418,7 @@ function getAdminAuthErrorMessage(error: unknown, step: 'start' | 'confirm'): st
   if (error instanceof ApiError) {
     if (step === 'start') {
       if (error.status === 400) return 'Informe um telefone válido.';
-      if (error.status === 401 || error.status === 403) return 'Número não autorizado para acesso administrativo.';
+      if (error.status === 401 || error.status === 403) return 'Esse número não tem acesso liberado.';
       return 'Não foi possível validar o acesso agora. Tente novamente.';
     }
     if (error.status === 400 || error.status === 401 || error.status === 403) {
@@ -2066,7 +2068,10 @@ function AdminBlocksView({ setModal }: { setModal: (modal: ModalKind) => void })
       await deleteAdminBlock(blockId);
       await queryClient.invalidateQueries({ queryKey: ['wireframe-admin-blocks'] });
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'Não foi possível excluir o bloqueio.');
+      window.alert(normalizeApiErrorMessage(err, {
+        context: 'admin',
+        fallbackMessage: 'Não foi possível excluir o bloqueio. Tente novamente.',
+      }));
     } finally {
       setDeletingId('');
     }
@@ -2473,7 +2478,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
   const [selectedEndTime, setSelectedEndTime] = useState('');
   const [monthStart] = useState(() => startOfMonth());
   const [fieldErrors, setFieldErrors] = useState<CreateBookingErrors>({});
-  const [backendError, setBackendError] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
   const selectedCity = allowedCities.includes(city) ? city : defaultCity;
@@ -2518,7 +2523,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
     if (storedProfile.email) setEmail(storedProfile.email);
     if (storedProfile.city) setCity(storedProfile.city);
     setFieldErrors((current) => ({ ...current, fullName: undefined, phone: undefined, protectedPassword: undefined, email: undefined }));
-    setBackendError('');
+    setSubmitError('');
   };
 
   const handleCityChange = (value: string) => {
@@ -2530,7 +2535,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
     setSelectedTime('');
     setSelectedEndTime('');
     setFieldErrors({});
-    setBackendError('');
+    setSubmitError('');
   };
 
   const handleAddressChange = (value: string) => {
@@ -2538,7 +2543,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
     setSelectedAddress(null);
     setHouseNumber('');
     setFieldErrors((current) => ({ ...current, address: undefined, number: undefined }));
-    setBackendError('');
+    setSubmitError('');
   };
 
   const handleAddressSelect = (suggestion: AddressSuggestion) => {
@@ -2548,7 +2553,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
     setHouseNumber(houseNumberFromSuggestion);
     setComplement('');
     setFieldErrors((current) => ({ ...current, address: undefined, number: undefined }));
-    setBackendError('');
+    setSubmitError('');
   };
 
   const handleCreateBooking = async () => {
@@ -2604,7 +2609,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
       return;
     }
 
-    setBackendError('');
+    setSubmitError('');
     setSuccessMessage('');
 
     try {
@@ -2647,12 +2652,12 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         navigate('/meus-agendamentos');
       }, 700);
     } catch (error) {
-      const message = mapBookingCreateError((error as Error).message || 'Nao foi possivel criar o agendamento.');
-      if (message.toLowerCase().includes('senha')) {
+      const message = mapBookingCreateError(error);
+      if (message.toLowerCase().includes('senha') || (error instanceof ApiError && error.code === 'RESERVED_ACCESS')) {
         setForceReservedPhonePassword(true);
         setFieldErrors((current) => ({ ...current, protectedPassword: 'Senha obrigatória para usar telefone de administrador ou prestador.' }));
       }
-      setBackendError(message);
+      setSubmitError(message);
       window.setTimeout(focusFirstCreateBookingError, 0);
     }
   };
@@ -2715,7 +2720,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
       </div>
       {selectedTime ? <p className="wf-create-selected-slot">Horário selecionado: <strong>{selectedTime}{selectedEndTime ? ` - ${selectedEndTime}` : ''}</strong></p> : null}
       {successMessage ? <p className="wf-auth-feedback wf-auth-feedback--success">{successMessage}</p> : null}
-      {backendError ? <p className="wf-auth-feedback wf-auth-feedback--error">{backendError}</p> : null}
+      {submitError ? <p className="wf-auth-feedback wf-auth-feedback--error">{submitError}</p> : null}
       <ModalActions primary={createBookingMutation.isPending ? 'Agendando...' : 'Confirmar agendamento'} secondary="Cancelar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={handleCreateBooking} disabledPrimary={createBookingMutation.isPending} />
     </>
   );
@@ -2732,9 +2737,9 @@ function mapGeneralAuthError(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
     if (error.status === 400) return 'Informe um telefone válido.';
     if (error.status === 401 || error.status === 403) return 'Código inválido ou expirado.';
-    return error.message || fallback;
+    return normalizeApiErrorMessage(error, { context: 'verification', fallbackMessage: fallback });
   }
-  return error instanceof Error ? error.message : fallback;
+  return normalizeApiErrorMessage(error, { context: 'verification', fallbackMessage: fallback });
 }
 
 function isAdminUnauthorized(error: unknown): boolean {
@@ -3126,7 +3131,10 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
       });
       setMessage('Perfil salvo neste dispositivo.');
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Não foi possível salvar o perfil.');
+      setError(normalizeApiErrorMessage(saveError, {
+        context: 'profile',
+        fallbackMessage: 'Não foi possível salvar o perfil. Tente novamente.',
+      }));
     } finally {
       setSaving(false);
     }
@@ -3438,7 +3446,10 @@ function AdminBlockModal({ onClose }: { onClose: () => void }) {
       setMessage('Bloqueio salvo na agenda.');
       window.setTimeout(onClose, 500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível salvar o bloqueio.');
+      setError(normalizeApiErrorMessage(err, {
+        context: 'admin',
+        fallbackMessage: 'Não foi possível salvar o bloqueio. Tente novamente.',
+      }));
     } finally {
       setSaving(false);
     }
@@ -3508,7 +3519,7 @@ function EditAdminBookingModal({ booking, onClose }: { booking?: BookingItem; on
       onClose();
       window.location.reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nao foi possivel editar.');
+      setError(normalizeApiErrorMessage(err, { context: 'editBooking' }));
     } finally {
       setSaving(false);
     }
@@ -3556,7 +3567,10 @@ function AssignProviderModal({ booking, onClose }: { booking?: BookingItem; onCl
       onClose();
       window.location.reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nao foi possivel designar.');
+      setError(normalizeApiErrorMessage(err, {
+        context: 'admin',
+        fallbackMessage: 'Não foi possível designar o prestador. Tente novamente.',
+      }));
     } finally {
       setSaving(false);
     }
@@ -3674,7 +3688,10 @@ function OfxModal({ onClose, onImported }: { onClose: () => void; onImported?: (
       setDashboard(null);
       setFileName('');
       setFileSize('');
-      setError(err instanceof Error ? err.message : 'Nao foi possivel ler o arquivo OFX.');
+      setError(normalizeApiErrorMessage(err, {
+        context: 'finance',
+        fallbackMessage: 'Não foi possível ler o arquivo. Confira o formato e tente novamente.',
+      }));
     } finally {
       setIsParsing(false);
     }
@@ -3837,7 +3854,7 @@ function BudgetModal({ booking, onClose }: { booking?: BookingItem; onClose: () 
       }));
       setMessage('Orçamento salvo no navegador. Exporte em PDF ou Excel para compartilhar.');
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Não foi possível salvar o orçamento no navegador.');
+      setMessage(normalizeApiErrorMessage(err, { context: 'budget' }));
     }
   };
 

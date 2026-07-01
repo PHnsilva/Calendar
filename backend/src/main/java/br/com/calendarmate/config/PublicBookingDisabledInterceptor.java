@@ -44,7 +44,11 @@ public class PublicBookingDisabledInterceptor implements HandlerInterceptor {
         response.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.getWriter().write("{\"message\":\"" + DISABLED_MESSAGE + "\"}");
+        response.getWriter().write(
+                "{\"code\":\"PUBLIC_BOOKING_UNAVAILABLE\","
+                        + "\"error\":\"PUBLIC_BOOKING_UNAVAILABLE\","
+                        + "\"message\":\"" + DISABLED_MESSAGE + "\","
+                        + "\"retryable\":false}");
         return false;
     }
 

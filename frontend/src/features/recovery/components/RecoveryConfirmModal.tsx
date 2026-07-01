@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { normalizeApiErrorMessage } from "../../../lib/errors";
 
 type WindowWithOtpCredential = Window & {
   OTPCredential?: unknown;
@@ -79,7 +80,7 @@ export function RecoveryConfirmModal({
         <span>Código</span>
         <input value={code} onChange={(e) => setCode(onlyDigits(e.target.value))} inputMode="numeric" autoComplete="one-time-code" maxLength={3} placeholder="000" />
       </label>
-      {error ? <p className="recovery-card__error">{error.message}</p> : null}
+      {error ? <p className="recovery-card__error">{normalizeApiErrorMessage(error, { context: "recovery" })}</p> : null}
       <div className="recovery-card__actions">
         <button type="button" className="primary-action" onClick={onConfirm} disabled={!canConfirm}>
           {isConfirming ? "Confirmando..." : "Confirmar"}

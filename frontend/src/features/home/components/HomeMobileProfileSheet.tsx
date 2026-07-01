@@ -7,6 +7,7 @@ import {
   savePhoneVerification,
   saveRecoveredBookings,
 } from '../../../lib/storage';
+import { normalizeApiErrorMessage } from '../../../lib/errors';
 import { formatPhoneInput, isValidMobilePhone, normalizePhone } from '../../../lib/authRole';
 import type { RecoverConfirmResponse, ServicoResponse } from '../../../types/api';
 
@@ -189,7 +190,10 @@ export default function HomeMobileProfileSheet({
       setStep('code');
       window.requestAnimationFrame(() => digitRefs.current[0]?.focus());
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Não foi possível enviar o código.');
+      setErrorMessage(normalizeApiErrorMessage(error, {
+        context: 'profile',
+        fallbackMessage: 'Não conseguimos enviar o código agora. Confira o número e tente novamente.',
+      }));
     } finally {
       setIsStarting(false);
     }
@@ -209,7 +213,10 @@ export default function HomeMobileProfileSheet({
       setSavedAt(new Date().toISOString());
       setStep('success');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Código inválido.');
+      setErrorMessage(normalizeApiErrorMessage(error, {
+        context: 'profile',
+        fallbackMessage: 'Código inválido ou expirado. Confira os dígitos e tente novamente.',
+      }));
     } finally {
       setIsConfirming(false);
     }
@@ -228,7 +235,10 @@ export default function HomeMobileProfileSheet({
       setCode('');
       window.requestAnimationFrame(() => digitRefs.current[0]?.focus());
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Não foi possível reenviar o código.');
+      setErrorMessage(normalizeApiErrorMessage(error, {
+        context: 'profile',
+        fallbackMessage: 'Não conseguimos reenviar o código agora. Tente novamente.',
+      }));
     } finally {
       setIsResending(false);
     }

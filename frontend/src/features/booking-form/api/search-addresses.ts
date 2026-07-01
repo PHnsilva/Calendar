@@ -1,5 +1,6 @@
 import { ApiError, apiClient } from "../../../lib/api-client";
 import { env } from "../../../lib/env";
+import { normalizeApiErrorMessage } from "../../../lib/errors";
 import type { GeoapifyAddressSuggestion, GeoapifyCityContext } from "../../../types/api";
 
 const AUTOCOMPLETE_ENDPOINT = "https://api.geoapify.com/v1/geocode/autocomplete";
@@ -142,24 +143,27 @@ function mapBackendAddressError(error: ApiError, fallback: string): Error {
   const code = error.code || payload?.error || "";
 
   if (error.status === 0) {
-    return new Error("Nao foi possivel conectar ao servico de enderecos.");
+    return new Error("Não foi possível buscar endereços agora. Verifique sua conexão e tente novamente.");
   }
   if (error.status === 404) {
-    return new Error("A busca de enderecos nao esta disponivel agora.");
+    return new Error("A busca de endereços não está disponível agora.");
   }
   if (code === "ADDRESS_STATE_INVALID" || field === "state") {
-    return new Error("Estado invalido para a busca de endereco. Use a UF, como MG.");
+    return new Error("Estado inválido para a busca de endereço. Use a UF, como MG.");
   }
   if (code === "ADDRESS_CITY_REQUIRED" || code === "ADDRESS_CITY_NOT_FOUND" || field === "city") {
-    return new Error(payload?.message || "Cidade invalida para a busca de endereco.");
+    return new Error(normalizeApiErrorMessage(error, {
+      context: "address",
+      fallbackMessage: "Cidade inválida para a busca de endereço.",
+    }));
   }
   if (code === "ADDRESS_AUTOCOMPLETE_UNAVAILABLE") {
-    return new Error("A busca automatica de endereco nao esta disponivel agora. Preencha rua, bairro e numero manualmente.");
+    return new Error("A busca automática de endereço não está disponível agora. Preencha rua, bairro e número manualmente.");
   }
   if (error.status >= 500) {
-    return new Error("A busca de enderecos esta temporariamente indisponivel.");
+    return new Error("A busca de endereços está temporariamente indisponível.");
   }
-  return new Error(payload?.message || error.message || fallback);
+  return new Error(normalizeApiErrorMessage(error, { context: "address", fallbackMessage: fallback }));
 }
 
 function firstText(...values: unknown[]): string {
@@ -547,8 +551,8 @@ async function resolveCityThroughBackend(cityName: string, state?: string): Prom
       },
     });
   } catch (error) {
-    if (error instanceof ApiError) throw mapBackendAddressError(error, "Nao foi possivel resolver a cidade para o autocomplete de endereco.");
-    throw new Error("Nao foi possivel resolver a cidade para o autocomplete de endereco.");
+    if (error instanceof ApiError) throw mapBackendAddressError(error, "Não foi possível validar a cidade para buscar o endereço.");
+    throw new Error("Não foi possível validar a cidade para buscar o endereço.");
   }
 }
 
@@ -565,7 +569,7 @@ export async function resolveGeoapifyCityContext(cityName: string, state?: strin
   } catch (error) {
     if (!(error instanceof GeoapifyDirectRequestError)) throw error;
 
-    if (!hasWarnedDirectFallback) {
+    if (isDevelopment() && !hasWarnedDirectFallback) {
       hasWarnedDirectFallback = true;
       console.warn("[CalendarMate] Geoapify direct city resolver failed; using backend proxy.", error);
     }
@@ -710,8 +714,8 @@ async function searchAddressesThroughBackend(query: string, cityContext: Geoapif
     });
     return filtered;
   } catch (error) {
-    if (error instanceof ApiError) throw mapBackendAddressError(error, "Nao foi possivel conectar ao backend de autocomplete de endereco.");
-    throw new Error("Nao foi possivel conectar ao backend de autocomplete de endereco.");
+    if (error instanceof ApiError) throw mapBackendAddressError(error, "Não foi possível buscar endereços agora.");
+    throw new Error("Não foi possível buscar endereços agora.");
   }
 }
 
@@ -721,11 +725,11 @@ export async function searchAddresses(text: string, cityContext?: GeoapifyCityCo
 
   const context = typeof cityContext === "string" ? { name: cityContext } : cityContext;
   if (!context?.name?.trim()) {
-    throw new Error("Cidade: selecione uma cidade antes de buscar o endereco.");
+    throw new Error("Cidade: selecione uma cidade antes de buscar o endereço.");
   }
 
   if (!buildGeoapifyFilter(context)) {
-    throw new Error("Cidade: aguarde a validacao da cidade para restringir a busca de endereco.");
+    throw new Error("Cidade: aguarde a validação da cidade para buscar o endereço.");
   }
 
   if (!env.geoapifyPublicKey) {
@@ -737,7 +741,7 @@ export async function searchAddresses(text: string, cityContext?: GeoapifyCityCo
   } catch (error) {
     if (!(error instanceof GeoapifyDirectRequestError)) throw error;
 
-    if (!hasWarnedDirectFallback) {
+    if (isDevelopment() && !hasWarnedDirectFallback) {
       hasWarnedDirectFallback = true;
       console.warn("[CalendarMate] Geoapify direct autocomplete failed; using backend proxy.", error);
     }

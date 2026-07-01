@@ -16,16 +16,16 @@ export default function AdminTokenGate({ initialToken = "" }: AdminTokenGateProp
         <span className="admin-token-gate__eyebrow">Admin</span>
         <h1 className="admin-token-gate__title">Acesso administrativo</h1>
         <p className="admin-token-gate__text">
-          Informe o token do admin para carregar os agendamentos e calcular rotas no painel.
+          Informe o código de acesso administrativo para carregar os agendamentos e calcular rotas no painel.
         </p>
 
         <label className="admin-token-gate__field">
-          <span>Token</span>
+          <span>Código de acesso</span>
           <input
             className="booking-form__input"
             value={token}
             onChange={(event) => setToken(event.target.value)}
-            placeholder="Sessao administrativa"
+            placeholder="Código administrativo"
           />
         </label>
 

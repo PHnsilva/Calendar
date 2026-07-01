@@ -1,3 +1,5 @@
+import { normalizeApiErrorMessage } from "../../../lib/errors";
+
 type RecoveryStartModalProps = {
   phone: string;
   setPhone: (value: string) => void;
@@ -16,7 +18,7 @@ export function RecoveryStartModal({ phone, setPhone, onStart, disabled, isLoadi
         <span>Telefone</span>
         <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(31) 99999-9999" inputMode="tel" />
       </label>
-      {error ? <p className="recovery-card__error">{error.message}</p> : null}
+      {error ? <p className="recovery-card__error">{normalizeApiErrorMessage(error, { context: "recovery" })}</p> : null}
       <button type="button" className="primary-action" onClick={onStart} disabled={disabled}>
         {isLoading ? "Enviando..." : "Enviar código"}
       </button>

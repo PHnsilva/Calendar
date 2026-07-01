@@ -27,8 +27,8 @@ export function useUserGeolocation() {
         });
         setIsLoading(false);
       },
-      (geoError) => {
-        setError(geoError.message || "Não foi possível obter sua localização.");
+      () => {
+        setError("Não foi possível obter sua localização. Verifique a permissão do navegador e tente novamente.");
         setIsLoading(false);
       },
       {

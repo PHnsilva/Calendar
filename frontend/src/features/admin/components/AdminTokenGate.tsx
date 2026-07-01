@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, ApiError } from "../../../lib/api-client";
+import { normalizeApiErrorMessage } from "../../../lib/errors";
 import { clearAdminToken, saveAdminToken } from "../../../lib/storage";
 import type { AdminDashboardSummaryResponse } from "../../../types/api";
 
@@ -31,9 +32,12 @@ export default function AdminTokenGate({ redirectTo = "/admin/dashboard", initia
     } catch (err) {
       clearAdminToken();
       if (err instanceof ApiError) {
-        setError(err.message || "Token administrativo invalido ou indisponivel.");
+        setError(normalizeApiErrorMessage(err, {
+          context: "login",
+          fallbackMessage: "Não foi possível validar o código de acesso.",
+        }));
       } else {
-        setError("Nao foi possivel validar o token administrativo.");
+        setError("Não foi possível validar o código de acesso.");
       }
     } finally {
       setLoading(false);
@@ -50,7 +54,7 @@ export default function AdminTokenGate({ redirectTo = "/admin/dashboard", initia
         className="booking-form__input"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="Cole o token administrativo"
+        placeholder="Código de acesso administrativo"
       />
       {error ? <p className="booking-form__error">{error}</p> : null}
       <div className="admin-gate-card__actions">

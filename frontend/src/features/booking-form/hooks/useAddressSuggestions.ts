@@ -65,7 +65,9 @@ function useResolvedCityContext(selectedCity: string, selectedState: string, ena
   useEffect(() => {
     if (!cityQuery.error || hasWarnedCityResolverFailure) return;
     hasWarnedCityResolverFailure = true;
-    console.warn("[CalendarMate] Geoapify city resolver failed.", cityQuery.error);
+    if (isDevelopment()) {
+      console.warn("[CalendarMate] Geoapify city resolver failed.", cityQuery.error);
+    }
   }, [cityQuery.error]);
 
   const cityContext = useMemo(() => {
@@ -90,13 +92,13 @@ function useResolvedCityContext(selectedCity: string, selectedState: string, ena
   const cityError = !enabled
     ? null
     : !city
-      ? "Cidade: selecione uma cidade antes de buscar o endereco."
+      ? "Cidade: selecione uma cidade antes de buscar o endereço."
       : cityQuery.error
-        ? "Nao foi possivel validar a cidade agora. Selecione uma cidade atendida e digite rua, bairro e numero."
+        ? "Não foi possível validar a cidade agora. Selecione uma cidade atendida e digite rua, bairro e número."
         : autocompleteUnavailable
-          ? "Endereco: a busca automatica nao esta disponivel agora. Digite rua, bairro e numero manualmente."
+          ? "Endereço: a busca automática não está disponível agora. Digite rua, bairro e número manualmente."
         : cityQuery.data && !cityContext
-          ? "Cidade: nao foi possivel preparar a busca de enderecos para a cidade escolhida."
+          ? "Cidade: não foi possível preparar a busca de endereços para a cidade escolhida."
           : null;
 
   return {
@@ -172,7 +174,7 @@ export function useAddressSuggestions(
     if (cityError || !cityContext) {
       setSuggestions([]);
       setIsLoading(false);
-      setError(cityError ?? "Cidade: aguarde a validacao da cidade para buscar enderecos.");
+      setError(cityError ?? "Cidade: aguarde a validação da cidade para buscar endereços.");
       setDebug(null);
       logAddressDebug("blocked-by-city", {
         inputValue: trimmed,
@@ -214,7 +216,7 @@ export function useAddressSuggestions(
         setSuggestions([]);
         setDebug(null);
         setError(friendlyAddressLookupError());
-        if (!hasWarnedGeoapifyRequestFailure) {
+        if (isDevelopment() && !hasWarnedGeoapifyRequestFailure) {
           hasWarnedGeoapifyRequestFailure = true;
           console.warn("[CalendarMate] Geoapify autocomplete request failed.", requestError);
         }

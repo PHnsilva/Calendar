@@ -12,6 +12,7 @@ import type { HomeSelectedSlot } from "../../home/types";
 import { formatDurationLabel, getAllowedCities, getBookingDurationMinutesByCity, getDefaultCity, getDefaultState, getSlotMinutes } from "../../../lib/bootstrap-config";
 import { usePublicBootstrap } from "../../public-config/hooks/usePublicBootstrap";
 import AlertNotice from '../../../components/ui/AlertNotice';
+import { normalizeApiErrorMessage } from "../../../lib/errors";
 import { formatPhoneInput as formatBrazilianPhoneInput, isValidMobilePhone, normalizePhone } from "../../../lib/authRole";
 
 type BookingFormModalProps = {
@@ -143,12 +144,13 @@ function validateForm(values: BookingFormValues, addressInput: string, selectedC
   return errors;
 }
 
-function mapCreateError(errorMessage: string): string {
-  const normalized = errorMessage.toLowerCase();
+function mapCreateError(error: unknown): string {
+  const message = normalizeApiErrorMessage(error, { context: "createBooking" });
+  const normalized = message.toLowerCase();
   if (normalized.includes("cidade") || normalized.includes("cep") || normalized.includes("bairro") || normalized.includes("rua") || normalized.includes("número") || normalized.includes("numero") || normalized.includes("endereço") || normalized.includes("endereco")) {
     return GENERIC_ADDRESS_ERROR;
   }
-  return errorMessage;
+  return message;
 }
 
 export default function BookingFormModal({
@@ -361,7 +363,7 @@ export default function BookingFormModal({
       });
     } catch (error) {
       createBookingMutation.reset();
-      const message = mapCreateError((error as Error).message || "Erro ao criar agendamento.");
+      const message = mapCreateError(error);
       setValidationErrors((current) => ({ ...current, addressInput: message === GENERIC_ADDRESS_ERROR ? message : current.addressInput }));
     }
   };
@@ -375,7 +377,7 @@ export default function BookingFormModal({
   };
 
   const submitDisabled = createBookingMutation.isPending || isUnavailable || isLoadingSlots;
-  const backendError = createBookingMutation.error ? mapCreateError(createBookingMutation.error.message) : null;
+  const createBookingErrorMessage = createBookingMutation.error ? mapCreateError(createBookingMutation.error) : null;
   const shouldShowComplementField = Boolean(selectedAddress);
   const shouldShowNumberField = Boolean(selectedAddress && !normalizeText(selectedAddress.houseNumber));
   const durationLabel = formatDurationLabel(bookingDurationMinutes);
@@ -424,7 +426,7 @@ export default function BookingFormModal({
                 {isLoadingSlots ? <div className="booking-preview-modal__empty"><strong>Carregando horários...</strong></div> : null}
                 {slotsError ? (
                   <AlertNotice variant="danger" title="Falha ao carregar horários" compact>
-                    <p>{slotsError instanceof Error ? slotsError.message : "Não foi possível carregar os horários."}</p>
+                    <p>{normalizeApiErrorMessage(slotsError, { context: "availability" })}</p>
                   </AlertNotice>
                 ) : null}
                 {!isLoadingSlots && availableSlots.length === 0 ? (
@@ -542,9 +544,9 @@ export default function BookingFormModal({
 
                 <p className="booking-form__hint">Escolha a cidade e selecione o endereço sugerido para preencher o agendamento com mais precisão.</p>
                 <p className="booking-form__hint">O tipo de serviço é enviado automaticamente como <strong>{DEFAULT_SERVICE_TYPE}</strong>.</p>
-                {backendError && backendError !== GENERIC_ADDRESS_ERROR ? (
+                {createBookingErrorMessage && createBookingErrorMessage !== GENERIC_ADDRESS_ERROR ? (
                   <AlertNotice variant="danger" title="Não foi possível concluir o agendamento" compact>
-                    <p>{backendError}</p>
+                    <p>{createBookingErrorMessage}</p>
                   </AlertNotice>
                 ) : null}
               </>

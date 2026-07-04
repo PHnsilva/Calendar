@@ -1,10 +1,11 @@
 /*
  * Client landing cascade authority.
- * Landing layout owns page sections. Client navbar is imported after landing core
- * so its compact cross-page contract stays identical on home and bookings pages.
+ * Client navbar provides the cross-page baseline. The landing core is imported
+ * after it so .wf-client-landing and .wf-client-navbar--landing own the final
+ * home-page contract without scattered override blocks.
  * Footer remains last to preserve the current .cm-footer visual contract.
  */
 
-@import "./client-landing-core.css";
 @import "../client-navbar-unified.css";
+@import "./client-landing-core.css";
 @import "../components/client-footer.css";

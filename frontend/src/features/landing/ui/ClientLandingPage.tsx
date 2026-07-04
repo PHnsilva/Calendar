@@ -1,4 +1,5 @@
 import { useState } from "react";
+import landingNavbarLogo from "../../../assets/brand/sg-navbar-logo-white-orange-v2.png";
 import ClientNavbar from "../../../components/layout/ClientNavbar";
 import { PageShell } from "../../../components/layout/ResponsivePrimitives";
 import { CalendarMateModal, useDoubleBackToLeavePage, type ModalKind } from "../../../components/screens/CalendarMateRoutes";
@@ -15,7 +16,7 @@ export function ClientLandingPage() {
 
   return (
     <PageShell className="wf-page wf-client-landing">
-      <ClientNavbar onCreate={() => setModal("create-client")} onConfirmPhone={() => setModal("client-profile")} onProfile={() => setModal("client-profile")} />
+      <ClientNavbar className="wf-client-navbar--landing wf-client-navbar--white-logo" logoSrc={landingNavbarLogo} onCreate={() => setModal("create-client")} onConfirmPhone={() => setModal("client-profile")} onProfile={() => setModal("client-profile")} />
       <main className="wf-landing-main">
         <ClientLandingHeroBlock setModal={setModal} />
         <ClientLandingActions profile={profile} setModal={setModal} />

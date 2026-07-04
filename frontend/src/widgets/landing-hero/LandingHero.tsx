@@ -1,50 +1,4 @@
 import type { ReactNode } from "react";
-import heroClientDesktop901 from "../../assets/wireframes/landing/hero-tradesman-transparent-901w.png";
-import heroClientDesktop1024 from "../../assets/wireframes/landing/hero-tradesman-transparent-1024w.png";
-import heroClientDesktop1280 from "../../assets/wireframes/landing/hero-tradesman-transparent-1280w.png";
-import heroClientDesktop1440 from "../../assets/wireframes/landing/hero-tradesman-transparent-1440w.png";
-import heroClientDesktop1600 from "../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png";
-import heroClientDesktop1718 from "../../assets/wireframes/landing/hero-tradesman-transparent-1718w.png";
-import heroClientDesktop1920 from "../../assets/wireframes/landing/hero-tradesman-transparent-1920w.png";
-import heroClientDesktop2200 from "../../assets/wireframes/landing/hero-tradesman-transparent-2200w.png";
-import heroClientDesktop2500 from "../../assets/wireframes/landing/hero-tradesman-transparent-2500w.png";
-import heroClientMobile320 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-320w.png";
-import heroClientMobile360 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-360w.png";
-import heroClientMobile390 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-390w.png";
-import heroClientMobile430 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-430w.png";
-import heroClientMobile531 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-531w.png";
-import heroClientMobile768 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-768w.png";
-import heroClientMobile899 from "../../assets/wireframes/landing/client-hero-composite-mobile-transparent-899w.png";
-import ResponsiveAsset from "../../shared/ui/ResponsiveAsset";
-
-const clientHeroDesktopSrcSet = [
-  `${heroClientDesktop901} 901w`,
-  `${heroClientDesktop1024} 1024w`,
-  `${heroClientDesktop1280} 1280w`,
-  `${heroClientDesktop1440} 1440w`,
-  `${heroClientDesktop1600} 1600w`,
-  `${heroClientDesktop1718} 1718w`,
-  `${heroClientDesktop1920} 1920w`,
-  `${heroClientDesktop2200} 2200w`,
-  `${heroClientDesktop2500} 2500w`,
-].join(", ");
-
-const clientHeroMobileSrcSet = [
-  `${heroClientMobile320} 320w`,
-  `${heroClientMobile360} 360w`,
-  `${heroClientMobile390} 390w`,
-  `${heroClientMobile430} 430w`,
-  `${heroClientMobile531} 531w`,
-  `${heroClientMobile768} 768w`,
-  `${heroClientMobile899} 899w`,
-].join(", ");
-
-const clientHeroSmallMobileSrcSet = [
-  `${heroClientMobile320} 320w`,
-  `${heroClientMobile360} 360w`,
-  `${heroClientMobile390} 390w`,
-  `${heroClientMobile430} 430w`,
-].join(", ");
 
 type LandingHeroProps = {
   badge: ReactNode;
@@ -74,7 +28,7 @@ export function LandingHero({
   mobileTitle,
 }: LandingHeroProps) {
   return (
-    <section className="wf-hero wf-hero--client wf-hero--client-final">
+    <section className="wf-hero wf-hero--client wf-hero--client-final" aria-label="Agendamento de pequenos reparos">
       <div className="wf-hero-copy wf-client-hero-copy-final">
         {badge}
         <h1 className="wf-hero-title">
@@ -92,21 +46,6 @@ export function LandingHero({
           </button>
         </div>
       </div>
-      <ResponsiveAsset
-        alt="Prestador de pequenos reparos"
-        className="wf-media-frame wf-media-frame--hero wf-hero-visual wf-hero-visual--client wf-client-hero-visual-final"
-        desktopSrc={heroClientDesktop1600}
-        desktopSrcSet={clientHeroDesktopSrcSet}
-        sizes="(min-width: 2200px) 1180px, (min-width: 1900px) 1040px, (min-width: 1400px) 900px, (min-width: 1161px) 770px, (min-width: 901px) 660px, 100vw"
-        mobileSrc={heroClientMobile531}
-        mobileSrcSet={clientHeroMobileSrcSet}
-        mobileSizes="(max-width: 430px) min(58vw, 430px), (max-width: 900px) min(56vw, 560px), 100vw"
-        mobileBreakpoint={900}
-        smallMobileSrc={heroClientMobile320}
-        smallMobileSrcSet={clientHeroSmallMobileSrcSet}
-        smallMobileBreakpoint={430}
-        smallMobileSizes="min(58vw, 430px)"
-      />
     </section>
   );
 }

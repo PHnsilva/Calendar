@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../../assets/brand/logowithname.png';
 import adminLogoMark from '../../assets/brand/admin-logo-mark.png';
-import adminLogoWordmark from '../../assets/brand/admin-logo-wordmark.png';
+import defaultLogoSrc from '../../assets/brand/logowithname.png';
 
 type NavbarProfile = 'client' | 'admin' | 'provider';
 type NavbarButtonVariant = 'blue' | 'orange' | 'ghost';
@@ -28,6 +27,7 @@ type BaseNavbarProps = {
   className?: string;
   mobileLeadingAction?: ReactNode;
   logoLabel?: string;
+  logoSrc?: string;
   logoTo?: string;
   mobileActions?: ReactNode;
 };
@@ -182,21 +182,21 @@ export default function BaseNavbar({
   children,
   className,
   logoLabel = 'SG Pequenos Reparos Agendamentos',
+  logoSrc,
   logoTo = '/',
   mobileLeadingAction,
   mobileActions,
   profile,
 }: BaseNavbarProps) {
+  const resolvedLogoSrc = logoSrc || (profile === 'admin' ? adminLogoMark : defaultLogoSrc);
+
   if (profile === 'admin') {
     return (
       <header className={cx('cm-admin-navbar', className)} data-admin-navbar>
         <div className="cm-admin-navbar__top">
           <Link to={logoTo} className="cm-admin-navbar__brand" aria-label={logoLabel}>
             <span className="cm-admin-navbar__mark" aria-hidden="true">
-              <img src={adminLogoMark} alt="" />
-            </span>
-            <span className="cm-admin-navbar__wordmark">
-              <img src={adminLogoWordmark} alt={logoLabel} />
+              <img src={resolvedLogoSrc} alt="" />
             </span>
           </Link>
           {actions ? <nav className="cm-admin-navbar__actions" aria-label="Ações principais">{actions}</nav> : null}
@@ -211,7 +211,7 @@ export default function BaseNavbar({
     <header className={cx('wf-header', 'wf-navbar', `wf-navbar--${profile}`, profile === 'client' && 'wf-header--public', Boolean(children) && 'wf-navbar--has-nav', Boolean(mobileLeadingAction) && 'wf-navbar--has-mobile-leading', className)}>
       {mobileLeadingAction ? <nav className="wf-navbar__mobile-leading" aria-label="Menu">{mobileLeadingAction}</nav> : null}
       <Link to={logoTo} className="wf-logo wf-navbar__logo">
-        <img src={logo} alt={logoLabel} />
+        <img src={resolvedLogoSrc} alt={logoLabel} />
       </Link>
       {children ? <nav className="wf-navbar__nav" aria-label="Navegação principal">{children}</nav> : null}
       {actions ? <nav className="wf-header-actions wf-navbar__actions" aria-label="Ações principais">{actions}</nav> : null}

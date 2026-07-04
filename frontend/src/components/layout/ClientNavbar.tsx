@@ -17,6 +17,8 @@ const CLIENT_BOOKINGS_PATH = '/meus-agendamentos';
 type ClientNavbarPage = 'home' | 'my';
 
 type ClientNavbarProps = {
+  className?: string;
+  logoSrc?: string;
   onConfirmPhone?: () => void;
   onCreate?: () => void;
   onProfile?: () => void;
@@ -37,6 +39,38 @@ const CLIENT_NAVBAR_PNG_ICONS: Record<ClientNavbarPngIconName, string> = {
   home: navHomeIcon,
   profile: navProfileIcon,
 };
+
+
+type ClientNavbarLineIconName = 'calendar' | 'home' | 'profile';
+
+function ClientNavbarLineIcon({ name }: { name: ClientNavbarLineIconName }) {
+  const commonProps = {
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    xmlns: 'http://www.w3.org/2000/svg',
+    'aria-hidden': true,
+  } as const;
+
+  const icon = name === 'calendar' ? (
+    <svg {...commonProps}>
+      <path d="M7 3.75v3M17 3.75v3M5.75 9.25h12.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M6.75 5.25h10.5a2 2 0 0 1 2 2v9.65a2 2 0 0 1-2 2H6.75a2 2 0 0 1-2-2V7.25a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.9" />
+      <path d="M8.35 12.45h.02M12 12.45h.02M15.65 12.45h.02M8.35 15.6h.02M12 15.6h.02" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" />
+    </svg>
+  ) : name === 'home' ? (
+    <svg {...commonProps}>
+      <path d="M4.2 11.2 12 4.65l7.8 6.55" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6.45 10.05v8.05h4.1v-4.35h2.9v4.35h4.1v-8.05" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ) : (
+    <svg {...commonProps}>
+      <path d="M12 12.1a3.55 3.55 0 1 0 0-7.1 3.55 3.55 0 0 0 0 7.1Z" stroke="currentColor" strokeWidth="2" />
+      <path d="M5.65 19.15c.9-3.2 3.15-4.85 6.35-4.85s5.45 1.65 6.35 4.85" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+
+  return <span aria-hidden="true" className={`wf-icon wf-client-nav-line-icon wf-client-nav-line-icon--${name}`}>{icon}</span>;
+}
 
 function ClientNavbarPngIcon({ name }: { name: ClientNavbarPngIconName }) {
   return (
@@ -89,20 +123,50 @@ function useClientNavbarSnapshot(): ClientNavbarSnapshot {
   return snapshot;
 }
 
-export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page = 'home' }: ClientNavbarProps) {
+export default function ClientNavbar({ className, logoSrc, onConfirmPhone, onCreate, onProfile, page = 'home' }: ClientNavbarProps) {
   const isHome = page === 'home';
   const snapshot = useClientNavbarSnapshot();
+  const [isNavbarScrolled, setIsNavbarScrolled] = useState(false);
   const profileLabel = snapshot.isVerified ? 'Perfil' : (isHome ? 'Olá! Visitante' : 'Cliente');
+
+  useEffect(() => {
+    if (!isHome) {
+      return undefined;
+    }
+
+    let rafId = 0;
+    const readScrollTop = () => Math.max(
+      window.scrollY || 0,
+      document.documentElement?.scrollTop || 0,
+      document.body?.scrollTop || 0,
+    );
+    const handleScrollState = () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(() => {
+        setIsNavbarScrolled(readScrollTop() > 8);
+      });
+    };
+
+    handleScrollState();
+    window.addEventListener('scroll', handleScrollState, { passive: true });
+    window.addEventListener('resize', handleScrollState);
+
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', handleScrollState);
+      window.removeEventListener('resize', handleScrollState);
+    };
+  }, [isHome]);
   const handleProfileAction = () => {
     onProfile?.();
   };
   void onConfirmPhone;
 
-  const desktopProfileLabel = <><ClientNavbarPngIcon name="profile" /> <span>Perfil</span></>;
+  const desktopProfileLabel = <><ClientNavbarLineIcon name="profile" /> <span>Perfil</span></>;
 
   const desktopActions = isHome ? (
     <>
-      <NavbarButton to={CLIENT_BOOKINGS_PATH} className="wf-client-bookings-trigger"><ClientNavbarPngIcon name="calendar" /> <span>Meus agendamentos</span></NavbarButton>
+      <NavbarButton to={CLIENT_BOOKINGS_PATH} className="wf-client-bookings-trigger"><ClientNavbarLineIcon name="calendar" /> <span>Meus agendamentos</span></NavbarButton>
       <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><ClientNavbarPlusIcon /> <span>Criar agendamento</span></NavbarButton>
       <NavbarButton
         className="wf-client-profile-trigger wf-client-profile-desktop"
@@ -115,7 +179,7 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
     </>
   ) : (
     <>
-      <NavbarButton to="/" className="wf-client-bookings-trigger"><ClientNavbarPngIcon name="home" /> <span>Página inicial</span></NavbarButton>
+      <NavbarButton to="/" className="wf-client-bookings-trigger"><ClientNavbarLineIcon name="home" /> <span>Página inicial</span></NavbarButton>
       <NavbarButton variant="orange" className="wf-client-create-trigger" onClick={onCreate}><ClientNavbarPlusIcon /> <span>Criar agendamento</span></NavbarButton>
       <NavbarButton
         className="wf-client-profile-trigger wf-client-profile-desktop"
@@ -175,10 +239,17 @@ export default function ClientNavbar({ onConfirmPhone, onCreate, onProfile, page
     </>
   );
 
+  const navbarClassName = [
+    className,
+    isHome ? (isNavbarScrolled ? 'wf-client-navbar-scrolled' : 'wf-client-navbar-at-top') : undefined,
+  ].filter(Boolean).join(' ');
+
   return (
     <BaseNavbar
       profile="client"
       actions={desktopActions}
+      className={navbarClassName || undefined}
+      logoSrc={logoSrc}
       mobileActions={mobileActions}
     />
   );

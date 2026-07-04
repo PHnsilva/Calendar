@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, ty
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
-import heroClient from '../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png';
-import heroClientMobile from '../../assets/wireframes/landing/client-hero-composite-mobile.png';
-import heroAdmin from '../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png';
-import heroAdminMobile from '../../assets/wireframes/landing/client-hero-composite-mobile-tall.png';
+import heroClient from '../../assets/wireframes/landing/sg-hero-drone-desktop-1920.png';
+import heroClientMobile from '../../assets/wireframes/landing/sg-hero-drone-mobile-safe.png';
+import heroAdmin from '../../assets/wireframes/landing/sg-hero-drone-desktop-1920.png';
+import heroAdminMobile from '../../assets/wireframes/landing/sg-hero-drone-mobile-safe.png';
 import clientCreateCalendarIcon from '../../assets/wireframes/icons/client-create-calendar.png';
 import clientFollowCalendarIcon from '../../assets/wireframes/icons/client-follow-calendar.png';
 import clientPhoneIcon from '../../assets/wireframes/icons/client-phone.png';

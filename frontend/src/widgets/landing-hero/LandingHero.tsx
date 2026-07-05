@@ -35,7 +35,7 @@ export function LandingHero({
           <span className="wf-hero-title__desktop">{title} <span>{highlight}</span></span>
           <span className="wf-hero-title__mobile">{mobileTitle ?? <>{title} <span>{highlight}</span></>}</span>
         </h1>
-        <p>{description}</p>
+        {description ? <p>{description}</p> : null}
 
         <div className="wf-hero-buttons">
           <button type="button" className="wf-primary-cta" onClick={onPrimaryAction}>

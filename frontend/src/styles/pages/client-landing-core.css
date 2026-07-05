@@ -946,3 +946,39 @@ html body .wf-client-landing footer.cm-footer {
     font-size: 1.64rem !important;
   }
 }
+
+
+/* 2026-07-05 follow-up mobile hero positioning:
+   - text block lower in the hero
+   - hero image re-centered so the avatar is not cut on the right
+*/
+@media (max-width: 900px) {
+  html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
+    background-position: center center, 54% center !important;
+    background-size: cover, cover !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: clamp(28px, 8vw, 46px) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
+    background-position: center center, 52% center !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: clamp(30px, 9vw, 44px) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
+    background-position: center center, 50% center !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: 34px !important;
+  }
+}

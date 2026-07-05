@@ -1,0 +1,427 @@
+
+/*
+ * Final mobile-only repair.
+ * Keeps the original mobile hero image asset, fixes title color/position, enlarges navbar PNG glyphs,
+ * and makes the landing navbar actually follow scroll on mobile.
+ */
+
+@media (max-width: 900px) {
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 120 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing.wf-client-navbar-at-top {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing.wf-client-navbar-scrolled {
+    background: linear-gradient(90deg, rgba(6, 16, 43, 0.96) 0%, rgba(7, 26, 76, 0.96) 56%, rgba(9, 32, 111, 0.96) 100%) !important;
+    box-shadow: 0 12px 28px rgba(6, 16, 43, 0.18) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-png-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing .wf-client-nav-png-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing .wf-client-nav-png-icon img {
+    width: clamp(22px, 6.4vw, 28px) !important;
+    min-width: clamp(22px, 6.4vw, 28px) !important;
+    height: clamp(22px, 6.4vw, 28px) !important;
+    min-height: clamp(22px, 6.4vw, 28px) !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain !important;
+  }
+
+  html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
+    background-image:
+      linear-gradient(90deg, rgba(6, 16, 43, 0.94) 0%, rgba(6, 16, 43, 0.78) 44%, rgba(6, 16, 43, 0.2) 72%, rgba(6, 16, 43, 0) 100%),
+      url("../../assets/wireframes/landing/sg-hero-drone-mobile-safe.png") !important;
+    background-repeat: no-repeat, no-repeat !important;
+    background-size: cover, cover !important;
+    background-position: center center, center center !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: clamp(18px, 5.2vw, 34px) !important;
+  }
+
+  html body .wf-client-landing .wf-hero-title,
+  html body .wf-client-landing .wf-hero.wf-hero--client h1 {
+    color: #ffffff !important;
+    font-size: clamp(1.42rem, 6.6vw, 1.88rem) !important;
+    line-height: 1.01 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  html body .wf-client-landing .wf-hero-title__mobile,
+  html body .wf-client-landing .wf-hero-title__mobile * {
+    color: #ffffff !important;
+  }
+
+  html body .wf-client-landing .wf-hero-title span span,
+  html body .wf-client-landing .wf-hero-title > span > span,
+  html body .wf-client-landing .wf-hero-title__mobile span {
+    color: #ff4b0b !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy > p {
+    display: none !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: clamp(18px, 5.4vw, 30px) !important;
+  }
+
+  html body .wf-client-landing .wf-hero-title,
+  html body .wf-client-landing .wf-hero.wf-hero--client h1 {
+    font-size: clamp(1.28rem, 6.2vw, 1.62rem) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-png-icon,
+  html body .wf-navbar.wf-navbar--client .wf-client-nav-png-icon img,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing .wf-client-nav-png-icon,
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing .wf-client-nav-png-icon img {
+    width: 22px !important;
+    min-width: 22px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+  }
+
+  html body .wf-client-landing .wf-hero-title,
+  html body .wf-client-landing .wf-hero.wf-hero--client h1 {
+    font-size: 1.42rem !important;
+  }
+}
+
+
+/* 2026-07-05 follow-up polish:
+   - hero corners square
+   - navbar gets rounded bottom corners after scroll
+   - hero text sits much lower
+   - plus icon visual center gap supported by TSX icon change
+*/
+@media (max-width: 900px) {
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing.wf-client-navbar-scrolled {
+    border-radius: 0 0 16px 16px !important;
+    overflow: hidden !important;
+  }
+
+  html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
+    border-radius: 0 !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: clamp(72px, 19vw, 118px) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing.wf-client-navbar-scrolled {
+    border-radius: 0 0 14px 14px !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: clamp(76px, 21vw, 116px) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing.wf-client-navbar-scrolled {
+    border-radius: 0 0 12px 12px !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: 82px !important;
+  }
+}
+
+
+/* 2026-07-05 hero-only follow-up:
+   - do not touch navbar further
+   - push hero copy much lower
+   - reduce hero height by ~20%
+   - keep badge on one line with the requested orange tone
+*/
+@media (max-width: 900px) {
+  html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
+    min-height: 416px !important;
+    height: 416px !important;
+    padding-top: 56px !important;
+    padding-bottom: 14px !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: clamp(54px, 13vw, 77px) !important;
+  }
+
+  html body .wf-client-landing .wf-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    width: fit-content !important;
+    max-width: min(100%, 232px) !important;
+    min-height: 26px !important;
+    padding: 0 11px !important;
+    white-space: nowrap !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+    color: #d97a1f !important;
+    border-color: rgba(217, 122, 31, 0.58) !important;
+    font-size: 0.56rem !important;
+    line-height: 1 !important;
+  }
+
+  html body .wf-client-landing .wf-badge .wf-icon,
+  html body .wf-client-landing .wf-badge svg {
+    color: #d97a1f !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
+    min-height: 372px !important;
+    height: 372px !important;
+    padding-top: 52px !important;
+    padding-bottom: 12px !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: clamp(50px, 14vw, 71px) !important;
+  }
+
+  html body .wf-client-landing .wf-badge {
+    max-width: min(100%, 222px) !important;
+    font-size: 0.53rem !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
+    min-height: 350px !important;
+    height: 350px !important;
+    padding-top: 48px !important;
+    padding-bottom: 10px !important;
+  }
+
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: 48px !important;
+  }
+
+  html body .wf-client-landing .wf-badge {
+    max-width: min(100%, 210px) !important;
+    min-height: 24px !important;
+    font-size: 0.49rem !important;
+  }
+}
+
+
+/* 2026-07-05 services button follow-up: keep everything else, only correct the secondary CTA color and prevent icon/text overlap. */
+@media (max-width: 900px) {
+  html body .wf-client-landing .wf-secondary-cta {
+    background: rgba(81, 88, 114, 0.46) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.18) !important;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.14) !important;
+    backdrop-filter: blur(7px) !important;
+    -webkit-backdrop-filter: blur(7px) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding-inline: 10px !important;
+    font-size: 0.64rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html body .wf-client-landing .wf-secondary-cta .wf-icon,
+  html body .wf-client-landing .wf-secondary-cta .wf-services-cta-icon,
+  html body .wf-client-landing .wf-secondary-cta svg {
+    flex: 0 0 auto !important;
+    width: 13px !important;
+    min-width: 13px !important;
+    height: 13px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body .wf-client-landing .wf-secondary-cta {
+    font-size: 0.62rem !important;
+    gap: 7px !important;
+    padding-inline: 9px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-client-landing .wf-secondary-cta {
+    font-size: 0.6rem !important;
+    gap: 6px !important;
+    padding-inline: 8px !important;
+  }
+}
+
+
+/* 2026-07-05 services button blue pass: keep all else unchanged, make the secondary CTA blue with larger text and icon. */
+@media (max-width: 900px) {
+  html body .wf-client-landing .wf-secondary-cta {
+    background: linear-gradient(135deg, #0058ff 0%, #0037df 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.18) !important;
+    box-shadow: 0 8px 18px rgba(0, 70, 220, 0.24) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    gap: 8px !important;
+    padding-inline: 11px !important;
+    font-size: 0.72rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+  }
+
+  html body .wf-client-landing .wf-secondary-cta .wf-icon,
+  html body .wf-client-landing .wf-secondary-cta .wf-services-cta-icon,
+  html body .wf-client-landing .wf-secondary-cta svg {
+    width: 15px !important;
+    min-width: 15px !important;
+    height: 15px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body .wf-client-landing .wf-secondary-cta {
+    font-size: 0.69rem !important;
+    gap: 8px !important;
+    padding-inline: 10px !important;
+  }
+
+  html body .wf-client-landing .wf-secondary-cta .wf-icon,
+  html body .wf-client-landing .wf-secondary-cta .wf-services-cta-icon,
+  html body .wf-client-landing .wf-secondary-cta svg {
+    width: 14px !important;
+    min-width: 14px !important;
+    height: 14px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-client-landing .wf-secondary-cta {
+    font-size: 0.66rem !important;
+    gap: 7px !important;
+    padding-inline: 9px !important;
+  }
+
+  html body .wf-client-landing .wf-secondary-cta .wf-icon,
+  html body .wf-client-landing .wf-secondary-cta .wf-services-cta-icon,
+  html body .wf-client-landing .wf-secondary-cta svg {
+    width: 13px !important;
+    min-width: 13px !important;
+    height: 13px !important;
+  }
+}
+
+
+/* 2026-07-05 follow-up: raise hero copy 10% more and double only the secondary CTA icon size. */
+@media (max-width: 900px) {
+  html body .wf-client-landing .wf-secondary-cta .wf-icon,
+  html body .wf-client-landing .wf-secondary-cta .wf-services-cta-icon,
+  html body .wf-client-landing .wf-secondary-cta svg {
+    width: 30px !important;
+    min-width: 30px !important;
+    height: 30px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body .wf-client-landing .wf-secondary-cta .wf-icon,
+  html body .wf-client-landing .wf-secondary-cta .wf-services-cta-icon,
+  html body .wf-client-landing .wf-secondary-cta svg {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-client-landing .wf-secondary-cta .wf-icon,
+  html body .wf-client-landing .wf-secondary-cta .wf-services-cta-icon,
+  html body .wf-client-landing .wf-secondary-cta svg {
+    width: 26px !important;
+    min-width: 26px !important;
+    height: 26px !important;
+  }
+}
+
+
+/* 2026-07-05 final follow-up: raise hero copy 30% more and increase Serviços prestados button font by 20%. */
+@media (max-width: 900px) {
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: clamp(38px, 9.1vw, 54px) !important;
+  }
+
+  html body .wf-client-landing .wf-secondary-cta {
+    font-size: 0.86rem !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: clamp(35px, 9.8vw, 50px) !important;
+  }
+
+  html body .wf-client-landing .wf-secondary-cta {
+    font-size: 0.83rem !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-client-landing .wf-hero-copy.wf-client-hero-copy-final {
+    margin-top: 34px !important;
+  }
+
+  html body .wf-client-landing .wf-secondary-cta {
+    font-size: 0.79rem !important;
+  }
+}
+
+
+/* 2026-07-05 small spacing follow-up: reduce only the gap between the Serviços prestados icon and text. */
+@media (max-width: 900px) {
+  html body .wf-client-landing .wf-secondary-cta {
+    gap: 3px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html body .wf-client-landing .wf-secondary-cta {
+    gap: 3px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-client-landing .wf-secondary-cta {
+    gap: 2px !important;
+  }
+}

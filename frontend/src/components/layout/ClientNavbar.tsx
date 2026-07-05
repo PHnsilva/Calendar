@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import BaseNavbar, { NavbarButton } from './BaseNavbar';
-import navCalendarIcon from '../../assets/navbar/client-nav-calendar.png';
+import navCalendarIcon from '../../assets/navbar/client-nav-calendar-mobile.png';
 import navCreateIcon from '../../assets/navbar/client-nav-create.png';
 import navHomeIcon from '../../assets/navbar/client-nav-home.png';
-import navProfileIcon from '../../assets/navbar/client-nav-profile.png';
+import navProfileIcon from '../../assets/navbar/client-nav-profile-mobile.png';
 import {
   formatPhoneForDisplay,
   getClientProfileChangedEventName,
@@ -85,7 +85,7 @@ function ClientNavbarPlusIcon() {
   return (
     <span aria-hidden="true" className="wf-icon wf-client-nav-plus-icon">
       <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M32 15v34M15 32h34" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
+        <path d="M32 15v10M32 39v10M15 32h10M39 32h10" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
       </svg>
     </span>
   );
@@ -135,11 +135,21 @@ export default function ClientNavbar({ className, logoSrc, onConfirmPhone, onCre
     }
 
     let rafId = 0;
-    const readScrollTop = () => Math.max(
-      window.scrollY || 0,
-      document.documentElement?.scrollTop || 0,
-      document.body?.scrollTop || 0,
-    );
+    const readScrollTop = () => {
+      const candidates = [
+        window.scrollY || 0,
+        window.pageYOffset || 0,
+        document.documentElement?.scrollTop || 0,
+        document.body?.scrollTop || 0,
+        (document.scrollingElement as HTMLElement | null)?.scrollTop || 0,
+        (document.querySelector('.wf-page-shell') as HTMLElement | null)?.scrollTop || 0,
+        (document.querySelector('.wf-client-landing') as HTMLElement | null)?.scrollTop || 0,
+        (document.querySelector('.wf-landing-main') as HTMLElement | null)?.scrollTop || 0,
+      ];
+
+      return Math.max(...candidates);
+    };
+
     const handleScrollState = () => {
       if (rafId) window.cancelAnimationFrame(rafId);
       rafId = window.requestAnimationFrame(() => {
@@ -147,14 +157,31 @@ export default function ClientNavbar({ className, logoSrc, onConfirmPhone, onCre
       });
     };
 
+    const scrollTargets = [
+      window,
+      document,
+      document.documentElement,
+      document.body,
+      document.scrollingElement,
+      document.querySelector('.wf-page-shell'),
+      document.querySelector('.wf-client-landing'),
+      document.querySelector('.wf-landing-main'),
+    ].filter(Boolean) as Array<Window | Document | Element>;
+
     handleScrollState();
-    window.addEventListener('scroll', handleScrollState, { passive: true });
+    scrollTargets.forEach((target) => target.addEventListener('scroll', handleScrollState, { passive: true }));
+    window.addEventListener('wheel', handleScrollState, { passive: true });
+    window.addEventListener('touchmove', handleScrollState, { passive: true });
     window.addEventListener('resize', handleScrollState);
+    window.addEventListener('orientationchange', handleScrollState);
 
     return () => {
       if (rafId) window.cancelAnimationFrame(rafId);
-      window.removeEventListener('scroll', handleScrollState);
+      scrollTargets.forEach((target) => target.removeEventListener('scroll', handleScrollState));
+      window.removeEventListener('wheel', handleScrollState);
+      window.removeEventListener('touchmove', handleScrollState);
       window.removeEventListener('resize', handleScrollState);
+      window.removeEventListener('orientationchange', handleScrollState);
     };
   }, [isHome]);
   const handleProfileAction = () => {

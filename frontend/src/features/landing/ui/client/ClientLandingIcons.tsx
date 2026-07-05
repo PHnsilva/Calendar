@@ -5,6 +5,10 @@ import clientCreateCalendarIcon from "../../../../assets/wireframes/icons/client
 import clientFollowCalendarIcon from "../../../../assets/wireframes/icons/client-follow-calendar.png";
 import clientPhoneIcon from "../../../../assets/wireframes/icons/client-phone.png";
 import clientChatIcon from "../../../../assets/wireframes/icons/client-chat.png";
+import actionCreateCalendarIcon from "../../../../assets/wireframes/icons/action-create-calendar.png";
+import actionFollowClipboardClockIcon from "../../../../assets/wireframes/icons/action-follow-clipboard-clock.png";
+import actionProfileUserIcon from "../../../../assets/wireframes/icons/action-profile-user.png";
+import actionContactChatIcon from "../../../../assets/wireframes/icons/action-contact-chat.png";
 import footerWhatsAppWireframeIcon from "../../../../assets/wireframes/icons/footer-whatsapp-wireframe.png";
 import footerInstagramWireframeIcon from "../../../../assets/wireframes/icons/footer-instagram-wireframe.png";
 import footerEmailWireframeIcon from "../../../../assets/wireframes/icons/footer-email-wireframe.png";
@@ -18,10 +22,11 @@ function cx(...classes: Array<string | false | null | undefined>): string {
 
 export function LandingIcon({ name }: { name: string }) {
   const imageIcons: Record<string, string> = {
-    "calendar-create": clientCreateCalendarIcon,
-    "calendar-clock": clientFollowCalendarIcon,
+    "calendar-create": actionCreateCalendarIcon,
+    "calendar-clock": actionFollowClipboardClockIcon,
     "mobile-phone": clientPhoneIcon,
-    "chat-bubbles": clientChatIcon,
+    "user": actionProfileUserIcon,
+    "chat-bubbles": actionContactChatIcon,
     "footer-whatsapp-social": footerWhatsAppWireframeIcon,
     "footer-instagram-social": footerInstagramWireframeIcon,
     "footer-email-social": footerEmailWireframeIcon,

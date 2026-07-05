@@ -20,7 +20,7 @@ export function ClientLandingPage() {
       <main className="wf-landing-main">
         <ClientLandingHeroBlock setModal={setModal} />
         <ClientLandingActions profile={profile} setModal={setModal} />
-        <ClientLandingInfoRow />
+        <ClientLandingInfoRow setModal={setModal} />
         <ClientLandingFooterBlock setModal={setModal} />
       </main>
       <CalendarMateModal modal={modal} onClose={() => setModal(null)} onOpenModal={setModal} />

@@ -26,7 +26,7 @@ export function ClientLandingActions({ profile, setModal }: { profile: ClientPro
   return (
     <div className="wf-actions-grid wf-actions-grid--client">
       <ActionCard icon="calendar-create" title="Criar agendamento" color="orange" onClick={() => setModal("create-client")} />
-      <ActionCard icon="calendar-clock" title="Acompanhar agendamento" color="blue" to="/meus-agendamentos" />
+      <ActionCard icon="calendar-clock" title="Acompanhar" color="blue" to="/meus-agendamentos" />
       <ActionCard
         icon="user"
         title="Perfil"

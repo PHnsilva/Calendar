@@ -1,0 +1,139 @@
+
+/* Mobile action cards wireframe authority. Hero is not touched here. */
+@media (max-width: 760px) {
+  html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client {
+    width: min(100% - 24px, 430px) !important;
+    max-width: 430px !important;
+    margin: 12px auto 14px !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  html body .wf-client-landing .wf-action-card {
+    position: relative !important;
+    min-width: 0 !important;
+    min-height: 64px !important;
+    height: 64px !important;
+    padding: 8px 10px 8px 12px !important;
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr) 14px !important;
+    align-items: center !important;
+    gap: 7px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(7, 19, 93, 0.08) !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 18px rgba(7, 19, 93, 0.08) !important;
+    text-decoration: none !important;
+  }
+
+  html body .wf-client-landing .wf-action-card::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 12px !important;
+    width: 52px !important;
+    height: 3px !important;
+    display: block !important;
+    border-radius: 999px !important;
+    background: currentColor !important;
+  }
+
+  html body .wf-client-landing .wf-action-card--orange { color: #ff4b0b !important; }
+  html body .wf-client-landing .wf-action-card--blue { color: #0058ff !important; }
+  html body .wf-client-landing .wf-action-card--green { color: #00a85a !important; }
+  html body .wf-client-landing .wf-action-card--purple { color: #8f32ff !important; }
+
+  html body .wf-client-landing .wf-action-card__icon {
+    width: 42px !important;
+    height: 42px !important;
+    display: grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+  }
+
+  html body .wf-client-landing .wf-action-card__icon .wf-icon,
+  html body .wf-client-landing .wf-action-card__icon .wf-icon img,
+  html body .wf-client-landing .wf-action-card__icon .wf-icon svg {
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    display: block !important;
+    object-fit: contain !important;
+  }
+
+  html body .wf-client-landing .wf-action-card__body {
+    min-width: 0 !important;
+    display: grid !important;
+    align-items: center !important;
+    gap: 0 !important;
+  }
+
+  html body .wf-client-landing .wf-action-card__body strong {
+    max-width: 100% !important;
+    color: #07135d !important;
+    font-size: 0.72rem !important;
+    font-weight: 900 !important;
+    line-height: 1.08 !important;
+    letter-spacing: -0.01em !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  html body .wf-client-landing .wf-action-card__body small {
+    display: none !important;
+  }
+
+  html body .wf-client-landing .wf-action-card__arrow {
+    align-self: center !important;
+    justify-self: end !important;
+    color: currentColor !important;
+    font-size: 2rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client {
+    width: min(100% - 18px, 340px) !important;
+    gap: 8px !important;
+    margin-block: 10px 12px !important;
+  }
+
+  html body .wf-client-landing .wf-action-card {
+    min-height: 60px !important;
+    height: 60px !important;
+    padding: 8px 8px 8px 10px !important;
+    grid-template-columns: 38px minmax(0, 1fr) 12px !important;
+    gap: 5px !important;
+    border-radius: 11px !important;
+  }
+
+  html body .wf-client-landing .wf-action-card::before {
+    left: 10px !important;
+    width: 46px !important;
+  }
+
+  html body .wf-client-landing .wf-action-card__icon,
+  html body .wf-client-landing .wf-action-card__icon .wf-icon,
+  html body .wf-client-landing .wf-action-card__icon .wf-icon img,
+  html body .wf-client-landing .wf-action-card__icon .wf-icon svg {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+  }
+
+  html body .wf-client-landing .wf-action-card__body strong {
+    font-size: 0.66rem !important;
+    line-height: 1.06 !important;
+  }
+
+  html body .wf-client-landing .wf-action-card__arrow {
+    font-size: 1.72rem !important;
+  }
+}

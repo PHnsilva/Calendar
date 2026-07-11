@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Booking } from "../../../entities/booking";
 import { BookingDetailCard } from "./BookingDetailCard";
 
@@ -15,9 +15,15 @@ vi.mock("../hooks/useBookingMutations", () => ({
   }),
 }));
 
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-07-01T12:00:00Z"));
+});
+
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  vi.useRealTimers();
 });
 
 function booking(id: string, overrides: Partial<Booking> = {}): Booking {
@@ -81,7 +87,7 @@ describe("BookingDetailCard", () => {
     });
 
     const view = render(<BookingDetailCard booking={first} />);
-    fireEvent.click(screen.getByRole("button", { name: "Editar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Editar / reagendar" }));
     expect(screen.getByDisplayValue("Visita tecnica")).toBeTruthy();
 
     view.rerender(<BookingDetailCard booking={second} />);
@@ -89,6 +95,6 @@ describe("BookingDetailCard", () => {
     expect(screen.queryByDisplayValue("Visita tecnica")).toBeNull();
     expect(screen.getByRole("heading", { name: "Instalacao" })).toBeTruthy();
     expect(screen.getByText("Maria Souza")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Editar" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Editar / reagendar" })).toBeTruthy();
   });
 });

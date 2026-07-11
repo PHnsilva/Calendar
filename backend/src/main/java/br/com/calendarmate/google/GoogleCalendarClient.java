@@ -4,6 +4,7 @@ import br.com.calendarmate.model.Servico;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -23,6 +24,8 @@ public class GoogleCalendarClient implements CalendarClient {
 
     private static final String APP_KEY = "appSource";
     private static final String APP_VALUE = "calendar-backend";
+    private static final int GOOGLE_CONNECT_TIMEOUT_MS = 10_000;
+    private static final int GOOGLE_READ_TIMEOUT_MS = 25_000;
 
     private static final String ENTITY_TYPE_KEY = "entityType";
     private static final String ENTITY_TYPE_BOOKING = "booking";
@@ -49,7 +52,13 @@ public class GoogleCalendarClient implements CalendarClient {
         credential.setRefreshToken(refreshToken);
         credential.refreshToken();
 
-        this.service = new Calendar.Builder(httpTransport, JSON_FACTORY, credential)
+        HttpRequestInitializer requestInitializer = request -> {
+            credential.initialize(request);
+            request.setConnectTimeout(GOOGLE_CONNECT_TIMEOUT_MS);
+            request.setReadTimeout(GOOGLE_READ_TIMEOUT_MS);
+        };
+
+        this.service = new Calendar.Builder(httpTransport, JSON_FACTORY, requestInitializer)
                 .setApplicationName(appName)
                 .build();
         this.calendarId = calendarId;

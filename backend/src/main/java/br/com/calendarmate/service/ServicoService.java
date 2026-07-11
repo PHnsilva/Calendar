@@ -9,6 +9,7 @@ import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.dto.ServicoResponse;
 import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ConflictException;
+import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.exception.NotFoundException;
 import br.com.calendarmate.exception.ReservedAdminPhoneException;
@@ -149,6 +150,9 @@ public class ServicoService {
         s.setPendingExpiresAt(null);
 
         Event created = calendar.createEvent(s);
+        if (created == null || created.getId() == null || created.getId().isBlank()) {
+            throw new ExternalServiceException("Resposta invalida do calendario ao criar agendamento.");
+        }
 
         String token = tokenUtil.generate(created.getId(), req.getClientEmail());
         pendingStore.deleteByEventId(created.getId());

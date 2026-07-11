@@ -1167,3 +1167,45 @@ html body .wf-client-landing .wf-badge svg {
     max-width: none !important;
   }
 }
+
+/* 2026-07-11 mobile carousel quality correction.
+   The carousel now uses the 1400px source on mobile; keep its native 3:1
+   framing so the embedded typography is not enlarged, cropped or blurred. */
+@media (max-width: 900px) {
+  html body .wf-client-landing .wf-info-row__carousel,
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase,
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__viewport {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 3 / 1 !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__image {
+    object-fit: contain !important;
+    object-position: center center !important;
+    transform: none !important;
+    image-rendering: auto !important;
+    background: #06102b !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__overlay {
+    inset: auto 8px 7px 8px !important;
+    gap: 7px !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__dots {
+    gap: 4px !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__dot {
+    width: clamp(12px, 4vw, 18px) !important;
+    height: 3px !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__counter {
+    min-height: 20px !important;
+    padding: 0 6px !important;
+    font-size: .62rem !important;
+  }
+}

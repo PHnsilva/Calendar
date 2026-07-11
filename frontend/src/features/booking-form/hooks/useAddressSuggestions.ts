@@ -32,6 +32,7 @@ function toAddressSuggestion(item: GeoapifyAddressSuggestion): AddressSuggestion
     id: item.id || item.placeId || item.formatted,
     label: item.label || item.formatted,
     addressLine2: item.addressLine2,
+    postcode: "",
     stateCode: item.state,
     lat: item.lat ?? item.latitude,
     lon: item.lon ?? item.longitude,

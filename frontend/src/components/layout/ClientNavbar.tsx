@@ -4,6 +4,12 @@ import navCalendarIcon from '../../assets/navbar/client-nav-calendar-mobile.png'
 import navCreateIcon from '../../assets/navbar/client-nav-create.png';
 import navHomeIcon from '../../assets/navbar/client-nav-home.png';
 import navProfileIcon from '../../assets/navbar/client-nav-profile-mobile.png';
+import clientProfileAvatarIcon from '../../assets/wireframes/icons/client-profile-avatar-unisex.png';
+import clientAvatarFemaleAfro from '../../assets/wireframes/avatars/client-avatar-female-afro.png';
+import clientAvatarFemaleLongBlack from '../../assets/wireframes/avatars/client-avatar-female-long-black.png';
+import clientAvatarFemaleRedhead from '../../assets/wireframes/avatars/client-avatar-female-redhead.png';
+import clientAvatarMaleBrownBeard from '../../assets/wireframes/avatars/client-avatar-male-brown-beard.png';
+import clientAvatarMaleBlackBeard from '../../assets/wireframes/avatars/client-avatar-male-black-beard.png';
 import {
   formatPhoneForDisplay,
   getClientProfileChangedEventName,
@@ -29,6 +35,7 @@ type ClientNavbarSnapshot = {
   isVerified: boolean;
   label: string;
   summary?: string;
+  avatarSrc?: string;
 };
 
 type ClientNavbarPngIconName = 'calendar' | 'create' | 'home' | 'profile';
@@ -39,6 +46,32 @@ const CLIENT_NAVBAR_PNG_ICONS: Record<ClientNavbarPngIconName, string> = {
   home: navHomeIcon,
   profile: navProfileIcon,
 };
+
+const CLIENT_PROFILE_AVATARS: Record<string, string> = {
+  default: clientProfileAvatarIcon,
+  'female-afro': clientAvatarFemaleAfro,
+  'female-long-black': clientAvatarFemaleLongBlack,
+  'female-redhead': clientAvatarFemaleRedhead,
+  'male-brown-beard': clientAvatarMaleBrownBeard,
+  'male-black-beard': clientAvatarMaleBlackBeard,
+};
+
+function resolveClientProfileAvatar(avatarId?: string): string {
+  const normalizedAvatarId = avatarId?.trim().toLowerCase();
+  if (!normalizedAvatarId) return CLIENT_PROFILE_AVATARS.default;
+
+  const directMatch = CLIENT_PROFILE_AVATARS[normalizedAvatarId];
+  if (directMatch) return directMatch;
+
+  const legacyMatch = Object.entries(CLIENT_PROFILE_AVATARS).find(([id, src]) => {
+    const normalizedSrc = src.toLowerCase();
+    return normalizedAvatarId === normalizedSrc
+      || normalizedAvatarId.includes(id)
+      || normalizedSrc.includes(normalizedAvatarId);
+  });
+
+  return legacyMatch?.[1] ?? CLIENT_PROFILE_AVATARS.default;
+}
 
 
 type ClientNavbarLineIconName = 'calendar' | 'home' | 'profile';
@@ -80,6 +113,14 @@ function ClientNavbarPngIcon({ name }: { name: ClientNavbarPngIconName }) {
   );
 }
 
+function ClientNavbarAvatar({ src }: { src: string }) {
+  return (
+    <span aria-hidden="true" className="wf-icon wf-client-nav-avatar">
+      <img src={src} alt="" draggable={false} />
+    </span>
+  );
+}
+
 
 function ClientNavbarPlusIcon() {
   return (
@@ -102,6 +143,9 @@ function readClientNavbarSnapshot(): ClientNavbarSnapshot {
     isVerified,
     label: isVerified ? 'Perfil' : 'Cliente',
     summary: firstName || (phone ? formatPhoneForDisplay(phone) : undefined),
+    // Any persisted profile receives an avatar. Older profiles without avatarId
+    // use the original male avatar until the user chooses another option.
+    avatarSrc: profile ? resolveClientProfileAvatar(profile.avatarId) : undefined,
   };
 }
 
@@ -110,13 +154,29 @@ function useClientNavbarSnapshot(): ClientNavbarSnapshot {
 
   useEffect(() => {
     const refresh = () => setSnapshot(readClientNavbarSnapshot());
-    window.addEventListener(getPhoneVerificationChangedEventName(), refresh);
-    window.addEventListener(getClientProfileChangedEventName(), refresh);
-    window.addEventListener('storage', refresh);
+    const refreshAfterPersistence = () => {
+      refresh();
+      window.requestAnimationFrame(refresh);
+      window.setTimeout(refresh, 0);
+    };
+    const refreshWhenVisible = () => {
+      if (!document.hidden) refreshAfterPersistence();
+    };
+
+    window.addEventListener(getPhoneVerificationChangedEventName(), refreshAfterPersistence);
+    window.addEventListener(getClientProfileChangedEventName(), refreshAfterPersistence);
+    window.addEventListener('storage', refreshAfterPersistence);
+    window.addEventListener('focus', refreshAfterPersistence);
+    window.addEventListener('pageshow', refreshAfterPersistence);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+
     return () => {
-      window.removeEventListener(getPhoneVerificationChangedEventName(), refresh);
-      window.removeEventListener(getClientProfileChangedEventName(), refresh);
-      window.removeEventListener('storage', refresh);
+      window.removeEventListener(getPhoneVerificationChangedEventName(), refreshAfterPersistence);
+      window.removeEventListener(getClientProfileChangedEventName(), refreshAfterPersistence);
+      window.removeEventListener('storage', refreshAfterPersistence);
+      window.removeEventListener('focus', refreshAfterPersistence);
+      window.removeEventListener('pageshow', refreshAfterPersistence);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
   }, []);
 
@@ -189,7 +249,10 @@ export default function ClientNavbar({ className, logoSrc, onConfirmPhone, onCre
   };
   void onConfirmPhone;
 
-  const desktopProfileLabel = <><ClientNavbarLineIcon name="profile" /> <span>Perfil</span></>;
+  const profileIcon = snapshot.avatarSrc
+    ? <ClientNavbarAvatar src={snapshot.avatarSrc} />
+    : <ClientNavbarLineIcon name="profile" />;
+  const desktopProfileLabel = <>{profileIcon} <span>Perfil</span></>;
 
   const desktopActions = isHome ? (
     <>
@@ -261,7 +324,7 @@ export default function ClientNavbar({ className, logoSrc, onConfirmPhone, onCre
         ariaLabel={profileLabel}
         title={snapshot.summary ? `${profileLabel}: ${snapshot.summary}` : profileLabel}
       >
-        <ClientNavbarPngIcon name="profile" />
+        {snapshot.avatarSrc ? <ClientNavbarAvatar src={snapshot.avatarSrc} /> : <ClientNavbarPngIcon name="profile" />}
       </NavbarButton>
     </>
   );

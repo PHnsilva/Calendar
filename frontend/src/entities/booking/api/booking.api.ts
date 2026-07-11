@@ -10,9 +10,10 @@ export async function getBookingByManageToken(manageToken: string): Promise<Book
   return mapBookingDto(dto);
 }
 
-export async function listMyBookingsByManageToken(manageToken: string): Promise<Booking[]> {
+export async function listMyBookingsByManageToken(manageToken: string, signal?: AbortSignal): Promise<Booking[]> {
   const dtos = await apiGet<BookingDto[]>("/api/servicos/my", {
     query: { token: manageToken },
+    signal,
   });
   return mapBookingDtos(dtos);
 }

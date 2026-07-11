@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import '../../../styles/components/booking-modal-day-picker.css';
 import { useAvailableSlots } from '../../calendar/hooks/useAvailableSlots';
 import { useAvailableMonthDates } from '../../calendar/hooks/useAvailableMonthDates';
@@ -183,10 +183,6 @@ function formatPhoneInput(value: string): string {
   return formatBrazilianPhoneInput(value);
 }
 
-function digitsOnly(value: string) {
-  return value.replace(/\D/g, '');
-}
-
 function isHouseNumberValid(value: string) {
   const normalized = normalizeText(value).toLowerCase();
   if (!normalized) return false;
@@ -252,12 +248,10 @@ function validateForm(
   if (!selectedSlot) errors.draftSlot = 'Horario: selecione um dos horarios disponiveis.';
   if (!isServiceNotesValid(values.serviceNotes)) errors.serviceNotes = 'Observacao: explique o que precisa de servico com pelo menos 10 caracteres. Exemplo: trocar tomada da sala.';
 
-  const cepDigits = digitsOnly(values.clientCep);
   const hasStructuredAddress = Boolean(
     selectedSuggestion &&
     normalizeText(values.clientStreet) &&
-    normalizeText(values.clientNeighborhood) &&
-    cepDigits.length === 8,
+    normalizeText(values.clientNeighborhood),
   );
   const suggestionMatchesCity = Boolean(
     selectedSuggestion &&
@@ -270,7 +264,7 @@ function validateForm(
   }
 
   if (!normalizeText(addressInput) || !hasStructuredAddress || !suggestionMatchesCity) {
-    errors.addressInput = 'Endereco: escolha uma sugestao da lista para validar rua, bairro e CEP. Exemplo: Rua Sao Jose, Centro.';
+    errors.addressInput = 'Endereco: escolha uma sugestao da lista para validar rua e bairro. Exemplo: Rua Sao Jose, Centro.';
   }
 
   return errors;
@@ -400,6 +394,7 @@ export default function BookingFormModal({
   const [verificationState, setVerificationState] = useState<VerificationState | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
+  const createBookingInFlightRef = useRef(false);
 
   const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
   const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
@@ -467,6 +462,7 @@ export default function BookingFormModal({
     setVerificationState(null);
     setCalendarExpanded(false);
     setCityPickerOpen(false);
+    createBookingInFlightRef.current = false;
   }, [defaultCity, defaultState, initialCalendarMonth, open]);
 
   useEffect(() => {
@@ -561,7 +557,7 @@ export default function BookingFormModal({
     setFormValues((current) => {
       const next = {
         ...current,
-        clientCep: digitsOnly(suggestion.postcode ?? current.clientCep).slice(0, 8),
+        clientCep: '',
         clientStreet: normalizeText(buildSuggestionStreetLine(suggestion)),
         clientNeighborhood: normalizeText(suggestion.neighborhood || current.clientNeighborhood),
         clientNumber: normalizeText(houseNumber),
@@ -627,6 +623,8 @@ export default function BookingFormModal({
   };
 
   const handleSubmit = async () => {
+    if (createBookingInFlightRef.current || createBookingMutation.isPending || successMessage) return;
+
     const errors = validateForm(formValues, addressInput, effectiveCity, selectedAddress, draftSlot);
     setValidationErrors(errors);
     if (Object.keys(errors).length > 0 || !draftSlot) return;
@@ -635,6 +633,7 @@ export default function BookingFormModal({
     const selectedHouseNumber = getSuggestionHouseNumber(selectedAddress);
     const effectiveHouseNumber = normalizeHouseNumber(selectedHouseNumber || formValues.clientNumber);
     saveStoredBookingDraft(formValues, addressInput);
+    createBookingInFlightRef.current = true;
 
     try {
       const response = await createBookingMutation.mutateAsync({
@@ -646,7 +645,7 @@ export default function BookingFormModal({
         clientLastName: normalizeText(formValues.clientLastName),
         clientEmail: normalizeText(formValues.clientEmail),
         clientPhone: normalizePhone(formValues.clientPhone),
-        clientCep: digitsOnly(formValues.clientCep).slice(0, 8),
+        clientCep: '',
         clientStreet: normalizeText(formValues.clientStreet),
         clientNeighborhood: normalizeText(formValues.clientNeighborhood),
         clientNumber: effectiveHouseNumber,
@@ -661,14 +660,21 @@ export default function BookingFormModal({
       const newEvent = mapServicoToCalendarEvent(response.servico);
       saveLocalCalendarEvent(newEvent);
       onBookingCreated?.(newEvent);
-      setSuccessMessage('Agendamento criado. Agora confirme o telefone para concluir.');
-      setVerificationState({
-        phone: formValues.clientPhone,
-        verificationId: response.verificationId,
-        expiresInSeconds: response.expiresInSeconds,
-        resendAfterSeconds: response.resendAfterSeconds,
-      });
+      if (response.verificationId) {
+        setSuccessMessage('Agendamento criado. Agora confirme o telefone para concluir.');
+        setVerificationState({
+          phone: formValues.clientPhone,
+          verificationId: response.verificationId,
+          expiresInSeconds: response.expiresInSeconds,
+          resendAfterSeconds: response.resendAfterSeconds,
+        });
+      } else {
+        savePhoneVerification(formValues.clientPhone);
+        setSuccessMessage('Agendamento confirmado com sucesso.');
+        window.setTimeout(() => onClose(), 700);
+      }
     } catch (error) {
+      createBookingInFlightRef.current = false;
       createBookingMutation.reset();
 
       if (isPendingConfirmationConflict(error)) {
@@ -691,7 +697,7 @@ export default function BookingFormModal({
     window.setTimeout(() => onClose(), 700);
   };
 
-  const submitDisabled = createBookingMutation.isPending || !confirmedDate || isLoadingSlots;
+  const submitDisabled = createBookingMutation.isPending || Boolean(successMessage) || !confirmedDate || isLoadingSlots;
   const createBookingErrorMessage = createBookingMutation.error ? mapCreateError(createBookingMutation.error) : null;
   const shouldShowComplementField = Boolean(selectedAddress);
   const shouldShowNumberField = shouldShowManualHouseNumber(selectedAddress);
@@ -926,7 +932,7 @@ export default function BookingFormModal({
                 {!selectedAddress ? (
                   <div className="booking-form__field booking-form__field--full">
                     <AlertNotice variant="info" title="Confirme o endereço pela lista" compact>
-                      <p>Escolha uma sugestão para validar cidade, rua e CEP antes de concluir.</p>
+                      <p>Escolha uma sugestão para validar cidade, rua e bairro antes de concluir.</p>
                     </AlertNotice>
                   </div>
                 ) : null}

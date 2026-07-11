@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAvailableSlots } from "../../calendar/hooks/useAvailableSlots";
 import type { CalendarEvent } from "../../calendar/types";
 import { useCreateBooking } from "../../bookings/hooks/useCreateBooking";
@@ -64,10 +64,6 @@ function formatPhoneInput(value: string): string {
   return formatBrazilianPhoneInput(value);
 }
 
-function digitsOnly(value: string) {
-  return value.replace(/\D/g, "");
-}
-
 function getTodayIso() {
   const today = new Date();
   const year = today.getFullYear();
@@ -121,12 +117,10 @@ function validateForm(values: BookingFormValues, addressInput: string, selectedC
   if (!isValidMobilePhone(phoneDigits)) errors.clientPhone = "Informe um celular válido com DDD.";
   if (!selectedSlot) errors.draftSlot = "Selecione um horário para continuar.";
 
-  const cepDigits = digitsOnly(values.clientCep);
   const hasStructuredAddress = Boolean(
     selectedSuggestion &&
     normalizeText(values.clientStreet) &&
-    normalizeText(values.clientNeighborhood) &&
-    cepDigits.length === 8,
+    normalizeText(values.clientNeighborhood),
   );
   const suggestionMatchesCity = Boolean(
     selectedSuggestion &&
@@ -174,6 +168,7 @@ export default function BookingFormModal({
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [verificationState, setVerificationState] = useState<VerificationState | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const createBookingInFlightRef = useRef(false);
 
   const { data: bootstrap } = usePublicBootstrap(open);
   const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
@@ -217,6 +212,7 @@ export default function BookingFormModal({
     setValidationErrors({});
     setSuccessMessage(null);
     setVerificationState(null);
+    createBookingInFlightRef.current = false;
   }, [defaultCity, defaultState, open, selectedDate, selectedSlot]);
 
   useEffect(() => {
@@ -286,7 +282,7 @@ export default function BookingFormModal({
     setAddressInput(suggestion.formatted);
     setFormValues((current) => ({
       ...current,
-      clientCep: digitsOnly(suggestion.postcode ?? current.clientCep).slice(0, 8),
+      clientCep: "",
       clientStreet: normalizeText(suggestion.street || suggestion.addressLine1 || suggestion.formatted),
       clientNeighborhood: normalizeText(suggestion.neighborhood || current.clientNeighborhood),
       clientNumber: normalizeText(suggestion.houseNumber),
@@ -325,11 +321,14 @@ export default function BookingFormModal({
   };
 
   const handleSubmit = async () => {
+    if (createBookingInFlightRef.current || createBookingMutation.isPending || successMessage) return;
+
     const errors = validateForm(formValues, addressInput, selectedCity, selectedAddress, draftSlot);
     setValidationErrors(errors);
     if (Object.keys(errors).length > 0 || !draftSlot) return;
 
     const normalizedComplement = normalizeText(formValues.clientComplement);
+    createBookingInFlightRef.current = true;
 
     try {
       const response = await createBookingMutation.mutateAsync({
@@ -341,7 +340,7 @@ export default function BookingFormModal({
         clientLastName: normalizeText(formValues.clientLastName),
         clientEmail: normalizeText(formValues.clientEmail),
         clientPhone: normalizePhone(formValues.clientPhone),
-        clientCep: digitsOnly(formValues.clientCep).slice(0, 8),
+        clientCep: "",
         clientStreet: normalizeText(formValues.clientStreet),
         clientNeighborhood: normalizeText(formValues.clientNeighborhood),
         clientNumber: buildPersistedNumber(formValues.clientNumber, normalizedComplement),
@@ -354,14 +353,22 @@ export default function BookingFormModal({
       const newEvent = mapServicoToCalendarEvent(response.servico);
       saveLocalCalendarEvent(newEvent);
       onBookingCreated?.(newEvent);
-      setSuccessMessage("Agendamento criado. Agora confirme o telefone para concluir.");
-      setVerificationState({
-        phone: formValues.clientPhone,
-        verificationId: response.verificationId,
-        expiresInSeconds: response.expiresInSeconds,
-        resendAfterSeconds: response.resendAfterSeconds,
-      });
+      if (response.verificationId) {
+        setSuccessMessage("Agendamento criado. Agora confirme o telefone para concluir.");
+        setVerificationState({
+          phone: formValues.clientPhone,
+          verificationId: response.verificationId,
+          expiresInSeconds: response.expiresInSeconds,
+          resendAfterSeconds: response.resendAfterSeconds,
+        });
+      } else {
+        setSuccessMessage("Agendamento confirmado com sucesso.");
+        window.setTimeout(() => {
+          onClose();
+        }, 700);
+      }
     } catch (error) {
+      createBookingInFlightRef.current = false;
       createBookingMutation.reset();
       const message = mapCreateError(error);
       setValidationErrors((current) => ({ ...current, addressInput: message === GENERIC_ADDRESS_ERROR ? message : current.addressInput }));
@@ -376,7 +383,7 @@ export default function BookingFormModal({
     }, 700);
   };
 
-  const submitDisabled = createBookingMutation.isPending || isUnavailable || isLoadingSlots;
+  const submitDisabled = createBookingMutation.isPending || Boolean(successMessage) || isUnavailable || isLoadingSlots;
   const createBookingErrorMessage = createBookingMutation.error ? mapCreateError(createBookingMutation.error) : null;
   const shouldShowComplementField = Boolean(selectedAddress);
   const shouldShowNumberField = Boolean(selectedAddress && !normalizeText(selectedAddress.houseNumber));
@@ -499,7 +506,7 @@ export default function BookingFormModal({
                   {!selectedAddress ? (
                     <div className="booking-form__field booking-form__field--full">
                       <AlertNotice variant="info" title="Confirme o endereço pela lista" compact>
-                        <p>Escolha uma sugestão para validar cidade, rua e CEP antes de concluir.</p>
+                        <p>Escolha uma sugestão para validar cidade, rua e bairro antes de concluir.</p>
                       </AlertNotice>
                     </div>
                   ) : null}

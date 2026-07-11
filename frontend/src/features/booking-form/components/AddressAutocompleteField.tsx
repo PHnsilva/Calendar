@@ -5,8 +5,7 @@ import { buildSuggestionStreetLine } from "../utils/address-selection";
 
 function buildSuggestionMeta(suggestion: AddressSuggestion): string {
   const neighborhood = (suggestion.neighborhood || suggestion.addressLine2 || "").trim();
-  const postcode = String(suggestion.postcode ?? "").replace(/\D/g, "").slice(0, 8);
-  return [neighborhood, postcode ? `CEP ${postcode}` : ""].filter(Boolean).join(" • ");
+  return neighborhood;
 }
 
 type AddressAutocompleteFieldProps = {

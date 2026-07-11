@@ -38,6 +38,7 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
   query?: Record<string, string | number | boolean | undefined | null>;
   adminToken?: string;
+  timeoutMs?: number;
 };
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
@@ -83,15 +84,35 @@ function logApiFailure(method: string, url: string, status: number | string, pay
 }
 
 export async function apiClient<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { body, headers, query, adminToken, ...rest } = options;
+  const { body, headers, query, adminToken, timeoutMs, ...rest } = options;
   const method = String(rest.method ?? "GET").toUpperCase();
   const url = buildUrl(path, query);
 
   let response: Response;
+  const timeoutEnabled = typeof timeoutMs === "number" && timeoutMs > 0;
+  const timeoutController = timeoutEnabled ? new AbortController() : null;
+  const externalSignal = rest.signal ?? null;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  let abortFromExternalSignal: (() => void) | undefined;
+
+  if (timeoutController) {
+    timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
+
+    if (externalSignal) {
+      abortFromExternalSignal = () => timeoutController.abort();
+      if (externalSignal.aborted) {
+        timeoutController.abort();
+      } else {
+        externalSignal.addEventListener("abort", abortFromExternalSignal, { once: true });
+      }
+    }
+  }
+
   try {
     response = await fetch(url, {
       ...rest,
       method,
+      signal: timeoutController?.signal ?? externalSignal ?? undefined,
       headers: {
         Accept: "application/json",
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
@@ -114,6 +135,13 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
       retryable: normalized.retryable,
       field: normalized.field,
     });
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+    if (externalSignal && abortFromExternalSignal) {
+      externalSignal.removeEventListener("abort", abortFromExternalSignal);
+    }
   }
 
   const payload = await parseResponse(response);

@@ -50,11 +50,12 @@ describe("Geoapify address autocomplete", () => {
     expect(suggestions[0]?.addressLine2).toBe("Centro");
     expect(suggestions[0]?.houseNumber).toBe("72");
     expect(suggestions[0]?.city).toBe("Itabirito");
+    expect(suggestions[0]?.postcode).toBe("");
     expect(suggestions[0]?.lat).toBe(-20.25);
     expect(suggestions[0]?.lon).toBe(-43.8);
   });
 
-  it("drops city-level postcode suggestions so generic CEP is not displayed", async () => {
+  it("drops city-level postcode suggestions and strips postcode from street suggestions", async () => {
     const { normalizeGeoapifySuggestions } = await import("./search-addresses");
     const payload = {
       results: [
@@ -86,7 +87,7 @@ describe("Geoapify address autocomplete", () => {
 
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0]?.placeId).toBe("street-without-postcode");
-    expect(suggestions[0]?.postcode).toBe("35450000");
+    expect(suggestions[0]?.postcode).toBe("");
   });
 
   it("uses filter=place when the selected city has place_id and keeps text as only the typed address", async () => {

@@ -1,9 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 beforeEach(() => {
   vi.resetModules();
   vi.stubEnv("VITE_API_BASE_URL", "http://backend.test");
   vi.unstubAllGlobals();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("apiClient", () => {
@@ -60,6 +64,30 @@ describe("apiClient", () => {
       message: "Esse horário acabou de ficar indisponível. Escolha outro horário.",
       retryable: false,
     });
+  });
+
+  it("aborts requests that exceed the configured timeout", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn((_url: string, init?: RequestInit) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => {
+        const error = new Error("aborted");
+        error.name = "AbortError";
+        reject(error);
+      });
+    })));
+
+    const { apiGet } = await import("./api-client");
+    const request = apiGet("/api/servicos", { timeoutMs: 50 });
+    const expectation = expect(request).rejects.toMatchObject({
+      name: "ApiError",
+      status: 408,
+      code: "DEPENDENCY_TIMEOUT",
+      retryable: true,
+    });
+
+    await vi.advanceTimersByTimeAsync(50);
+
+    await expectation;
   });
 
   it("ignores raw string responses from failing endpoints", async () => {

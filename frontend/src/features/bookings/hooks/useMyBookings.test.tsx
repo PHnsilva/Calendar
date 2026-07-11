@@ -64,7 +64,7 @@ describe("useMyBookings", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(getMyBookings).toHaveBeenCalledTimes(1);
-    expect(getMyBookings).toHaveBeenCalledWith("manage-token");
+    expect(getMyBookings).toHaveBeenCalledWith("manage-token", expect.any(AbortSignal));
     expect(result.current.data?.[0]?.model).toBe(model);
     expect(result.current.data?.[0]?.legacy).toMatchObject({
       eventId: "event-1",

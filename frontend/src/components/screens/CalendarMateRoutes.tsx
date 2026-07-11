@@ -19,6 +19,11 @@ import clientFollowCalendarIcon from '../../assets/wireframes/icons/client-follo
 import clientPhoneIcon from '../../assets/wireframes/icons/client-phone.png';
 import clientChatIcon from '../../assets/wireframes/icons/client-chat.png';
 import clientProfileAvatarIcon from '../../assets/wireframes/icons/client-profile-avatar-unisex.png';
+import clientAvatarFemaleAfro from '../../assets/wireframes/avatars/client-avatar-female-afro.png';
+import clientAvatarFemaleLongBlack from '../../assets/wireframes/avatars/client-avatar-female-long-black.png';
+import clientAvatarFemaleRedhead from '../../assets/wireframes/avatars/client-avatar-female-redhead.png';
+import clientAvatarMaleBrownBeard from '../../assets/wireframes/avatars/client-avatar-male-brown-beard.png';
+import clientAvatarMaleBlackBeard from '../../assets/wireframes/avatars/client-avatar-male-black-beard.png';
 import contactWhatsAppIcon from '../../assets/wireframes/icons/contact-whatsapp.png';
 import contactInstagramIcon from '../../assets/wireframes/icons/contact-instagram.png';
 import contactPhoneIcon from '../../assets/wireframes/icons/contact-phone.png';
@@ -118,6 +123,25 @@ import type { AdminAuthConfirmResponse, AdminProviderResponse, AdminWorkspaceCon
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
 import { confirmAdminLogin, listAdminProviders, loginAdminWithPassword, resendAdminLogin, startAdminLogin } from '../../features/admin/api/admin-auth';
 import { ADMIN_BOOKINGS_ROUTE, PROVIDER_BOOKINGS_ROUTE, applyAdminLoginDestination, resolveAdminLoginDestination } from '../../features/admin/services/admin-workspace-flow';
+
+type ClientAvatarOption = {
+  id: string;
+  src: string;
+  alt: string;
+};
+
+const CLIENT_AVATAR_OPTIONS: ClientAvatarOption[] = [
+  { id: 'default', src: clientProfileAvatarIcon, alt: 'Avatar masculino atual do perfil' },
+  { id: 'female-afro', src: clientAvatarFemaleAfro, alt: 'Avatar feminino com cabelo afro' },
+  { id: 'female-long-black', src: clientAvatarFemaleLongBlack, alt: 'Avatar feminino com cabelo longo preto' },
+  { id: 'female-redhead', src: clientAvatarFemaleRedhead, alt: 'Avatar feminino ruivo de cabelo curto' },
+  { id: 'male-brown-beard', src: clientAvatarMaleBrownBeard, alt: 'Avatar masculino com barba castanha' },
+  { id: 'male-black-beard', src: clientAvatarMaleBlackBeard, alt: 'Avatar masculino com barba e cabelo crespo' },
+];
+
+function getClientAvatarOption(avatarId?: string): ClientAvatarOption {
+  return CLIENT_AVATAR_OPTIONS.find((option) => option.id === avatarId) ?? CLIENT_AVATAR_OPTIONS[0];
+}
 import { updateAdminBooking } from '../../features/admin/api/update-admin-booking';
 import { exportBudgetPdf, exportBudgetXls } from '../../features/admin/services/budget-export';
 import { ApiError } from '../../lib/api-client';
@@ -2508,6 +2532,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
   const [submitError, setSubmitError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
+  const createBookingInFlightRef = useRef(false);
   const selectedCity = allowedCities.includes(city) ? city : defaultCity;
   const bookingDurationMinutes = getBookingDurationMinutesByCity(bootstrap, selectedCity);
   const createBookingMutation = useCreateBooking();
@@ -2584,9 +2609,10 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
   };
 
   const handleCreateBooking = async () => {
+    if (createBookingInFlightRef.current || createBookingMutation.isPending || successMessage) return;
+
     const { firstName, lastName } = splitFullName(fullName);
     const phoneDigits = digitsOnly(phone);
-    const cepDigits = digitsOnly(selectedAddress?.postcode ?? '');
     const houseNumberFromSuggestion = getSuggestionHouseNumber(selectedAddress);
     const effectiveHouseNumber = houseNumberFromSuggestion || houseNumber;
     const manualAddress = parseManualBookingAddress(addressInput, effectiveHouseNumber, selectedCity);
@@ -2638,6 +2664,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
 
     setSubmitError('');
     setSuccessMessage('');
+    createBookingInFlightRef.current = true;
 
     try {
       const response = await createBookingMutation.mutateAsync({
@@ -2649,7 +2676,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         clientLastName: lastName,
         clientEmail: cleanFormText(email),
         clientPhone: phoneDigits,
-        clientCep: cepDigits.length === 8 ? cepDigits : '',
+        clientCep: '',
         clientStreet,
         clientNeighborhood,
         clientNumber,
@@ -2669,7 +2696,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
       });
       saveManageToken(response.manageToken, response.servico.eventId);
       saveLocalCalendarEvent(mapCreatedServicoToCalendarEvent(response.servico));
-      await Promise.all([
+      void Promise.allSettled([
         queryClient.invalidateQueries({ queryKey: ['my-bookings'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-bookings'] }),
       ]);
@@ -2679,6 +2706,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         navigate('/meus-agendamentos');
       }, 700);
     } catch (error) {
+      createBookingInFlightRef.current = false;
       const message = mapBookingCreateError(error);
       if (message.toLowerCase().includes('senha') || (error instanceof ApiError && error.code === 'RESERVED_ACCESS')) {
         setForceReservedPhonePassword(true);
@@ -2709,7 +2737,6 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
             <span className="wf-input-shell wf-input-shell--address">
               <Icon name="map" />
               <AddressAutocompleteField value={addressInput} selectedCity={selectedCity} selectedState={defaultState} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
-              <button type="button" className="wf-address-search-button" onMouseDown={(event) => event.preventDefault()}>Buscar endereço</button>
             </span>
             {fieldErrors.address ? <small className="wf-field-error">{fieldErrors.address}</small> : null}
           </label>
@@ -2748,7 +2775,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
       {selectedTime ? <p className="wf-create-selected-slot">Horário selecionado: <strong>{selectedTime}{selectedEndTime ? ` - ${selectedEndTime}` : ''}</strong></p> : null}
       {successMessage ? <p className="wf-auth-feedback wf-auth-feedback--success">{successMessage}</p> : null}
       {submitError ? <p className="wf-auth-feedback wf-auth-feedback--error">{submitError}</p> : null}
-      <ModalActions primary={createBookingMutation.isPending ? 'Agendando...' : 'Confirmar agendamento'} secondary="Cancelar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={handleCreateBooking} disabledPrimary={createBookingMutation.isPending} />
+      <ModalActions primary={createBookingMutation.isPending ? 'Agendando...' : 'Confirmar agendamento'} secondary="Cancelar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={handleCreateBooking} disabledPrimary={createBookingMutation.isPending || Boolean(successMessage)} />
     </>
   );
 }
@@ -3105,7 +3132,8 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
   const [selectedWorkspace, setSelectedWorkspace] = useState('');
   const [sessionPhone, setSessionPhone] = useState('');
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState(0);
+  const [selectedAvatar, setSelectedAvatar] = useState(() => getClientAvatarOption(profile?.avatarId).id);
+  const activeAvatar = useMemo(() => getClientAvatarOption(selectedAvatar), [selectedAvatar]);
   const phoneDigits = normalizePhone(phone);
   const hasValidPhone = isValidPhone(phone);
   const detectedProtectedPhone = isProtectedStaffPhone(phone);
@@ -3150,12 +3178,19 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
         navigate(destination.to, { replace: true });
         return;
       }
-      saveClientProfile({
+      const savedProfile = saveClientProfile({
         name: cleanFormText(name),
         email: cleanFormText(email),
         phone: phoneDigits || undefined,
         city: cleanFormText(city),
+        avatarId: selectedAvatar,
       });
+      if (!savedProfile) {
+        throw new Error('Não foi possível persistir o perfil neste dispositivo.');
+      }
+      // Keep every mounted navbar synchronized immediately after the first save
+      // and after subsequent avatar changes, including legacy browser sessions.
+      window.dispatchEvent(new CustomEvent(getClientProfileChangedEventName(), { detail: savedProfile }));
       setMessage('Perfil salvo neste dispositivo.');
     } catch (saveError) {
       setError(normalizeApiErrorMessage(saveError, {
@@ -3191,8 +3226,8 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="wf-client-profile-modal__hero">
-        <figure className="wf-client-profile-modal__avatar">
-          <img src={clientProfileAvatarIcon} alt="Avatar do perfil" />
+        <figure className="wf-client-profile-modal__avatar" data-avatar-id={activeAvatar.id}>
+          <img src={activeAvatar.src} alt={activeAvatar.alt} />
         </figure>
         <div className="wf-client-profile-modal__identity">
           <strong>{displayName}</strong>
@@ -3245,23 +3280,21 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
               <button type="button" aria-label="Fechar seleção de avatar" onClick={() => setAvatarPickerOpen(false)}><Icon name="close" /></button>
             </header>
             <div className="wf-client-avatar-picker__grid">
-              {Array.from({ length: 6 }, (_, index) => (
+              {CLIENT_AVATAR_OPTIONS.map((avatar, index) => (
                 <button
-                  key={index}
+                  key={avatar.id}
                   type="button"
-                  className={cx('wf-client-avatar-picker__option', selectedAvatar === index && 'wf-client-avatar-picker__option--selected')}
-                  onClick={() => { setSelectedAvatar(index); setAvatarPickerOpen(false); }}
+                  className={cx('wf-client-avatar-picker__option', selectedAvatar === avatar.id && 'wf-client-avatar-picker__option--selected')}
+                  data-avatar-id={avatar.id}
+                  onClick={() => { setSelectedAvatar(avatar.id); setAvatarPickerOpen(false); }}
                   aria-label={`Selecionar avatar ${index + 1}`}
+                  title={avatar.alt}
                 >
-                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <circle cx="32" cy="32" r="24" stroke="currentColor" strokeWidth="3.8" strokeDasharray="5 6" />
-                    <path d="M22 45c2.2-7.2 5.6-10.8 10-10.8S39.8 37.8 42 45" stroke="currentColor" strokeWidth="3.8" strokeLinecap="round" />
-                    <circle cx="32" cy="24" r="6" stroke="currentColor" strokeWidth="3.8" />
-                  </svg>
+                  <img src={avatar.src} alt={avatar.alt} />
                 </button>
               ))}
             </div>
-            <p>Espaços reservados para os PNGs dos avatares.</p>
+            <p>Escolha um dos seis avatares disponíveis para o seu perfil.</p>
           </section>
         </div>
       ) : null}

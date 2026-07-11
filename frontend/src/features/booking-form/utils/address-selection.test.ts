@@ -57,6 +57,8 @@ describe("address selection helpers", () => {
 
     expect(buildSuggestionInputValue(item)).toContain("Rua Joao Pessoa");
     expect(buildSuggestionInputValue(item)).toContain("Centro");
+    expect(buildSuggestionInputValue(item)).not.toContain("CEP");
+    expect(buildSuggestionInputValue(item)).not.toContain("35450045");
     expect(buildSuggestionStreetLine(item)).toBe("Rua Joao Pessoa");
   });
 });

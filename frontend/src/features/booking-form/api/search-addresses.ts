@@ -127,10 +127,6 @@ function normalizeNumber(value?: unknown): number {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
-function normalizePostcode(value?: unknown): string {
-  return normalizeText(value).replace(/\D/g, "").slice(0, 8);
-}
-
 function normalizeUf(value?: unknown): string {
   const text = normalizeText(value).toUpperCase();
   if (/^[A-Z]{2}$/.test(text)) return text;
@@ -282,7 +278,7 @@ export function toSuggestion(properties: GeoapifyResult): GeoapifyAddressSuggest
   const city = firstText(properties.city, properties.town, properties.village);
   const stateCode = normalizeUf(firstText(properties.state_code, properties.state));
   const state = stateCode || normalizeText(properties.state).toUpperCase();
-  const postcode = street ? normalizePostcode(properties.postcode) : "";
+  const postcode = "";
   const latitude = normalizeNumber(properties.lat);
   const longitude = normalizeNumber(properties.lon);
 

@@ -8,8 +8,12 @@ import { BookingActions } from "./BookingActions";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { useBookingMutations } from "../hooks/useBookingMutations";
 
+export type BookingDetailMode = "view" | "edit" | "cancel";
+
 type BookingDetailCardProps = {
   booking: Booking;
+  initialMode?: BookingDetailMode;
+  onDeleted?: () => void;
 };
 
 function toFormState(booking: Booking): ServicoRequest {
@@ -34,19 +38,20 @@ function toFormState(booking: Booking): ServicoRequest {
   };
 }
 
-function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
+function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: BookingDetailCardProps) {
   const token = useMemo(
     () => resolveManageToken({ eventId: booking.id, manageToken: booking.manageToken ?? undefined }),
     [booking.id, booking.manageToken],
   );
-  const [isEditing, setIsEditing] = useState(false);
-  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialMode === "edit");
+  const [confirmCancel, setConfirmCancel] = useState(initialMode === "cancel");
   const [form, setForm] = useState<ServicoRequest>(() => toFormState(booking));
   const [reservedPhonePassword, setReservedPhonePassword] = useState("");
   const { updateBooking, deleteBooking, isUpdating, isDeleting, updateError, deleteError } = useBookingMutations();
 
   const lockedByTime = isWithinTwoHours(booking.startsAt);
-  const canManage = Boolean(token) && !lockedByTime;
+  const isCancelled = booking.status.code === "cancelled";
+  const canManage = Boolean(token) && !lockedByTime && !isCancelled;
 
   const onChange = (field: keyof ServicoRequest, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -54,21 +59,30 @@ function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
 
   const submitUpdate = async () => {
     if (!token) return;
-    await updateBooking({
-      eventId: booking.id,
-      token,
-      payload: {
-        ...form,
-        reservedPhonePassword: reservedPhonePassword.trim() || undefined,
-      },
-    });
-    setIsEditing(false);
+    try {
+      await updateBooking({
+        eventId: booking.id,
+        token,
+        payload: {
+          ...form,
+          reservedPhonePassword: reservedPhonePassword.trim() || undefined,
+        },
+      });
+      setIsEditing(false);
+    } catch {
+      // React Query exposes the normalized mutation error below.
+    }
   };
 
   const submitDelete = async () => {
     if (!token) return;
-    await deleteBooking({ eventId: booking.id, token });
-    setConfirmCancel(false);
+    try {
+      await deleteBooking({ eventId: booking.id, token });
+      setConfirmCancel(false);
+      onDeleted?.();
+    } catch {
+      // React Query exposes the normalized mutation error below.
+    }
   };
 
   return (
@@ -81,7 +95,8 @@ function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
         <BookingStatusBadge status={booking.status} />
       </div>
 
-      {lockedByTime ? <p className="booking-detail__notice">Alterações só podem ser feitas com pelo menos 2 horas de antecedência.</p> : null}
+      {lockedByTime && !isCancelled ? <p className="booking-detail__notice">Alterações só podem ser feitas com pelo menos 2 horas de antecedência.</p> : null}
+      {isCancelled ? <p className="booking-detail__notice">Este agendamento já foi cancelado e não pode mais ser alterado.</p> : null}
       {!token ? <p className="booking-detail__notice">Esse atendimento não tem código de acesso salvo neste navegador. Use a recuperação para restaurar o acesso.</p> : null}
 
       {isEditing ? (
@@ -136,7 +151,7 @@ function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
         </div>
       )}
 
-      {!isEditing ? <BookingActions canManage={canManage} onEdit={() => setIsEditing(true)} onCancel={() => setConfirmCancel(true)} /> : null}
+      {!isEditing && !confirmCancel ? <BookingActions canManage={canManage} onEdit={() => setIsEditing(true)} onCancel={() => setConfirmCancel(true)} /> : null}
 
       {confirmCancel ? (
         <div className="booking-detail__confirm">
@@ -154,6 +169,6 @@ function BookingDetailCardContent({ booking }: BookingDetailCardProps) {
   );
 }
 
-export function BookingDetailCard({ booking }: BookingDetailCardProps) {
-  return <BookingDetailCardContent key={booking.id} booking={booking} />;
+export function BookingDetailCard({ booking, initialMode = "view", onDeleted }: BookingDetailCardProps) {
+  return <BookingDetailCardContent key={`${booking.id}:${initialMode}`} booking={booking} initialMode={initialMode} onDeleted={onDeleted} />;
 }

@@ -2,7 +2,7 @@ import type { GeoapifyAddressSuggestion } from "../../../types/api";
 
 type AddressLike = Pick<
   GeoapifyAddressSuggestion,
-  "addressLine1" | "addressLine2" | "formatted" | "houseNumber" | "label" | "neighborhood" | "postcode" | "street"
+  "addressLine1" | "addressLine2" | "formatted" | "houseNumber" | "label" | "neighborhood" | "street"
 > & {
   raw?: Record<string, unknown>;
 };
@@ -27,8 +27,7 @@ export function shouldShowManualHouseNumber(suggestion?: AddressLike | null): bo
 export function buildSuggestionInputValue(suggestion: AddressLike): string {
   const street = buildSuggestionStreetLine(suggestion);
   const neighborhood = clean(suggestion.neighborhood) || clean(suggestion.addressLine2);
-  const postcode = clean(suggestion.postcode).replace(/\D/g, "").slice(0, 8);
-  return [street, neighborhood, postcode ? `CEP ${postcode}` : ""].filter(Boolean).join(", ")
+  return [street, neighborhood].filter(Boolean).join(", ")
     || clean(suggestion.formatted)
     || clean(suggestion.label)
     || clean(suggestion.street);

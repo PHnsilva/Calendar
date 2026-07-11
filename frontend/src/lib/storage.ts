@@ -402,6 +402,22 @@ export function saveManageToken(token: string, eventId?: string): void {
   }
 }
 
+export function removeManageToken(token: string, eventId?: string): void {
+  const normalized = token.trim();
+  if (!normalized) return;
+
+  writeJson(MANAGE_TOKENS_KEY, getManageTokens().filter((item) => item !== normalized));
+
+  if (eventId?.trim()) {
+    const normalizedEventId = eventId.trim();
+    const map = getManageTokenMap();
+    if (map[normalizedEventId] === normalized) {
+      delete map[normalizedEventId];
+      writeJson(MANAGE_TOKEN_MAP_KEY, map);
+    }
+  }
+}
+
 export function saveRecoveredBookings(bookings: ServicoResponse[]): void {
   bookings.forEach((booking) => {
     if (booking.manageToken?.trim()) {
@@ -432,8 +448,8 @@ export function removeLocalCalendarEvent(eventId: string): void {
 
   const map = getManageTokenMap();
   if (map[eventId]) {
-    const { [eventId]: _removed, ...rest } = map;
-    writeJson(MANAGE_TOKEN_MAP_KEY, rest);
+    delete map[eventId];
+    writeJson(MANAGE_TOKEN_MAP_KEY, map);
   }
 
   dispatchLocalEventsChanged();

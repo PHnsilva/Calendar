@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../../assets/brand/sg-navbar-logo-white-orange-v2.png";
+import viewIcon from "../../../assets/wireframes/icons/booking-action-eye.svg";
+import editIcon from "../../../assets/wireframes/icons/booking-action-pencil.svg";
+import cancelIcon from "../../../assets/wireframes/icons/booking-action-cancel.svg";
+import contactIcon from "../../../assets/wireframes/icons/booking-action-whatsapp.svg";
+import calendarIcon from "../../../assets/wireframes/icons/booking-meta-calendar.svg";
+import refreshIcon from "../../../assets/wireframes/icons/booking-search.svg";
 import { CalendarMateModal, type ModalKind } from "../../../components/screens/CalendarMateRoutes";
 import type { Booking } from "../../../entities/booking";
 import { BookingDetailCard, type BookingDetailMode } from "../../bookings/components/BookingDetailCard";
@@ -74,21 +80,26 @@ function BookingSummaryCard({
 
       <div className="appointments-modal-card__actions">
         <button type="button" className="appointments-card-action appointments-card-action--primary" onClick={() => onOpen("view")}>
+          <img src={viewIcon} alt="" aria-hidden="true" />
           Ver detalhes
         </button>
         <button type="button" className="appointments-card-action" onClick={() => onOpen("edit")} disabled={!canManage}>
+          <img src={editIcon} alt="" aria-hidden="true" />
           Editar / reagendar
         </button>
         <button type="button" className="appointments-card-action" onClick={onContact}>
+          <img src={contactIcon} alt="" aria-hidden="true" />
           {booking.assignedProvider?.phone ? "Falar com prestador" : "Fale conosco"}
         </button>
         <button type="button" className="appointments-card-action appointments-card-action--danger" onClick={() => onOpen("cancel")} disabled={!canManage}>
+          <img src={cancelIcon} alt="" aria-hidden="true" />
           Cancelar
         </button>
       </div>
 
       {booking.eventLink ? (
         <a className="appointments-modal-card__calendar-link" href={booking.eventLink} target="_blank" rel="noreferrer">
+          <img src={calendarIcon} alt="" aria-hidden="true" />
           Abrir evento no calendário
         </a>
       ) : null}
@@ -102,7 +113,12 @@ export default function AppointmentsPage() {
   const [selected, setSelected] = useState<SelectedBooking | null>(null);
   const [childModal, setChildModal] = useState<ModalKind>(null);
   const bookingsQuery = useMyBookings(tokens);
-  const bookings = bookingsQuery.data ?? [];
+  const bookings = useMemo(() => bookingsQuery.data ?? [], [bookingsQuery.data]);
+  const hasBookings = bookings.length > 0;
+  const showAccessEmpty = tokens.length === 0;
+  const showInitialLoading = tokens.length > 0 && bookingsQuery.isLoading && !hasBookings;
+  const showLoadError = tokens.length > 0 && bookingsQuery.isError && !hasBookings;
+  const showEmpty = tokens.length > 0 && !bookingsQuery.isLoading && !bookingsQuery.isError && !bookingsQuery.isFetching && !hasBookings;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -115,12 +131,20 @@ export default function AppointmentsPage() {
   useEffect(() => {
     if (!selected) return;
     const stillExists = bookings.some(({ model }) => model.id === selected.entry.model.id);
-    if (!stillExists && !bookingsQuery.isFetching) setSelected(null);
+    if (stillExists || bookingsQuery.isFetching) return;
+    const timeoutId = window.setTimeout(() => setSelected(null), 0);
+    return () => window.clearTimeout(timeoutId);
   }, [bookings, bookingsQuery.isFetching, selected]);
 
   const closeChildModal = () => {
     setChildModal(null);
     setTokens(getManageTokens());
+  };
+
+  const handleDeleted = () => {
+    setSelected(null);
+    setTokens(getManageTokens());
+    bookingsQuery.refetch().catch(() => undefined);
   };
 
   const handleContact = (booking: Booking) => {
@@ -157,12 +181,17 @@ export default function AppointmentsPage() {
             </span>
           </div>
           <button type="button" onClick={() => void bookingsQuery.refetch()} disabled={bookingsQuery.isFetching}>
+            <img src={refreshIcon} alt="" aria-hidden="true" />
             {bookingsQuery.isFetching ? "Atualizando..." : "Atualizar lista"}
           </button>
         </div>
 
         <div className="appointments-modal__content">
-          {tokens.length === 0 ? (
+          {bookingsQuery.isFetching && hasBookings ? (
+            <p className="appointments-modal__inline-status">Atualizando com os dados mais recentes...</p>
+          ) : null}
+
+          {showAccessEmpty ? (
             <section className="appointments-modal__empty">
               <span aria-hidden="true">🔐</span>
               <h2>Nenhum acesso salvo neste navegador</h2>
@@ -174,7 +203,7 @@ export default function AppointmentsPage() {
             </section>
           ) : null}
 
-          {tokens.length > 0 && bookingsQuery.isLoading ? (
+          {showInitialLoading ? (
             <section className="appointments-modal__empty">
               <span className="appointments-modal__spinner" aria-hidden="true" />
               <h2>Carregando agendamentos</h2>
@@ -182,7 +211,7 @@ export default function AppointmentsPage() {
             </section>
           ) : null}
 
-          {tokens.length > 0 && bookingsQuery.isError ? (
+          {showLoadError ? (
             <section className="appointments-modal__empty">
               <span aria-hidden="true">!</span>
               <h2>Não foi possível carregar os agendamentos</h2>
@@ -191,7 +220,7 @@ export default function AppointmentsPage() {
             </section>
           ) : null}
 
-          {tokens.length > 0 && !bookingsQuery.isLoading && !bookingsQuery.isError && bookings.length === 0 ? (
+          {showEmpty ? (
             <section className="appointments-modal__empty">
               <span aria-hidden="true">📅</span>
               <h2>Nenhum agendamento encontrado</h2>
@@ -203,7 +232,7 @@ export default function AppointmentsPage() {
             </section>
           ) : null}
 
-          {bookings.length > 0 ? (
+          {hasBookings ? (
             <div className="appointments-modal__grid">
               {bookings.map((entry) => (
                 <BookingSummaryCard
@@ -233,7 +262,7 @@ export default function AppointmentsPage() {
               <BookingDetailCard
                 booking={selected.entry.model}
                 initialMode={selected.mode}
-                onDeleted={() => setSelected(null)}
+                onDeleted={handleDeleted}
               />
             </div>
           </section>

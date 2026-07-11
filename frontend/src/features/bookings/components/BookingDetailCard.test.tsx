@@ -71,7 +71,7 @@ describe("BookingDetailCard", () => {
     expect(screen.getByText("31999999999")).toBeTruthy();
     expect(screen.getByText("Rua Sao Jose, 123 - Centro - Itabirito/MG")).toBeTruthy();
     expect(screen.getByText("Itabirito - MG")).toBeTruthy();
-    expect(screen.getByText("Pendente")).toBeTruthy();
+    expect(screen.getAllByText("Pendente").length).toBeGreaterThanOrEqual(1);
   });
 
   it("resets edit state when the selected booking changes", () => {

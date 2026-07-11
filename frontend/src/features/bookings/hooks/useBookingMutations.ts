@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { BookingListEntry } from "../types";
 import { deleteBooking } from "../api/delete-booking";
 import { updateBooking } from "../api/update-booking";
 
@@ -17,7 +18,13 @@ export function useBookingMutations() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteBooking,
-    onSuccess: invalidate,
+    onSuccess: (_data, variables) => {
+      queryClient.setQueriesData<BookingListEntry[]>({ queryKey: ["my-bookings"] }, (current) => {
+        if (!current) return current;
+        return current.filter((entry) => entry.model.id !== variables.eventId);
+      });
+      invalidate();
+    },
   });
 
   return {

@@ -717,3 +717,186 @@ html body .appointments-detail-overlay .booking-detail__error {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Appointment management polish: cards, action icons, and detail/cancel panels. */
+html body .appointments-modal__grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr));
+  gap: clamp(16px, 1.8vw, 26px);
+}
+
+html body .appointments-modal-card {
+  padding: clamp(18px, 1.7vw, 24px);
+  gap: 16px;
+  border-color: rgba(7, 19, 93, .12);
+  border-left: 5px solid #ff5a13;
+  border-radius: 18px;
+  box-shadow: 0 16px 36px rgba(7, 19, 93, .09);
+}
+
+html body .appointments-modal-card__summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+html body .appointments-card-action,
+html body .appointments-modal__toolbar > button,
+html body .appointments-modal-card__calendar-link,
+html body .appointments-detail-overlay .booking-detail__actions button,
+html body .appointments-detail-overlay .booking-detail__calendar-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+html body .appointments-card-action img,
+html body .appointments-modal__toolbar > button img,
+html body .appointments-modal-card__calendar-link img,
+html body .appointments-detail-overlay .booking-detail__actions button img,
+html body .appointments-detail-overlay .booking-detail__icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  display: block;
+  object-fit: contain;
+}
+
+html body .appointments-card-action--primary img,
+html body .appointments-detail-overlay .primary-action img,
+html body .appointments-detail-overlay .primary-action--danger img {
+  filter: brightness(0) invert(1);
+}
+
+html body .appointments-modal__inline-status {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(6, 76, 225, .14);
+  border-radius: 12px;
+  background: #fff;
+  color: #40527c;
+  font-size: .84rem;
+  font-weight: 750;
+}
+
+html body .appointments-detail-overlay__panel {
+  width: min(820px, 94vw);
+}
+
+html body .appointments-detail-overlay .booking-detail {
+  gap: 18px;
+}
+
+html body .appointments-detail-overlay .booking-detail__header,
+html body .appointments-detail-overlay .booking-detail__content,
+html body .appointments-detail-overlay .booking-detail__form,
+html body .appointments-detail-overlay .booking-detail__confirm {
+  padding: clamp(16px, 2vw, 22px);
+  border-radius: 18px;
+  box-shadow: 0 14px 34px rgba(7, 19, 93, .07);
+}
+
+html body .appointments-detail-overlay .booking-detail__content,
+html body .appointments-detail-overlay .booking-detail__confirm {
+  display: grid;
+  gap: 14px;
+}
+
+html body .appointments-detail-overlay .booking-detail__section {
+  min-width: 0;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(7, 19, 93, .08);
+  border-radius: 14px;
+  background: #f8faff;
+}
+
+html body .appointments-detail-overlay .booking-detail__section h3,
+html body .appointments-detail-overlay .booking-detail__confirm-heading h3 {
+  margin: 0;
+  color: #07135d;
+}
+
+html body .appointments-detail-overlay .booking-detail__section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .98rem;
+}
+
+html body .appointments-detail-overlay .booking-detail__section p,
+html body .appointments-detail-overlay .booking-detail__notes,
+html body .appointments-detail-overlay .booking-detail__confirm-heading p {
+  margin: 0;
+  color: #4c5c7e;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+html body .appointments-detail-overlay .booking-detail__info-grid,
+html body .appointments-detail-overlay .booking-detail__cancel-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+html body .appointments-detail-overlay .booking-detail__info-grid span,
+html body .appointments-detail-overlay .booking-detail__cancel-summary span {
+  min-width: 0;
+  padding: 11px 12px;
+  display: grid;
+  gap: 4px;
+  border-radius: 12px;
+  background: #fff;
+  color: #415173;
+  font-size: .84rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+html body .appointments-detail-overlay .booking-detail__cancel-summary span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+html body .appointments-detail-overlay .booking-detail__info-grid b {
+  color: #07135d;
+  font-size: .72rem;
+  text-transform: uppercase;
+}
+
+html body .appointments-detail-overlay .booking-detail__calendar-link {
+  width: fit-content;
+  color: #064ce1;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+html body .appointments-detail-overlay .booking-detail__actions button {
+  gap: 8px;
+}
+
+html body .appointments-detail-overlay .booking-detail__confirm-heading {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+html body .appointments-detail-overlay .booking-detail__confirm-heading > .booking-detail__icon {
+  width: 44px;
+  height: 44px;
+  padding: 9px;
+  border-radius: 14px;
+  background: #fff1f1;
+}
+
+@media (max-width: 700px) {
+  html body .appointments-modal-card__summary,
+  html body .appointments-detail-overlay .booking-detail__info-grid,
+  html body .appointments-detail-overlay .booking-detail__cancel-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

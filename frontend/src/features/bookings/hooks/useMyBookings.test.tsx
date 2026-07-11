@@ -51,7 +51,7 @@ function booking(id: string, startsAt: string): Booking {
 
 describe("useMyBookings", () => {
   it("preserves the booking model beside its compatible legacy payload", async () => {
-    const model = booking("event-1", "2026-06-10T12:00:00Z");
+    const model = booking("event-1", "2099-07-12T12:00:00Z");
     vi.mocked(getMyBookings).mockResolvedValue([model]);
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -68,9 +68,32 @@ describe("useMyBookings", () => {
     expect(result.current.data?.[0]?.model).toBe(model);
     expect(result.current.data?.[0]?.legacy).toMatchObject({
       eventId: "event-1",
-      start: "2026-06-10T12:00:00.000Z",
+      start: "2099-07-12T12:00:00.000Z",
       status: "PENDING_PHONE",
     });
+
+    queryClient.clear();
+  });
+
+  it("filters cancelled bookings and appointments from past dates", async () => {
+    const upcoming = booking("event-upcoming", "2099-07-12T12:00:00Z");
+    const cancelled = {
+      ...booking("event-cancelled", "2099-07-13T12:00:00Z"),
+      status: { code: "cancelled" as const, label: "Cancelado", raw: "CANCELLED" },
+    };
+    const past = booking("event-past", "2000-07-10T12:00:00Z");
+    vi.mocked(getMyBookings).mockResolvedValue([past, cancelled, upcoming]);
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useMyBookings(["manage-token"]), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.map((entry) => entry.model.id)).toEqual(["event-upcoming"]);
 
     queryClient.clear();
   });

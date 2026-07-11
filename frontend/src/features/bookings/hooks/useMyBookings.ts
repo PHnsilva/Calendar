@@ -18,6 +18,19 @@ function mergeBookings(items: Booking[][]): Booking[] {
   return [...map.values()].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 }
 
+function startOfToday(): Date {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+export function isVisibleClientBooking(booking: Booking, now: Date = new Date()): boolean {
+  if (booking.status.code === "cancelled") return false;
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  return booking.startsAt >= today;
+}
+
 export function useMyBookings(tokens: string[]) {
   const uniqueTokens = [...new Set(tokens.map((token) => token.trim()).filter(Boolean))].sort();
 
@@ -50,10 +63,12 @@ export function useMyBookings(tokens: string[]) {
           throw firstFailure?.reason ?? new Error("Não foi possível carregar os agendamentos.");
         }
 
-        return mergeBookings(fulfilled).map((model) => ({
-          model,
-          legacy: toLegacyBookingResponse(model),
-        }));
+        return mergeBookings(fulfilled)
+          .filter((booking) => booking.status.code !== "cancelled" && booking.startsAt >= startOfToday())
+          .map((model) => ({
+            model,
+            legacy: toLegacyBookingResponse(model),
+          }));
       } finally {
         globalThis.clearTimeout(timeoutId);
         signal.removeEventListener("abort", abortFromQuery);

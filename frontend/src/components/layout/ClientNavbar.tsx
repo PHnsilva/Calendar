@@ -56,6 +56,23 @@ const CLIENT_PROFILE_AVATARS: Record<string, string> = {
   'male-black-beard': clientAvatarMaleBlackBeard,
 };
 
+function resolveClientProfileAvatar(avatarId?: string): string {
+  const normalizedAvatarId = avatarId?.trim().toLowerCase();
+  if (!normalizedAvatarId) return CLIENT_PROFILE_AVATARS.default;
+
+  const directMatch = CLIENT_PROFILE_AVATARS[normalizedAvatarId];
+  if (directMatch) return directMatch;
+
+  const legacyMatch = Object.entries(CLIENT_PROFILE_AVATARS).find(([id, src]) => {
+    const normalizedSrc = src.toLowerCase();
+    return normalizedAvatarId === normalizedSrc
+      || normalizedAvatarId.includes(id)
+      || normalizedSrc.includes(normalizedAvatarId);
+  });
+
+  return legacyMatch?.[1] ?? CLIENT_PROFILE_AVATARS.default;
+}
+
 
 type ClientNavbarLineIconName = 'calendar' | 'home' | 'profile';
 
@@ -126,7 +143,9 @@ function readClientNavbarSnapshot(): ClientNavbarSnapshot {
     isVerified,
     label: isVerified ? 'Perfil' : 'Cliente',
     summary: firstName || (phone ? formatPhoneForDisplay(phone) : undefined),
-    avatarSrc: profile?.avatarId ? CLIENT_PROFILE_AVATARS[profile.avatarId] : undefined,
+    // Any persisted profile receives an avatar. Older profiles without avatarId
+    // use the original male avatar until the user chooses another option.
+    avatarSrc: profile ? resolveClientProfileAvatar(profile.avatarId) : undefined,
   };
 }
 
@@ -135,13 +154,29 @@ function useClientNavbarSnapshot(): ClientNavbarSnapshot {
 
   useEffect(() => {
     const refresh = () => setSnapshot(readClientNavbarSnapshot());
-    window.addEventListener(getPhoneVerificationChangedEventName(), refresh);
-    window.addEventListener(getClientProfileChangedEventName(), refresh);
-    window.addEventListener('storage', refresh);
+    const refreshAfterPersistence = () => {
+      refresh();
+      window.requestAnimationFrame(refresh);
+      window.setTimeout(refresh, 0);
+    };
+    const refreshWhenVisible = () => {
+      if (!document.hidden) refreshAfterPersistence();
+    };
+
+    window.addEventListener(getPhoneVerificationChangedEventName(), refreshAfterPersistence);
+    window.addEventListener(getClientProfileChangedEventName(), refreshAfterPersistence);
+    window.addEventListener('storage', refreshAfterPersistence);
+    window.addEventListener('focus', refreshAfterPersistence);
+    window.addEventListener('pageshow', refreshAfterPersistence);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+
     return () => {
-      window.removeEventListener(getPhoneVerificationChangedEventName(), refresh);
-      window.removeEventListener(getClientProfileChangedEventName(), refresh);
-      window.removeEventListener('storage', refresh);
+      window.removeEventListener(getPhoneVerificationChangedEventName(), refreshAfterPersistence);
+      window.removeEventListener(getClientProfileChangedEventName(), refreshAfterPersistence);
+      window.removeEventListener('storage', refreshAfterPersistence);
+      window.removeEventListener('focus', refreshAfterPersistence);
+      window.removeEventListener('pageshow', refreshAfterPersistence);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
   }, []);
 

@@ -3178,13 +3178,19 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
         navigate(destination.to, { replace: true });
         return;
       }
-      saveClientProfile({
+      const savedProfile = saveClientProfile({
         name: cleanFormText(name),
         email: cleanFormText(email),
         phone: phoneDigits || undefined,
         city: cleanFormText(city),
         avatarId: selectedAvatar,
       });
+      if (!savedProfile) {
+        throw new Error('Não foi possível persistir o perfil neste dispositivo.');
+      }
+      // Keep every mounted navbar synchronized immediately after the first save
+      // and after subsequent avatar changes, including legacy browser sessions.
+      window.dispatchEvent(new CustomEvent(getClientProfileChangedEventName(), { detail: savedProfile }));
       setMessage('Perfil salvo neste dispositivo.');
     } catch (saveError) {
       setError(normalizeApiErrorMessage(saveError, {
@@ -3220,7 +3226,7 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="wf-client-profile-modal__hero">
-        <figure className="wf-client-profile-modal__avatar">
+        <figure className="wf-client-profile-modal__avatar" data-avatar-id={activeAvatar.id}>
           <img src={activeAvatar.src} alt={activeAvatar.alt} />
         </figure>
         <div className="wf-client-profile-modal__identity">
@@ -3279,6 +3285,7 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
                   key={avatar.id}
                   type="button"
                   className={cx('wf-client-avatar-picker__option', selectedAvatar === avatar.id && 'wf-client-avatar-picker__option--selected')}
+                  data-avatar-id={avatar.id}
                   onClick={() => { setSelectedAvatar(avatar.id); setAvatarPickerOpen(false); }}
                   aria-label={`Selecionar avatar ${index + 1}`}
                   title={avatar.alt}

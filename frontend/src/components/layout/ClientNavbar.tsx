@@ -4,6 +4,12 @@ import navCalendarIcon from '../../assets/navbar/client-nav-calendar-mobile.png'
 import navCreateIcon from '../../assets/navbar/client-nav-create.png';
 import navHomeIcon from '../../assets/navbar/client-nav-home.png';
 import navProfileIcon from '../../assets/navbar/client-nav-profile-mobile.png';
+import clientProfileAvatarIcon from '../../assets/wireframes/icons/client-profile-avatar-unisex.png';
+import clientAvatarFemaleAfro from '../../assets/wireframes/avatars/client-avatar-female-afro.png';
+import clientAvatarFemaleLongBlack from '../../assets/wireframes/avatars/client-avatar-female-long-black.png';
+import clientAvatarFemaleRedhead from '../../assets/wireframes/avatars/client-avatar-female-redhead.png';
+import clientAvatarMaleBrownBeard from '../../assets/wireframes/avatars/client-avatar-male-brown-beard.png';
+import clientAvatarMaleBlackBeard from '../../assets/wireframes/avatars/client-avatar-male-black-beard.png';
 import {
   formatPhoneForDisplay,
   getClientProfileChangedEventName,
@@ -29,6 +35,7 @@ type ClientNavbarSnapshot = {
   isVerified: boolean;
   label: string;
   summary?: string;
+  avatarSrc?: string;
 };
 
 type ClientNavbarPngIconName = 'calendar' | 'create' | 'home' | 'profile';
@@ -38,6 +45,15 @@ const CLIENT_NAVBAR_PNG_ICONS: Record<ClientNavbarPngIconName, string> = {
   create: navCreateIcon,
   home: navHomeIcon,
   profile: navProfileIcon,
+};
+
+const CLIENT_PROFILE_AVATARS: Record<string, string> = {
+  default: clientProfileAvatarIcon,
+  'female-afro': clientAvatarFemaleAfro,
+  'female-long-black': clientAvatarFemaleLongBlack,
+  'female-redhead': clientAvatarFemaleRedhead,
+  'male-brown-beard': clientAvatarMaleBrownBeard,
+  'male-black-beard': clientAvatarMaleBlackBeard,
 };
 
 
@@ -80,6 +96,14 @@ function ClientNavbarPngIcon({ name }: { name: ClientNavbarPngIconName }) {
   );
 }
 
+function ClientNavbarAvatar({ src }: { src: string }) {
+  return (
+    <span aria-hidden="true" className="wf-icon wf-client-nav-avatar">
+      <img src={src} alt="" draggable={false} />
+    </span>
+  );
+}
+
 
 function ClientNavbarPlusIcon() {
   return (
@@ -102,6 +126,7 @@ function readClientNavbarSnapshot(): ClientNavbarSnapshot {
     isVerified,
     label: isVerified ? 'Perfil' : 'Cliente',
     summary: firstName || (phone ? formatPhoneForDisplay(phone) : undefined),
+    avatarSrc: profile?.avatarId ? CLIENT_PROFILE_AVATARS[profile.avatarId] : undefined,
   };
 }
 
@@ -189,7 +214,10 @@ export default function ClientNavbar({ className, logoSrc, onConfirmPhone, onCre
   };
   void onConfirmPhone;
 
-  const desktopProfileLabel = <><ClientNavbarLineIcon name="profile" /> <span>Perfil</span></>;
+  const profileIcon = snapshot.avatarSrc
+    ? <ClientNavbarAvatar src={snapshot.avatarSrc} />
+    : <ClientNavbarLineIcon name="profile" />;
+  const desktopProfileLabel = <>{profileIcon} <span>Perfil</span></>;
 
   const desktopActions = isHome ? (
     <>
@@ -261,7 +289,7 @@ export default function ClientNavbar({ className, logoSrc, onConfirmPhone, onCre
         ariaLabel={profileLabel}
         title={snapshot.summary ? `${profileLabel}: ${snapshot.summary}` : profileLabel}
       >
-        <ClientNavbarPngIcon name="profile" />
+        {snapshot.avatarSrc ? <ClientNavbarAvatar src={snapshot.avatarSrc} /> : <ClientNavbarPngIcon name="profile" />}
       </NavbarButton>
     </>
   );

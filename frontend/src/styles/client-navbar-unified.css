@@ -294,6 +294,18 @@ html body .wf-navbar.wf-navbar--client .wf-top-btn--compact::after {
 }
 
 /* Saved client avatar in the profile action. */
+html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop {
+  height: clamp(42px, 3.6vw, 58px) !important;
+  padding-block: 2px !important;
+}
+
+html body .wf-navbar.wf-navbar--client .wf-client-profile-desktop > .wf-client-nav-avatar {
+  width: calc(clamp(42px, 3.6vw, 58px) - 4px) !important;
+  min-width: calc(clamp(42px, 3.6vw, 58px) - 4px) !important;
+  height: calc(clamp(42px, 3.6vw, 58px) - 4px) !important;
+  flex: 0 0 calc(clamp(42px, 3.6vw, 58px) - 4px) !important;
+}
+
 html body .wf-navbar.wf-navbar--client .wf-client-nav-avatar {
   overflow: hidden !important;
   border-radius: 50% !important;
@@ -315,8 +327,9 @@ html body .wf-navbar.wf-navbar--client .wf-client-nav-avatar img {
 @media (max-width: 900px) {
   html body .wf-navbar.wf-navbar--client .wf-client-mobile-user > .wf-client-nav-avatar,
   html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing .wf-client-mobile-user > .wf-client-nav-avatar {
-    width: clamp(27px, 8vw, 34px) !important;
-    min-width: clamp(27px, 8vw, 34px) !important;
-    height: clamp(27px, 8vw, 34px) !important;
+    width: calc(100% - 4px) !important;
+    min-width: calc(100% - 4px) !important;
+    height: calc(100% - 4px) !important;
+    flex-basis: calc(100% - 4px) !important;
   }
 }

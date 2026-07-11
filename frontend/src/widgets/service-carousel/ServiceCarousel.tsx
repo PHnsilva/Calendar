@@ -13,20 +13,12 @@ import serviceDroneMedium from "../../assets/images/landing-carousel/medium-1400
 import serviceHidraulicaMedium from "../../assets/images/landing-carousel/medium-1400w/05-hidraulica-1400w.png";
 import serviceEletricaMedium from "../../assets/images/landing-carousel/medium-1400w/06-eletrica-basica-1400w.png";
 import serviceJardinagemMedium from "../../assets/images/landing-carousel/medium-1400w/07-jardinagem-1400w.png";
-import servicePinturaMobile from "../../assets/images/landing-carousel/mobile-320w/01-servicos-de-pintor-320w.png";
-import serviceMontagemMobile from "../../assets/images/landing-carousel/mobile-320w/02-montagem-e-instalacao-320w.png";
-import servicePedreiroMobile from "../../assets/images/landing-carousel/mobile-320w/03-servicos-de-pedreiro-320w.png";
-import serviceDroneMobile from "../../assets/images/landing-carousel/mobile-320w/04-filmagem-com-drone-320w.png";
-import serviceHidraulicaMobile from "../../assets/images/landing-carousel/mobile-320w/05-hidraulica-320w.png";
-import serviceEletricaMobile from "../../assets/images/landing-carousel/mobile-320w/06-eletrica-basica-320w.png";
-import serviceJardinagemMobile from "../../assets/images/landing-carousel/mobile-320w/07-jardinagem-320w.png";
 
 type ServiceShowcaseItem = {
   title: string;
   alt: string;
   desktopImage: string;
   mediumImage: string;
-  mobileImage: string;
 };
 
 const SERVICE_SHOWCASE_INTERVAL_MS = 4600;
@@ -37,49 +29,42 @@ const SERVICE_SHOWCASE_ITEMS: ServiceShowcaseItem[] = [
     alt: "Card do serviço de pintura",
     desktopImage: servicePinturaDesktop,
     mediumImage: servicePinturaMedium,
-    mobileImage: servicePinturaMobile,
   },
   {
     title: "Montagem e instalação",
     alt: "Card do serviço de montagem e instalação",
     desktopImage: serviceMontagemDesktop,
     mediumImage: serviceMontagemMedium,
-    mobileImage: serviceMontagemMobile,
   },
   {
     title: "Serviços de pedreiro",
     alt: "Card do serviço de pedreiro",
     desktopImage: servicePedreiroDesktop,
     mediumImage: servicePedreiroMedium,
-    mobileImage: servicePedreiroMobile,
   },
   {
     title: "Filmagem com drone",
     alt: "Card do serviço de filmagem com drone",
     desktopImage: serviceDroneDesktop,
     mediumImage: serviceDroneMedium,
-    mobileImage: serviceDroneMobile,
   },
   {
     title: "Hidráulica",
     alt: "Card do serviço de hidráulica",
     desktopImage: serviceHidraulicaDesktop,
     mediumImage: serviceHidraulicaMedium,
-    mobileImage: serviceHidraulicaMobile,
   },
   {
     title: "Elétrica básica",
     alt: "Card do serviço de elétrica básica",
     desktopImage: serviceEletricaDesktop,
     mediumImage: serviceEletricaMedium,
-    mobileImage: serviceEletricaMobile,
   },
   {
     title: "Jardinagem",
     alt: "Card do serviço de jardinagem",
     desktopImage: serviceJardinagemDesktop,
     mediumImage: serviceJardinagemMedium,
-    mobileImage: serviceJardinagemMobile,
   },
 ];
 
@@ -115,7 +100,7 @@ export function ServiceCarousel() {
 
   useEffect(() => {
     SERVICE_SHOWCASE_ITEMS.forEach((service) => {
-      [service.desktopImage, service.mediumImage, service.mobileImage].forEach((src) => {
+      [service.desktopImage, service.mediumImage].forEach((src) => {
         const image = new Image();
         image.src = src;
       });
@@ -206,11 +191,13 @@ export function ServiceCarousel() {
             className={cx("wf-services-showcase__picture", serviceIndex === index && "is-active")}
             aria-hidden={serviceIndex !== index}
           >
-            <source media="(max-width: 900px)" srcSet={service.mobileImage} />
-            <source media="(max-width: 1400px)" srcSet={service.mediumImage} />
+            <source media="(max-width: 900px)" srcSet={service.mediumImage} />
+            <source media="(max-width: 1400px)" srcSet={`${service.mediumImage} 1400w, ${service.desktopImage} 2500w`} sizes="calc(100vw - 32px)" />
             <img
               className={cx("wf-services-showcase__image", serviceIndex === index && "is-active")}
               src={service.desktopImage}
+              srcSet={`${service.mediumImage} 1400w, ${service.desktopImage} 2500w`}
+              sizes="calc(100vw - 32px)"
               alt={service.alt}
               loading={serviceIndex === 0 ? "eager" : "lazy"}
               decoding="async"

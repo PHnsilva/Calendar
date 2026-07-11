@@ -7,7 +7,7 @@ export function ClientLandingHeroBlock({ setModal }: { setModal: (modal: ModalKi
   return (
     <LandingHero
       badge={<Badge icon="calendar" color="orange">Simples, rápido e sem complicações</Badge>}
-      description={<>Crie seu agendamento sem precisar fazer login.<br />No dia, confirme seu número de telefone e pronto!</>}
+      description={null}
       highlight="facilidade."
       onPrimaryAction={() => setModal("create-client")}
       onSecondaryAction={() => setModal("services-info")}

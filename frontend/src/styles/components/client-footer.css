@@ -2481,3 +2481,103 @@ html body footer.cm-footer .cm-footer__social .cm-footer__social-text {
     --cm-footer-icon-gap-final: clamp(14px, 3.6vw, 20px);
   }
 }
+
+
+/* 2026-07-11 small-mobile footer location row fix.
+   Prevent the served-cities text from looking crooked on narrow screens by
+   tightening the icon column and giving the stacked text a cleaner wrap. */
+@media (max-width: 480px) {
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location {
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+    column-gap: 10px !important;
+    align-items: start !important;
+  }
+
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-icon,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-icon .wf-icon,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-icon .wf-svg-wrapper,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-icon img,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-icon svg,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__contact-asset--location {
+    width: 26px !important;
+    min-width: 26px !important;
+    max-width: 26px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    max-height: 26px !important;
+  }
+
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-text--stacked {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    line-height: 1.18 !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-text--stacked b {
+    font-size: 11px !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+  }
+
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-text--stacked small {
+    display: block !important;
+    margin: 0 !important;
+    font-size: 10.5px !important;
+    line-height: 1.22 !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    text-wrap: pretty !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location {
+    grid-template-columns: 30px minmax(0, 1fr) !important;
+    column-gap: 8px !important;
+  }
+
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-icon,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-icon .wf-icon,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-icon .wf-svg-wrapper,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-icon img,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-icon svg,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__contact-asset--location {
+    width: 24px !important;
+    min-width: 24px !important;
+    max-width: 24px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-text--stacked b {
+    font-size: 10.5px !important;
+  }
+
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-text--stacked small {
+    font-size: 10px !important;
+  }
+}
+
+/* 2026-07-11 served-cities text alignment only. */
+@media (max-width: 480px) {
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-text--stacked {
+    width: 100% !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    justify-self: stretch !important;
+    text-align: left !important;
+  }
+
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-text--stacked b,
+  html body footer.cm-footer .cm-footer__contact .cm-footer__contact-row--location .cm-footer__row-text--stacked small {
+    width: 100% !important;
+    align-self: stretch !important;
+    justify-self: stretch !important;
+    text-align: left !important;
+  }
+}

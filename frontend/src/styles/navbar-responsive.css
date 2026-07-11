@@ -487,3 +487,144 @@
     height: 18px !important;
   }
 }
+
+/* Mobile 320px safeguard for landing header with the deeper mobile hero image. */
+@media (max-width: 320px) {
+  .wf-navbar.wf-header,
+  .wf-navbar--admin.wf-header {
+    padding-inline: 6px !important;
+    gap: 4px !important;
+  }
+
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: 72px !important;
+    max-width: 156px !important;
+  }
+
+  .wf-navbar .wf-mobile-actions {
+    gap: 4px !important;
+  }
+
+  .wf-navbar .wf-top-btn--compact {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+  }
+
+  .wf-navbar .wf-top-btn .wf-icon {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+
+/* 2026-07-04 compact mobile header pass so the hero keeps the man and drone visible. */
+@media (min-width: 800px) and (max-width: 900px) {
+  .wf-navbar.wf-header,
+  .wf-navbar--admin.wf-header {
+    min-height: 72px !important;
+    padding-inline: 12px !important;
+    padding-block: 6px !important;
+    gap: 8px !important;
+  }
+
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: 72px !important;
+    max-width: 214px !important;
+  }
+
+  .wf-navbar .wf-top-btn {
+    min-height: 42px !important;
+    padding-inline: 10px !important;
+    font-size: 11px !important;
+    gap: 5px !important;
+  }
+
+  .wf-navbar .wf-top-btn .wf-icon {
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+  }
+}
+
+@media (max-width: 799px) {
+  .wf-navbar.wf-header,
+  .wf-navbar--admin.wf-header {
+    min-height: 62px !important;
+    padding: 6px 10px !important;
+    gap: 6px !important;
+  }
+
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: 60px !important;
+    max-width: 178px !important;
+  }
+
+  .wf-navbar .wf-top-btn,
+  .wf-navbar .wf-client-mobile-user {
+    min-height: 38px !important;
+    font-size: 10px !important;
+  }
+
+  .wf-navbar .wf-top-btn--compact {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+  }
+
+  .wf-navbar .wf-top-btn .wf-icon {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .wf-navbar.wf-header,
+  .wf-navbar--admin.wf-header {
+    min-height: 56px !important;
+    padding: 5px 8px !important;
+  }
+
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: 52px !important;
+    max-width: 156px !important;
+  }
+
+  .wf-navbar .wf-top-btn--compact {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+  }
+
+  .wf-navbar .wf-top-btn .wf-icon {
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .wf-navbar.wf-header,
+  .wf-navbar--admin.wf-header {
+    min-height: 52px !important;
+    padding: 4px 6px !important;
+  }
+
+  .wf-navbar--client .wf-logo img,
+  .wf-page .wf-navbar.wf-navbar--client.wf-header .wf-logo img {
+    height: 48px !important;
+    max-width: 144px !important;
+  }
+
+  .wf-navbar .wf-top-btn--compact {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+  }
+}

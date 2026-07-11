@@ -2,10 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, ty
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import logo from '../../assets/brand/logowithname.png';
-import heroClient from '../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png';
-import heroClientMobile from '../../assets/wireframes/landing/client-hero-composite-mobile.png';
-import heroAdmin from '../../assets/wireframes/landing/hero-tradesman-transparent-1600w.png';
-import heroAdminMobile from '../../assets/wireframes/landing/client-hero-composite-mobile-tall.png';
+import heroClient from '../../assets/wireframes/landing/sg-hero-drone-desktop-1920.png';
+import heroClientMobile from '../../assets/wireframes/landing/sg-hero-drone-mobile-900.png';
+import heroMobile320 from '../../assets/wireframes/landing/sg-hero-drone-mobile-320.png';
+import heroMobile360 from '../../assets/wireframes/landing/sg-hero-drone-mobile-360.png';
+import heroMobile390 from '../../assets/wireframes/landing/sg-hero-drone-mobile-390.png';
+import heroMobile430 from '../../assets/wireframes/landing/sg-hero-drone-mobile-430.png';
+import heroMobile480 from '../../assets/wireframes/landing/sg-hero-drone-mobile-480.png';
+import heroMobile640 from '../../assets/wireframes/landing/sg-hero-drone-mobile-640.png';
+import heroMobile750 from '../../assets/wireframes/landing/sg-hero-drone-mobile-750.png';
+import heroMobile900 from '../../assets/wireframes/landing/sg-hero-drone-mobile-900.png';
+import heroAdmin from '../../assets/wireframes/landing/sg-hero-drone-desktop-1920.png';
+import heroAdminMobile from '../../assets/wireframes/landing/sg-hero-drone-mobile-900.png';
 import clientCreateCalendarIcon from '../../assets/wireframes/icons/client-create-calendar.png';
 import clientFollowCalendarIcon from '../../assets/wireframes/icons/client-follow-calendar.png';
 import clientPhoneIcon from '../../assets/wireframes/icons/client-phone.png';
@@ -905,6 +913,18 @@ function Badge({ icon, children, color = 'orange' }: { icon?: string; children: 
 function HeroVisual({ type, className }: { type: 'client' | 'admin'; className?: string }) {
   const desktop = type === 'admin' ? heroAdmin : heroClient;
   const mobile = type === 'admin' ? heroAdminMobile : heroClientMobile;
+  const smallMobileSrcSet = [
+    `${heroMobile320} 320w`,
+    `${heroMobile360} 360w`,
+    `${heroMobile390} 390w`,
+    `${heroMobile430} 430w`,
+  ].join(', ');
+  const mobileSrcSet = [
+    `${heroMobile480} 480w`,
+    `${heroMobile640} 640w`,
+    `${heroMobile750} 750w`,
+    `${heroMobile900} 900w`,
+  ].join(', ');
 
   return (
     <ResponsiveAsset
@@ -912,6 +932,13 @@ function HeroVisual({ type, className }: { type: 'client' | 'admin'; className?:
       className={cx('wf-media-frame', 'wf-media-frame--hero', 'wf-hero-visual', `wf-hero-visual--${type}`, className)}
       desktopSrc={desktop}
       mobileSrc={mobile}
+      mobileSrcSet={mobileSrcSet}
+      mobileSizes="100vw"
+      mobileBreakpoint={900}
+      smallMobileSrc={heroMobile430}
+      smallMobileSrcSet={smallMobileSrcSet}
+      smallMobileSizes="100vw"
+      smallMobileBreakpoint={430}
     />
   );
 }

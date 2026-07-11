@@ -36,3 +36,6 @@
    Keep this last while legacy global CSS is still being retired: the landing
    rules are scoped to .wf-client-landing and must win only there. */
 @import "./pages/client-landing.css";
+
+/* Final scoped mobile repair. Keep last. */
+@import "./pages/client-landing-mobile-repair.css";

@@ -425,3 +425,25 @@
     gap: 2px !important;
   }
 }
+
+/* 2026-07-05 desktop follow-up: keep the client landing navbar pinned on desktop too. */
+@media (min-width: 901px) {
+  html body .wf-client-landing {
+    overflow-x: visible !important;
+  }
+
+  html body .wf-client-landing > .wf-navbar.wf-navbar--client.wf-header.wf-client-navbar--landing {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 220 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  html body .wf-client-landing .wf-landing-main {
+    padding-top: 82px !important;
+  }
+}

@@ -206,7 +206,7 @@ export function ServiceCarousel() {
             className={cx("wf-services-showcase__picture", serviceIndex === index && "is-active")}
             aria-hidden={serviceIndex !== index}
           >
-            <source media="(max-width: 760px)" srcSet={service.mobileImage} />
+            <source media="(max-width: 900px)" srcSet={service.mobileImage} />
             <source media="(max-width: 1400px)" srcSet={service.mediumImage} />
             <img
               className={cx("wf-services-showcase__image", serviceIndex === index && "is-active")}

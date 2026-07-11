@@ -1,10 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import logo from "../../../../assets/brand/logowithname.png";
-import clientCreateCalendarIcon from "../../../../assets/wireframes/icons/client-create-calendar.png";
-import clientFollowCalendarIcon from "../../../../assets/wireframes/icons/client-follow-calendar.png";
 import clientPhoneIcon from "../../../../assets/wireframes/icons/client-phone.png";
-import clientChatIcon from "../../../../assets/wireframes/icons/client-chat.png";
 import actionCreateCalendarIcon from "../../../../assets/wireframes/icons/action-create-calendar.png";
 import actionFollowClipboardClockIcon from "../../../../assets/wireframes/icons/action-follow-clipboard-clock.png";
 import actionProfileUserIcon from "../../../../assets/wireframes/icons/action-profile-user.png";

@@ -1021,3 +1021,149 @@ html body .wf-client-landing .wf-badge .wf-icon,
 html body .wf-client-landing .wf-badge svg {
   color: var(--cm-orange-600) !important;
 }
+
+/* 2026-07-11 desktop info-row hierarchy.
+   The service carousel owns the full first row. Location and Instagram cards
+   share the second row. Mobile order and sizing remain unchanged. */
+@media (min-width: 901px) {
+  html body .wf-client-landing .wf-info-row.wf-info-row--mobile-priority {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-areas:
+      "carousel carousel"
+      "location social" !important;
+    gap: clamp(16px, 1.5vw, 24px) !important;
+    align-items: stretch !important;
+  }
+
+  html body .wf-client-landing .wf-info-row.wf-info-row--mobile-priority > .wf-info-row__carousel {
+    grid-area: carousel !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: clamp(280px, calc((100vw - 32px) / 3), 454px) !important;
+  }
+
+  html body .wf-client-landing .wf-info-row.wf-info-row--mobile-priority > .wf-house-card {
+    grid-area: location !important;
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    min-height: clamp(230px, 18vw, 280px) !important;
+  }
+
+  html body .wf-client-landing .wf-info-row.wf-info-row--mobile-priority > .wf-social-spotlight-card {
+    grid-area: social !important;
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    min-height: clamp(230px, 18vw, 280px) !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase,
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__viewport {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    aspect-ratio: auto !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__image {
+    object-fit: cover !important;
+    object-position: center center !important;
+  }
+}
+
+
+/* 2026-07-11 carousel wide-desktop fit pass.
+   On larger widths the carousel was becoming too short for the banner art,
+   which cropped the slides and pushed the indicators into awkward positions.
+   Keep the full carousel image visible and anchor the controls inside a safer
+   inset on desktop. */
+@media (min-width: 901px) {
+  html body .wf-client-landing .wf-info-row.wf-info-row--mobile-priority > .wf-info-row__carousel {
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 3 / 1 !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase,
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__viewport {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 3 / 1 !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__overlay {
+    inset: auto 18px 12px 18px !important;
+    align-items: flex-end !important;
+    gap: 10px !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__dots {
+    gap: 6px !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__dot {
+    width: 24px !important;
+    height: 5px !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__counter {
+    min-height: 24px !important;
+    padding: 0 8px !important;
+    font-size: 0.76rem !important;
+  }
+}
+
+@media (min-width: 1400px) {
+  html body .wf-client-landing .wf-info-row.wf-info-row--mobile-priority > .wf-info-row__carousel {
+    aspect-ratio: 3 / 1 !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase,
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__viewport {
+    aspect-ratio: 3 / 1 !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__image {
+    object-fit: contain !important;
+    object-position: center center !important;
+    background: #06102b !important;
+  }
+
+  html body .wf-client-landing .wf-info-row__carousel .wf-services-showcase__overlay {
+    inset: auto 20px 14px 20px !important;
+  }
+}
+
+
+/* 2026-07-11 wide desktop width restoration.
+   Keep this after the carousel fit rules so the legacy 1360px cap cannot
+   re-center and compress the action grid or the desktop information section. */
+@media (min-width: 1400px) {
+  html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client,
+  html body .wf-client-landing .wf-info-row.wf-info-row--mobile-priority {
+    width: calc(100% - 32px) !important;
+    max-width: none !important;
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+  }
+
+  html body .wf-client-landing .wf-actions-grid.wf-actions-grid--client {
+    margin-top: 18px !important;
+    margin-bottom: 24px !important;
+  }
+
+  html body .wf-client-landing .wf-info-row.wf-info-row--mobile-priority {
+    margin-top: 0 !important;
+    margin-bottom: 34px !important;
+  }
+
+  html body .wf-client-landing .wf-info-row.wf-info-row--mobile-priority > .wf-info-row__carousel {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}

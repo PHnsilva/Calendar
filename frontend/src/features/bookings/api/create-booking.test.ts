@@ -50,4 +50,39 @@ describe("createBooking", () => {
     expect(request?.[1]?.method).toBe("POST");
     expect(JSON.parse(String(request?.[1]?.body))).toEqual(payload);
   });
+
+  it("rejects malformed create responses instead of treating them as success", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      servico: {},
+      manageToken: "",
+    }), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    })));
+
+    const payload: ServicoRequest = {
+      serviceType: "Visita tecnica",
+      serviceNotes: "Trocar tomada da sala",
+      date: "2026-06-10",
+      time: "09:00",
+      clientFirstName: "Pedro",
+      clientLastName: "Silva",
+      clientEmail: "pedro@example.com",
+      clientPhone: "31999999999",
+      clientCep: "",
+      clientStreet: "Rua Sao Jose",
+      clientNeighborhood: "Centro",
+      clientNumber: "123",
+      clientCity: "Itabirito",
+      clientState: "MG",
+    };
+
+    const { createBooking } = await import("./create-booking");
+
+    await expect(createBooking(payload)).rejects.toMatchObject({
+      name: "ApiError",
+      code: "UNEXPECTED_RESPONSE",
+      retryable: true,
+    });
+  });
 });

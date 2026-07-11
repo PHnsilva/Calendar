@@ -380,13 +380,15 @@ public class AddressAutocompleteService {
         String street = firstClean(properties.get("street"), parsedAddressLine.street(), properties.get("address_line1"));
         String houseNumber = firstClean(properties.get("housenumber"), parsedAddressLine.houseNumber());
         String neighborhood = firstClean(properties.get("suburb"), properties.get("district"), properties.get("neighbourhood"), parsedAddressLine.neighborhood());
+        if (isGenericPlaceResult(properties, street, neighborhood)) {
+            return null;
+        }
         String city = firstClean(
                 properties.get("city"),
                 properties.get("town"),
                 properties.get("village"));
         String stateCode = normalizeUf(firstClean(properties.get("state_code"), properties.get("state")));
-        String postcode = clean(properties.get("postcode")).replaceAll("\\D", "");
-        if (postcode.length() > 8) postcode = postcode.substring(0, 8);
+        String postcode = "";
         String formatted = buildDisplayLabel(street, houseNumber, neighborhood, rawFormatted);
         String id = firstClean(properties.get("place_id"), properties.get("placeId"), rawFormatted + "-" + latitude + "-" + longitude);
 
@@ -407,6 +409,20 @@ public class AddressAutocompleteService {
                 postcode,
                 rawCopy(properties)
         );
+    }
+
+    private boolean isGenericPlaceResult(Map<?, ?> properties, String street, String neighborhood) {
+        String resultType = normalizeForMatch(firstClean(
+                properties.get("result_type"),
+                properties.get("resultType"),
+                properties.get("type")));
+        if (!clean(street).isBlank()) {
+            return false;
+        }
+        if (List.of("city", "county", "state", "postcode", "district", "suburb").contains(resultType)) {
+            return true;
+        }
+        return clean(neighborhood).isBlank();
     }
 
     private AddressCityContextResponse pickMatchingCity(List<Map<?, ?>> results, String city, String state) {

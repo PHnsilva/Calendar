@@ -156,6 +156,8 @@ describe("AddressAutocompleteField", () => {
     expect(listbox).toBeTruthy();
     expect(listbox.parentElement).toBe(document.body);
     expect(screen.queryByText(/Manaus/i)).toBeNull();
+    expect(screen.queryByText(/CEP/i)).toBeNull();
+    expect(screen.queryByText(/35450000/i)).toBeNull();
 
     fireEvent.blur(input);
     fireEvent.mouseDown(option);

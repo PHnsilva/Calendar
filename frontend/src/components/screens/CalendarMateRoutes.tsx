@@ -2508,6 +2508,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
   const [submitError, setSubmitError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
+  const createBookingInFlightRef = useRef(false);
   const selectedCity = allowedCities.includes(city) ? city : defaultCity;
   const bookingDurationMinutes = getBookingDurationMinutesByCity(bootstrap, selectedCity);
   const createBookingMutation = useCreateBooking();
@@ -2584,9 +2585,10 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
   };
 
   const handleCreateBooking = async () => {
+    if (createBookingInFlightRef.current || createBookingMutation.isPending || successMessage) return;
+
     const { firstName, lastName } = splitFullName(fullName);
     const phoneDigits = digitsOnly(phone);
-    const cepDigits = digitsOnly(selectedAddress?.postcode ?? '');
     const houseNumberFromSuggestion = getSuggestionHouseNumber(selectedAddress);
     const effectiveHouseNumber = houseNumberFromSuggestion || houseNumber;
     const manualAddress = parseManualBookingAddress(addressInput, effectiveHouseNumber, selectedCity);
@@ -2638,6 +2640,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
 
     setSubmitError('');
     setSuccessMessage('');
+    createBookingInFlightRef.current = true;
 
     try {
       const response = await createBookingMutation.mutateAsync({
@@ -2649,7 +2652,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         clientLastName: lastName,
         clientEmail: cleanFormText(email),
         clientPhone: phoneDigits,
-        clientCep: cepDigits.length === 8 ? cepDigits : '',
+        clientCep: '',
         clientStreet,
         clientNeighborhood,
         clientNumber,
@@ -2669,7 +2672,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
       });
       saveManageToken(response.manageToken, response.servico.eventId);
       saveLocalCalendarEvent(mapCreatedServicoToCalendarEvent(response.servico));
-      await Promise.all([
+      void Promise.allSettled([
         queryClient.invalidateQueries({ queryKey: ['my-bookings'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-bookings'] }),
       ]);
@@ -2679,6 +2682,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         navigate('/meus-agendamentos');
       }, 700);
     } catch (error) {
+      createBookingInFlightRef.current = false;
       const message = mapBookingCreateError(error);
       if (message.toLowerCase().includes('senha') || (error instanceof ApiError && error.code === 'RESERVED_ACCESS')) {
         setForceReservedPhonePassword(true);
@@ -2709,7 +2713,6 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
             <span className="wf-input-shell wf-input-shell--address">
               <Icon name="map" />
               <AddressAutocompleteField value={addressInput} selectedCity={selectedCity} selectedState={defaultState} onChange={handleAddressChange} onSelectSuggestion={handleAddressSelect} />
-              <button type="button" className="wf-address-search-button" onMouseDown={(event) => event.preventDefault()}>Buscar endereço</button>
             </span>
             {fieldErrors.address ? <small className="wf-field-error">{fieldErrors.address}</small> : null}
           </label>
@@ -2748,7 +2751,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
       {selectedTime ? <p className="wf-create-selected-slot">Horário selecionado: <strong>{selectedTime}{selectedEndTime ? ` - ${selectedEndTime}` : ''}</strong></p> : null}
       {successMessage ? <p className="wf-auth-feedback wf-auth-feedback--success">{successMessage}</p> : null}
       {submitError ? <p className="wf-auth-feedback wf-auth-feedback--error">{submitError}</p> : null}
-      <ModalActions primary={createBookingMutation.isPending ? 'Agendando...' : 'Confirmar agendamento'} secondary="Cancelar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={handleCreateBooking} disabledPrimary={createBookingMutation.isPending} />
+      <ModalActions primary={createBookingMutation.isPending ? 'Agendando...' : 'Confirmar agendamento'} secondary="Cancelar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={handleCreateBooking} disabledPrimary={createBookingMutation.isPending || Boolean(successMessage)} />
     </>
   );
 }

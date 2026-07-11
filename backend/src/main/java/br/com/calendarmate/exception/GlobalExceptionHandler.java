@@ -15,6 +15,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.text.Normalizer;
 import java.util.Locale;
 
@@ -185,7 +186,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IOException.class)
     public ResponseEntity<ApiError> io(IOException ex, HttpServletRequest req) {
         log.warn("Calendar communication failure at {} exceptionClass={} exceptionMessage={}", req.getRequestURI(), ex.getClass().getSimpleName(), safeExceptionMessage(ex));
-        return build(mapDependencyByPath(req.getRequestURI(), "CALENDAR_UNAVAILABLE", true), req);
+        String fallbackCode = hasCause(ex, SocketTimeoutException.class) ? "DEPENDENCY_TIMEOUT" : "CALENDAR_UNAVAILABLE";
+        return build(mapDependencyByPath(req.getRequestURI(), fallbackCode, true), req);
     }
 
     @ExceptionHandler(ExternalServiceException.class)
@@ -353,6 +355,7 @@ public class GlobalExceptionHandler {
     }
 
     private String dependencyCodeByPath(String path, String fallbackCode) {
+        if ("DEPENDENCY_TIMEOUT".equals(fallbackCode)) return fallbackCode;
         String normalizedPath = path == null ? "" : path.toLowerCase(Locale.ROOT);
         if (normalizedPath.contains("/rotas")) return "ROUTE_UNAVAILABLE";
         if (normalizedPath.contains("/enderecos") || normalizedPath.contains("/cep")) return "ADDRESS_LOOKUP_UNAVAILABLE";
@@ -360,6 +363,15 @@ public class GlobalExceptionHandler {
         if (normalizedPath.contains("/verification") || normalizedPath.contains("/recovery") || normalizedPath.contains("/admin/auth")) return "DEPENDENCY_UNAVAILABLE";
         if (normalizedPath.contains("/servicos") || normalizedPath.contains("/availability")) return "CALENDAR_UNAVAILABLE";
         return fallbackCode;
+    }
+
+    private boolean hasCause(Throwable error, Class<? extends Throwable> type) {
+        Throwable current = error;
+        while (current != null) {
+            if (type.isInstance(current)) return true;
+            current = current.getCause();
+        }
+        return false;
     }
 
     private String messageByPath(String path) {

@@ -6,11 +6,9 @@ export function useCreateBooking() {
 
   return useMutation({
     mutationFn: createBooking,
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-bookings'] }),
-      ]);
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
     },
   });
 }

@@ -39,3 +39,6 @@
 
 /* Final scoped mobile repair. Keep last. */
 @import "./pages/client-landing-mobile-repair.css";
+
+/* Client appointments modal authority. */
+@import "./pages/appointments-modal.css";

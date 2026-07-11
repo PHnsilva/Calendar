@@ -8,7 +8,7 @@ export function BookingActions({ canManage, onEdit, onCancel }: BookingActionsPr
   return (
     <div className="booking-detail__actions">
       <button type="button" className="secondary-action" onClick={onEdit} disabled={!canManage}>
-        Editar
+        Editar / reagendar
       </button>
       <button type="button" className="primary-action primary-action--danger" onClick={onCancel} disabled={!canManage}>
         Cancelar

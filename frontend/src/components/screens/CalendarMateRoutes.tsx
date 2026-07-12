@@ -1516,11 +1516,19 @@ function AdminWorkspaceSelectionModal({
   onSelectWorkspace?: (workspace: string) => void;
   onDone: (workspace: AdminWorkspaceContext) => void;
 }) {
-  const chooseAdmin = () => {
-    const workspace: AdminWorkspaceContext = { mode: 'ADMIN' };
-    onSelectWorkspace?.('ADMIN');
+  const selectionInFlightRef = useRef(false);
+
+  const completeSelection = (workspace: AdminWorkspaceContext, selection: string) => {
+    if (selectionInFlightRef.current) return;
+    selectionInFlightRef.current = true;
+    onSelectWorkspace?.(selection);
     setAdminWorkspace(workspace);
     onDone(workspace);
+  };
+
+  const chooseAdmin = () => {
+    const workspace: AdminWorkspaceContext = { mode: 'ADMIN' };
+    completeSelection(workspace, 'ADMIN');
   };
 
   const chooseProvider = (provider: AdminProviderResponse) => {
@@ -1530,9 +1538,7 @@ function AdminWorkspaceSelectionModal({
       providerName: provider.name,
       impersonatedByOwner: true,
     };
-    onSelectWorkspace?.(provider.id);
-    setAdminWorkspace(workspace);
-    onDone(workspace);
+    completeSelection(workspace, provider.id);
   };
 
   const body = (
@@ -2340,7 +2346,20 @@ export function CalendarMateModal({
   onOfxImported?: (dashboard: FinancialDashboardDTO) => void;
   onOpenModal?: (modal: ModalKind) => void;
 }) {
+  const navigate = useNavigate();
+  const navigationInFlightRef = useRef(false);
   const closeModal = useModalBrowserBack(Boolean(modal), `root-${modal ?? 'none'}`, onClose);
+  const navigateFromModal = useCallback((to: string, options?: { replace?: boolean }) => {
+    if (navigationInFlightRef.current) return;
+    navigationInFlightRef.current = true;
+    onClose();
+    navigate(to, options);
+  }, [navigate, onClose]);
+
+  useEffect(() => {
+    navigationInFlightRef.current = false;
+  }, [modal]);
+
   if (!modal) return null;
   const modalClass = cx(
     'wf-modal',
@@ -2362,8 +2381,8 @@ export function CalendarMateModal({
   return (
     <ModalShell open={Boolean(modal)} dataModal={modal} className={modalClass} onClose={closeModal} closeIcon={<Icon name="close" />}>
         {modal === 'create-client' ? <CreateBookingModal initialDate={context.createDate} onClose={closeModal} /> : null}
-        {modal === 'confirm-phone' ? <ClientProfileModal onClose={closeModal} /> : null}
-        {modal === 'client-profile' ? <ClientProfileModal onClose={closeModal} /> : null}
+        {modal === 'confirm-phone' ? <ClientProfileModal onClose={closeModal} onNavigate={navigateFromModal} /> : null}
+        {modal === 'client-profile' ? <ClientProfileModal onClose={closeModal} onNavigate={navigateFromModal} /> : null}
         {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={closeModal} /> : null}
         {modal === 'contact' ? <ContactModal onClose={closeModal} /> : null}
         {modal === 'services-info' ? <ServicesInfoModal onSchedule={() => onOpenModal ? onOpenModal('create-client') : onClose()} /> : null}
@@ -2806,7 +2825,7 @@ function isAdminUnauthorized(error: unknown): boolean {
   return error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 404);
 }
 
-export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
+export function ConfirmPhoneModal({ onClose, onNavigate }: { onClose: () => void; onNavigate?: (to: string, options?: { replace?: boolean }) => void }) {
   const stored = getStoredPhoneVerification();
   const storedProfile = getStoredClientProfile();
   const navigate = useNavigate();
@@ -3010,8 +3029,12 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
           requestWorkspaceProviders(response);
           return;
         }
-        onClose();
-        navigate(destination.to, { replace: true });
+        if (onNavigate) {
+          onNavigate(destination.to, { replace: true });
+        } else {
+          onClose();
+          navigate(destination.to, { replace: true });
+        }
         return;
       }
 
@@ -3055,8 +3078,14 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
         selectedWorkspace={selectedWorkspace}
         onSelectWorkspace={setSelectedWorkspace}
         onDone={(workspace) => {
-          onClose();
-          navigate(routeForAdminWorkspace(workspace), { replace: true });
+          setPendingWorkspaceSelection(false);
+          setLoading(false);
+          if (onNavigate) {
+            onNavigate(routeForAdminWorkspace(workspace), { replace: true });
+          } else {
+            onClose();
+            navigate(routeForAdminWorkspace(workspace), { replace: true });
+          }
         }}
       />
     );
@@ -3145,8 +3174,7 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ClientProfileModal({ onClose }: { onClose: () => void }) {
-  const navigate = useNavigate();
+function ClientProfileModal({ onClose, onNavigate }: { onClose: () => void; onNavigate: (to: string, options?: { replace?: boolean }) => void }) {
   const queryClient = useQueryClient();
   const verification = getStoredPhoneVerification();
   const profile = getStoredClientProfile();
@@ -3175,8 +3203,7 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
   const displayName = cleanFormText(name) || 'Cliente';
 
   const goToBookings = () => {
-    onClose();
-    navigate('/meus-agendamentos');
+    onNavigate('/meus-agendamentos');
   };
 
   const requestWorkspaceProviders = useCallback((response: AdminAuthConfirmResponse) => {
@@ -3227,8 +3254,7 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
           return;
         }
         setMessage('Acesso administrativo validado. Abrindo painel...');
-        onClose();
-        navigate(destination.to, { replace: true });
+        onNavigate(destination.to, { replace: true });
         return;
       }
       const savedProfile = saveClientProfile({
@@ -3269,8 +3295,9 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
         selectedWorkspace={selectedWorkspace}
         onSelectWorkspace={setSelectedWorkspace}
         onDone={(workspace) => {
-          onClose();
-          navigate(routeForAdminWorkspace(workspace), { replace: true });
+          setPendingWorkspaceSelection(false);
+          setSaving(false);
+          onNavigate(routeForAdminWorkspace(workspace), { replace: true });
         }}
       />
     );

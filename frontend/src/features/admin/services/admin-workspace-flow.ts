@@ -2,24 +2,24 @@ import { isOwnerAdminPhone } from "../../../lib/authRole";
 import { setAdminWorkspace } from "../../../lib/storage";
 import type { AdminAuthConfirmResponse, AdminWorkspaceContext } from "../../../types/api";
 
-export const ADMIN_BOOKINGS_ROUTE = "/admin/dashboard?view=agendamentos";
-export const PROVIDER_BOOKINGS_ROUTE = "/prestador/dashboard?view=agendamentos";
+export const ADMIN_WORKSPACE_ROUTE = "/admin";
+export const PROVIDER_WORKSPACE_ROUTE = "/prestador";
 
 export type AdminLoginDestination =
-  | { kind: "choose-workspace"; to: typeof ADMIN_BOOKINGS_ROUTE }
-  | { kind: "navigate"; to: typeof ADMIN_BOOKINGS_ROUTE | typeof PROVIDER_BOOKINGS_ROUTE; workspace: AdminWorkspaceContext };
+  | { kind: "choose-workspace"; to: typeof ADMIN_WORKSPACE_ROUTE }
+  | { kind: "navigate"; to: typeof ADMIN_WORKSPACE_ROUTE | typeof PROVIDER_WORKSPACE_ROUTE; workspace: AdminWorkspaceContext };
 
 export function resolveAdminLoginDestination(
   response: AdminAuthConfirmResponse,
   fallbackPhone = "",
 ): AdminLoginDestination {
   if (response.admin.role === "OWNER" || isOwnerAdminPhone(response.admin.phone || fallbackPhone)) {
-    return { kind: "choose-workspace", to: ADMIN_BOOKINGS_ROUTE };
+    return { kind: "choose-workspace", to: ADMIN_WORKSPACE_ROUTE };
   }
 
   return {
     kind: "navigate",
-    to: PROVIDER_BOOKINGS_ROUTE,
+    to: PROVIDER_WORKSPACE_ROUTE,
     workspace: {
       mode: "PROVIDER",
       providerId: response.admin.id,
@@ -39,6 +39,6 @@ export function applyAdminLoginDestination(
   return destination;
 }
 
-export function routeForAdminWorkspace(workspace: AdminWorkspaceContext): typeof ADMIN_BOOKINGS_ROUTE | typeof PROVIDER_BOOKINGS_ROUTE {
-  return workspace.mode === "PROVIDER" ? PROVIDER_BOOKINGS_ROUTE : ADMIN_BOOKINGS_ROUTE;
+export function routeForAdminWorkspace(workspace: AdminWorkspaceContext): typeof ADMIN_WORKSPACE_ROUTE | typeof PROVIDER_WORKSPACE_ROUTE {
+  return workspace.mode === "PROVIDER" ? PROVIDER_WORKSPACE_ROUTE : ADMIN_WORKSPACE_ROUTE;
 }

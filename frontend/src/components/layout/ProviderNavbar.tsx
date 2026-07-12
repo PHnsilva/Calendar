@@ -67,5 +67,5 @@ export default function ProviderNavbar({
     </>
   );
 
-  return <BaseNavbar profile="provider" logoTo="/admin/dashboard?view=agendamentos" actions={desktopActions} mobileActions={mobileActions} />;
+  return <BaseNavbar profile="provider" logoTo="/prestador" actions={desktopActions} mobileActions={mobileActions} />;
 }

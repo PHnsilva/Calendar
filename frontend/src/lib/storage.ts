@@ -6,6 +6,7 @@ import { isValidPhone, normalizePhone } from "./authRole";
 const ADMIN_TOKEN_STORAGE_KEY = "calendar.admin.token";
 const LEGACY_ADMIN_TOKEN_STORAGE_KEY = "calendar.adminToken";
 const ADMIN_SESSION_STORAGE_KEY = "calendar.admin.session";
+const ADMIN_SESSION_CHANGED_EVENT = "calendar:admin-session-changed";
 const MANAGE_TOKENS_KEY = "calendar.manageTokens";
 const MANAGE_TOKEN_MAP_KEY = "calendar.manageTokenByEvent";
 const LOCAL_EVENTS_KEY = "calendar.localEvents";
@@ -90,6 +91,11 @@ function dispatchPhoneVerificationChanged(): void {
 function dispatchClientProfileChanged(): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(CLIENT_PROFILE_CHANGED_EVENT));
+}
+
+function dispatchAdminSessionChanged(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(ADMIN_SESSION_CHANGED_EVENT));
 }
 
 function cleanOptionalText(value: unknown): string | undefined {
@@ -268,6 +274,7 @@ export function setStoredAdminToken(token: string): void {
     storage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     storage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
     storage.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
+    dispatchAdminSessionChanged();
     return;
   }
 
@@ -283,6 +290,7 @@ export function setStoredAdminToken(token: string): void {
   writeJson(ADMIN_SESSION_STORAGE_KEY, fallbackSession);
   storage.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
   storage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+  dispatchAdminSessionChanged();
 }
 
 export function clearStoredAdminToken(): void {
@@ -290,6 +298,11 @@ export function clearStoredAdminToken(): void {
   storage?.removeItem(ADMIN_SESSION_STORAGE_KEY);
   storage?.removeItem(ADMIN_TOKEN_STORAGE_KEY);
   storage?.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
+  dispatchAdminSessionChanged();
+}
+
+export function getAdminSessionChangedEventName(): string {
+  return ADMIN_SESSION_CHANGED_EVENT;
 }
 
 export function getStoredAdminSession(): StoredAdminSession | null {
@@ -314,6 +327,7 @@ export function saveAdminSession(sessionToken: string, admin: AdminMeResponse): 
   writeJson(ADMIN_SESSION_STORAGE_KEY, session);
   getStorage()?.removeItem(ADMIN_TOKEN_STORAGE_KEY);
   getStorage()?.removeItem(LEGACY_ADMIN_TOKEN_STORAGE_KEY);
+  dispatchAdminSessionChanged();
   return session;
 }
 
@@ -333,6 +347,7 @@ export function setAdminWorkspace(workspace: AdminWorkspaceContext): StoredAdmin
     workspace: normalized,
   };
   writeJson(ADMIN_SESSION_STORAGE_KEY, nextSession);
+  dispatchAdminSessionChanged();
   return nextSession;
 }
 

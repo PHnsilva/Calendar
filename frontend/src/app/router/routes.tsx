@@ -11,7 +11,8 @@ import AdminBookingPage from "../../pages/admin/AdminBookingPage";
 import NotFoundPage from "../../pages/shared/NotFoundPage";
 import ForbiddenPage from "../../pages/shared/ForbiddenPage";
 import ServerErrorPage from "../../pages/shared/ServerErrorPage";
-import { shouldRenderHoldingPage } from "./guards";
+import { isSiteHoldingPageEnabled } from "../../lib/holding-mode";
+import { AdminRouteGuard } from "./guards";
 
 const holdingRoutes: RouteObject[] = [
   { path: "*", element: <SitePreparationPage /> },
@@ -32,20 +33,30 @@ const applicationRoutes: RouteObject[] = [
   },
   {
     path: "/admin",
-    element: <AdminLayout />,
+    element: <AdminRouteGuard requiredWorkspace="ADMIN" />,
     children: [
-      { index: true, element: <AdminGatePage /> },
-      { path: "dashboard", element: <AdminDashboardPage /> },
-      { path: "booking/:eventId", element: <AdminBookingPage /> },
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <AdminGatePage /> },
+          { path: "dashboard", element: <AdminDashboardPage /> },
+          { path: "booking/:eventId", element: <AdminBookingPage /> },
+        ],
+      },
     ],
   },
   {
     path: "/prestador",
-    element: <AdminLayout />,
+    element: <AdminRouteGuard requiredWorkspace="PROVIDER" />,
     children: [
-      { index: true, element: <AdminDashboardPage /> },
-      { path: "dashboard", element: <AdminDashboardPage /> },
-      { path: "booking/:eventId", element: <AdminBookingPage /> },
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <AdminDashboardPage /> },
+          { path: "dashboard", element: <AdminDashboardPage /> },
+          { path: "booking/:eventId", element: <AdminBookingPage /> },
+        ],
+      },
     ],
   },
   {
@@ -54,4 +65,4 @@ const applicationRoutes: RouteObject[] = [
   },
 ];
 
-export const routes = shouldRenderHoldingPage() ? holdingRoutes : applicationRoutes;
+export const routes = isSiteHoldingPageEnabled() ? holdingRoutes : applicationRoutes;

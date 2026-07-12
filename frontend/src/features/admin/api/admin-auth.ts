@@ -11,6 +11,7 @@ import { requireAdminSessionToken } from "./admin-session";
 
 const ADMIN_PASSWORD_LOGIN_TIMEOUT_MS = 8000;
 const ADMIN_PROVIDER_LIST_TIMEOUT_MS = 6000;
+const ADMIN_SESSION_VALIDATION_TIMEOUT_MS = 6000;
 
 export function startAdminLogin(phone: string) {
   return apiPost<AdminAuthStartResponse>("/api/admin/auth/start", { phone: normalizePhone(phone) });
@@ -43,7 +44,10 @@ export async function confirmAdminLogin(verificationId: string, code: string) {
 }
 
 export function getAdminMe() {
-  return apiGet<AdminMeResponse>("/api/admin/auth/me", { adminToken: requireAdminSessionToken() });
+  return apiGet<AdminMeResponse>("/api/admin/auth/me", {
+    adminToken: requireAdminSessionToken(),
+    timeoutMs: ADMIN_SESSION_VALIDATION_TIMEOUT_MS,
+  });
 }
 
 export function listAdminProviders() {

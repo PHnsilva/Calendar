@@ -15,7 +15,7 @@ beforeEach(() => {
 
 describe("admin workspace login flow", () => {
   it("requires a workspace choice for owner login results", async () => {
-    const { resolveAdminLoginDestination, ADMIN_BOOKINGS_ROUTE } = await import("./admin-workspace-flow");
+    const { resolveAdminLoginDestination, ADMIN_WORKSPACE_ROUTE } = await import("./admin-workspace-flow");
 
     const destination = resolveAdminLoginDestination(response({
       id: "owner-1",
@@ -26,12 +26,12 @@ describe("admin workspace login flow", () => {
       sessionExpiresAt,
     }));
 
-    expect(destination).toEqual({ kind: "choose-workspace", to: ADMIN_BOOKINGS_ROUTE });
+    expect(destination).toEqual({ kind: "choose-workspace", to: ADMIN_WORKSPACE_ROUTE });
   });
 
   it("stores provider workspace for provider login results", async () => {
     const { saveAdminSession, getStoredAdminSession } = await import("../../../lib/storage");
-    const { applyAdminLoginDestination, PROVIDER_BOOKINGS_ROUTE } = await import("./admin-workspace-flow");
+    const { applyAdminLoginDestination, PROVIDER_WORKSPACE_ROUTE } = await import("./admin-workspace-flow");
     const admin: AdminMeResponse = {
       id: "provider-1",
       name: "Prestador 1",
@@ -46,7 +46,7 @@ describe("admin workspace login flow", () => {
 
     expect(destination).toEqual({
       kind: "navigate",
-      to: PROVIDER_BOOKINGS_ROUTE,
+      to: PROVIDER_WORKSPACE_ROUTE,
       workspace: { mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1" },
     });
     expect(getStoredAdminSession()?.workspace).toEqual({
@@ -57,9 +57,9 @@ describe("admin workspace login flow", () => {
   });
 
   it("resolves workspace routes for admin and provider dashboards", async () => {
-    const { routeForAdminWorkspace, ADMIN_BOOKINGS_ROUTE, PROVIDER_BOOKINGS_ROUTE } = await import("./admin-workspace-flow");
+    const { routeForAdminWorkspace, ADMIN_WORKSPACE_ROUTE, PROVIDER_WORKSPACE_ROUTE } = await import("./admin-workspace-flow");
 
-    expect(routeForAdminWorkspace({ mode: "ADMIN" })).toBe(ADMIN_BOOKINGS_ROUTE);
-    expect(routeForAdminWorkspace({ mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1" })).toBe(PROVIDER_BOOKINGS_ROUTE);
+    expect(routeForAdminWorkspace({ mode: "ADMIN" })).toBe(ADMIN_WORKSPACE_ROUTE);
+    expect(routeForAdminWorkspace({ mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1" })).toBe(PROVIDER_WORKSPACE_ROUTE);
   });
 });

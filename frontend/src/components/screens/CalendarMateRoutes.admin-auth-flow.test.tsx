@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { BrowserRouter, useLocation } from "react-router-dom";
 import type { AdminAuthConfirmResponse, AdminProviderResponse } from "../../types/api";
 
 vi.setConfig({ testTimeout: 30000 });
@@ -57,13 +58,27 @@ async function renderProfileModal() {
   });
   const onClose = vi.fn();
   const { CalendarMateModal } = await import("./CalendarMateRoutes");
+  window.history.replaceState(null, "", "/");
+
+  function ProfileModalHarness() {
+    const [modalOpen, setModalOpen] = useState(true);
+    return modalOpen ? (
+      <CalendarMateModal
+        modal="client-profile"
+        onClose={() => {
+          onClose();
+          setModalOpen(false);
+        }}
+      />
+    ) : null;
+  }
 
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/"]}>
-        <CalendarMateModal modal="client-profile" onClose={onClose} />
+      <BrowserRouter>
+        <ProfileModalHarness />
         <LocationProbe />
-      </MemoryRouter>
+      </BrowserRouter>
     </QueryClientProvider>,
   );
 
@@ -126,15 +141,17 @@ describe("CalendarMate admin password profile flow", () => {
   it("navigates to the selected admin dashboard from role selection", async () => {
     adminAuthMocks.loginAdminWithPassword.mockResolvedValue(ownerResponse);
     adminAuthMocks.listAdminProviders.mockReturnValue(new Promise<AdminProviderResponse[]>(() => undefined));
-    await renderProfileModal();
+    const { onClose } = await renderProfileModal();
     await fillAdminPasswordForm();
 
     fireEvent.click(screen.getByRole("button", { name: /Validar acesso/i }));
     fireEvent.click(await screen.findByRole("button", { name: /Entrar como Admin/i }));
 
     await waitFor(() => {
-      expect(screen.getByTestId("location").textContent).toBe("/admin/dashboard?view=agendamentos");
+      expect(screen.getByTestId("location").textContent).toBe("/admin");
     });
+    expect(screen.queryByText("Escolha o workspace")).toBeNull();
+    expect(onClose).toHaveBeenCalledTimes(1);
   }, 30000);
 
   it("keeps role selection available when providers cannot be loaded", async () => {
@@ -154,15 +171,17 @@ describe("CalendarMate admin password profile flow", () => {
   it("navigates to the selected provider dashboard from role selection", async () => {
     adminAuthMocks.loginAdminWithPassword.mockResolvedValue(ownerResponse);
     adminAuthMocks.listAdminProviders.mockResolvedValue([provider]);
-    await renderProfileModal();
+    const { onClose } = await renderProfileModal();
     await fillAdminPasswordForm();
 
     fireEvent.click(screen.getByRole("button", { name: /Validar acesso/i }));
     fireEvent.click(await screen.findByRole("button", { name: /Entrar como Prestador 1/i }));
 
     await waitFor(() => {
-      expect(screen.getByTestId("location").textContent).toBe("/prestador/dashboard?view=agendamentos");
+      expect(screen.getByTestId("location").textContent).toBe("/prestador");
     });
+    expect(screen.queryByText("Escolha o workspace")).toBeNull();
+    expect(onClose).toHaveBeenCalledTimes(1);
   }, 30000);
 
   it("shows an invalid password message and returns control to the profile form", async () => {

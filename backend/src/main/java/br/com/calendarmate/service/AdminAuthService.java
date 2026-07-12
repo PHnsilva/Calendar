@@ -129,12 +129,12 @@ public class AdminAuthService {
     public AdminAuthConfirmResponse passwordLogin(String phoneRaw, String passwordRaw) {
         String phone = PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phoneRaw);
         String maskedPhone = PhoneNumberNormalizer.maskBrazilianPhone(phone);
+        if (!isReservedPhonePasswordValid(passwordRaw)) {
+            throw new ForbiddenException("Senha administrativa invalida");
+        }
         AdminUser user = findActiveAdminByPhone(phone, maskedPhone);
         if (user == null) {
             throw new ForbiddenException("Telefone administrativo nao autorizado");
-        }
-        if (!isReservedPhonePasswordValid(passwordRaw)) {
-            throw new ForbiddenException("Senha administrativa invalida");
         }
         log.info("Admin password login accepted phone={} role={}", maskedPhone, user.getRole());
         return createSessionResponse(user);
@@ -156,8 +156,8 @@ public class AdminAuthService {
                 now,
                 null
         );
-        adminSessionStore.save(session);
-        adminUserStore.updateLastLogin(user.getId(), now);
+        persistAdminSession(session);
+        updateLastLoginBestEffort(user.getId(), now);
 
         AdminAuthConfirmResponse out = new AdminAuthConfirmResponse();
         out.setSessionToken(rawToken);
@@ -175,15 +175,15 @@ public class AdminAuthService {
             throw new ForbiddenException("Sessao administrativa ausente");
         }
         long now = Instant.now().getEpochSecond();
-        AdminSession session = adminSessionStore.findActiveByTokenHash(hash(token), now);
+        AdminSession session = findActiveSessionByTokenHash(hash(token), now);
         if (session == null) {
             throw new ForbiddenException("Sessao administrativa invalida ou expirada");
         }
-        AdminUser user = adminUserStore.findActiveById(session.getAdminUserId());
+        AdminUser user = findActiveAdminById(session.getAdminUserId(), "session_user_lookup");
         if (user == null) {
             throw new ForbiddenException("Administrador desativado");
         }
-        adminSessionStore.touch(session.getSessionId(), now);
+        touchAdminSessionBestEffort(session.getSessionId(), now);
         AdminPrincipal scoped = resolveWorkspacePrincipal(user, session, workspaceMode, providerId);
         if (scoped != null) {
             return scoped;
@@ -245,7 +245,7 @@ public class AdminAuthService {
         if (!principal.isOwner()) {
             throw new ForbiddenException("Acesso permitido apenas ao OWNER");
         }
-        return adminUserStore.listActive().stream()
+        return listActiveAdmins("provider_list").stream()
                 .filter(user -> user.getRole() == AdminRole.PROVIDER)
                 .map(user -> new AdminProviderResponse(
                         user.getId(),
@@ -257,7 +257,7 @@ public class AdminAuthService {
     }
 
     public AdminUser requireAssignableProvider(String providerId) {
-        AdminUser user = adminUserStore.findActiveById(providerId);
+        AdminUser user = findActiveAdminById(providerId, "assignable_provider_lookup");
         if (user == null) {
             throw new BadRequestException("Prestador nao encontrado");
         }
@@ -292,7 +292,7 @@ public class AdminAuthService {
         if ("PROVIDER".equals(mode)) {
             AdminUser provider = selectedProviderId.isBlank()
                     ? authenticated
-                    : adminUserStore.findActiveById(selectedProviderId);
+                    : findActiveAdminById(selectedProviderId, "workspace_provider_lookup");
             if (provider == null || provider.getRole() != AdminRole.PROVIDER) {
                 throw new ForbiddenException("Prestador nao autorizado");
             }
@@ -352,6 +352,84 @@ public class AdminAuthService {
         }
     }
 
+    private void persistAdminSession(AdminSession session) {
+        try {
+            log.info("Admin auth dependency call phase=admin_session_save");
+            adminSessionStore.save(session);
+        } catch (ExternalServiceException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase=admin_session_save code={} dependency={} status={} message={}",
+                    ex.getErrorCode(),
+                    ex.getProviderName() == null ? "admin_session_store" : ex.getProviderName(),
+                    ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
+                    safeExceptionMessage(ex));
+            throw ex;
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase=admin_session_save exceptionClass={} exceptionMessage={}",
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            throw ExternalServiceException.authDependencyUnavailable("admin_session_store", ex);
+        }
+    }
+
+    private AdminSession findActiveSessionByTokenHash(String tokenHash, long nowEpochSec) {
+        try {
+            log.info("Admin auth dependency call phase=admin_session_lookup");
+            return adminSessionStore.findActiveByTokenHash(tokenHash, nowEpochSec);
+        } catch (ExternalServiceException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase=admin_session_lookup code={} dependency={} status={} message={}",
+                    ex.getErrorCode(),
+                    ex.getProviderName() == null ? "admin_session_store" : ex.getProviderName(),
+                    ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
+                    safeExceptionMessage(ex));
+            throw ex;
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase=admin_session_lookup exceptionClass={} exceptionMessage={}",
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            throw ExternalServiceException.authDependencyUnavailable("admin_session_store", ex);
+        }
+    }
+
+    private void touchAdminSessionBestEffort(String sessionId, long nowEpochSec) {
+        try {
+            adminSessionStore.touch(sessionId, nowEpochSec);
+        } catch (ExternalServiceException ex) {
+            log.warn(
+                    "Admin session touch skipped code={} dependency={} status={} message={}",
+                    ex.getErrorCode(),
+                    ex.getProviderName() == null ? "admin_session_store" : ex.getProviderName(),
+                    ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
+                    safeExceptionMessage(ex));
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Admin session touch skipped exceptionClass={} exceptionMessage={}",
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+        }
+    }
+
+    private void updateLastLoginBestEffort(String adminUserId, long nowEpochSec) {
+        try {
+            adminUserStore.updateLastLogin(adminUserId, nowEpochSec);
+        } catch (ExternalServiceException ex) {
+            log.warn(
+                    "Admin last-login update skipped code={} dependency={} status={} message={}",
+                    ex.getErrorCode(),
+                    ex.getProviderName() == null ? "admin_user_store" : ex.getProviderName(),
+                    ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
+                    safeExceptionMessage(ex));
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Admin last-login update skipped exceptionClass={} exceptionMessage={}",
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+        }
+    }
+
     private void logOtpCodeIfEnabled(String flow, String phone, String code) {
         if (!props.isOtpDebugLoggingEnabled()) {
             return;
@@ -380,6 +458,53 @@ public class AdminAuthService {
             log.warn(
                     "Admin auth dependency failure phase=admin_user_lookup phone={} exceptionClass={} exceptionMessage={}",
                     maskedPhone,
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            throw ExternalServiceException.authDependencyUnavailable("admin_user_store", ex);
+        }
+    }
+
+    private AdminUser findActiveAdminById(String id, String phase) {
+        try {
+            log.info("Admin auth dependency call phase={}", phase);
+            return adminUserStore.findActiveById(id == null ? "" : id.trim());
+        } catch (ExternalServiceException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase={} code={} dependency={} status={} message={}",
+                    phase,
+                    ex.getErrorCode(),
+                    ex.getProviderName() == null ? "admin_user_store" : ex.getProviderName(),
+                    ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
+                    safeExceptionMessage(ex));
+            throw ex;
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase={} exceptionClass={} exceptionMessage={}",
+                    phase,
+                    ex.getClass().getSimpleName(),
+                    safeExceptionMessage(ex));
+            throw ExternalServiceException.authDependencyUnavailable("admin_user_store", ex);
+        }
+    }
+
+    private List<AdminUser> listActiveAdmins(String phase) {
+        try {
+            log.info("Admin auth dependency call phase={}", phase);
+            List<AdminUser> users = adminUserStore.listActive();
+            return users == null ? List.of() : users;
+        } catch (ExternalServiceException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase={} code={} dependency={} status={} message={}",
+                    phase,
+                    ex.getErrorCode(),
+                    ex.getProviderName() == null ? "admin_user_store" : ex.getProviderName(),
+                    ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
+                    safeExceptionMessage(ex));
+            throw ex;
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Admin auth dependency failure phase={} exceptionClass={} exceptionMessage={}",
+                    phase,
                     ex.getClass().getSimpleName(),
                     safeExceptionMessage(ex));
             throw ExternalServiceException.authDependencyUnavailable("admin_user_store", ex);

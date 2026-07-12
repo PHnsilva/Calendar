@@ -38,3 +38,7 @@ export function applyAdminLoginDestination(
   }
   return destination;
 }
+
+export function routeForAdminWorkspace(workspace: AdminWorkspaceContext): typeof ADMIN_BOOKINGS_ROUTE | typeof PROVIDER_BOOKINGS_ROUTE {
+  return workspace.mode === "PROVIDER" ? PROVIDER_BOOKINGS_ROUTE : ADMIN_BOOKINGS_ROUTE;
+}

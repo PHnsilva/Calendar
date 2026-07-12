@@ -40,6 +40,16 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void mapsInvalidAdminPasswordToFriendlyMessage() throws Exception {
+        mvc.perform(post("/api/admin/auth/password"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("INVALID_ADMIN_PASSWORD"))
+                .andExpect(jsonPath("$.message").value("Senha incorreta. Confira e tente novamente."))
+                .andExpect(jsonPath("$.field").value("password"))
+                .andExpect(jsonPath("$.retryable").value(false));
+    }
+
+    @Test
     void mapsTechnicalRouteFailuresToRouteMessage() throws Exception {
         MvcResult result = mvc.perform(get("/api/rotas/config"))
                 .andExpect(status().isServiceUnavailable())
@@ -87,6 +97,11 @@ class GlobalExceptionHandlerTest {
                     "Supabase",
                     null,
                     null);
+        }
+
+        @PostMapping("/api/admin/auth/password")
+        void invalidAdminPassword() {
+            throw new ForbiddenException("Senha administrativa invalida");
         }
 
         @GetMapping("/api/rotas/config")

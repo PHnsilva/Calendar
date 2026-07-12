@@ -44,6 +44,7 @@ const NETWORK_MESSAGE = "Verifique sua conexão e tente novamente.";
 
 const CODE_MESSAGES: Record<string, string> = {
   ACCESS_LINK_INVALID: "Não foi possível validar seu acesso. Abra o link novamente para continuar.",
+  ADMIN_ACCESS_NOT_ALLOWED: "Esse número não tem acesso liberado.",
   ADDRESS_LOOKUP_UNAVAILABLE: "Não foi possível buscar o endereço agora. Confira os dados e tente novamente.",
   ADDRESS_NOT_FOUND: "Não encontramos esse CEP. Revise o número e tente novamente.",
   AVAILABILITY_BLOCK_CONFLICT: "Existem agendamentos nesse período. Revise a prévia antes de bloquear.",
@@ -61,6 +62,7 @@ const CODE_MESSAGES: Record<string, string> = {
   FINANCE_UNAVAILABLE: "Não foi possível carregar as informações financeiras agora. Tente novamente.",
   FORBIDDEN: "Você não tem permissão para realizar essa ação.",
   INVALID_CEP: "Informe um CEP com 8 números.",
+  INVALID_ADMIN_PASSWORD: "Senha incorreta. Confira e tente novamente.",
   INVALID_PARAM: "Revise os dados informados e tente novamente.",
   INVALID_PHONE: "Informe um celular válido com DDD.",
   INVALID_REQUEST_BODY: "Revise os dados enviados e tente novamente.",

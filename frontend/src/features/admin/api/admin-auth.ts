@@ -9,6 +9,9 @@ import type {
 } from "../../../types/api";
 import { requireAdminSessionToken } from "./admin-session";
 
+const ADMIN_PASSWORD_LOGIN_TIMEOUT_MS = 8000;
+const ADMIN_PROVIDER_LIST_TIMEOUT_MS = 6000;
+
 export function startAdminLogin(phone: string) {
   return apiPost<AdminAuthStartResponse>("/api/admin/auth/start", { phone: normalizePhone(phone) });
 }
@@ -23,6 +26,8 @@ export async function loginAdminWithPassword(phone: string, password: string) {
   const response = await apiPost<AdminAuthConfirmResponse>("/api/admin/auth/password", {
     phone: normalizePhone(phone),
     password,
+  }, {
+    timeoutMs: ADMIN_PASSWORD_LOGIN_TIMEOUT_MS,
   });
   saveAdminSession(response.sessionToken, response.admin);
   return response;
@@ -42,5 +47,8 @@ export function getAdminMe() {
 }
 
 export function listAdminProviders() {
-  return apiGet<AdminProviderResponse[]>("/api/admin/auth/providers", { adminToken: requireAdminSessionToken() });
+  return apiGet<AdminProviderResponse[]>("/api/admin/auth/providers", {
+    adminToken: requireAdminSessionToken(),
+    timeoutMs: ADMIN_PROVIDER_LIST_TIMEOUT_MS,
+  });
 }

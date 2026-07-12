@@ -122,7 +122,7 @@ import {
 import type { AdminAuthConfirmResponse, AdminProviderResponse, AdminWorkspaceContext, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
 import { confirmAdminLogin, listAdminProviders, loginAdminWithPassword, resendAdminLogin, startAdminLogin } from '../../features/admin/api/admin-auth';
-import { ADMIN_BOOKINGS_ROUTE, PROVIDER_BOOKINGS_ROUTE, applyAdminLoginDestination, resolveAdminLoginDestination } from '../../features/admin/services/admin-workspace-flow';
+import { applyAdminLoginDestination, resolveAdminLoginDestination, routeForAdminWorkspace } from '../../features/admin/services/admin-workspace-flow';
 
 type ClientAvatarOption = {
   id: string;
@@ -1482,15 +1482,7 @@ function getAdminAuthErrorMessage(error: unknown, step: 'start' | 'confirm'): st
 
 async function loadAdminWorkspaceProviders(response: AdminAuthConfirmResponse): Promise<AdminProviderResponse[]> {
   if (resolveAdminLoginDestination(response).kind !== 'choose-workspace') return [];
-  try {
-    return await listAdminProviders();
-  } catch {
-    return [];
-  }
-}
-
-function routeForAdminWorkspace(workspace: AdminWorkspaceContext): string {
-  return workspace.mode === 'PROVIDER' ? PROVIDER_BOOKINGS_ROUTE : ADMIN_BOOKINGS_ROUTE;
+  return listAdminProviders();
 }
 
 function getAdminWorkspaceBaseRoute(): '/admin' | '/prestador' {
@@ -1508,6 +1500,8 @@ function adminBookingRoute(eventId: string): string {
 function AdminWorkspaceSelectionModal({
   embedded = false,
   providers,
+  providersError = '',
+  providersLoading = false,
   sessionPhone,
   selectedWorkspace,
   onSelectWorkspace,
@@ -1515,6 +1509,8 @@ function AdminWorkspaceSelectionModal({
 }: {
   embedded?: boolean;
   providers: AdminProviderResponse[];
+  providersError?: string;
+  providersLoading?: boolean;
   sessionPhone?: string;
   selectedWorkspace?: string;
   onSelectWorkspace?: (workspace: string) => void;
@@ -1554,6 +1550,9 @@ function AdminWorkspaceSelectionModal({
           <small>Acesso completo</small>
           <small>OWNER</small>
         </button>
+        {providersLoading ? <p className="wf-auth-feedback" role="status">Carregando prestadores...</p> : null}
+        {providersError ? <p className="wf-auth-feedback wf-auth-feedback--error">{providersError}</p> : null}
+        {!providersLoading && !providersError && providers.length === 0 ? <p className="wf-auth-feedback">Nenhum prestador disponível agora.</p> : null}
         {providers.map((provider) => (
           <button key={provider.id} type="button" className={selectedWorkspace === provider.id ? 'is-selected' : ''} aria-pressed={selectedWorkspace === provider.id} onClick={() => chooseProvider(provider)}>
             <span className="wf-radio-dot" />
@@ -1587,18 +1586,24 @@ function AdminWorkspaceSelectionModal({
 function AdminWorkspaceSelectionGate({ onDone }: { onDone: (workspace: AdminWorkspaceContext) => void }) {
   const [pendingWorkspaceSelection] = useState(true);
   const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
+  const [providersLoading, setProvidersLoading] = useState(true);
   const [selectedWorkspace, setSelectedWorkspace] = useState('');
   const [sessionPhone] = useState(() => getStoredAdminSession()?.phone || '');
   const [error, setError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
+    setProvidersLoading(true);
+    setError('');
     listAdminProviders()
       .then((providers) => {
         if (!cancelled) setAvailableWorkspaces(providers);
       })
       .catch(() => {
-        if (!cancelled) setError('Nao foi possivel carregar os prestadores agora.');
+        if (!cancelled) setError('Não foi possível carregar os prestadores agora. Você ainda pode entrar como Admin.');
+      })
+      .finally(() => {
+        if (!cancelled) setProvidersLoading(false);
       });
     return () => {
       cancelled = true;
@@ -1611,9 +1616,10 @@ function AdminWorkspaceSelectionGate({ onDone }: { onDone: (workspace: AdminWork
 
   return (
     <PageShell className="wf-page wf-admin-landing wf-admin-login-page">
-      {error ? <p className="booking-form__error">{error}</p> : null}
       <AdminWorkspaceSelectionModal
         providers={availableWorkspaces}
+        providersError={error}
+        providersLoading={providersLoading}
         sessionPhone={sessionPhone}
         selectedWorkspace={selectedWorkspace}
         onSelectWorkspace={setSelectedWorkspace}
@@ -2814,9 +2820,12 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
   const [message, setMessage] = useState('');
   const [pendingWorkspaceSelection, setPendingWorkspaceSelection] = useState(false);
   const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
+  const [workspaceProvidersLoading, setWorkspaceProvidersLoading] = useState(false);
+  const [workspaceProvidersError, setWorkspaceProvidersError] = useState('');
   const [selectedWorkspace, setSelectedWorkspace] = useState('');
   const [sessionPhone, setSessionPhone] = useState('');
   const codeInputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const confirmInFlightRef = useRef(false);
   const normalizedPhone = normalizePhone(phone);
   const canSendCode = isValidPhone(phone) && !loading;
   const canConfirm = Boolean(flow?.verificationId) && code.length === OTP_CODE_LENGTH && !loading;
@@ -2878,6 +2887,22 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
     if (!flow?.verificationId) return;
     focusCodeInput(0);
   }, [flow?.verificationId, focusCodeInput]);
+
+  const requestWorkspaceProviders = useCallback((response: AdminAuthConfirmResponse) => {
+    setAvailableWorkspaces([]);
+    setWorkspaceProvidersError('');
+    setWorkspaceProvidersLoading(true);
+    void loadAdminWorkspaceProviders(response)
+      .then((providers) => {
+        setAvailableWorkspaces(providers);
+      })
+      .catch(() => {
+        setWorkspaceProvidersError('Não foi possível carregar os prestadores agora. Você ainda pode entrar como Admin.');
+      })
+      .finally(() => {
+        setWorkspaceProvidersLoading(false);
+      });
+  }, []);
 
   const startClientAuth = async (targetPhone: string): Promise<GeneralAuthFlow> => {
     const response = await startRecovery(targetPhone);
@@ -2965,7 +2990,8 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
   };
 
   const handleConfirm = async () => {
-    if (!flow?.verificationId || code.length < 3 || loading) return;
+    if (!flow?.verificationId || code.length < 3 || loading || confirmInFlightRef.current) return;
+    confirmInFlightRef.current = true;
     setLoading(true);
     setError('');
     setMessage('');
@@ -2975,11 +3001,13 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
         const response = await confirmAdminLogin(flow.verificationId, code);
         const confirmedPhone = response.admin.phone || normalizedPhone;
         setSessionPhone(confirmedPhone);
-        await queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
+        void queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
         const destination = applyAdminLoginDestination(response, normalizedPhone);
         if (destination.kind === 'choose-workspace') {
           setPendingWorkspaceSelection(true);
-          setAvailableWorkspaces(await loadAdminWorkspaceProviders(response));
+          setMessage('Acesso validado. Escolha a área para continuar.');
+          setLoading(false);
+          requestWorkspaceProviders(response);
           return;
         }
         onClose();
@@ -3011,6 +3039,7 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
       }
       setError(mapGeneralAuthError(authError, 'Não foi possível confirmar o código.'));
     } finally {
+      confirmInFlightRef.current = false;
       setLoading(false);
     }
   };
@@ -3020,6 +3049,8 @@ export function ConfirmPhoneModal({ onClose }: { onClose: () => void }) {
       <AdminWorkspaceSelectionModal
         embedded
         providers={availableWorkspaces}
+        providersError={workspaceProvidersError}
+        providersLoading={workspaceProvidersLoading}
         sessionPhone={sessionPhone}
         selectedWorkspace={selectedWorkspace}
         onSelectWorkspace={setSelectedWorkspace}
@@ -3129,10 +3160,13 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
   const [message, setMessage] = useState('');
   const [pendingWorkspaceSelection, setPendingWorkspaceSelection] = useState(false);
   const [availableWorkspaces, setAvailableWorkspaces] = useState<AdminProviderResponse[]>([]);
+  const [workspaceProvidersLoading, setWorkspaceProvidersLoading] = useState(false);
+  const [workspaceProvidersError, setWorkspaceProvidersError] = useState('');
   const [selectedWorkspace, setSelectedWorkspace] = useState('');
   const [sessionPhone, setSessionPhone] = useState('');
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState(() => getClientAvatarOption(profile?.avatarId).id);
+  const saveProfileInFlightRef = useRef(false);
   const activeAvatar = useMemo(() => getClientAvatarOption(selectedAvatar), [selectedAvatar]);
   const phoneDigits = normalizePhone(phone);
   const hasValidPhone = isValidPhone(phone);
@@ -3145,7 +3179,25 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
     navigate('/meus-agendamentos');
   };
 
+  const requestWorkspaceProviders = useCallback((response: AdminAuthConfirmResponse) => {
+    setAvailableWorkspaces([]);
+    setWorkspaceProvidersError('');
+    setWorkspaceProvidersLoading(true);
+    void loadAdminWorkspaceProviders(response)
+      .then((providers) => {
+        setAvailableWorkspaces(providers);
+      })
+      .catch(() => {
+        setWorkspaceProvidersError('Não foi possível carregar os prestadores agora. Você ainda pode entrar como Admin.');
+      })
+      .finally(() => {
+        setWorkspaceProvidersLoading(false);
+      });
+  }, []);
+
   const handleSaveProfile = async () => {
+    if (saveProfileInFlightRef.current) return;
+    saveProfileInFlightRef.current = true;
     setSaving(true);
     setError('');
     setMessage('');
@@ -3166,11 +3218,12 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
         const adminResponse = await loginAdminWithPassword(phoneDigits, staffPassword);
         const destination = applyAdminLoginDestination(adminResponse, phoneDigits);
         setSessionPhone(adminResponse.admin.phone || phoneDigits);
-        await queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
+        void queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
         if (destination.kind === 'choose-workspace') {
-          setAvailableWorkspaces(await loadAdminWorkspaceProviders(adminResponse));
           setPendingWorkspaceSelection(true);
           setMessage('Acesso validado. Escolha a área para continuar.');
+          setSaving(false);
+          requestWorkspaceProviders(adminResponse);
           return;
         }
         setMessage('Acesso administrativo validado. Abrindo painel...');
@@ -3194,10 +3247,13 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
       setMessage('Perfil salvo neste dispositivo.');
     } catch (saveError) {
       setError(normalizeApiErrorMessage(saveError, {
-        context: 'profile',
-        fallbackMessage: 'Não foi possível salvar o perfil. Tente novamente.',
+        context: staffPassword.trim() ? 'login' : 'profile',
+        fallbackMessage: staffPassword.trim()
+          ? 'Não foi possível validar o acesso. Tente novamente.'
+          : 'Não foi possível salvar o perfil. Tente novamente.',
       }));
     } finally {
+      saveProfileInFlightRef.current = false;
       setSaving(false);
     }
   };
@@ -3207,6 +3263,8 @@ function ClientProfileModal({ onClose }: { onClose: () => void }) {
       <AdminWorkspaceSelectionModal
         embedded
         providers={availableWorkspaces}
+        providersError={workspaceProvidersError}
+        providersLoading={workspaceProvidersLoading}
         sessionPhone={sessionPhone}
         selectedWorkspace={selectedWorkspace}
         onSelectWorkspace={setSelectedWorkspace}

@@ -113,6 +113,74 @@ class AdminAuthServiceTest {
     }
 
     @Test
+    void passwordLoginRejectsInvalidPasswordBeforeCallingAdminStore() {
+        AdminAuthService service = new AdminAuthService(
+                new FailingAdminUserStore(),
+                new NoopAdminSessionStore(),
+                new InMemoryVerificationStore(),
+                new RecordingOtpDeliveryClient(),
+                new CustomPasswordProperties("team-password"));
+
+        ForbiddenException ex = assertThrows(
+                ForbiddenException.class,
+                () -> service.passwordLogin("+55 31 99999-9999", "wrong-password"));
+
+        assertEquals("Senha administrativa invalida", ex.getMessage());
+    }
+
+    @Test
+    void passwordLoginClassifiesAdminUserStoreFailureForValidPassword() {
+        AdminAuthService service = new AdminAuthService(
+                new FailingAdminUserStore(),
+                new NoopAdminSessionStore(),
+                new InMemoryVerificationStore(),
+                new RecordingOtpDeliveryClient(),
+                new CustomPasswordProperties("team-password"));
+
+        ExternalServiceException ex = assertThrows(
+                ExternalServiceException.class,
+                () -> service.passwordLogin("+55 31 99999-9999", "team-password"));
+
+        assertEquals("AUTH_DEPENDENCY_UNAVAILABLE", ex.getErrorCode());
+        assertEquals("admin_user_store", ex.getProviderName());
+    }
+
+    @Test
+    void passwordLoginClassifiesAdminSessionStoreFailure() {
+        InMemoryAdminUserStore userStore = new InMemoryAdminUserStore("+55 31 99999-9999|Owner|OWNER|owner-1");
+        AdminAuthService service = new AdminAuthService(
+                userStore,
+                new FailingSaveAdminSessionStore(),
+                new InMemoryVerificationStore(),
+                new RecordingOtpDeliveryClient(),
+                new CustomPasswordProperties("team-password"));
+
+        ExternalServiceException ex = assertThrows(
+                ExternalServiceException.class,
+                () -> service.passwordLogin("+55 31 99999-9999", "team-password"));
+
+        assertEquals("AUTH_DEPENDENCY_UNAVAILABLE", ex.getErrorCode());
+        assertEquals("admin_session_store", ex.getProviderName());
+    }
+
+    @Test
+    void passwordLoginDoesNotFailWhenLastLoginUpdateFailsAfterSessionSave() {
+        FailingLastLoginAdminUserStore userStore = new FailingLastLoginAdminUserStore("+55 31 99999-9999|Owner|OWNER|owner-1");
+        InMemoryAdminSessionStore sessionStore = new InMemoryAdminSessionStore();
+        AdminAuthService service = new AdminAuthService(
+                userStore,
+                sessionStore,
+                new InMemoryVerificationStore(),
+                new RecordingOtpDeliveryClient(),
+                new CustomPasswordProperties("team-password"));
+
+        AdminAuthConfirmResponse response = service.passwordLogin("+55 31 99999-9999", "team-password");
+
+        assertNotNull(response.getSessionToken());
+        assertTrue(service.require(response.getSessionToken()).isOwner());
+    }
+
+    @Test
     void providerCannotListProvidersButOwnerCan() {
         InMemoryAdminUserStore userStore = new InMemoryAdminUserStore(
                 "+55 31 99999-9999|Owner|OWNER;+55 31 98888-8888|Provider|PROVIDER");
@@ -252,6 +320,24 @@ class AdminAuthServiceTest {
         @Override
         public int deleteExpired(long nowEpochSec) {
             return 0;
+        }
+    }
+
+    private static class FailingSaveAdminSessionStore extends NoopAdminSessionStore {
+        @Override
+        public void save(AdminSession session) {
+            throw new ResourceAccessException("Connection timed out");
+        }
+    }
+
+    private static class FailingLastLoginAdminUserStore extends InMemoryAdminUserStore {
+        FailingLastLoginAdminUserStore(String seedConfig) {
+            super(seedConfig);
+        }
+
+        @Override
+        public void updateLastLogin(String id, long epochSec) {
+            throw new ResourceAccessException("Connection timed out");
         }
     }
 

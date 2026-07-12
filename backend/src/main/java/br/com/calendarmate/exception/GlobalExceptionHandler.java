@@ -222,6 +222,12 @@ public class GlobalExceptionHandler {
         String path = req.getRequestURI();
         String message = normalize(ex.getMessage());
 
+        if (isAdminPath(path) && message.contains("senha administrativa invalida")) {
+            return descriptor(HttpStatus.FORBIDDEN, "INVALID_ADMIN_PASSWORD", "Senha incorreta. Confira e tente novamente.", false, "password", null);
+        }
+        if (isAdminPath(path) && message.contains("telefone administrativo")) {
+            return descriptor(HttpStatus.FORBIDDEN, "ADMIN_ACCESS_NOT_ALLOWED", "Esse número não tem acesso liberado.", false, "phone", null);
+        }
         if (message.contains("sessao") || isAdminPath(path) && (message.contains("administrativa ausente") || message.contains("expirada"))) {
             return descriptor(HttpStatus.UNAUTHORIZED, "SESSION_EXPIRED", MSG_SESSION_EXPIRED, false);
         }

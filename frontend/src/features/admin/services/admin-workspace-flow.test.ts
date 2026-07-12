@@ -55,4 +55,11 @@ describe("admin workspace login flow", () => {
       providerName: "Prestador 1",
     });
   });
+
+  it("resolves workspace routes for admin and provider dashboards", async () => {
+    const { routeForAdminWorkspace, ADMIN_BOOKINGS_ROUTE, PROVIDER_BOOKINGS_ROUTE } = await import("./admin-workspace-flow");
+
+    expect(routeForAdminWorkspace({ mode: "ADMIN" })).toBe(ADMIN_BOOKINGS_ROUTE);
+    expect(routeForAdminWorkspace({ mode: "PROVIDER", providerId: "provider-1", providerName: "Prestador 1" })).toBe(PROVIDER_BOOKINGS_ROUTE);
+  });
 });

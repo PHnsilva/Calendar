@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AdminAuthConfirmResponse, ServicoRequest } from "../../../types/api";
 
 const admin = {
@@ -33,6 +33,10 @@ beforeEach(() => {
   vi.stubEnv("VITE_API_BASE_URL", "http://backend.test");
   vi.unstubAllGlobals();
   window.localStorage.clear();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("admin API authentication", () => {
@@ -124,7 +128,53 @@ describe("admin API authentication", () => {
       phone: "31999999999",
       password: "team-password",
     });
+    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal);
     expect(new Headers(fetchMock.mock.calls[1]?.[1]?.headers).get("X-ADMIN-SESSION")).toBe("password-token");
+  });
+
+  it("does not persist a session when the password is invalid", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({
+      status: 403,
+      code: "INVALID_ADMIN_PASSWORD",
+      message: "Senha incorreta. Confira e tente novamente.",
+      field: "password",
+      retryable: false,
+    }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { loginAdminWithPassword } = await import("./admin-auth");
+
+    await expect(loginAdminWithPassword("31999999999", "wrong-password")).rejects.toMatchObject({
+      code: "INVALID_ADMIN_PASSWORD",
+      field: "password",
+      message: "Senha incorreta. Confira e tente novamente.",
+      retryable: false,
+    });
+
+    expect(window.localStorage.getItem("calendar.admin.session")).toBeNull();
+  });
+
+  it("aborts password login quickly when the upstream does not answer", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => {
+        reject(new DOMException("Aborted", "AbortError"));
+      });
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { loginAdminWithPassword } = await import("./admin-auth");
+
+    const request = expect(loginAdminWithPassword("31999999999", "team-password")).rejects.toMatchObject({
+      code: "DEPENDENCY_TIMEOUT",
+      retryable: true,
+      status: 408,
+    });
+    await vi.advanceTimersByTimeAsync(8000);
+
+    await request;
+    expect(window.localStorage.getItem("calendar.admin.session")).toBeNull();
   });
 
   it("sends provider workspace headers with authenticated admin requests", async () => {

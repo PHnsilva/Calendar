@@ -1,8 +1,17 @@
 import { useMemo, useState } from 'react';
-import historyIcon from '../../assets/wireframes/icons/admin-history-clock.png';
 import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
 import { getStoredAdminToken } from '../../lib/storage';
 import type { ServicoResponse } from '../../types/api';
+import {
+  AdminButton,
+  AdminIcon,
+  AdminPageHeader,
+  AdminSectionHeader,
+  AdminState,
+  AdminStatusBadge,
+  type AdminIconName,
+} from './AdminWorkspaceUi';
+import styles from './AdminWorkspaceUi.module.css';
 
 type PeriodFilter = '30' | '90' | 'ALL';
 
@@ -46,6 +55,14 @@ function formatStatus(status?: string): string {
   return 'Confirmado';
 }
 
+function statusTone(status: string): 'danger' | 'info' | 'success' | 'warning' {
+  const value = normalize(status);
+  if (value.includes('cancel')) return 'danger';
+  if (value.includes('pend')) return 'warning';
+  if (value.includes('concl')) return 'success';
+  return 'info';
+}
+
 function isCompleted(status: string): boolean {
   return normalize(status).includes('concl') || normalize(status).includes('complete') || normalize(status).includes('done');
 }
@@ -58,7 +75,7 @@ function mapBooking(booking: ServicoResponse): HistoryBooking {
     client: fullClientName(booking),
     date,
     email: booking.clientEmail || 'Não informado',
-    notes: booking.serviceType || 'Sem observações registradas.',
+    notes: booking.serviceNotes || 'Sem observações registradas.',
     phone: booking.clientPhone || 'Não informado',
     provider: booking.assignedProviderName || 'A definir',
     service: booking.serviceType || 'Serviço não informado',
@@ -69,15 +86,24 @@ function mapBooking(booking: ServicoResponse): HistoryBooking {
 
 function inPeriod(booking: HistoryBooking, period: PeriodFilter): boolean {
   if (period === 'ALL') return true;
-  const days = Number(period);
   const floor = new Date();
-  floor.setDate(floor.getDate() - days);
+  floor.setDate(floor.getDate() - Number(period));
   return toLocalDate(booking.date).getTime() >= new Date(floor.getFullYear(), floor.getMonth(), floor.getDate()).getTime();
 }
 
 function Avatar({ name }: { name: string }) {
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'SG';
-  return <span className="admin-history-avatar" aria-hidden="true">{initials}</span>;
+  return <span className={styles.avatar} aria-hidden="true">{initials}</span>;
+}
+
+function DetailRow({ icon, label, value }: { icon: AdminIconName; label: string; value: string }) {
+  return (
+    <div className={styles.detailRow}>
+      <span className={styles.detailIcon}><AdminIcon name={icon} size={15} /></span>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
 }
 
 export function HistoryPanel() {
@@ -106,97 +132,135 @@ export function HistoryPanel() {
     });
   }, [client, period, provider, search, sourceBookings]);
 
-  const selected = filteredBookings.find((booking) => booking.id === selectedId) ?? filteredBookings[0] ?? sourceBookings[0];
+  const selected = filteredBookings.find((booking) => booking.id === selectedId) ?? filteredBookings[0];
+  const filtersActive = period !== '30' || client !== 'ALL' || provider !== 'ALL' || Boolean(search.trim());
+  const clearFilters = () => {
+    setPeriod('30');
+    setClient('ALL');
+    setProvider('ALL');
+    setSearch('');
+    setSelectedId('');
+  };
 
   return (
-    <section className="wf-admin-section admin-history-panel admin-history-panel--wireframe" aria-label="Histórico de agendamentos">
-      <header className="admin-panel-header admin-panel-header--plain">
-        <span className="admin-panel-header__icon"><img src={historyIcon} alt="" /></span>
-        <div>
-          <h1>Histórico</h1>
-          <p>Consulte os agendamentos já concluídos e as informações registradas pelos clientes.</p>
-        </div>
-      </header>
+    <section className={styles.page} aria-labelledby="admin-history-title">
+      <div id="admin-history-title">
+        <AdminPageHeader
+          icon="history"
+          title="Histórico"
+          description="Consulte atendimentos concluídos e todas as informações registradas pelos clientes."
+        />
+      </div>
 
-      <section className="admin-history-filters" aria-label="Filtros do histórico">
-        <label>
-          <span>Período</span>
-          <select value={period} onChange={(event) => setPeriod(event.target.value as PeriodFilter)}>
+      <section className={styles.filters} aria-label="Filtros do histórico">
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}><AdminIcon name="calendar" size={15} /> Período</span>
+          <select className={styles.fieldControl} value={period} onChange={(event) => setPeriod(event.target.value as PeriodFilter)}>
             <option value="30">Últimos 30 dias</option>
             <option value="90">Últimos 90 dias</option>
             <option value="ALL">Todo o histórico</option>
           </select>
         </label>
-        <label>
-          <span>Cliente</span>
-          <select value={client} onChange={(event) => setClient(event.target.value)}>
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}><AdminIcon name="user" size={15} /> Cliente</span>
+          <select className={styles.fieldControl} value={client} onChange={(event) => setClient(event.target.value)}>
             <option value="ALL">Todos</option>
             {clientOptions.map((option) => <option key={option} value={option}>{option}</option>)}
           </select>
         </label>
-        <label>
-          <span>Prestador</span>
-          <select value={provider} onChange={(event) => setProvider(event.target.value)}>
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}><AdminIcon name="service" size={15} /> Prestador</span>
+          <select className={styles.fieldControl} value={provider} onChange={(event) => setProvider(event.target.value)}>
             <option value="ALL">Todos</option>
             {providerOptions.map((option) => <option key={option} value={option}>{option}</option>)}
           </select>
         </label>
-        <label>
-          <span>Busca</span>
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por cliente, agendamento ou observação..." />
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}><AdminIcon name="search" size={15} /> Busca</span>
+          <input className={styles.fieldControl} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cliente, código, serviço ou observação" />
         </label>
+        <div className={styles.filterActions}>
+          <AdminButton icon="close" onClick={clearFilters} disabled={!filtersActive}>Limpar filtros</AdminButton>
+        </div>
       </section>
 
-      <div className="admin-history-wireframe-layout">
-        <section className="admin-history-results" aria-label="Agendamentos concluídos">
-          <div className="admin-section-heading">
-            <div>
-              <h2>{completedBookings.length ? 'Agendamentos concluídos' : 'Agendamentos carregados'}</h2>
-              <p>{filteredBookings.length} registro(s) reais do sistema</p>
-            </div>
-            <strong>Mais recentes</strong>
-          </div>
+      <div className={styles.historyLayout}>
+        <section className={`${styles.panel} ${styles.historyList}`} aria-label="Atendimentos do histórico">
+          <AdminSectionHeader
+            icon="history"
+            title={completedBookings.length ? 'Atendimentos concluídos' : 'Atendimentos registrados'}
+            description="Selecione um registro para consultar os detalhes completos."
+            meta={<AdminStatusBadge tone="info">{filteredBookings.length} registro(s)</AdminStatusBadge>}
+          />
 
-          {query.isFetching ? <p className="admin-transaction-empty">Carregando historico.</p> : null}
-          {!hasAdminToken ? <p className="admin-transaction-empty">Faça login administrativo para carregar o histórico.</p> : null}
-          {!query.isFetching && filteredBookings.length === 0 ? <p className="admin-transaction-empty">Nenhum agendamento encontrado para os filtros selecionados.</p> : null}
+          {query.isFetching && filteredBookings.length === 0 ? <AdminState tone="loading" title="Carregando histórico" description="Buscando os atendimentos registrados." /> : null}
+          {!hasAdminToken ? <AdminState tone="error" title="Não foi possível abrir o histórico" description="Entre novamente para acessar esta área administrativa." /> : null}
+          {hasAdminToken && query.isError ? (
+            <AdminState
+              tone="error"
+              title="Histórico indisponível"
+              description="Não foi possível carregar os atendimentos agora. Tente novamente em instantes."
+              action={<AdminButton icon="refresh" onClick={() => void query.refetch()}>Tentar novamente</AdminButton>}
+            />
+          ) : null}
+          {!query.isFetching && !query.isError && hasAdminToken && filteredBookings.length === 0 ? (
+            <AdminState
+              title="Nenhum atendimento encontrado"
+              description={filtersActive ? 'Ajuste ou limpe os filtros para consultar outros registros.' : 'Ainda não existem atendimentos para exibir neste período.'}
+              action={filtersActive ? <AdminButton icon="close" onClick={clearFilters}>Limpar filtros</AdminButton> : undefined}
+            />
+          ) : null}
 
-          <div className="admin-history-card-list">
-            {filteredBookings.map((booking) => (
-              <button
-                key={booking.id}
-                type="button"
-                className={booking.id === selected?.id ? 'is-active' : ''}
-                onClick={() => setSelectedId(booking.id)}
-              >
-                <span className="admin-history-date"><strong>{ptDate.format(toLocalDate(booking.date))}</strong><em>{booking.time}</em><i>{booking.status}</i></span>
-                <span className="admin-history-client"><strong>{booking.client}</strong><small>{booking.phone}</small><em>{booking.notes}</em><b>Código: {booking.id}</b></span>
-                <span className="admin-history-provider"><Avatar name={booking.provider} /><strong>{booking.provider}</strong></span>
-                <span className="admin-history-details">Ver detalhes</span>
-              </button>
-            ))}
-          </div>
+          {query.isFetching && filteredBookings.length > 0 ? <AdminState tone="loading" title="Atualizando histórico" description="Mantendo os registros atuais enquanto buscamos novidades." /> : null}
+
+          {filteredBookings.map((booking) => (
+            <button
+              key={booking.id}
+              type="button"
+              className={`${styles.historyItem} ${booking.id === selected?.id ? styles.historyItemActive : ''}`}
+              onClick={() => setSelectedId(booking.id)}
+              aria-pressed={booking.id === selected?.id}
+            >
+              <span className={styles.historyCell}>
+                <span className={styles.historyMeta}><AdminIcon name="calendar" size={15} />{ptDate.format(toLocalDate(booking.date))}</span>
+                <span className={styles.historyMeta}><AdminIcon name="clock" size={15} />{booking.time}</span>
+                <AdminStatusBadge tone={statusTone(booking.status)}>{booking.status}</AdminStatusBadge>
+              </span>
+              <span className={styles.historyCell}>
+                <strong>{booking.client}</strong>
+                <small>{booking.phone}</small>
+                <small>{booking.service}</small>
+                <small>Código: {booking.id}</small>
+              </span>
+              <span className={styles.historyCell}>
+                <span className={styles.historyMeta}><Avatar name={booking.provider} /><strong>{booking.provider}</strong></span>
+                <small>{booking.notes}</small>
+              </span>
+              <span className={styles.historyMeta}><AdminIcon name="eye" size={16} />Ver detalhes</span>
+            </button>
+          ))}
         </section>
 
         {selected ? (
-          <aside className="admin-history-selected" aria-label="Detalhes do atendimento">
-            <div className="admin-history-selected__person">
+          <aside className={`${styles.detailPanel} ${styles.detailsList}`} aria-label="Detalhes do atendimento">
+            <div className={styles.personHeader}>
               <Avatar name={selected.provider} />
               <div>
                 <h2>{selected.provider}</h2>
-                <p>Prestador de Serviços</p>
-                <span>{selected.status}</span>
+                <p>Prestador de serviços</p>
               </div>
+              <AdminStatusBadge tone={statusTone(selected.status)}>{selected.status}</AdminStatusBadge>
             </div>
             <dl>
-              <dt>Agendamento</dt><dd>{selected.id}</dd>
-              <dt>Cliente</dt><dd>{selected.client}</dd>
-              <dt>Telefone</dt><dd>{selected.phone}</dd>
-              <dt>E-mail</dt><dd>{selected.email}</dd>
-              <dt>Prestador que atendeu</dt><dd>{selected.provider}</dd>
-              <dt>Data / Hora do atendimento</dt><dd>{ptDate.format(toLocalDate(selected.date))} às {selected.time}</dd>
-              <dt>Endereço</dt><dd>{selected.address}</dd>
-              <dt>Observações do cliente</dt><dd>{selected.notes}</dd>
+              <DetailRow icon="note" label="Agendamento" value={selected.id} />
+              <DetailRow icon="user" label="Cliente" value={selected.client} />
+              <DetailRow icon="service" label="Serviço" value={selected.service} />
+              <DetailRow icon="user" label="Telefone" value={selected.phone} />
+              <DetailRow icon="mail" label="E-mail" value={selected.email} />
+              <DetailRow icon="service" label="Prestador" value={selected.provider} />
+              <DetailRow icon="calendar" label="Data e horário" value={`${ptDate.format(toLocalDate(selected.date))} às ${selected.time}`} />
+              <DetailRow icon="location" label="Endereço" value={selected.address} />
+              <DetailRow icon="note" label="Observações" value={selected.notes} />
             </dl>
           </aside>
         ) : null}

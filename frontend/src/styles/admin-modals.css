@@ -1,0 +1,552 @@
+/* Admin-only modal authority. Shared client/provider modal styles remain untouched. */
+.wf-modal.cm-admin-modal,
+.wf-modal.cm-admin-modal * {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.wf-modal.cm-admin-modal {
+  width: min(920px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: min(92dvh, 900px);
+  display: block;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  border: 1px solid var(--cm-color-border, #dbe4f3);
+  border-radius: 14px;
+  padding: clamp(18px, 2.5vw, 30px);
+  color: var(--cm-color-text, #07135d);
+  background: var(--cm-color-surface, #fff);
+}
+
+.wf-modal.cm-admin-modal--block-admin,
+.wf-modal.cm-admin-modal--budget-admin {
+  width: min(1040px, calc(100vw - 32px));
+}
+
+.wf-modal.cm-admin-modal--assign-provider,
+.wf-modal.cm-admin-modal--email-admin,
+.wf-modal.cm-admin-modal--edit-admin {
+  width: min(940px, calc(100vw - 32px));
+}
+
+.wf-modal.cm-admin-modal--ofx-admin {
+  width: min(760px, calc(100vw - 32px));
+}
+
+.wf-modal.cm-admin-modal--calendar {
+  width: min(1180px, calc(100vw - 32px));
+}
+
+.wf-modal.cm-admin-modal--workspace {
+  width: min(760px, calc(100vw - 32px));
+}
+
+.wf-modal.cm-admin-modal .wf-modal-close {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  float: right;
+  margin: 0 0 -40px auto;
+  border: 1px solid var(--cm-color-border, #dbe4f3);
+  border-radius: 7px;
+  color: var(--cm-color-text, #07135d);
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(8, 20, 95, 0.08);
+}
+
+.wf-modal.cm-admin-modal .wf-modal-close:hover {
+  color: #b42318;
+  border-color: #efb8b5;
+  background: #fff7f6;
+}
+
+.wf-modal.cm-admin-modal .wf-modal-close:focus-visible,
+.wf-modal.cm-admin-modal button:focus-visible,
+.wf-modal.cm-admin-modal input:focus-visible,
+.wf-modal.cm-admin-modal select:focus-visible,
+.wf-modal.cm-admin-modal textarea:focus-visible {
+  outline: 3px solid rgba(3, 88, 255, 0.2);
+  outline-offset: 2px;
+}
+
+.wf-modal.cm-admin-modal .wf-modal-title {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 56px;
+  margin: 0 52px 18px 0;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--cm-color-border, #dbe4f3);
+}
+
+.wf-modal.cm-admin-modal .wf-modal-title > span {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d8e4ff;
+  border-radius: 8px;
+  color: var(--cm-color-blue, #0358ff);
+  background: var(--cm-color-surface-muted, #eef4ff);
+}
+
+.wf-modal.cm-admin-modal .wf-modal-title > span .wf-icon,
+.wf-modal.cm-admin-modal .wf-modal-title > span svg,
+.wf-modal.cm-admin-modal .wf-modal-title > span img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.wf-modal.cm-admin-modal .wf-modal-title h2 {
+  margin: 0;
+  color: var(--cm-color-text, #07135d);
+  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+  line-height: 1.15;
+  letter-spacing: 0;
+  overflow-wrap: anywhere !important;
+}
+
+.wf-modal.cm-admin-modal .wf-modal-title p {
+  max-width: 720px;
+  margin: 5px 0 0;
+  color: var(--cm-color-text-soft, #4f6385);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere !important;
+}
+
+.wf-modal.cm-admin-modal .wf-form-grid,
+.wf-modal.cm-admin-modal .wf-admin-block-modal--wireframe,
+.wf-modal.cm-admin-modal .wf-email-modal-layout,
+.wf-modal.cm-admin-modal .wf-budget-modal-layout--wireframe {
+  gap: 14px;
+}
+
+.wf-modal.cm-admin-modal .wf-admin-block-modal--wireframe > section,
+.wf-modal.cm-admin-modal .wf-email-modal-layout > section,
+.wf-modal.cm-admin-modal .wf-email-security,
+.wf-modal.cm-admin-modal .wf-budget-context-card,
+.wf-modal.cm-admin-modal .wf-budget-editor,
+.wf-modal.cm-admin-modal .wf-assign-summary,
+.wf-modal.cm-admin-modal .wf-provider-list--wireframe {
+  border: 1px solid var(--cm-color-border, #dbe4f3);
+  border-radius: 8px;
+  padding: clamp(12px, 1.8vw, 18px);
+  background: #f8faff;
+}
+
+.wf-modal.cm-admin-modal label,
+.wf-modal.cm-admin-modal .wf-field-label,
+.wf-modal.cm-admin-modal .wf-full-label,
+.wf-modal.cm-admin-modal .wf-admin-block-modal label {
+  color: var(--cm-color-text-soft, #4f6385);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.wf-modal.cm-admin-modal input:not(.wf-file-input),
+.wf-modal.cm-admin-modal select,
+.wf-modal.cm-admin-modal textarea,
+.wf-modal.cm-admin-modal .wf-input-shell,
+.wf-modal.cm-admin-modal .wf-input-action--with-icon {
+  width: 100%;
+  max-width: 100%;
+  min-height: 42px;
+  border-color: var(--cm-color-border-strong, #c7d4ea);
+  border-radius: 7px;
+  color: var(--cm-color-text, #07135d);
+  background: #fff;
+}
+
+.wf-modal.cm-admin-modal .wf-file-input {
+  width: 1px;
+  max-width: 1px;
+  min-height: 1px;
+}
+
+.wf-modal.cm-admin-modal textarea {
+  min-height: 96px;
+  resize: vertical;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.wf-modal.cm-admin-modal .wf-time-options button,
+.wf-modal.cm-admin-modal .wf-provider-list--wireframe button,
+.wf-modal.cm-admin-modal .wf-budget-editor button,
+.wf-modal.cm-admin-modal .wf-attachment-drop,
+.wf-modal.cm-admin-modal .wf-ofx-modal-drop--wireframe {
+  border-radius: 7px;
+}
+
+.wf-modal.cm-admin-modal .wf-time-options {
+  width: 100%;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wf-modal.cm-admin-modal .wf-time-options button {
+  min-width: 0;
+  min-height: 40px;
+  border: 1px solid var(--cm-color-border-strong, #c7d4ea);
+  background: #fff;
+}
+
+.wf-modal.cm-admin-modal .wf-time-options button.is-selected {
+  color: #fff;
+  border-color: var(--cm-color-blue, #0358ff);
+  background: var(--cm-color-blue, #0358ff);
+}
+
+.wf-modal.cm-admin-modal .wf-check-line {
+  min-height: 44px;
+  align-items: flex-start;
+  border: 1px solid var(--cm-color-border, #dbe4f3);
+  border-radius: 7px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.wf-modal.cm-admin-modal .wf-check-line input,
+.wf-modal.cm-admin-modal input[type='checkbox'],
+.wf-modal.cm-admin-modal input[type='radio'] {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+}
+
+.wf-modal.cm-admin-modal .wf-assign-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.wf-modal.cm-admin-modal .wf-assign-summary > span {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 4px 7px;
+  align-items: center;
+  padding: 9px;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.wf-modal.cm-admin-modal .wf-assign-summary small {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+}
+
+.wf-modal.cm-admin-modal .wf-provider-list--wireframe {
+  max-height: min(42dvh, 360px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  overflow: auto;
+}
+
+.wf-modal.cm-admin-modal .wf-provider-list--wireframe > button {
+  min-height: 74px;
+  border: 1px solid var(--cm-color-border, #dbe4f3);
+  background: #fff;
+}
+
+.wf-modal.cm-admin-modal .wf-provider-list--wireframe > button.is-active {
+  border-color: var(--cm-color-blue, #0358ff);
+  background: #eef4ff;
+}
+
+.wf-modal.cm-admin-modal .wf-editor-toolbar {
+  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--cm-color-border, #dbe4f3);
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  background: #f5f8fd;
+}
+
+.wf-modal.cm-admin-modal .wf-attachment-drop,
+.wf-modal.cm-admin-modal .wf-ofx-modal-drop--wireframe {
+  width: 100%;
+  min-height: 132px;
+  border: 1px dashed #9fb4de;
+  padding: 16px;
+  background: #f8faff;
+}
+
+.wf-modal.cm-admin-modal .wf-email-security {
+  align-content: center;
+}
+
+.wf-modal.cm-admin-modal .wf-ofx-file,
+.wf-modal.cm-admin-modal .wf-ofx-period,
+.wf-modal.cm-admin-modal .wf-ofx-format,
+.wf-modal.cm-admin-modal .booking-form__error,
+.wf-modal.cm-admin-modal .booking-form__hint {
+  border-radius: 7px;
+}
+
+.wf-modal.cm-admin-modal .wf-ofx-file,
+.wf-modal.cm-admin-modal .wf-ofx-period {
+  border: 1px solid var(--cm-color-border, #dbe4f3);
+  background: #f8faff;
+}
+
+.wf-modal.cm-admin-modal .wf-ofx-file button,
+.wf-modal.cm-admin-modal .wf-budget-item-row > button {
+  width: auto;
+  min-width: 40px;
+  height: 40px;
+  border: 1px solid #efc1be;
+  color: #b42318;
+  background: #fff;
+}
+
+.wf-modal.cm-admin-modal .wf-budget-context-card {
+  align-self: start;
+}
+
+.wf-modal.cm-admin-modal .wf-budget-context-card dl {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.7fr) minmax(0, 1.3fr);
+  gap: 0;
+}
+
+.wf-modal.cm-admin-modal .wf-budget-context-card dt,
+.wf-modal.cm-admin-modal .wf-budget-context-card dd {
+  margin: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--cm-color-border, #dbe4f3);
+  overflow-wrap: anywhere;
+}
+
+.wf-modal.cm-admin-modal .wf-budget-item-row {
+  border: 1px solid var(--cm-color-border, #dbe4f3);
+  border-radius: 7px;
+  background: #fff;
+}
+
+.wf-modal.cm-admin-modal .wf-budget-total-card {
+  border-radius: 7px;
+}
+
+.wf-modal.cm-admin-modal .wf-modal-actions {
+  position: sticky;
+  bottom: -1px;
+  z-index: 7;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 18px -4px -4px;
+  padding: 14px 4px 4px;
+  border-top: 1px solid var(--cm-color-border, #dbe4f3);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.wf-modal.cm-admin-modal .wf-modal-actions .wf-ghost-btn,
+.wf-modal.cm-admin-modal .wf-modal-actions .wf-primary-cta--modal {
+  min-height: 42px;
+  border-radius: 7px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 850;
+}
+
+.wf-modal.cm-admin-modal .wf-modal-actions .wf-ghost-btn {
+  border: 1px solid var(--cm-color-border-strong, #c7d4ea);
+  color: var(--cm-color-text, #07135d);
+  background: #fff;
+}
+
+.wf-modal.cm-admin-modal .wf-modal-actions .wf-primary-cta--modal {
+  border: 1px solid var(--cm-color-blue, #0358ff);
+  color: #fff;
+  background: var(--cm-color-blue, #0358ff);
+  box-shadow: none;
+}
+
+.wf-modal.cm-admin-modal .booking-form__error,
+.wf-modal.cm-admin-modal .booking-form__hint {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  line-height: 1.45;
+}
+
+.wf-modal.cm-admin-modal--calendar .wf-admin-calendar-modal__header {
+  margin: 0 52px 18px 0;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--cm-color-border, #dbe4f3);
+}
+
+.wf-modal.cm-admin-modal--calendar .wf-admin-calendar-modal__header h2 {
+  margin: 0;
+  color: var(--cm-color-text, #07135d);
+  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+  letter-spacing: 0;
+}
+
+.wf-modal.cm-admin-modal--calendar .wf-admin-calendar-modal__header p {
+  max-width: 720px;
+  margin: 5px 0 0;
+  color: var(--cm-color-text-soft, #4f6385);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.wf-modal.cm-admin-modal--calendar .wf-calendar-card {
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--cm-color-border, #dbe4f3);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.wf-modal.cm-admin-modal--workspace .wf-provider-list--wireframe {
+  max-height: min(58dvh, 520px);
+}
+
+@media (max-width: 800px) {
+  .wf-modal.cm-admin-modal {
+    width: min(calc(100% - 16px), 720px) !important;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .wf-modal.cm-admin-modal--calendar {
+    width: min(calc(100vw - 16px), 720px) !important;
+    justify-self: center;
+  }
+
+  .wf-modal.cm-admin-modal .wf-assign-summary,
+  .wf-modal.cm-admin-modal .wf-provider-list--wireframe,
+  .wf-modal.cm-admin-modal .wf-admin-block-modal--wireframe,
+  .wf-modal.cm-admin-modal .wf-email-modal-layout,
+  .wf-modal.cm-admin-modal .wf-budget-modal-layout--wireframe {
+    grid-template-columns: 1fr;
+  }
+
+  .wf-modal.cm-admin-modal .wf-email-security {
+    display: none;
+  }
+
+  .wf-modal.cm-admin-modal .wf-budget-context-card {
+    display: block;
+  }
+
+  .wf-modal.cm-admin-modal .wf-budget-item-row {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
+
+  .wf-modal.cm-admin-modal .wf-budget-item-row > strong,
+  .wf-modal.cm-admin-modal .wf-budget-item-row > button {
+    justify-self: stretch;
+  }
+
+  .wf-modal.cm-admin-modal .wf-budget-item-row > button {
+    width: 100%;
+  }
+
+  .wf-modal.cm-admin-modal--calendar .wf-calendar-card {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .wf-modal-backdrop.cm-admin-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .wf-modal.cm-admin-modal {
+    width: 100vw !important;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 12px 12px 0 0;
+    padding: 14px 12px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .wf-modal.cm-admin-modal .wf-modal-title {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 9px;
+    margin-right: 46px;
+  }
+
+  .wf-modal.cm-admin-modal .wf-modal-title > span {
+    width: 42px;
+    height: 42px;
+  }
+
+  .wf-modal.cm-admin-modal .wf-modal-title h2 {
+    font-size: 1.25rem;
+  }
+
+  .wf-modal.cm-admin-modal .wf-modal-title p {
+    font-size: 0.75rem !important;
+  }
+
+  .wf-modal.cm-admin-modal--calendar .wf-admin-calendar-modal__header {
+    margin-right: 46px;
+  }
+
+  .wf-modal.cm-admin-modal--calendar .wf-admin-calendar-modal__header p {
+    font-size: 0.75rem;
+  }
+
+  .wf-modal.cm-admin-modal .wf-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .wf-modal.cm-admin-modal .wf-modal-actions .wf-ghost-btn,
+  .wf-modal.cm-admin-modal .wf-modal-actions .wf-primary-cta--modal {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .wf-modal.cm-admin-modal .wf-budget-context-card dl {
+    grid-template-columns: 1fr;
+  }
+
+  .wf-modal.cm-admin-modal .wf-budget-context-card dd {
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 340px) {
+  .wf-modal.cm-admin-modal {
+    padding-inline: 10px;
+  }
+
+  .wf-modal.cm-admin-modal .wf-admin-block-modal--wireframe > section,
+  .wf-modal.cm-admin-modal .wf-email-modal-layout > section,
+  .wf-modal.cm-admin-modal .wf-budget-context-card,
+  .wf-modal.cm-admin-modal .wf-budget-editor,
+  .wf-modal.cm-admin-modal .wf-assign-summary,
+  .wf-modal.cm-admin-modal .wf-provider-list--wireframe {
+    padding: 10px;
+  }
+}

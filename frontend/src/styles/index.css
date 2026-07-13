@@ -42,3 +42,6 @@
 
 /* Client appointments modal authority. */
 @import "./pages/appointments-modal.css";
+
+/* Admin-only modal authority. Keep last so legacy modal repairs cannot override it. */
+@import "./admin-modals.css";

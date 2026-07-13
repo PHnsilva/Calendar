@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
-import financeIcon from '../../assets/wireframes/icons/admin-finance-chart.png';
 import { getFinanceConfig } from '../../features/finance/api/get-finance-config';
 import { getFinanceHealth } from '../../features/finance/api/get-finance-health';
 import { getStatement } from '../../features/finance/api/get-statement';
@@ -14,6 +13,15 @@ import type { AdminStatementItem } from '../../types/finance';
 import { FinancialChart } from './FinancialChart';
 import { FinancialSummaryCards } from './FinancialSummaryCards';
 import { FinancialTransactionsTable } from './FinancialTransactionsTable';
+import {
+  AdminButton,
+  AdminIcon,
+  AdminPageHeader,
+  AdminSectionHeader,
+  AdminState,
+  AdminStatusBadge,
+} from './AdminWorkspaceUi';
+import styles from './AdminWorkspaceUi.module.css';
 
 type FinancialStatementPanelProps = {
   importedDashboard?: FinancialDashboardDTO | null;
@@ -67,6 +75,7 @@ export function FinancialStatementPanel({ importedDashboard, onOpenOfx }: Financ
   const [copied, setCopied] = useState(false);
   const [pixModalOpen, setPixModalOpen] = useState(false);
   const [pixAmountInput, setPixAmountInput] = useState('');
+  const [qrImageError, setQrImageError] = useState(false);
   const hasAdminToken = Boolean(getStoredAdminToken());
   const statementQuery = useQuery({
     queryKey: ['admin', 'finance', 'statement', 'wireframe'],
@@ -104,11 +113,22 @@ export function FinancialStatementPanel({ importedDashboard, onOpenOfx }: Financ
     key: configQuery.data?.pix.key || '16055164655',
     recipientName: configQuery.data?.pix.recipientName || 'SG Pequenos Reparos',
     recipientCity: configQuery.data?.pix.recipientCity || 'Belo Horizonte',
-    description: configQuery.data?.pix.description || 'Comissao socio',
+    description: configQuery.data?.pix.description || 'Comissão do sócio',
   }), [configQuery.data?.pix]);
   const pixAmount = parseAmountInput(pixAmountInput);
   const pixCode = useMemo(() => buildPixPayload(pixConfig, pixAmount), [pixAmount, pixConfig]);
   const qrCodeImageUrl = pixCode ? buildQrCodeImageUrl(pixCode) : '';
+  const hasStatementData = imported || Boolean(statementQuery.data);
+  const isInitialLoading = !imported && statementQuery.isFetching && !statementQuery.data;
+
+  useEffect(() => {
+    if (!pixModalOpen) return undefined;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPixModalOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [pixModalOpen]);
 
   const exportStatement = () => {
     const blob = new Blob([JSON.stringify(statementQuery.data?.items ?? dashboard.transactions, null, 2)], { type: 'application/json' });
@@ -123,144 +143,150 @@ export function FinancialStatementPanel({ importedDashboard, onOpenOfx }: Financ
   const openPixModal = () => {
     setPixAmountInput(formatAmountInput(commissionAmount));
     setCopied(false);
+    setQrImageError(false);
     setPixModalOpen(true);
   };
 
   const copyPixCode = async () => {
-    const code = pixCode;
-    if (!code) {
-      window.alert('Informe um valor valido ou deixe em branco para gerar um QR com valor livre.');
+    if (!pixCode) {
+      window.alert('Informe um valor válido ou deixe em branco para gerar um QR com valor livre.');
       return;
     }
     try {
-      await navigator.clipboard?.writeText(code);
+      await navigator.clipboard?.writeText(pixCode);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
-      window.alert(code || 'Nao foi possivel gerar o codigo Pix.');
+      window.alert(pixCode || 'Não foi possível gerar o código Pix.');
     }
   };
 
+  const refreshFinance = () => {
+    void Promise.all([statementQuery.refetch(), healthQuery.refetch(), configQuery.refetch(), bookingsQuery.refetch()]);
+  };
+
   return (
-    <section className="wf-admin-section admin-financial-panel admin-financial-panel--wireframe" aria-label="Comissoes e repasses">
-      <header className="admin-panel-header admin-panel-header--plain admin-financial-title">
-        <span className="admin-panel-header__icon"><img src={financeIcon} alt="" /></span>
-        <div>
-          <h1>Comissoes e repasses</h1>
-          <p>Acompanhe as entradas do mes, confira a base de calculo e gere o Pix da comissao.</p>
-        </div>
-        <div className="admin-panel-actions">
-          <button type="button" className="admin-outline-button" onClick={onOpenOfx}>Upload de arquivo OFX</button>
-          <button type="button" className="admin-outline-button" onClick={exportStatement}>Exportar</button>
-          <button type="button" className="admin-primary-button admin-primary-button--orange" onClick={openPixModal}>Gerar QR Pix</button>
-        </div>
-      </header>
-
-      <div className="admin-financial-status-row">
-        <span className={imported ? 'is-processed' : ''}>{imported ? 'OFX importado nesta sessao' : healthQuery.data?.message || 'Resumo financeiro carregado.'}</span>
-        <strong>Base da comissao: {formatCurrency(dashboard.totalEntries)}</strong>
+    <section className={styles.page} aria-labelledby="admin-statement-title">
+      <div id="admin-statement-title">
+        <AdminPageHeader
+          icon="wallet"
+          title="Extrato"
+          description="Acompanhe entradas, saídas, saldo, repasses e movimentações financeiras em um só lugar."
+          actions={(
+            <>
+              <AdminButton icon="upload" onClick={onOpenOfx}>Importar OFX</AdminButton>
+              <AdminButton icon="download" onClick={exportStatement} disabled={!hasStatementData && !imported}>Exportar</AdminButton>
+              <AdminButton icon="pix" tone="primary" onClick={openPixModal}>Gerar QR Pix</AdminButton>
+            </>
+          )}
+        />
       </div>
 
-      <FinancialSummaryCards data={dashboard} imported={imported} />
+      {!hasAdminToken ? <AdminState tone="error" title="Não foi possível abrir o extrato" description="Entre novamente para acessar esta área administrativa." /> : null}
+      {hasAdminToken && isInitialLoading ? <AdminState tone="loading" title="Carregando extrato" description="Buscando as movimentações financeiras do período." /> : null}
+      {hasAdminToken && statementQuery.isError && !imported ? (
+        <AdminState
+          tone="error"
+          title="Extrato indisponível"
+          description="Não foi possível carregar as movimentações agora. Você ainda pode importar um arquivo OFX."
+          action={<AdminButton icon="refresh" onClick={refreshFinance}>Tentar novamente</AdminButton>}
+        />
+      ) : null}
 
-      <div className="admin-financial-layout">
-        <article className="admin-financial-card admin-financial-chart-card">
-          <div className="admin-section-heading">
-            <div>
-              <h2>Resumo financeiro</h2>
-              <p>Entradas, saidas e saldo acumulado do mes.</p>
-            </div>
-            <strong>Este mes</strong>
+      {hasAdminToken ? (
+        <>
+          <div className={styles.statusStrip} role="status">
+            <span><AdminIcon name={imported ? 'check' : healthQuery.isError ? 'warning' : 'refresh'} size={16} />{imported ? 'Arquivo OFX importado nesta sessão' : healthQuery.data?.message || (healthQuery.isError ? 'Atualização bancária indisponível no momento' : 'Extrato atualizado')}</span>
+            <strong><AdminIcon name="chart" size={16} />Base da comissão: {formatCurrency(dashboard.totalEntries)}</strong>
           </div>
-          <FinancialChart data={dashboard.chart} dualYAxis />
-        </article>
 
-        <aside className="admin-financial-side">
-          <article className="admin-financial-card admin-commission-card">
-            <div className="admin-section-heading">
-              <div>
-                <h2>Comissao do socio</h2>
-                <p>QR Pix calculado sobre 12% das entradas do periodo atual.</p>
-              </div>
-            </div>
-            <div className="admin-pix-card">
-              <div className="admin-pix-amount">
-                <small>12% sobre {formatCurrency(dashboard.totalEntries)}</small>
-                <strong>{formatCurrency(commissionAmount)}</strong>
-              </div>
-              <p className="admin-commission-card__hint">Se quiser, voce pode ajustar o valor no modal antes de gerar o QR. A chave usada e {pixConfig.key}.</p>
-              <button type="button" className="admin-primary-button admin-primary-button--orange" onClick={openPixModal}>Realizar Pix</button>
-            </div>
-          </article>
+          <FinancialSummaryCards data={dashboard} imported={imported} />
 
-          <article className="admin-financial-card admin-ofx-import-card">
-            <div className="admin-section-heading">
-              <div>
-                <h2>Importar extrato (OFX)</h2>
-              </div>
-            </div>
-            <button type="button" className="admin-ofx-drop-button" onClick={onOpenOfx}>
-              <span>☁</span>
-              <strong>Arraste e solte o arquivo OFX aqui</strong>
-              <small>ou clique para selecionar</small>
-              <em>Máx. 10MB • Arquivos OFX</em>
-            </button>
-          </article>
+          <div className={styles.financialLayout}>
+            <article className={`${styles.panel} ${styles.financialMain}`}>
+              <AdminSectionHeader icon="chart" title="Resumo financeiro" description="Entradas, saídas e saldo acumulado no mês." meta={<AdminStatusBadge tone="info">{monthLabel}</AdminStatusBadge>} />
+              <FinancialChart data={dashboard.chart} dualYAxis />
+            </article>
 
-          <article className={`admin-financial-card admin-integration-card${interEnabled ? '' : ' admin-integration-card--disabled'}`} aria-disabled={!interEnabled}>
-            <div className="admin-section-heading">
-              <div>
-                <h2>InterPJ</h2>
-                <p>{interEnabled ? 'Integracao bancaria pronta para uso.' : 'Integracao bancaria indisponivel nesta configuracao.'}</p>
-              </div>
-              <strong>{interEnabled && healthQuery.data?.ok ? 'Online' : 'Indisponivel'}</strong>
-            </div>
-            <p>{interEnabled ? 'Conecte sua conta para automatizar a conciliacao.' : 'Use a importacao de OFX enquanto a integracao estiver desligada.'}</p>
-          </article>
-        </aside>
+            <aside className={styles.financialSide}>
+              <article className={`${styles.panel} ${styles.financialMain}`}>
+                <AdminSectionHeader icon="pix" title="Comissão do sócio" description="Cálculo de 12% sobre as entradas do período." />
+                <div className={styles.amountBox}>
+                  <small>12% sobre {formatCurrency(dashboard.totalEntries)}</small>
+                  <strong>{formatCurrency(commissionAmount)}</strong>
+                </div>
+                <p className={styles.cardCopy}>O valor pode ser ajustado antes de gerar o código de pagamento.</p>
+                <AdminButton icon="pix" tone="primary" onClick={openPixModal}>Gerar pagamento Pix</AdminButton>
+              </article>
 
-        <article className="admin-financial-card admin-transactions-card">
-          <div className="admin-section-heading">
-            <div>
-              <h2>Ultimas movimentacoes</h2>
-              <p>Movimentacoes carregadas do extrato automatico ou importadas por OFX.</p>
-            </div>
-            <strong>{monthLabel}</strong>
+              <article className={`${styles.panel} ${styles.financialMain}`}>
+                <AdminSectionHeader icon="upload" title="Importar OFX" description="Atualize o extrato com um arquivo do banco." />
+                <button type="button" className={styles.actionTile} onClick={onOpenOfx}>
+                  <AdminIcon name="upload" size={22} />
+                  <span><strong>Selecionar arquivo OFX</strong><small>Arquivo de até 10 MB</small></span>
+                  <AdminIcon name="chevron-right" size={18} />
+                </button>
+              </article>
+
+              <article className={`${styles.panel} ${styles.financialMain}`} aria-disabled={!interEnabled}>
+                <AdminSectionHeader
+                  icon="bank"
+                  title="Inter PJ"
+                  description={interEnabled ? 'Integração bancária configurada.' : 'Conexão bancária indisponível nesta configuração.'}
+                  meta={<AdminStatusBadge tone={interEnabled && healthQuery.data?.ok ? 'success' : 'neutral'}>{interEnabled && healthQuery.data?.ok ? 'Online' : 'Indisponível'}</AdminStatusBadge>}
+                />
+                <p className={styles.cardCopy}>{interEnabled ? 'A conciliação automática está disponível para a conta conectada.' : 'Use a importação OFX enquanto a conexão estiver desligada.'}</p>
+              </article>
+            </aside>
+
+            <article className={`${styles.panel} ${styles.transactionsPanel}`}>
+              <AdminSectionHeader icon="wallet" title="Últimas movimentações" description="Entradas e saídas carregadas automaticamente ou via OFX." meta={<AdminStatusBadge tone="info">{monthLabel}</AdminStatusBadge>} />
+              {statementQuery.isFetching && hasStatementData ? <AdminState tone="loading" title="Atualizando movimentações" description="Mantendo os dados atuais enquanto buscamos novidades." /> : null}
+              {!statementQuery.isFetching && dashboard.transactions.length === 0 ? <AdminState title="Nenhuma movimentação encontrada" description="Importe um arquivo OFX ou tente atualizar o extrato mais tarde." action={<AdminButton icon="upload" onClick={onOpenOfx}>Importar OFX</AdminButton>} /> : null}
+              <FinancialTransactionsTable transactions={dashboard.transactions.slice(0, 8)} />
+            </article>
           </div>
-          {statementQuery.isFetching ? <p className="admin-transaction-empty">Carregando movimentacoes financeiras.</p> : null}
-          {!hasAdminToken ? <p className="admin-transaction-empty">Faca login administrativo para carregar o extrato.</p> : null}
-          <FinancialTransactionsTable transactions={dashboard.transactions.slice(0, 8)} />
-        </article>
-      </div>
+        </>
+      ) : null}
+
       {pixModalOpen ? createPortal(
-        <div className="wf-modal-backdrop admin-pix-modal-backdrop" data-modal="finance-pix" onMouseDown={() => setPixModalOpen(false)}>
-          <section className="admin-pix-modal" role="dialog" aria-modal="true" aria-labelledby="admin-pix-modal-title" onMouseDown={(event) => event.stopPropagation()}>
-            <header className="admin-pix-modal__header">
+        <div className={styles.pixBackdrop} data-modal="finance-pix" onMouseDown={() => setPixModalOpen(false)}>
+          <section className={styles.pixModal} role="dialog" aria-modal="true" aria-labelledby="admin-pix-modal-title" aria-describedby="admin-pix-modal-description" onMouseDown={(event) => event.stopPropagation()}>
+            <header className={styles.pixHeader}>
+              <span className={styles.summaryIcon}><AdminIcon name="pix" size={21} /></span>
               <div>
-                <span>Pix da comissao</span>
                 <h2 id="admin-pix-modal-title">Gerar QR Pix</h2>
-                <p>Use o valor padrao de 12% ou ajuste antes de copiar o codigo.</p>
+                <p id="admin-pix-modal-description">Use o valor calculado ou ajuste antes de copiar o código.</p>
               </div>
-              <button type="button" className="admin-pix-modal__close" onClick={() => setPixModalOpen(false)} aria-label="Fechar">×</button>
+              <button type="button" className={styles.pixClose} onClick={() => setPixModalOpen(false)} aria-label="Fechar modal Pix">
+                <AdminIcon name="close" size={20} />
+              </button>
             </header>
-            <label className="admin-inline-field admin-pix-modal__field">
-              <span>Valor da cobranca</span>
-              <input value={pixAmountInput} onChange={(event) => setPixAmountInput(event.target.value)} inputMode="decimal" placeholder="Ex.: 245,90" />
-              <small>Se deixar em branco, o QR sera gerado com valor livre para quem for pagar.</small>
+
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}><AdminIcon name="wallet" size={15} /> Valor da cobrança</span>
+              <input className={styles.fieldControl} value={pixAmountInput} onChange={(event) => { setPixAmountInput(event.target.value); setQrImageError(false); }} inputMode="decimal" placeholder="Ex.: 245,90" />
+              <small>Deixe em branco para gerar um código sem valor definido.</small>
             </label>
-            <div className="admin-pix-modal__body">
-              <div className="admin-pix-modal__qr">
-                {qrCodeImageUrl ? <img src={qrCodeImageUrl} alt="QR Code Pix da comissao" /> : <div className="admin-pix-modal__qr-empty">Informe um valor valido ou deixe em branco para gerar o QR livre.</div>}
+
+            <div className={styles.pixBody}>
+              <div className={styles.qrBox}>
+                {qrCodeImageUrl && !qrImageError ? <img src={qrCodeImageUrl} alt="QR Code Pix da comissão" onError={() => setQrImageError(true)} /> : <AdminState tone={qrImageError ? 'error' : 'empty'} title={qrImageError ? 'QR indisponível' : 'QR sem valor definido'} description={qrImageError ? 'Não foi possível carregar a imagem. O código Pix ainda pode ser copiado.' : 'O código será gerado sem valor fixo.'} />}
               </div>
-              <div className="admin-pix-code">
-                <small>Chave Pix</small>
+              <div className={styles.pixCode}>
+                <span className={styles.fieldLabel}><AdminIcon name="pix" size={15} /> Chave Pix</span>
                 <strong>{pixConfig.key}</strong>
-                <textarea readOnly value={pixCode} placeholder="O codigo Pix aparecera aqui." />
+                <label className={styles.field}>
+                  <span>Código Pix</span>
+                  <textarea readOnly value={pixCode} aria-label="Código Pix para copiar" />
+                </label>
+                {copied ? <AdminState tone="success" title="Código copiado" description="O código Pix foi enviado para a área de transferência." /> : null}
               </div>
             </div>
-            <div className="admin-pix-modal__actions">
-              <button type="button" className="admin-outline-button" onClick={() => setPixModalOpen(false)}>Fechar</button>
-              <button type="button" className="admin-primary-button admin-primary-button--orange" onClick={() => void copyPixCode()}>{copied ? 'Codigo copiado' : 'Copiar codigo Pix'}</button>
+
+            <div className={styles.modalActions}>
+              <AdminButton onClick={() => setPixModalOpen(false)}>Cancelar</AdminButton>
+              <AdminButton icon="copy" tone="primary" onClick={() => void copyPixCode()}>{copied ? 'Código copiado' : 'Copiar código Pix'}</AdminButton>
             </div>
           </section>
         </div>,

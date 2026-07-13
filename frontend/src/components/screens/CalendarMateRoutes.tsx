@@ -78,6 +78,7 @@ import confirmPhoneSecurityIllustration from '../../assets/wireframes/modals/con
 import emailIllustrationAsset from '../../assets/wireframes/modals/email-illustration.png';
 import { FinancialStatementPanel } from '../admin/FinancialStatementPanel';
 import { HistoryPanel } from '../admin/HistoryPanel';
+import { AdminBlocksPanel } from '../admin/AdminBlocksPanel';
 import AdminNavbar, { type AdminNavView } from '../layout/AdminNavbar';
 import ProviderNavbar from '../layout/ProviderNavbar';
 import { PageShell, SvgWrapper } from '../layout/ResponsivePrimitives';
@@ -1579,10 +1580,14 @@ function AdminWorkspaceSelectionModal({
   return (
     <ModalShell
       open
+      ariaLabel="Escolha do workspace administrativo"
+      backdropClassName="cm-admin-modal-backdrop"
       dataModal="admin-workspace"
-      className="wf-modal wf-modal--admin-workspace"
+      className="wf-modal wf-modal--admin-workspace cm-admin-modal cm-admin-modal--workspace"
       onClose={() => undefined}
       closeIcon={<Icon name="close" />}
+      lockBodyScroll
+      showCloseButton={false}
     >
       {body}
     </ModalShell>
@@ -1694,7 +1699,7 @@ export function AdminLanding() {
           <AdminLandingCard icon="admin-appointments" title="Agendamentos" text="Crie, edite, atribua e acompanhe todos os agendamentos em um só lugar." color="orange" view="agendamentos" onOpen={openView} />
           {owner ? <AdminLandingCard icon="admin-blocks" title="Bloqueios" text="Bloqueie horários e períodos indisponíveis para evitar conflitos na agenda." color="green" view="bloqueios" onOpen={openView} /> : null}
           <AdminLandingCard icon="admin-history" title="Histórico" text="Consulte atendimentos realizados e detalhes completos de cada serviço." color="purple" view="historico" onOpen={openView} />
-          {owner ? <AdminLandingCard icon="budget-blue" mediaIcon="admin-finance" title="Extrato / Financeiro" text="Acompanhe recebimentos, faturamento e saldos de forma organizada." color="blue" view="extrato" onOpen={openView} wide /> : null}
+          {owner ? <AdminLandingCard icon="budget-blue" mediaIcon="admin-finance" title="Extrato" text="Acompanhe recebimentos, faturamento e saldos de forma organizada." color="blue" view="extrato" onOpen={openView} wide /> : null}
         </section>
         <LandingFooter admin setModal={setModal} />
       </main>
@@ -2006,19 +2011,27 @@ function AdminWeekDayGroup({
 
 function AdminCalendarModal({ bookings, onClose, onCreate }: { bookings: BookingItem[]; onClose: () => void; onCreate?: (date?: string) => void }) {
   return (
-    <div className="wf-admin-calendar-modal" role="dialog" aria-modal="true" aria-labelledby="wf-admin-calendar-modal-title">
-      <div className="wf-admin-calendar-modal__backdrop" onClick={onClose} />
-      <section className="wf-admin-calendar-modal__panel">
-        <header className="wf-admin-calendar-modal__header">
-          <div>
-            <h2 id="wf-admin-calendar-modal-title">Calendário</h2>
-            <p>Visualização mensal embutida. O calendário permanece fechado por padrão.</p>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Fechar calendário"><Icon name="close" /></button>
-        </header>
-        <CalendarBoard bookings={bookings} admin onCreate={onCreate ? (date) => { onClose(); onCreate(date); } : undefined} />
-      </section>
-    </div>
+    <ModalShell
+      open
+      ariaLabel="Calendário administrativo"
+      backdropClassName="wf-admin-calendar-modal cm-admin-modal-backdrop"
+      className="wf-admin-calendar-modal__panel cm-admin-modal cm-admin-modal--calendar"
+      closeIcon={<Icon name="close" />}
+      closeLabel="Fechar calendário"
+      closeOnBackdrop
+      closeOnEscape
+      focusCloseOnOpen
+      lockBodyScroll
+      onClose={onClose}
+    >
+      <header className="wf-admin-calendar-modal__header">
+        <div>
+          <h2>Calendário</h2>
+          <p>Consulte os agendamentos do mês e abra um novo atendimento pela data desejada.</p>
+        </div>
+      </header>
+      <CalendarBoard bookings={bookings} admin onCreate={onCreate ? (date) => { onClose(); onCreate(date); } : undefined} />
+    </ModalShell>
   );
 }
 
@@ -2108,17 +2121,6 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
   );
 }
 
-function formatBlockDate(block: AvailabilityBlockResponse): string {
-  const source = block.start?.slice(0, 10) || block.end?.slice(0, 10) || '';
-  if (!source) return 'Data não informada';
-  return ptLongDate.format(toLocalDate(source));
-}
-
-function formatBlockTime(block: AvailabilityBlockResponse): string {
-  if (block.type?.toLowerCase() === 'day' || !block.start || !block.end) return 'Dia inteiro';
-  return `${block.start.slice(11, 16)}–${block.end.slice(11, 16)}`;
-}
-
 function AdminBlocksView({ setModal }: { setModal: (modal: ModalKind) => void }) {
   const { blocks, isLoading, isError, hasAdminToken } = useAdminBlocksData();
   const queryClient = useQueryClient();
@@ -2141,55 +2143,15 @@ function AdminBlocksView({ setModal }: { setModal: (modal: ModalKind) => void })
   };
 
   return (
-    <section className="wf-admin-section wf-blocks-view">
-      <div className="wf-admin-title-row">
-        <span className="wf-large-icon"><Icon name="calendar-block" /></span>
-        <div><h1>Bloqueios detalhados</h1><p>Visualize e gerencie os dias e horários marcados como indisponíveis na agenda.</p></div>
-      </div>
-      <div className="wf-blocks-grid">
-        <div className="wf-blocks-left">
-          <div className="wf-filters-card wf-filters-card--blocks">
-            <label>Profissional<input placeholder="Buscar profissional" /></label>
-            <label>Data inicial<input type="date" /></label>
-            <label>Data final<input type="date" /></label>
-            <label>Buscar por profissional ou data<input placeholder="Digite o nome ou a data" /></label>
-            <button type="button" onClick={() => notifyUnavailable('Filtro de bloqueios')}><Icon name="filter" /> Filtrar</button>
-            <button type="button" className="wf-link-button" onClick={() => setModal('block-admin')}><Icon name="plus" /> Novo bloqueio</button>
-          </div>
-          <div className="wf-table-card">
-            <h2><Icon name="chart" /> Lista de bloqueios</h2>
-            <div className="wf-block-table">
-              <div className="wf-table-head"><span>Profissional</span><span>Data</span><span>Horários bloqueados</span><span>Observação</span><span>Ações</span></div>
-              {blocks.map((block) => (
-                <div key={block.blockId} className="wf-table-row">
-                  <span><Avatar name="Admin" /> Administrativo</span>
-                  <span>{formatBlockDate(block)}</span>
-                  <span className="wf-chip-list"><i>{formatBlockTime(block)}</i></span>
-                  <span>{block.reason || 'Sem observação'}</span>
-                  <span className="wf-row-actions">
-                    <button type="button" onClick={() => window.alert(`${formatBlockDate(block)}\n${formatBlockTime(block)}\n${block.reason || 'Sem observação'}`)}><Icon name="eye" /> Ver detalhes</button>
-                    <button type="button" onClick={() => setModal('block-admin')}><Icon name="edit" /> Editar</button>
-                    <button type="button" className="wf-danger" onClick={() => void removeBlock(block.blockId)} disabled={deletingId === block.blockId}><Icon name="delete" /> {deletingId === block.blockId ? 'Excluindo...' : 'Excluir'}</button>
-                  </span>
-                </div>
-              ))}
-            </div>
-            {isLoading ? <EmptyState title="Carregando bloqueios" text="Buscando bloqueios da agenda." /> : null}
-            {isError || !hasAdminToken ? <EmptyState title="Bloqueios não disponíveis" text="Faça login administrativo para carregar os bloqueios reais." /> : null}
-            {!isLoading && !isError && blocks.length === 0 ? <EmptyState title="Nenhum bloqueio encontrado" text="Nao ha bloqueios para o periodo selecionado." action="Adicionar bloqueio" onAction={() => setModal('block-admin')} /> : null}
-          </div>
-        </div>
-        <aside className="wf-blocks-sidebar">
-          <MiniMonth blocks={blocks} />
-          <div className="wf-side-card">
-            <h2>Horários do dia selecionado</h2>
-            {blocks.length ? blocks.slice(0, 4).map((block) => <p key={block.blockId}><Icon name="calendar" /> {formatBlockDate(block)} <span className="wf-chip-list"><i>{formatBlockTime(block)}</i></span></p>) : <p className="wf-muted">Nenhum horário bloqueado carregado.</p>}
-            <button type="button" className="wf-primary-cta wf-primary-cta--small" onClick={() => setModal('block-admin')}><Icon name="plus" /> Adicionar horário</button>
-          </div>
-          <div className="wf-info-alert"><Icon name="bell" /> Dias marcados em laranja possuem bloqueios. Pontos azuis indicam bloqueio parcial em horários específicos.</div>
-        </aside>
-      </div>
-    </section>
+    <AdminBlocksPanel
+      blocks={blocks}
+      deletingId={deletingId}
+      hasAdminToken={hasAdminToken}
+      isError={isError}
+      isLoading={isLoading}
+      onDelete={removeBlock}
+      onOpenEditor={() => setModal('block-admin')}
+    />
   );
 }
 
@@ -2361,8 +2323,19 @@ export function CalendarMateModal({
   }, [modal]);
 
   if (!modal) return null;
+  const adminModalLabels: Partial<Record<NonNullable<ModalKind>, string>> = {
+    'assign-provider': 'Designar prestador',
+    'block-admin': 'Bloquear agenda',
+    'budget-admin': 'Orçamento administrativo',
+    'edit-admin': 'Editar agendamento',
+    'email-admin': 'Enviar e-mail administrativo',
+    'ofx-admin': 'Importar extrato OFX',
+  };
+  const adminModalLabel = adminModalLabels[modal];
   const modalClass = cx(
     'wf-modal',
+    Boolean(adminModalLabel) && 'cm-admin-modal',
+    adminModalLabel && `cm-admin-modal--${modal.replace(/[^a-zA-Z0-9-]/g, '-')}`,
     modal === 'create-client' && 'wf-modal--create',
     modal === 'confirm-phone' && 'wf-modal--confirm',
     modal === 'client-profile' && 'wf-modal--profile',
@@ -2379,7 +2352,19 @@ export function CalendarMateModal({
   );
 
   return (
-    <ModalShell open={Boolean(modal)} dataModal={modal} className={modalClass} onClose={closeModal} closeIcon={<Icon name="close" />}>
+    <ModalShell
+      open={Boolean(modal)}
+      ariaLabel={adminModalLabel}
+      backdropClassName={adminModalLabel ? 'cm-admin-modal-backdrop' : undefined}
+      dataModal={modal}
+      className={modalClass}
+      onClose={closeModal}
+      closeIcon={<Icon name="close" />}
+      closeOnBackdrop={Boolean(adminModalLabel)}
+      closeOnEscape={Boolean(adminModalLabel)}
+      focusCloseOnOpen={Boolean(adminModalLabel)}
+      lockBodyScroll={Boolean(adminModalLabel)}
+    >
         {modal === 'create-client' ? <CreateBookingModal initialDate={context.createDate} onClose={closeModal} /> : null}
         {modal === 'confirm-phone' ? <ClientProfileModal onClose={closeModal} onNavigate={navigateFromModal} /> : null}
         {modal === 'client-profile' ? <ClientProfileModal onClose={closeModal} onNavigate={navigateFromModal} /> : null}

@@ -4,6 +4,7 @@ import br.com.calendarmate.booking.application.GetAvailableSlotsUseCase;
 import br.com.calendarmate.booking.domain.BookingWindow;
 import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.dto.AvailableSlotResponse;
+import br.com.calendarmate.dto.AdminServicoUpdateRequest;
 import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.dto.ServicoResponse;
@@ -94,7 +95,7 @@ public class ServicoService {
         validateTime(req.getTime());
         validatePublicLeadTime(req.getDate(), req.getTime());
         validateServiceArea(req);
-        String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
+        String serviceNotes = normalizeServiceNotes(req.getServiceNotes(), req.getServiceType());
 
         String phoneDigits = normalizePhone(req.getClientPhone());
         validateReservedPhonePassword(phoneDigits, req.getReservedPhonePassword());
@@ -286,7 +287,7 @@ public class ServicoService {
         validateTime(req.getTime());
         validatePublicLeadTime(req.getDate(), req.getTime());
         validateServiceArea(req);
-        String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
+        String serviceNotes = normalizeServiceNotes(req.getServiceNotes(), req.getServiceType());
 
         TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
         if (vt == null || !vt.getEventId().equals(eventId)) {
@@ -597,6 +598,20 @@ public class ServicoService {
         calendar.deleteEvent(eventId);
     }
 
+    public ServicoResponse getByIdAdmin(String eventId, AdminPrincipal principal) throws IOException {
+        Event existing = calendar.getEvent(eventId);
+        if (existing == null) {
+            throw new NotFoundException("Agendamento não encontrado");
+        }
+        if (!canPrincipalAccessEvent(principal, existing)) {
+            throw new ForbiddenException("Agendamento não designado para este prestador");
+        }
+        if (!isActiveAdminBooking(existing)) {
+            throw new NotFoundException("Agendamento não encontrado");
+        }
+        return mapEventToResponse(existing);
+    }
+
     public ServicoResponse assignProviderAdmin(String eventId, AdminUser provider) throws IOException {
         Event existing = calendar.getEvent(eventId);
         if (existing == null) {
@@ -627,7 +642,7 @@ public class ServicoService {
         }
     }
 
-    public ServicoResponse updateByIdAdmin(String eventId, AdminPrincipal principal, ServicoRequest req) throws IOException {
+    public ServicoResponse updateByIdAdmin(String eventId, AdminPrincipal principal, AdminServicoUpdateRequest req) throws IOException {
         Event existing = calendar.getEvent(eventId);
         if (existing == null) {
             throw new NotFoundException("Agendamento nao encontrado");
@@ -641,8 +656,8 @@ public class ServicoService {
 
         validateAdminDateWindow(req.getDate());
         validateTime(req.getTime());
-        validateServiceArea(req);
-        String serviceNotes = normalizeServiceNotes(req.getServiceNotes());
+        validateServiceArea(req.getClientCity(), req.getClientState());
+        String serviceNotes = normalizeServiceNotes(req.getServiceNotes(), req.getServiceType());
 
         BookingWindow window = resolveBookingWindow(req.getDate(), req.getTime(), req.getClientCity());
         Instant start = window.blockStart();
@@ -666,7 +681,7 @@ public class ServicoService {
         s.setAppointmentStart(window.appointmentStart());
         s.setAppointmentEnd(window.appointmentEnd());
         s.setClientFirstName(req.getClientFirstName());
-        s.setClientLastName(req.getClientLastName());
+        s.setClientLastName(ext0.getOrDefault("clientLastName", ""));
         s.setClientEmail(req.getClientEmail());
         s.setClientPhone(phoneDigits);
         s.setClientCep(req.getClientCep());
@@ -676,8 +691,8 @@ public class ServicoService {
         s.setClientComplement(req.getClientComplement());
         s.setClientCity(req.getClientCity());
         s.setClientState(req.getClientState());
-        s.setClientLatitude(req.getClientLatitude());
-        s.setClientLongitude(req.getClientLongitude());
+        s.setClientLatitude(req.getClientLatitude() == null ? doubleFromExt(ext0, "clientLatitude") : req.getClientLatitude());
+        s.setClientLongitude(req.getClientLongitude() == null ? doubleFromExt(ext0, "clientLongitude") : req.getClientLongitude());
         s.setStatus(ext0.getOrDefault("status", "CONFIRMED"));
         s.setAssignedProviderId(ext0.getOrDefault("assignedProviderId", ""));
         s.setAssignedProviderName(ext0.getOrDefault("assignedProviderName", ""));
@@ -729,10 +744,17 @@ public class ServicoService {
         return events.isEmpty();
     }
 
-    private String normalizeServiceNotes(String value) {
+    private String normalizeServiceNotes(String value, String serviceType) {
         String notes = value == null ? "" : value.trim().replaceAll("\\s+", " ");
+        if (notes.isBlank()) {
+            String fallback = serviceType == null ? "" : serviceType.trim().replaceAll("\\s+", " ");
+            if (fallback.isBlank()) {
+                throw new BadRequestException("Servico e obrigatorio");
+            }
+            return fallback;
+        }
         if (notes.length() < 10) {
-            throw new BadRequestException("Observacao e obrigatoria e deve explicar o servico com pelo menos 10 caracteres. Exemplo: trocar tomada da sala");
+            throw new BadRequestException("Observacao deve ter pelo menos 10 caracteres quando informada");
         }
         if (notes.length() > 2000) {
             throw new BadRequestException("Observacao deve ter no maximo 2000 caracteres");
@@ -822,8 +844,12 @@ public class ServicoService {
     }
 
     private void validateServiceArea(ServicoRequest req) {
-        String reqCityNorm = LocationNormalizer.normalizeCity(req.getClientCity());
-        String reqStateUp = LocationNormalizer.normalizeState(req.getClientState());
+        validateServiceArea(req.getClientCity(), req.getClientState());
+    }
+
+    private void validateServiceArea(String city, String state) {
+        String reqCityNorm = LocationNormalizer.normalizeCity(city);
+        String reqStateUp = LocationNormalizer.normalizeState(state);
 
         Set<String> allowedStates = props.getAllowedStatesUpper();
         if (!allowedStates.isEmpty()) {
@@ -1039,14 +1065,33 @@ public class ServicoService {
     }
 
     private String buildAddressLine(ServicoResponse s) {
-        String base = s.getClientStreet() + ", " + s.getClientNumber();
-        if (s.getClientComplement() != null && !s.getClientComplement().isBlank()) {
-            base += " - " + s.getClientComplement();
+        List<String> parts = new ArrayList<>();
+        String street = cleanAddressPart(s.getClientStreet());
+        String number = cleanAddressPart(s.getClientNumber());
+        if (!street.isBlank() || !number.isBlank()) {
+            parts.add((street + (street.isBlank() || number.isBlank() ? "" : ", ") + number).trim());
         }
-        base += " - " + s.getClientNeighborhood()
-                + " - " + s.getClientCity() + "/" + s.getClientState()
-                + " CEP: " + s.getClientCep();
-        return base.trim();
+        addAddressPart(parts, s.getClientComplement());
+        addAddressPart(parts, s.getClientNeighborhood());
+        String city = cleanAddressPart(s.getClientCity());
+        String state = cleanAddressPart(s.getClientState());
+        if (!city.isBlank() || !state.isBlank()) {
+            parts.add((city + (city.isBlank() || state.isBlank() ? "" : "/") + state).trim());
+        }
+        String cep = cleanAddressPart(s.getClientCep());
+        if (!cep.isBlank()) {
+            parts.add("CEP: " + cep);
+        }
+        return String.join(" - ", parts);
+    }
+
+    private void addAddressPart(List<String> parts, String value) {
+        String cleaned = cleanAddressPart(value);
+        if (!cleaned.isBlank()) parts.add(cleaned);
+    }
+
+    private String cleanAddressPart(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private Servico servicoFromEvent(Event e) {

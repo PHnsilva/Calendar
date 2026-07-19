@@ -2,6 +2,7 @@ package br.com.calendarmate.controller;
 
 import br.com.calendarmate.booking.application.GetAvailableSlotsUseCase;
 import br.com.calendarmate.dto.AdminAssignProviderRequest;
+import br.com.calendarmate.dto.AdminServicoUpdateRequest;
 import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
@@ -122,13 +123,24 @@ public class ServicoController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/admin/{eventId}")
+    public ResponseEntity<ServicoResponse> adminGetById(
+            @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
+            @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
+            @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
+            @PathVariable String eventId) throws IOException {
+
+        AdminPrincipal principal = adminAuthService.require(session, workspace, providerId);
+        return ResponseEntity.ok(service.getByIdAdmin(eventId, principal));
+    }
+
     @PutMapping("/admin/{eventId}")
     public ResponseEntity<ServicoResponse> adminUpdate(
             @RequestHeader(value = "X-ADMIN-SESSION", required = false) String session,
             @RequestHeader(value = "X-ADMIN-WORKSPACE", required = false) String workspace,
             @RequestHeader(value = "X-ADMIN-PROVIDER-ID", required = false) String providerId,
             @PathVariable String eventId,
-            @Valid @RequestBody ServicoRequest req) throws IOException {
+            @Valid @RequestBody AdminServicoUpdateRequest req) throws IOException {
 
         AdminPrincipal principal = adminAuthService.require(session, workspace, providerId);
         return ResponseEntity.ok(service.updateByIdAdmin(eventId, principal, req));

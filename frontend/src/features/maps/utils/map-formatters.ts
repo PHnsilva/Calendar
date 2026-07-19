@@ -20,17 +20,58 @@ export function formatDuration(durationSeconds?: number | null) {
 
 type LatLng = { lat: number; lon: number };
 
+function decodeEncodedPolyline(value?: string | null): LatLng[] {
+  if (!value) return [];
+  const points: LatLng[] = [];
+  let index = 0;
+  let latitude = 0;
+  let longitude = 0;
+
+  const decodeCoordinate = () => {
+    let result = 0;
+    let shift = 0;
+    let byte = 0;
+    do {
+      if (index >= value.length) return null;
+      byte = value.charCodeAt(index) - 63;
+      index += 1;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+    return (result & 1) ? ~(result >> 1) : result >> 1;
+  };
+
+  while (index < value.length) {
+    const latitudeDelta = decodeCoordinate();
+    const longitudeDelta = decodeCoordinate();
+    if (latitudeDelta == null || longitudeDelta == null) return [];
+    latitude += latitudeDelta;
+    longitude += longitudeDelta;
+    points.push({ lat: latitude / 1e5, lon: longitude / 1e5 });
+  }
+  return points;
+}
+
+function sampleRoutePoints(points: LatLng[], maxPoints = 80): LatLng[] {
+  if (points.length <= maxPoints) return points;
+  const sampled = Array.from({ length: maxPoints }, (_, index) => {
+    const sourceIndex = Math.round(index * (points.length - 1) / (maxPoints - 1));
+    return points[sourceIndex];
+  });
+  return sampled;
+}
+
 function toPoints(route?: RouteOption | null): LatLng[] {
   const lines = route?.geometry?.coordinates;
-  if (!Array.isArray(lines) || lines.length === 0) return [];
-
-  return lines.flatMap((segment) =>
+  const geometryPoints = Array.isArray(lines) ? lines.flatMap((segment) =>
     Array.isArray(segment)
       ? segment
           .filter((point) => Array.isArray(point) && point.length >= 2)
           .map((point) => ({ lon: Number(point[0]), lat: Number(point[1]) }))
       : [],
-  );
+  ) : [];
+  const points = geometryPoints.length >= 2 ? geometryPoints : decodeEncodedPolyline(route?.polyline);
+  return sampleRoutePoints(points.filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon)));
 }
 
 function encodeMarker(point: LatLng, color: string) {
@@ -91,4 +132,26 @@ export function buildMapsSearchUrl(addressLine?: string | null, city?: string | 
   const query = [addressLine, city].filter(Boolean).join(", ").trim();
   if (!query) return "";
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+export function buildGoogleMapsDirectionsUrl(
+  destinationAddress?: string | null,
+  destinationCity?: string | null,
+  origin?: { lat: number; lng: number } | null,
+) {
+  const address = destinationAddress?.trim() ?? '';
+  const city = destinationCity?.trim() ?? '';
+  const destination = city && !address.toLocaleLowerCase('pt-BR').includes(city.toLocaleLowerCase('pt-BR'))
+    ? [address, city].filter(Boolean).join(', ')
+    : address || city;
+  if (!destination) return '';
+  const params = new URLSearchParams({
+    api: '1',
+    destination,
+    travelmode: 'driving',
+  });
+  if (origin && Number.isFinite(origin.lat) && Number.isFinite(origin.lng)) {
+    params.set('origin', `${origin.lat},${origin.lng}`);
+  }
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
 }

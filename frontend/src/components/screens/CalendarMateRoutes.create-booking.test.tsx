@@ -78,8 +78,8 @@ const createResponse: ServicoCreateResponse = {
   servico: {
     eventId: 'created-event-1',
     eventLink: '',
-    serviceType: 'Visita tecnica',
-    serviceNotes: 'Trocar a tomada da sala.',
+    serviceType: 'Eletrica',
+    serviceNotes: 'Eletrica',
     start: '2026-07-20T09:00:00-03:00',
     end: '2026-07-20T10:00:00-03:00',
     clientFirstName: 'Cliente',
@@ -100,6 +100,13 @@ const createResponse: ServicoCreateResponse = {
   expiresInSeconds: 0,
   resendAfterSeconds: 0,
   pendingExpiresAt: '2026-07-20T09:00:00-03:00',
+};
+
+const bootstrapData = {
+  services: ['Eletrica', 'Hidraulica'],
+  schedule: { cycleStart: '2026-05-16', workStart: '08:00', workEnd: '18:00', lunchStart: '12:00', lunchEnd: '13:00' },
+  booking: { slotMinutes: 60, maxFutureMonthsAhead: 1 },
+  serviceArea: { allowedCities: ['Itabirito'], allowedStates: ['MG'], durationByCity: { Itabirito: 60 } },
 };
 
 function LocationProbe() {
@@ -144,7 +151,7 @@ function fillValidBooking() {
   if (!dateButton) throw new Error('Expected an available date button');
   fireEvent.click(dateButton);
   fireEvent.click(screen.getByRole('button', { name: '09:00' }));
-  fireEvent.change(screen.getByPlaceholderText(/Explique detalhadamente/i), { target: { value: 'Trocar a tomada da sala.' } });
+  fireEvent.change(screen.getByRole('combobox', { name: /Servi/ }), { target: { value: 'Eletrica' } });
 }
 
 beforeEach(() => {
@@ -155,7 +162,12 @@ beforeEach(() => {
   mocks.mutateAsync.mockReset();
   mocks.mutateAsync.mockResolvedValue(createResponse);
   mocks.usePublicBootstrap.mockReset();
-  mocks.usePublicBootstrap.mockReturnValue({ data: undefined });
+  mocks.usePublicBootstrap.mockReturnValue({
+    data: bootstrapData,
+    isError: false,
+    isLoading: false,
+    refetch: vi.fn(),
+  });
   mocks.useAvailableMonthDates.mockReset();
   mocks.useAvailableMonthDates.mockReturnValue({
     availableDates: ['2026-07-20'],
@@ -213,6 +225,7 @@ describe('shared client and admin booking creation modal', () => {
 
     await waitFor(() => expect(mocks.mutateAsync).toHaveBeenCalledTimes(1));
     expect(mocks.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      serviceType: 'Eletrica',
       date: '2026-07-20',
       time: '09:00',
       clientFirstName: 'Cliente',
@@ -221,6 +234,7 @@ describe('shared client and admin booking creation modal', () => {
       clientNeighborhood: 'Centro',
       clientNumber: '10',
     }));
+    expect(mocks.mutateAsync.mock.calls[0]?.[0]).not.toHaveProperty('serviceNotes');
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(700);
@@ -231,5 +245,57 @@ describe('shared client and admin booking creation modal', () => {
     expect(Boolean(window.localStorage.getItem('calendar.clientProfile'))).toBe(persistsClientData);
     expect(Boolean(window.localStorage.getItem('calendar.manageTokens'))).toBe(persistsClientData);
     expect(Boolean(window.localStorage.getItem('calendar.localEvents'))).toBe(persistsClientData);
+  });
+
+  it('renders service loading, empty, and error states from the shared API catalog', async () => {
+    const refetch = vi.fn();
+    mocks.usePublicBootstrap.mockReturnValueOnce({ data: undefined, isLoading: true, isError: false, refetch });
+    const loadingView = await renderCreateModal('client');
+    expect(screen.getByRole('combobox', { name: /Servi/ }).textContent).toContain('Carregando');
+    expect((screen.getByRole('combobox', { name: /Servi/ }) as HTMLSelectElement).disabled).toBe(true);
+    loadingView.unmount();
+
+    mocks.usePublicBootstrap.mockReturnValueOnce({ data: { ...bootstrapData, services: [] }, isLoading: false, isError: false, refetch });
+    const emptyView = await renderCreateModal('admin');
+    expect(screen.getByText(/Nenhum servi.*dispon.vel/i)).toBeTruthy();
+    emptyView.unmount();
+
+    mocks.usePublicBootstrap.mockReturnValueOnce({ data: undefined, isLoading: false, isError: true, refetch });
+    await renderCreateModal('client');
+    expect(screen.getByText(/N.o foi poss.vel carregar os servi/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps actions outside the scrolling form and closes only from the real overlay', async () => {
+    const { container, onClose } = await renderCreateModal('client');
+    const dialog = screen.getByRole('dialog', { name: 'Criar agendamento' });
+    const scrollBody = container.querySelector('.wf-create-booking-modal__scroll');
+    const actions = container.querySelector('.wf-modal-actions');
+    expect(scrollBody).toBeTruthy();
+    expect(actions).toBeTruthy();
+    expect(scrollBody?.contains(actions)).toBe(false);
+
+    fireEvent.mouseDown(dialog);
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.mouseDown(dialog.parentElement as HTMLElement);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('prevents Escape, close button, and overlay dismissal during submission', async () => {
+    let resolveBooking!: (value: ServicoCreateResponse) => void;
+    mocks.mutateAsync.mockReturnValueOnce(new Promise<ServicoCreateResponse>((resolve) => { resolveBooking = resolve; }));
+    const { onClose } = await renderCreateModal('client');
+    fillValidBooking();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar agendamento' }));
+    await waitFor(() => expect(mocks.mutateAsync).toHaveBeenCalledTimes(1));
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar modal' }));
+    fireEvent.mouseDown(screen.getByRole('dialog').parentElement as HTMLElement);
+    expect(onClose).not.toHaveBeenCalled();
+
+    resolveBooking(createResponse);
+    await act(async () => { await Promise.resolve(); });
   });
 });

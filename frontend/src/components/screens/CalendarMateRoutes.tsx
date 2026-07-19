@@ -82,6 +82,9 @@ import { useAvailableSlots } from '../../features/calendar/hooks/useAvailableSlo
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
 import { createAdminBlocks, deleteAdminBlock, listAdminBlocks } from '../../features/admin/api/manage-admin-blocks';
 import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
+import { useAdminBookingDetails } from '../../features/admin/hooks/useAdminBookingDetails';
+import { useAdminRoute } from '../../features/admin/hooks/useAdminRoute';
+import { deleteAdminBooking } from '../../features/admin/api/delete-admin-booking';
 import type { AdminFilters } from '../../features/admin/types';
 import { getAdminAgendaRange, isDateInAdminAgendaRange, type AdminAgendaRangeKey } from '../../features/admin/utils/admin-agenda-range';
 import { useMyBookings } from '../../features/bookings/hooks/useMyBookings';
@@ -110,7 +113,7 @@ import {
   saveRecoveredBookings,
   getPhoneVerificationChangedEventName,
 } from '../../lib/storage';
-import type { AdminAuthConfirmResponse, AdminProviderResponse, AdminWorkspaceContext, AvailabilityBlockResponse, ServicoRequest, ServicoResponse } from '../../types/api';
+import type { AdminAuthConfirmResponse, AdminProviderResponse, AdminServicoUpdateRequest, AdminWorkspaceContext, AvailabilityBlockResponse, ServicoResponse } from '../../types/api';
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
 import { confirmAdminLogin, listAdminProviders, loginAdminWithPassword, resendAdminLogin, startAdminLogin } from '../../features/admin/api/admin-auth';
 import { applyAdminLoginDestination, resolveAdminLoginDestination, routeForAdminWorkspace } from '../../features/admin/services/admin-workspace-flow';
@@ -164,6 +167,10 @@ import ModalShell from '../../shared/ui/ModalShell';
 import PageTitle from '../../shared/ui/PageTitle';
 import ResponsiveAsset from '../../shared/ui/ResponsiveAsset';
 import { useAuth } from '../../app/providers/auth-context';
+import { useUserGeolocation } from '../../features/maps/hooks/useUserGeolocation';
+import { useLocationPreview } from '../../features/maps/hooks/useLocationPreview';
+import { buildGoogleMapsDirectionsUrl, buildStaticPlaceMapUrl, buildStaticRouteMapUrl } from '../../features/maps/utils/map-formatters';
+import RouteSummaryCard from '../../features/maps/components/RouteSummaryCard';
 
 function isProtectedStaffPhone(value: string): boolean {
   return isValidPhone(value) && resolveUserRoleByPhone(value) === 'admin';
@@ -180,6 +187,7 @@ export type ModalKind =
   | 'block-admin'
   | 'assign-provider'
   | 'edit-admin'
+  | 'cancel-admin'
   | 'email-admin'
   | 'ofx-admin'
   | 'budget-admin'
@@ -308,10 +316,6 @@ function normalizeHouseNumber(value: string): string {
   return normalized;
 }
 
-function isServiceNotesValid(value: string): boolean {
-  return cleanFormText(value).replace(/\s+/g, ' ').length >= 10;
-}
-
 function splitFullName(value: string): { firstName: string; lastName: string } {
   const parts = cleanFormText(value).split(/\s+/).filter(Boolean);
   const firstName = parts.shift() ?? '';
@@ -346,7 +350,7 @@ function parseManualBookingAddress(value: string, number: string, city: string) 
 function focusFirstCreateBookingError() {
   window.requestAnimationFrame(() => {
     const error = document.querySelector<HTMLElement>('.wf-create-booking-form .wf-field-error');
-    const target = error?.closest('label, .wf-choice-block, .wf-create-address-row')?.querySelector<HTMLElement>('input, textarea, button:not([disabled])');
+    const target = error?.closest('label, .wf-choice-block, .wf-create-address-row')?.querySelector<HTMLElement>('input, select, textarea, button:not([disabled])');
     (target ?? error)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     target?.focus();
   });
@@ -422,13 +426,26 @@ function formatStatus(value?: string): string {
   return 'Confirmado';
 }
 
+function sanitizeAddressLine(value?: string | null): string {
+  return cleanFormText(value)
+    .replace(/\s*(?:-|–)?\s*CEP:\s*$/i, '')
+    .replace(/(?:\s+-\s+){2,}/g, ' - ')
+    .trim();
+}
+
+function formatCep(value?: string | null): string {
+  const digits = digitsOnly(value ?? '');
+  if (digits.length === 8) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  return cleanFormText(value);
+}
+
 function bookingFromServico(servico: ServicoResponse, index = 0): BookingItem {
   const start = toBusinessDateTimeParts(servico.start);
   const end = toBusinessDateTimeParts(servico.end);
   const bookingDate = start.date || toIsoDate(new Date());
   const date = toLocalDate(bookingDate);
   const name = `${servico.clientFirstName ?? ''} ${servico.clientLastName ?? ''}`.trim() || 'Cliente não informado';
-  const address = servico.clientAddressLine || [servico.clientStreet, servico.clientNumber, servico.clientNeighborhood, servico.clientCity, servico.clientState].filter(Boolean).join(' - ') || 'Endereço não informado';
+  const address = sanitizeAddressLine(servico.clientAddressLine) || [servico.clientStreet, servico.clientNumber, servico.clientNeighborhood, servico.clientCity, servico.clientState].filter(Boolean).join(' - ') || 'Endereço não informado';
 
   return {
     id: servico.eventId,
@@ -859,6 +876,7 @@ function Icon({ name }: { name: string }) {
     'clock-orange': <svg {...common}><defs><linearGradient id={`${uid}-oclock`} x1="10" y1="10" x2="55" y2="55"><stop stopColor="#ffb34a"/><stop offset="1" stopColor="#ff4b0b"/></linearGradient></defs><circle cx="32" cy="32" r="24" fill="#fff5eb" stroke={`url(#${uid}-oclock)`} strokeWidth="4"/><path d="M32 19v14l10 6" stroke="#ff4b0b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     menu: <svg {...common}><path d="M13 19h38M13 32h38M13 45h38" {...line}/></svg>,
     close: <svg {...common}><path d="M18 18 46 46M46 18 18 46" {...line}/></svg>,
+    expand: <svg {...common}><path d="M25 11H11v14M39 11h14v14M25 53H11V39M39 53h14V39" {...line}/><path d="m11 25 15-15M53 25 38 10M11 39l15 15M53 39 38 54" {...line}/></svg>,
     chevron: <svg {...common}><path d="m20 26 12 12 12-12" {...line}/></svg>,
     whatsapp: <svg {...common}><defs><linearGradient id={`${uid}-wa`} x1="10" y1="8" x2="55" y2="56"><stop stopColor="#28d66b"/><stop offset="1" stopColor="#0aa64b"/></linearGradient></defs><circle cx="32" cy="32" r="27" fill={`url(#${uid}-wa)`}/><path d="M19 47.5 22 38a18 18 0 1 1 6.4 5.9L19 47.5Z" fill="#fff"/><path d="M27.8 23.8c.6-1.4 1.3-1.6 2.4-1.5h1.4c.5 0 1 .2 1.3.9.4 1 1.4 3.7 1.5 4.1.2.4.2.8-.1 1.2-.4.7-1 1.5-1.6 2-.4.4-.5.7-.2 1.2 1.1 1.8 2.6 3.4 4.3 4.6 1.5 1 2.3 1.3 2.9.7.7-.7 1.5-1.8 1.9-2.3.4-.5.8-.6 1.5-.4l4 1.9c.7.4.8.7.7 1.1-.2 1.6-1.5 3.5-3.2 4.1-1.9.7-5.1.3-9.2-2.2-5.6-3.4-9.1-8.4-9.8-12.3-.4-1.6.1-2.5 1.2-3.1Z" fill="#0aa64b"/></svg>,
     instagram: <svg {...common}><defs><linearGradient id={`${uid}-ig`} x1="9" y1="55" x2="55" y2="9"><stop stopColor="#ffbd2e"/><stop offset=".35" stopColor="#ff2f6d"/><stop offset=".68" stopColor="#a42cff"/><stop offset="1" stopColor="#2864ff"/></linearGradient></defs><rect x="7" y="7" width="50" height="50" rx="15" fill={`url(#${uid}-ig)`}/><rect x="18" y="18" width="28" height="28" rx="8" stroke="#fff" strokeWidth="4"/><circle cx="32" cy="32" r="8" stroke="#fff" strokeWidth="4"/><circle cx="43" cy="21" r="3" fill="#fff"/></svg>,
@@ -1845,6 +1863,7 @@ function AdminAgendaBookingCard({
   onBudget,
   onDetails,
   onEdit,
+  onCancel,
 }: {
   booking: BookingItem;
   index: number;
@@ -1853,6 +1872,7 @@ function AdminAgendaBookingCard({
   onBudget: () => void;
   onDetails: () => void;
   onEdit: () => void;
+  onCancel: () => void;
 }) {
   const accent = resolveAgendaAccent(booking, index);
   const providerUndefined = isWithoutProvider(booking);
@@ -1880,7 +1900,7 @@ function AdminAgendaBookingCard({
         <AdminAgendaActionButton icon="booking-action-pencil" label="Editar" onClick={onEdit} />
         {owner ? <AdminAgendaActionButton icon="booking-action-provider" label="Designar" onClick={onAssign} /> : null}
         <AdminAgendaActionButton icon="budget" label="Orçamento" onClick={onBudget} />
-        <AdminAgendaActionButton icon="booking-action-cancel" label="Cancelar" danger onClick={() => notifyUnavailable('Cancelamento')} />
+        {owner ? <AdminAgendaActionButton icon="booking-action-cancel" label="Cancelar" danger onClick={onCancel} /> : null}
       </div>
     </article>
   );
@@ -1894,6 +1914,7 @@ function AdminWeekDayGroup({
   onBudget,
   onDetails,
   onEdit,
+  onCancel,
   owner,
 }: {
   date: string;
@@ -1903,6 +1924,7 @@ function AdminWeekDayGroup({
   onBudget: (booking: BookingItem) => void;
   onDetails: (booking: BookingItem) => void;
   onEdit: (booking: BookingItem) => void;
+  onCancel: (booking: BookingItem) => void;
   owner: boolean;
 }) {
   const accent = accentCycle[index % accentCycle.length];
@@ -1926,6 +1948,7 @@ function AdminWeekDayGroup({
             onBudget={() => onBudget(booking)}
             onDetails={() => onDetails(booking)}
             onEdit={() => onEdit(booking)}
+            onCancel={() => onCancel(booking)}
           />
         ))}
       </div>
@@ -1962,6 +1985,7 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
   const openAssign = (booking: BookingItem) => { setContext({ booking }); setModal('assign-provider'); };
   const openEdit = (booking: BookingItem) => { setContext({ booking }); setModal('edit-admin'); };
   const openBudget = (booking: BookingItem) => { setContext({ booking }); setModal('budget-admin'); };
+  const openCancel = (booking: BookingItem) => { setContext({ booking }); setModal('cancel-admin'); };
   return (
     <section className="wf-admin-week-agenda" aria-labelledby="wf-admin-week-agenda-title">
       <div className="wf-admin-week-agenda__hero">
@@ -2015,6 +2039,7 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
             onBudget={openBudget}
             onDetails={openDetails}
             onEdit={openEdit}
+            onCancel={openCancel}
           />
         ))}
       </div>
@@ -2118,12 +2143,49 @@ export function AdminBookingDetails() {
   const { adminSession: session } = useAuth();
   const [modal, setModal] = useState<ModalKind>(null);
   const [context, setContext] = useState<ModalContext>({});
-  const { eventId } = useParams();
-  const { bookings, isLoading } = useAdminBookingsData();
-  const booking = useMemo(() => bookings.find((item) => item.id === eventId) ?? bookings[0], [bookings, eventId]);
+  const [mapExpanded, setMapExpanded] = useState(false);
+  const { eventId = '' } = useParams();
+  const bookingQuery = useAdminBookingDetails(eventId, Boolean(session));
+  const source = bookingQuery.data;
+  const booking = useMemo(() => source ? bookingFromServico(source) : null, [source]);
+  const { coords, error: locationError, isLoading: isLocating, requestLocation } = useUserGeolocation();
+  const routeQuery = useAdminRoute(eventId, coords?.lat, coords?.lng, Boolean(booking && coords));
   const workspace = session?.workspace;
   const providerWorkspace = workspace?.mode === 'PROVIDER';
   const owner = session?.role === 'OWNER' && workspace?.mode === 'ADMIN';
+  const address = sanitizeAddressLine(source?.clientAddressLine) || booking?.address || '';
+  const city = source?.clientCity || booking?.city || '';
+  const hasDestinationCoordinates = typeof source?.clientLatitude === 'number'
+    && Number.isFinite(source.clientLatitude)
+    && typeof source?.clientLongitude === 'number'
+    && Number.isFinite(source.clientLongitude);
+  const needsLocationLookup = Boolean(booking && address && !hasDestinationCoordinates);
+  const locationPreview = useLocationPreview(address, city, needsLocationLookup);
+  const destinationLatitude = hasDestinationCoordinates ? source.clientLatitude : locationPreview.data?.latitude;
+  const destinationLongitude = hasDestinationCoordinates ? source.clientLongitude : locationPreview.data?.longitude;
+  const hasResolvedDestination = typeof destinationLatitude === 'number'
+    && Number.isFinite(destinationLatitude)
+    && typeof destinationLongitude === 'number'
+    && Number.isFinite(destinationLongitude);
+  const primaryRoute = routeQuery.data?.primary ?? null;
+  const routeMapUrl = buildStaticRouteMapUrl(primaryRoute);
+  const placeMapUrl = buildStaticPlaceMapUrl(destinationLatitude, destinationLongitude);
+  const mapUrl = routeMapUrl || placeMapUrl;
+  const googleMapsUrl = buildGoogleMapsDirectionsUrl(address, city, coords);
+
+  useEffect(() => {
+    if (!mapExpanded) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const closeExpandedMap = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setMapExpanded(false);
+    };
+    document.addEventListener('keydown', closeExpandedMap);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeExpandedMap);
+    };
+  }, [mapExpanded]);
 
   if (!session) {
     return <Navigate to="/" replace />;
@@ -2139,6 +2201,10 @@ export function AdminBookingDetails() {
   const openBookingEmail = () => {
     setContext(booking ? { booking } : {});
     setModal('email-admin');
+  };
+
+  const handleCancelled = () => {
+    window.setTimeout(() => navigate(adminDashboardRoute('agendamentos'), { replace: true }), 650);
   };
 
   const selectAdminView = (nextView: AdminView) => {
@@ -2171,54 +2237,119 @@ export function AdminBookingDetails() {
           onView={selectAdminView}
         />
       )}
-      <main className="wf-details-main">
-        <div className="wf-admin-title-row">
-          <Link to={adminDashboardRoute('agendamentos')} className="wf-back-btn"><Icon name="back" /></Link>
-          <div><h1>Detalhes do agendamento</h1><p>{booking ? `Agendamento #${booking.id}` : 'Selecione um agendamento existente'}</p></div>
-        </div>
-        {!booking && !isLoading ? <EmptyState title="Agendamento não encontrado" text="O agendamento solicitado não está disponível na agenda carregada." /> : null}
+      <main className="cm-admin-booking-details">
+        <header className="cm-admin-booking-details__header">
+          <Link to={adminDashboardRoute('agendamentos')} className="cm-admin-booking-details__back" aria-label="Voltar para a agenda"><Icon name="back" /></Link>
+          <div>
+            <span className="cm-admin-booking-details__eyebrow">Agenda administrativa</span>
+            <h1>Detalhes do agendamento</h1>
+            <p>{booking ? `Agendamento #${booking.id}` : 'Consulte todos os dados do atendimento.'}</p>
+          </div>
+          {booking ? <Badge color="green">{booking.status}</Badge> : null}
+        </header>
+
+        {bookingQuery.isPending || bookingQuery.isFetching && !booking ? <EmptyState tone="loading" title="Carregando agendamento" text="Buscando os dados atualizados do atendimento." /> : null}
+        {bookingQuery.isError ? <EmptyState tone="error" title="Não foi possível carregar o agendamento" text={normalizeApiErrorMessage(bookingQuery.error, { context: 'calendar', fallbackMessage: 'O atendimento não respondeu. Tente novamente.' })} action="Tentar novamente" onAction={() => void bookingQuery.refetch()} /> : null}
+        {!bookingQuery.isPending && !bookingQuery.isError && !booking ? <EmptyState title="Agendamento não encontrado" text="O agendamento solicitado não existe ou não está mais disponível." /> : null}
+
         {booking ? (
-          <div className="wf-details-grid">
-            <section className="wf-details-cards">
-              <DetailInfo icon="calendar" title="Informações do agendamento" items={[["Data", ptLongDate.format(toLocalDate(booking.date))], ['Horário', booking.endTime ? `${booking.time}–${booking.endTime}` : booking.time], ['Status', booking.status], ['Serviço', booking.service]]} />
-              <DetailInfo icon="user" title="Dados do cliente" items={[["Nome", booking.name], ['Telefone', formatPhoneForDisplay(booking.phone) || 'Não informado'], ['E-mail', booking.email || 'Não informado']]} />
-              <DetailInfo icon="map" title="Endereço do atendimento" items={[[booking.address, booking.city || 'Cidade não informada']]} action="Ver rotas" />
-              <DetailInfo icon="chat" title="Observações do cliente" items={[["", booking.service]]} />
-              <DetailInfo icon="user" title="Profissional responsável" items={[[booking.provider || 'A definir', 'Sem telefone cadastrado']]} badge="Confirmado" />
-              <div className="wf-detail-actions"><button type="button" onClick={() => setModal('edit-admin')}><Icon name="edit" /> Editar</button><button type="button" onClick={openBookingEmail}><Icon name="mail" /> E-mail</button><button type="button" className="wf-danger" onClick={() => notifyUnavailable('Cancelamento')}><Icon name="delete" /> Cancelar</button><button type="button" onClick={() => setModal('edit-admin')}><Icon name="calendar" /> Reagendar</button>{owner ? <button type="button" onClick={() => setModal('assign-provider')}><Icon name="user" /> Trocar responsável</button> : null}<button type="button" onClick={openBudget}><Icon name="budget" /> Orçamento</button></div>
+          <div className="cm-admin-booking-details__layout">
+            <div className="cm-admin-booking-details__information">
+              <AdminDetailSection icon="calendar" title="Agendamento" tone="orange">
+                <AdminDetailItem label="Data" value={ptLongDate.format(toLocalDate(booking.date))} />
+                <AdminDetailItem label="Horário" value={booking.endTime ? `${booking.time} – ${booking.endTime}` : booking.time} />
+                <AdminDetailItem label="Serviço" value={booking.service} wide />
+                {source?.serviceNotes && normalizeText(source.serviceNotes) !== normalizeText(booking.service) ? <AdminDetailItem label="Detalhes do serviço" value={source.serviceNotes} wide /> : null}
+              </AdminDetailSection>
+
+              <AdminDetailSection icon="user" title="Cliente" tone="blue">
+                <AdminDetailItem label="Nome" value={booking.name} />
+                <AdminDetailItem label="Telefone" value={formatPhoneForDisplay(booking.phone) || 'Não informado'} />
+                <AdminDetailItem label="E-mail" value={booking.email || 'Não informado'} wide />
+              </AdminDetailSection>
+
+              <AdminDetailSection icon="map" title="Endereço do atendimento" tone="purple">
+                <AdminDetailItem label="Endereço" value={address || 'Não informado'} wide />
+                <AdminDetailItem label="Cidade" value={city || 'Não informada'} />
+                {source?.clientCep && formatCep(source.clientCep) ? <AdminDetailItem label="CEP" value={formatCep(source.clientCep)} /> : null}
+              </AdminDetailSection>
+
+              <AdminDetailSection icon="user" title="Profissional responsável" tone="green">
+                <AdminDetailItem label="Profissional" value={booking.provider || 'A definir'} />
+                <AdminDetailItem label="Telefone" value={formatPhoneForDisplay(source?.assignedProviderPhone || '') || 'Não informado'} />
+              </AdminDetailSection>
+            </div>
+
+            {mapExpanded ? <button type="button" className="cm-admin-route-map__backdrop" aria-label="Fechar mapa expandido" onClick={() => setMapExpanded(false)} /> : null}
+            <section className={cx('cm-admin-route-map', mapExpanded && 'is-expanded')} aria-labelledby="cm-admin-route-map-title">
+              <header className="cm-admin-route-map__header">
+                <div>
+                  <span>Rota do atendimento</span>
+                  <h2 id="cm-admin-route-map-title">Origem, destino e deslocamento</h2>
+                </div>
+                <div className="cm-admin-route-map__controls">
+                  {googleMapsUrl ? <a href={googleMapsUrl} target="_blank" rel="noreferrer"><Icon name="map" /> Abrir no Google Maps</a> : null}
+                  <button type="button" onClick={requestLocation} disabled={isLocating}><Icon name="location" /> {coords ? 'Atualizar origem' : 'Usar minha localização'}</button>
+                  <button type="button" onClick={() => setMapExpanded((current) => !current)} aria-expanded={mapExpanded}><Icon name={mapExpanded ? 'close' : 'expand'} /> {mapExpanded ? 'Reduzir mapa' : 'Expandir mapa'}</button>
+                </div>
+              </header>
+
+              <div className="cm-admin-route-map__visual">
+                {mapUrl ? <img src={mapUrl} alt={routeMapUrl ? 'Mapa com a rota entre a origem e o atendimento' : 'Mapa do local do atendimento'} /> : (
+                  <div className="cm-admin-route-map__fallback">
+                    <Icon name="map" />
+                    <strong>Visualização do mapa indisponível</strong>
+                    <span>{hasResolvedDestination ? 'A integração de mapa não está configurada neste ambiente.' : 'As coordenadas do endereço não estão disponíveis. Use o endereço abaixo no Google Maps.'}</span>
+                  </div>
+                )}
+                {mapUrl ? <span className="cm-admin-route-map__attribution">Geoapify · OpenStreetMap · OpenMapTiles</span> : null}
+              </div>
+
+              <div className="cm-admin-route-map__points">
+                <article><span className="cm-admin-route-map__point cm-admin-route-map__point--origin"><Icon name="location" /></span><div><small>Origem</small><strong>{coords ? 'Sua localização atual' : 'Aguardando sua localização'}</strong><p>{coords ? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` : 'Permita o acesso para calcular a rota real.'}</p></div></article>
+                <span className="cm-admin-route-map__connector" aria-hidden="true" />
+                <article><span className="cm-admin-route-map__point cm-admin-route-map__point--destination"><Icon name="map" /></span><div><small>Destino</small><strong>Local do atendimento</strong><p>{address || 'Endereço não informado'}</p></div></article>
+              </div>
+
+              {isLocating ? <p className="cm-admin-route-map__state" role="status">Obtendo sua localização...</p> : null}
+              {locationError ? <p className="cm-admin-route-map__state cm-admin-route-map__state--error" role="alert">{locationError}</p> : null}
+              {locationPreview.isLoading ? <p className="cm-admin-route-map__state" role="status">Localizando o endereço no mapa...</p> : null}
+              {locationPreview.isError && !destinationLatitude ? <p className="cm-admin-route-map__state cm-admin-route-map__state--error">Não foi possível obter as coordenadas do endereço.</p> : null}
+              {routeQuery.isFetching ? <p className="cm-admin-route-map__state" role="status">Calculando a melhor rota...</p> : null}
+              {routeQuery.isError ? <p className="cm-admin-route-map__state cm-admin-route-map__state--error" role="alert">{normalizeApiErrorMessage(routeQuery.error, { context: 'route' })}</p> : null}
+              {primaryRoute ? <RouteSummaryCard route={primaryRoute} /> : null}
             </section>
-            <section className="wf-map-card">
-              <button type="button" className="wf-map-btn wf-map-btn--left" onClick={() => notifyUnavailable('Google Maps')}>Abrir no Google Maps</button>
-              <button type="button" className="wf-map-btn wf-map-btn--right" onClick={() => notifyUnavailable('Mapa expandido')}>Expandir mapa</button>
-              <div className="wf-route-line" />
-              <span className="wf-map-pin wf-map-pin--origin" />
-              <span className="wf-map-pin wf-map-pin--dest" />
-              <div className="wf-map-label wf-map-label--origin"><strong>Origem</strong><br />Base administrativa</div>
-              <div className="wf-map-label wf-map-label--dest"><strong>Local do atendimento</strong><br />{booking.address}</div>
-              <span className="wf-map-text wf-map-text--one">ROTA</span><span className="wf-map-text wf-map-text--two">ATENDIMENTO</span><span className="wf-map-text wf-map-text--three">DESTINO</span>
+
+            <section className="cm-admin-booking-actions" aria-labelledby="cm-admin-booking-actions-title">
+              <div><span>Ações</span><h2 id="cm-admin-booking-actions-title">Gerenciar agendamento</h2></div>
+              <div className="cm-admin-booking-actions__grid">
+                <button type="button" onClick={() => setModal('edit-admin')}><Icon name="edit" /> Editar dados</button>
+                <button type="button" onClick={() => setModal('edit-admin')}><Icon name="calendar" /> Reagendar</button>
+                <button type="button" onClick={openBookingEmail}><Icon name="mail" /> Enviar e-mail</button>
+                {owner ? <button type="button" onClick={() => setModal('assign-provider')}><Icon name="user" /> Trocar responsável</button> : null}
+                <button type="button" onClick={openBudget}><Icon name="budget" /> Orçamento</button>
+                {owner ? <button type="button" className="cm-admin-booking-actions__danger" onClick={() => setModal('cancel-admin')}><Icon name="delete" /> Cancelar agendamento</button> : null}
+              </div>
             </section>
           </div>
         ) : null}
       </main>
-      <CalendarMateModal modal={modal} context={modal === 'email-admin' ? context : booking ? { booking } : {}} bookingAudience="admin" onClose={() => setModal(null)} onOpenModal={setModal} />
+      <CalendarMateModal modal={modal} context={modal === 'email-admin' ? context : booking ? { booking } : {}} bookingAudience="admin" onClose={() => setModal(null)} onOpenModal={setModal} onBookingCancelled={handleCancelled} />
     </PageShell>
   );
 }
 
-function DetailInfo({ icon, title, items, action, badge }: { icon: string; title: string; items: Array<[string, string]>; action?: string; badge?: string }) {
+function AdminDetailSection({ icon, title, tone, children }: { icon: string; title: string; tone: Accent; children: ReactNode }) {
   return (
-    <article className="wf-detail-card">
-      <span className="wf-detail-icon"><Icon name={icon} /></span>
-      <div className="wf-detail-body">
-        <h2>{title}</h2>
-        <div className="wf-detail-items">
-          {items.map(([label, value]) => <span key={`${label}-${value}`}><small>{label}</small><strong>{value}</strong></span>)}
-        </div>
-      </div>
-      {action ? <button type="button" onClick={() => notifyUnavailable(action)}>{action}</button> : null}
-      {badge ? <Badge color="green">{badge}</Badge> : null}
-    </article>
+    <section className={cx('cm-admin-detail-section', `cm-admin-detail-section--${tone}`)}>
+      <header><span><Icon name={icon} /></span><h2>{title}</h2></header>
+      <dl>{children}</dl>
+    </section>
   );
+}
+
+function AdminDetailItem({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) {
+  return <div className={wide ? 'is-wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>;
 }
 
 function Avatar({ name, large = false, huge = false }: { name: string; large?: boolean; huge?: boolean }) {
@@ -2233,6 +2364,7 @@ export function CalendarMateModal({
   onClose,
   onOfxImported,
   onOpenModal,
+  onBookingCancelled,
 }: {
   modal: ModalKind;
   context?: ModalContext;
@@ -2240,10 +2372,16 @@ export function CalendarMateModal({
   onClose: () => void;
   onOfxImported?: (dashboard: FinancialDashboardDTO) => void;
   onOpenModal?: (modal: ModalKind) => void;
+  onBookingCancelled?: (eventId: string) => void;
 }) {
   const navigate = useNavigate();
   const navigationInFlightRef = useRef(false);
+  const [busyModal, setBusyModal] = useState<ModalKind>(null);
   const closeModal = useModalBrowserBack(Boolean(modal), `root-${modal ?? 'none'}`, onClose);
+  const closeBlocked = Boolean(modal && busyModal === modal);
+  const requestClose = useCallback(() => {
+    if (!closeBlocked) closeModal();
+  }, [closeBlocked, closeModal]);
   const navigateFromModal = useCallback((to: string, options?: { replace?: boolean }) => {
     if (navigationInFlightRef.current) return;
     navigationInFlightRef.current = true;
@@ -2262,16 +2400,35 @@ export function CalendarMateModal({
     'block-admin': 'Bloquear agenda',
     'budget-admin': 'Orçamento administrativo',
     'edit-admin': 'Editar agendamento',
+    'cancel-admin': 'Cancelar agendamento',
     'email-admin': 'Enviar e-mail administrativo',
     'ofx-admin': 'Importar extrato OFX',
   };
+  const modalLabels: Record<NonNullable<ModalKind>, string> = {
+    'create-client': 'Criar agendamento',
+    'confirm-phone': 'Confirmar telefone',
+    'client-profile': 'Perfil do cliente',
+    'client-details': 'Detalhes do agendamento',
+    'contact': 'Contato',
+    'services-info': 'Serviços prestados',
+    'help-contact': 'Ajuda e contato',
+    'block-admin': 'Bloquear agenda',
+    'assign-provider': 'Designar prestador',
+    'edit-admin': 'Editar agendamento',
+    'cancel-admin': 'Cancelar agendamento',
+    'email-admin': 'Enviar e-mail administrativo',
+    'ofx-admin': 'Importar extrato OFX',
+    'budget-admin': 'Orçamento administrativo',
+    'how-it-works': 'Como funciona',
+  };
   const adminModalLabel = adminModalLabels[modal];
-  const accessibleModalLabel = modal === 'create-client' ? 'Criar agendamento' : adminModalLabel;
+  const accessibleModalLabel = modalLabels[modal];
   const modalClass = cx(
     'wf-modal',
     Boolean(adminModalLabel) && 'cm-admin-modal',
     adminModalLabel && `cm-admin-modal--${modal.replace(/[^a-zA-Z0-9-]/g, '-')}`,
     modal === 'create-client' && 'wf-modal--create',
+    modal === 'create-client' && 'wf-modal--shared-create',
     modal === 'confirm-phone' && 'wf-modal--confirm',
     modal === 'client-profile' && 'wf-modal--profile',
     modal === 'client-details' && 'wf-modal--details',
@@ -2281,6 +2438,7 @@ export function CalendarMateModal({
     modal === 'block-admin' && 'wf-modal--admin-block',
     modal === 'assign-provider' && 'wf-modal--assign',
     modal === 'edit-admin' && 'wf-modal--create',
+    modal === 'cancel-admin' && 'wf-modal--cancel-admin',
     modal === 'email-admin' && 'wf-modal--email',
     modal === 'ofx-admin' && 'wf-modal--ofx',
     modal === 'budget-admin' && 'wf-modal--budget',
@@ -2290,29 +2448,31 @@ export function CalendarMateModal({
     <ModalShell
       open={Boolean(modal)}
       ariaLabel={accessibleModalLabel}
-      backdropClassName={accessibleModalLabel ? 'cm-admin-modal-backdrop' : undefined}
+      backdropClassName={adminModalLabel ? 'cm-admin-modal-backdrop' : undefined}
       dataModal={modal}
       className={modalClass}
-      onClose={closeModal}
+      onClose={requestClose}
+      closeDisabled={closeBlocked}
       closeIcon={<Icon name="close" />}
-      closeOnBackdrop={Boolean(accessibleModalLabel)}
-      closeOnEscape={Boolean(accessibleModalLabel)}
-      focusCloseOnOpen={Boolean(accessibleModalLabel)}
-      lockBodyScroll={Boolean(accessibleModalLabel)}
+      closeOnBackdrop
+      closeOnEscape
+      focusCloseOnOpen
+      lockBodyScroll
     >
-        {modal === 'create-client' ? <SharedCreateBookingModal audience={bookingAudience} initialDate={context.createDate} onClose={closeModal} /> : null}
-        {modal === 'confirm-phone' ? <ClientProfileModal onClose={closeModal} onNavigate={navigateFromModal} /> : null}
-        {modal === 'client-profile' ? <ClientProfileModal onClose={closeModal} onNavigate={navigateFromModal} /> : null}
-        {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={closeModal} /> : null}
+        {modal === 'create-client' ? <SharedCreateBookingModal audience={bookingAudience} initialDate={context.createDate} onClose={requestClose} onSubmissionChange={(busy) => setBusyModal(busy ? modal : null)} /> : null}
+        {modal === 'confirm-phone' ? <ClientProfileModal onClose={requestClose} onNavigate={navigateFromModal} /> : null}
+        {modal === 'client-profile' ? <ClientProfileModal onClose={requestClose} onNavigate={navigateFromModal} /> : null}
+        {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={requestClose} /> : null}
         {modal === 'contact' ? <ContactModal onClose={closeModal} /> : null}
         {modal === 'services-info' ? <ServicesInfoModal onSchedule={() => onOpenModal ? onOpenModal('create-client') : onClose()} /> : null}
         {modal === 'help-contact' ? <HelpContactModal /> : null}
-        {modal === 'block-admin' ? <AdminBlockModal onClose={closeModal} /> : null}
-        {modal === 'assign-provider' ? <AssignProviderModal booking={context.booking} onClose={closeModal} /> : null}
-        {modal === 'edit-admin' ? <EditAdminBookingModal booking={context.booking} onClose={closeModal} /> : null}
-        {modal === 'email-admin' ? <EmailAdminModal booking={context.booking} onClose={closeModal} /> : null}
-        {modal === 'ofx-admin' ? <OfxModal onClose={closeModal} onImported={onOfxImported} /> : null}
-        {modal === 'budget-admin' ? <BudgetModal booking={context.booking} onClose={closeModal} /> : null}
+        {modal === 'block-admin' ? <AdminBlockModal onClose={requestClose} /> : null}
+        {modal === 'assign-provider' ? <AssignProviderModal booking={context.booking} onClose={requestClose} /> : null}
+        {modal === 'edit-admin' ? <EditAdminBookingModal booking={context.booking} onClose={requestClose} onSubmissionChange={(busy) => setBusyModal(busy ? modal : null)} /> : null}
+        {modal === 'cancel-admin' ? <CancelAdminBookingModal booking={context.booking} onClose={requestClose} onCancelled={onBookingCancelled} onSubmissionChange={(busy) => setBusyModal(busy ? modal : null)} /> : null}
+        {modal === 'email-admin' ? <EmailAdminModal booking={context.booking} onClose={requestClose} /> : null}
+        {modal === 'ofx-admin' ? <OfxModal onClose={requestClose} onImported={onOfxImported} /> : null}
+        {modal === 'budget-admin' ? <BudgetModal booking={context.booking} onClose={requestClose} /> : null}
     </ModalShell>
   );
 }
@@ -2444,14 +2604,29 @@ type CreateBookingField =
   | 'number'
   | 'date'
   | 'time'
-  | 'notes';
+  | 'service';
 
 type CreateBookingErrors = Partial<Record<CreateBookingField, string>>;
 
-function SharedCreateBookingModal({ audience, initialDate = '', onClose }: { audience: BookingAudience; initialDate?: string; onClose: () => void }) {
+function SharedCreateBookingModal({
+  audience,
+  initialDate = '',
+  onClose,
+  onSubmissionChange,
+}: {
+  audience: BookingAudience;
+  initialDate?: string;
+  onClose: () => void;
+  onSubmissionChange: (busy: boolean) => void;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: bootstrap } = usePublicBootstrap(true);
+  const bootstrapQuery = usePublicBootstrap(true);
+  const bootstrap = bootstrapQuery.data;
+  const services = useMemo(
+    () => [...new Set((bootstrap?.services ?? []).map((service) => service.trim()).filter(Boolean))],
+    [bootstrap?.services],
+  );
   const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
   const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
   const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);
@@ -2468,7 +2643,7 @@ function SharedCreateBookingModal({ audience, initialDate = '', onClose }: { aud
   const [houseNumber, setHouseNumber] = useState('');
   const [complement, setComplement] = useState('');
   const [referencePoint, setReferencePoint] = useState('');
-  const [notes, setNotes] = useState('');
+  const [selectedService, setSelectedService] = useState('');
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectedTime, setSelectedTime] = useState('');
   const [monthStart] = useState(() => startOfMonth());
@@ -2587,8 +2762,10 @@ function SharedCreateBookingModal({ audience, initialDate = '', onClose }: { aud
     } else if (!isAtLeast24HoursAhead(activeSelectedDate, activeSelectedTime)) {
       nextErrors.time = 'Escolha uma data com pelo menos 24 horas de antecedência.';
     }
-    if (!isServiceNotesValid(notes)) {
-      nextErrors.notes = 'Observacao: explique o que precisa de servico com pelo menos 10 caracteres. Exemplo: trocar tomada da sala.';
+    if (!selectedService || !services.includes(selectedService)) {
+      nextErrors.service = bootstrapQuery.isError
+        ? 'Não foi possível carregar os serviços. Tente novamente.'
+        : 'Serviço: selecione uma opção disponível.';
     }
 
     setFieldErrors(nextErrors);
@@ -2600,11 +2777,11 @@ function SharedCreateBookingModal({ audience, initialDate = '', onClose }: { aud
     setSubmitError('');
     setSuccessMessage('');
     createBookingInFlightRef.current = true;
+    onSubmissionChange(true);
 
     try {
       const response = await createBookingMutation.mutateAsync({
-        serviceType: 'Visita técnica',
-        serviceNotes: cleanFormText(notes).replace(/\s+/g, ' '),
+        serviceType: selectedService,
         date: activeSelectedDate,
         time: activeSelectedTime,
         clientFirstName: firstName,
@@ -2642,6 +2819,7 @@ function SharedCreateBookingModal({ audience, initialDate = '', onClose }: { aud
       setSuccessMessage(audience === 'admin'
         ? 'Agendamento criado. Atualizando a agenda administrativa...'
         : 'Agendamento criado. Abrindo seus agendamentos...');
+      onSubmissionChange(false);
       window.setTimeout(() => {
         onClose();
         if (audience === 'client') {
@@ -2651,6 +2829,7 @@ function SharedCreateBookingModal({ audience, initialDate = '', onClose }: { aud
     } catch (error) {
       trackEvent('booking_error');
       createBookingInFlightRef.current = false;
+      onSubmissionChange(false);
       const message = mapBookingCreateError(error);
       if (message.toLowerCase().includes('senha') || (error instanceof ApiError && error.code === 'RESERVED_ACCESS')) {
         setForceReservedPhonePassword(true);
@@ -2662,13 +2841,14 @@ function SharedCreateBookingModal({ audience, initialDate = '', onClose }: { aud
   };
 
   return (
-    <>
-      <ModalTitle icon="calendar-modal-blue" title="Criar agendamento" text="Preencha seus dados e informe onde e quando o serviço será realizado." />
-      <div className="wf-profile-prefill-row">
+    <div className="wf-create-booking-modal">
+      <div className="wf-create-booking-modal__scroll">
+        <ModalTitle icon="calendar-modal-blue" title="Criar agendamento" text="Preencha seus dados e informe onde e quando o serviço será realizado." />
+        <div className="wf-profile-prefill-row">
         <span><Icon name="user" /> {profileHasReusableData ? 'Dados de perfil disponíveis' : 'Nenhum dado de perfil salvo'}</span>
         <button type="button" onClick={handleUseProfileData} disabled={!profileHasReusableData}>Usar dados do perfil</button>
-      </div>
-      <div className="wf-create-booking-form wf-create-booking-form--wireframe">
+        </div>
+        <div className="wf-create-booking-form wf-create-booking-form--wireframe">
         <ModalField className="wf-create-field wf-create-field--name" label="Nome completo" icon="user" placeholder="Digite seu nome completo" required value={fullName} onChange={setFullName} error={fieldErrors.fullName} />
         <ModalField className="wf-create-field wf-create-field--phone" label="Telefone" icon="phone" placeholder="(11) 99999-9999" required value={phone} inputMode="tel" onChange={(value) => { setPhone(formatPhoneInput(value)); setReservedPhonePassword(''); setForceReservedPhonePassword(false); setFieldErrors((current) => ({ ...current, phone: undefined, protectedPassword: undefined })); }} error={fieldErrors.phone} />
         {requiresReservedPhonePassword ? <ModalField className="wf-create-field wf-create-field--protected-password" label="Senha da equipe" icon="lock" placeholder="Senha para telefone de admin/prestador" required value={reservedPhonePassword} type="password" onChange={setReservedPhonePassword} error={fieldErrors.protectedPassword} /> : null}
@@ -2704,23 +2884,41 @@ function SharedCreateBookingModal({ audience, initialDate = '', onClose }: { aud
           <div className="wf-time-options wf-time-options--scroll">{availableSlots.map((slot) => <button className={activeSelectedTime === slot.startTime ? 'is-active' : ''} type="button" key={`${slot.date}-${slot.startTime}`} onClick={() => setSelectedTime(slot.startTime)}>{slot.startTime}</button>)}</div>
           {fieldErrors.time ? <small className="wf-field-error">{fieldErrors.time}</small> : null}
         </div>
-        <ModalField className="wf-create-field wf-create-field--reference" label="Ponto de referência (opcional)" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
-        <label className="wf-modal-field wf-create-field wf-create-field--notes">
-          <span className="wf-field-label">Observações<em>*</em></span>
-          <textarea
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-            minLength={10}
-            placeholder="Explique detalhadamente o que precisa de serviço. Exemplo: trocar tomada da sala que parou de funcionar."
-          />
-          {fieldErrors.notes ? <small className="wf-field-error">{fieldErrors.notes}</small> : null}
-        </label>
+          <ModalField className="wf-create-field wf-create-field--reference" label="Ponto de referência (opcional)" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
+          <label className="wf-modal-field wf-create-field wf-create-field--service">
+            <span className="wf-field-label">Serviço<em>*</em></span>
+            <span className="wf-input-shell wf-input-shell--select">
+              <Icon name="booking-field-service" />
+              <select
+                aria-label="Serviço"
+                value={selectedService}
+                disabled={bootstrapQuery.isLoading || bootstrapQuery.isError || services.length === 0}
+                onChange={(event) => {
+                  setSelectedService(event.target.value);
+                  setFieldErrors((current) => ({ ...current, service: undefined }));
+                }}
+              >
+                <option value="">{bootstrapQuery.isLoading ? 'Carregando serviços...' : 'Selecione o serviço'}</option>
+                {services.map((service) => <option key={service} value={service}>{service}</option>)}
+              </select>
+              <Icon name="chevron" />
+            </span>
+            {bootstrapQuery.isError ? (
+              <small className="wf-service-load-state wf-service-load-state--error">
+                Não foi possível carregar os serviços.
+                <button type="button" onClick={() => void bootstrapQuery.refetch()}>Tentar novamente</button>
+              </small>
+            ) : null}
+            {!bootstrapQuery.isLoading && !bootstrapQuery.isError && services.length === 0 ? <small className="wf-service-load-state">Nenhum serviço disponível no momento.</small> : null}
+            {fieldErrors.service ? <small className="wf-field-error">{fieldErrors.service}</small> : null}
+          </label>
+        </div>
+        {activeSelectedTime ? <p className="wf-create-selected-slot">Horário selecionado: <strong>{activeSelectedTime}{activeSelectedEndTime ? ` - ${activeSelectedEndTime}` : ''}</strong></p> : null}
+        {successMessage ? <p className="wf-auth-feedback wf-auth-feedback--success">{successMessage}</p> : null}
+        {submitError ? <p className="wf-auth-feedback wf-auth-feedback--error">{submitError}</p> : null}
       </div>
-      {activeSelectedTime ? <p className="wf-create-selected-slot">Horário selecionado: <strong>{activeSelectedTime}{activeSelectedEndTime ? ` - ${activeSelectedEndTime}` : ''}</strong></p> : null}
-      {successMessage ? <p className="wf-auth-feedback wf-auth-feedback--success">{successMessage}</p> : null}
-      {submitError ? <p className="wf-auth-feedback wf-auth-feedback--error">{submitError}</p> : null}
-      <ModalActions primary={createBookingMutation.isPending ? 'Agendando...' : 'Confirmar agendamento'} secondary="Cancelar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={handleCreateBooking} disabledPrimary={createBookingMutation.isPending || Boolean(successMessage)} />
-    </>
+      <ModalActions primary={createBookingMutation.isPending ? 'Agendando...' : 'Confirmar agendamento'} secondary="Cancelar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={handleCreateBooking} disabledPrimary={createBookingMutation.isPending || Boolean(successMessage)} disabledSecondary={createBookingMutation.isPending} />
+    </div>
   );
 }
 
@@ -3562,14 +3760,14 @@ function AdminBlockModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function EditAdminBookingModal({ booking, onClose }: { booking?: BookingItem; onClose: () => void }) {
+function EditAdminBookingModal({ booking, onClose, onSubmissionChange }: { booking?: BookingItem; onClose: () => void; onSubmissionChange: (busy: boolean) => void }) {
+  const queryClient = useQueryClient();
   const source = booking?.source && 'eventId' in booking.source ? booking.source as ServicoResponse : null;
   const [date, setDate] = useState(booking?.date ?? '');
   const [time, setTime] = useState(booking?.time ?? '');
   const [serviceType, setServiceType] = useState(source?.serviceType || booking?.service || '');
   const [serviceNotes, setServiceNotes] = useState(source?.serviceNotes || booking?.notes || 'Observacao detalhada nao informada.');
   const [firstName, setFirstName] = useState(source?.clientFirstName || booking?.name.split(' ')[0] || '');
-  const [lastName, setLastName] = useState(source?.clientLastName || booking?.name.split(' ').slice(1).join(' ') || '');
   const [email, setEmail] = useState(source?.clientEmail || booking?.email || '');
   const [phone, setPhone] = useState(source?.clientPhone || booking?.phone || '');
   const [saving, setSaving] = useState(false);
@@ -3577,33 +3775,49 @@ function EditAdminBookingModal({ booking, onClose }: { booking?: BookingItem; on
 
   const save = async () => {
     if (!booking?.id || !source || saving) return;
+    const normalizedServiceType = serviceType.trim();
+    const normalizedServiceNotes = serviceNotes.trim();
+    const hasInvalidCustomNotes = Boolean(normalizedServiceNotes)
+      && normalizeText(normalizedServiceNotes) !== normalizeText(normalizedServiceType)
+      && normalizedServiceNotes.length < 10;
+    if (!normalizedServiceType || hasInvalidCustomNotes || !date || !time || !firstName.trim() || !isEmailValid(email) || !digitsOnly(phone)) {
+      setError('Preencha serviço, data, horário, nome, telefone e e-mail corretamente. Se informar uma observação, use ao menos 10 caracteres.');
+      return;
+    }
     setSaving(true);
+    onSubmissionChange(true);
     setError('');
-    const payload: ServicoRequest = {
-      serviceType,
-      serviceNotes,
+    const payload: AdminServicoUpdateRequest = {
+      serviceType: normalizedServiceType,
+      serviceNotes: normalizedServiceNotes && normalizeText(normalizedServiceNotes) !== normalizeText(normalizedServiceType)
+        ? normalizedServiceNotes
+        : undefined,
       date,
       time,
-      clientFirstName: firstName,
-      clientLastName: lastName,
-      clientEmail: email,
-      clientPhone: phone.replace(/\D/g, ''),
-      clientCep: source.clientCep,
+      clientFirstName: firstName.trim(),
+      clientEmail: email.trim(),
+      clientPhone: digitsOnly(phone),
+      clientCep: digitsOnly(source.clientCep || ''),
       clientStreet: source.clientStreet,
       clientNeighborhood: source.clientNeighborhood,
       clientNumber: source.clientNumber,
       clientComplement: source.clientComplement,
       clientCity: source.clientCity,
       clientState: source.clientState,
+      clientLatitude: source.clientLatitude,
+      clientLongitude: source.clientLongitude,
     };
     try {
-      await updateAdminBooking(booking.id, payload);
+      const updated = await updateAdminBooking(booking.id, payload);
+      queryClient.setQueriesData<ServicoResponse[]>({ queryKey: ['admin-bookings'] }, (current) => current?.map((item) => item.eventId === booking.id ? updated : item));
+      queryClient.setQueryData(['admin-booking', booking.id], updated);
+      await queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
       onClose();
-      window.location.reload();
     } catch (err) {
       setError(normalizeApiErrorMessage(err, { context: 'editBooking' }));
     } finally {
       setSaving(false);
+      onSubmissionChange(false);
     }
   };
 
@@ -3619,13 +3833,79 @@ function EditAdminBookingModal({ booking, onClose }: { booking?: BookingItem; on
           <ModalField label="Horario" icon="clock" type="time" value={time} onChange={setTime} />
           <ModalField label="Telefone" icon="phone" value={phone} onChange={setPhone} />
           <ModalField label="Nome" icon="user" value={firstName} onChange={setFirstName} />
-          <ModalField label="Sobrenome" icon="user" value={lastName} onChange={setLastName} />
           <ModalField className="wf-span-2" label="E-mail" icon="mail" value={email} onChange={setEmail} />
         </section>
       ) : null}
       {error ? <p className="booking-form__error">{error}</p> : null}
-      <ModalActions primary={saving ? 'Salvando...' : 'Salvar alteracoes'} secondary="Cancelar" primaryIcon="edit" onSecondary={onClose} onPrimary={save} />
+      <ModalActions primary={saving ? 'Salvando...' : 'Salvar alteracoes'} secondary="Cancelar" primaryIcon="edit" onSecondary={onClose} onPrimary={save} disabledPrimary={saving} disabledSecondary={saving} />
     </>
+  );
+}
+
+function CancelAdminBookingModal({
+  booking,
+  onClose,
+  onCancelled,
+  onSubmissionChange,
+}: {
+  booking?: BookingItem;
+  onClose: () => void;
+  onCancelled?: (eventId: string) => void;
+  onSubmissionChange: (busy: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [cancelling, setCancelling] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const confirmCancellation = async () => {
+    if (!booking?.id || cancelling || success) return;
+    setCancelling(true);
+    setError('');
+    onSubmissionChange(true);
+    try {
+      await deleteAdminBooking(booking.id);
+      await queryClient.cancelQueries({ queryKey: ['admin-bookings'] });
+      queryClient.setQueriesData<ServicoResponse[]>({ queryKey: ['admin-bookings'] }, (current) => current?.filter((item) => item.eventId !== booking.id));
+      queryClient.removeQueries({ queryKey: ['admin-booking', booking.id], exact: true });
+      void Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ['admin-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-summary'] }),
+      ]);
+      setSuccess('Agendamento cancelado com sucesso. A agenda já foi atualizada.');
+      onSubmissionChange(false);
+      onCancelled?.(booking.id);
+      window.setTimeout(onClose, 650);
+    } catch (err) {
+      const fallbackMessage = 'Não foi possível cancelar o agendamento. Nenhuma alteração foi feita.';
+      setError(err instanceof ApiError
+        ? normalizeApiErrorMessage(err, { context: 'cancelBooking', fallbackMessage })
+        : fallbackMessage);
+      setCancelling(false);
+      onSubmissionChange(false);
+    }
+  };
+
+  return (
+    <div className="cm-cancel-booking-modal">
+      <ModalTitle icon="delete" title="Cancelar agendamento" text="Revise os dados antes de confirmar. Esta ação remove o atendimento da agenda." />
+      {booking ? (
+        <section className="cm-cancel-booking-modal__summary" aria-label="Resumo do agendamento">
+          <span><small>Cliente</small><strong>{booking.name}</strong></span>
+          <span><small>Serviço</small><strong>{booking.service}</strong></span>
+          <span><small>Data e horário</small><strong>{ptDate.format(toLocalDate(booking.date))}, {booking.time}</strong></span>
+        </section>
+      ) : <EmptyState title="Agendamento não encontrado" text="Feche esta janela e selecione um agendamento válido." />}
+      <p className="cm-cancel-booking-modal__warning"><Icon name="bell" /> O horário será liberado imediatamente para novos agendamentos.</p>
+      {error ? <p className="wf-auth-feedback wf-auth-feedback--error" role="alert">{error}</p> : null}
+      {success ? <p className="wf-auth-feedback wf-auth-feedback--success" role="status">{success}</p> : null}
+      <footer className="wf-modal-actions cm-cancel-booking-modal__actions">
+        <button type="button" className="wf-ghost-btn" onClick={onClose} disabled={cancelling}>Voltar</button>
+        <button type="button" className="cm-cancel-booking-modal__confirm" onClick={confirmCancellation} disabled={!booking || cancelling || Boolean(success)}>
+          <Icon name="delete" /> {cancelling ? 'Cancelando...' : 'Cancelar agendamento'}
+        </button>
+      </footer>
+    </div>
   );
 }
 
@@ -3989,6 +4269,6 @@ function BudgetModal({ booking, onClose }: { booking?: BookingItem; onClose: () 
   );
 }
 
-function ModalActions({ primary, secondary, primaryIcon = 'plus', onPrimary, onSecondary, disabledPrimary = false }: { primary: string; secondary?: string; primaryIcon?: string; onPrimary?: () => void; onSecondary?: () => void; disabledPrimary?: boolean }) {
-  return <footer className="wf-modal-actions">{secondary ? <button type="button" className="wf-ghost-btn" onClick={onSecondary}>{secondary}</button> : null}<button type="button" className="wf-primary-cta wf-primary-cta--modal" onClick={onPrimary} disabled={disabledPrimary}>{primary} <Icon name={primaryIcon} /></button></footer>;
+function ModalActions({ primary, secondary, primaryIcon = 'plus', onPrimary, onSecondary, disabledPrimary = false, disabledSecondary = false }: { primary: string; secondary?: string; primaryIcon?: string; onPrimary?: () => void; onSecondary?: () => void; disabledPrimary?: boolean; disabledSecondary?: boolean }) {
+  return <footer className="wf-modal-actions">{secondary ? <button type="button" className="wf-ghost-btn" onClick={onSecondary} disabled={disabledSecondary}>{secondary}</button> : null}<button type="button" className="wf-primary-cta wf-primary-cta--modal" onClick={onPrimary} disabled={disabledPrimary}>{primary} <Icon name={primaryIcon} /></button></footer>;
 }

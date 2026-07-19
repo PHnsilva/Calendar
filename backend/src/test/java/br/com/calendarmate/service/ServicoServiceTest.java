@@ -3,6 +3,7 @@ package br.com.calendarmate.service;
 import br.com.calendarmate.booking.application.GetAvailableSlotsUseCase;
 import br.com.calendarmate.config.AppProperties;
 import br.com.calendarmate.controller.ServicoController;
+import br.com.calendarmate.dto.AdminServicoUpdateRequest;
 import br.com.calendarmate.dto.AvailabilityBlockCreateRequest;
 import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
@@ -12,6 +13,7 @@ import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.exception.GlobalExceptionHandler;
+import br.com.calendarmate.exception.NotFoundException;
 import br.com.calendarmate.exception.ReservedAdminPhoneException;
 import br.com.calendarmate.google.DummyCalendarClient;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
@@ -53,6 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -227,6 +230,31 @@ class ServicoServiceTest {
     }
 
     @Test
+    void createUsesSelectedServiceWhenOptionalNotesAndCepAreOmitted() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        ServicoRequest request = validRequest(nextAvailableDate(calendar, props));
+        request.setServiceType("Eletrica");
+        request.setServiceNotes(null);
+        request.setClientCep("");
+
+        ServicoResponse created = service.create(request).getServico();
+
+        assertEquals("Eletrica", created.getServiceType());
+        assertEquals("Eletrica", created.getServiceNotes());
+        assertFalse(created.getClientAddressLine().contains("CEP"));
+
+        AdminServicoUpdateRequest update = adminUpdateRequest(created, request.getDate());
+        update.setServiceNotes(null);
+        ServicoResponse updated = service.updateByIdAdmin(
+                created.getEventId(),
+                principal("owner-1", AdminRole.OWNER),
+                update);
+        assertEquals("Eletrica", updated.getServiceNotes());
+    }
+
+    @Test
     void adminListReturnsTomorrowBookingWithOneCalendarRead() throws IOException {
         AppProperties props = new AppProperties();
         TrackingCalendarClient calendar = new TrackingCalendarClient();
@@ -307,6 +335,23 @@ class ServicoServiceTest {
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].eventId").value(expected.getId()))
                 .andExpect(jsonPath("$[0].status").value("CONFIRMED"));
+
+        mvc.perform(get("/api/servicos/admin/{eventId}", expected.getId())
+                        .header("X-ADMIN-SESSION", sessionToken)
+                        .header("X-ADMIN-WORKSPACE", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.eventId").value(expected.getId()))
+                .andExpect(jsonPath("$.clientLastName").value("Souza"));
+
+        mvc.perform(delete("/api/servicos/admin/{eventId}", expected.getId())
+                        .header("X-ADMIN-SESSION", sessionToken)
+                        .header("X-ADMIN-WORKSPACE", "ADMIN"))
+                .andExpect(status().isOk());
+
+        mvc.perform(get("/api/servicos/admin/{eventId}", expected.getId())
+                        .header("X-ADMIN-SESSION", sessionToken)
+                        .header("X-ADMIN-WORKSPACE", "ADMIN"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -438,6 +483,26 @@ class ServicoServiceTest {
         assertEquals("Visita tecnica", booking.getServiceType());
     }
 
+    @Test
+    void adminUpdateDtoPreservesExistingSurnameWithoutAcceptingItInPayload() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        LocalDate date = nextAvailableDate(calendar, props);
+        ServicoResponse created = service.create(validRequest(date)).getServico();
+        AdminServicoUpdateRequest update = adminUpdateRequest(created, date);
+        update.setClientFirstName("Paulo");
+
+        ServicoResponse updated = service.updateByIdAdmin(
+                created.getEventId(),
+                principal("owner-1", AdminRole.OWNER),
+                update);
+
+        assertEquals("Paulo", updated.getClientFirstName());
+        assertEquals("Silva", updated.getClientLastName());
+        assertThrows(NotFoundException.class, () -> service.getByIdAdmin("missing-event", principal("owner-1", AdminRole.OWNER)));
+    }
+
     private static ServicoService serviceWith(DummyCalendarClient calendar, AppProperties props) {
         return serviceWith(calendar, props, adminAuthServiceWithoutAdmins());
     }
@@ -507,6 +572,27 @@ class ServicoServiceTest {
         req.setClientNumber("123");
         req.setClientCity("Itabirito");
         req.setClientState("MG");
+        return req;
+    }
+
+    private static AdminServicoUpdateRequest adminUpdateRequest(ServicoResponse source, LocalDate date) {
+        AdminServicoUpdateRequest req = new AdminServicoUpdateRequest();
+        req.setServiceType(source.getServiceType());
+        req.setServiceNotes(source.getServiceNotes());
+        req.setDate(date);
+        req.setTime(source.getStart().atZone(ZONE).toLocalTime());
+        req.setClientFirstName(source.getClientFirstName());
+        req.setClientEmail(source.getClientEmail());
+        req.setClientPhone(source.getClientPhone());
+        req.setClientCep(source.getClientCep());
+        req.setClientStreet(source.getClientStreet());
+        req.setClientNeighborhood(source.getClientNeighborhood());
+        req.setClientNumber(source.getClientNumber());
+        req.setClientComplement(source.getClientComplement());
+        req.setClientCity(source.getClientCity());
+        req.setClientState(source.getClientState());
+        req.setClientLatitude(source.getClientLatitude());
+        req.setClientLongitude(source.getClientLongitude());
         return req;
     }
 

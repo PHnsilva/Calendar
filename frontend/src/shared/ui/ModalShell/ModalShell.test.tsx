@@ -51,4 +51,19 @@ describe('ModalShell accessibility options', () => {
     expect(screen.getByRole('dialog', { name: 'Escolha obrigatória' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /fechar/i })).toBeNull();
   });
+
+  it('blocks every dismissal control while closing is disabled', () => {
+    const onClose = vi.fn();
+    const { container } = render(
+      <ModalShell open ariaLabel="Enviando" closeDisabled closeOnBackdrop closeOnEscape onClose={onClose}>
+        <button type="button">Conteúdo interno</button>
+      </ModalShell>,
+    );
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.mouseDown(container.firstElementChild as HTMLElement);
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar modal' }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect((screen.getByRole('button', { name: 'Fechar modal' }) as HTMLButtonElement).disabled).toBe(true);
+  });
 });

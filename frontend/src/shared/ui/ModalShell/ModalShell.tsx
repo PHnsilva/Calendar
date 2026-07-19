@@ -8,6 +8,7 @@ type ModalShellProps = {
   className?: string;
   closeIcon?: ReactNode;
   closeLabel?: string;
+  closeDisabled?: boolean;
   closeOnBackdrop?: boolean;
   closeOnEscape?: boolean;
   dataModal?: string;
@@ -30,6 +31,7 @@ export function ModalShell({
   className,
   closeIcon,
   closeLabel = "Fechar modal",
+  closeDisabled = false,
   closeOnBackdrop = false,
   closeOnEscape = false,
   dataModal,
@@ -51,7 +53,7 @@ export function ModalShell({
     if (lockBodyScroll) document.body.style.overflow = "hidden";
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (closeOnEscape && event.key === "Escape") onClose();
+      if (closeOnEscape && !closeDisabled && event.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handleKeyDown);
 
@@ -60,7 +62,7 @@ export function ModalShell({
       if (lockBodyScroll) document.body.style.overflow = previousOverflow;
       if (focusCloseOnOpen) previouslyFocused?.focus();
     };
-  }, [closeOnEscape, focusCloseOnOpen, lockBodyScroll, onClose, open]);
+  }, [closeDisabled, closeOnEscape, focusCloseOnOpen, lockBodyScroll, onClose, open]);
 
   if (!open) return null;
 
@@ -70,13 +72,13 @@ export function ModalShell({
       role="presentation"
       data-modal={dataModal}
       onMouseDown={(event) => {
-        if (closeOnBackdrop && event.target === event.currentTarget) onClose();
+        if (closeOnBackdrop && !closeDisabled && event.target === event.currentTarget) onClose();
       }}
     >
       <div className={cx(styles.shell, "wf-modal", className)} role="dialog" aria-label={ariaLabel} aria-modal="true">
         {showMobileHandle ? <span className="wf-modal-mobile-handle" aria-hidden="true" /> : null}
         {showCloseButton ? (
-          <button ref={closeRef} type="button" className="wf-modal-close" onClick={onClose} aria-label={closeLabel}>
+          <button ref={closeRef} type="button" className="wf-modal-close" onClick={onClose} aria-label={closeLabel} disabled={closeDisabled}>
             {closeIcon}
           </button>
         ) : null}

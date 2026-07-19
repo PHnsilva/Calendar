@@ -13,6 +13,18 @@ import java.util.stream.Collectors;
 
 @Configuration
 public class AppProperties {
+    private static final List<String> DEFAULT_SERVICE_TYPES = List.of(
+            "Montagem",
+            "Elétrica",
+            "Hidráulica",
+            "Instalações",
+            "Pequenos reparos",
+            "Serviços de pedreiro",
+            "Pintura",
+            "Jardinagem",
+            "Serviços com drone",
+            "Orçamento");
+
     @Value("${app.zone:America/Sao_Paulo}")
     private String zone;
 
@@ -45,6 +57,9 @@ public class AppProperties {
 
     @Value("${app.service.allowedStates:}")
     private String allowedStatesCsv;
+
+    @Value("${app.service.types:}")
+    private String serviceTypes;
 
     @Value("${app.booking.durationByCity:}")
     private String bookingDurationByCityCsv;
@@ -290,6 +305,19 @@ public class AppProperties {
             }
         }
         return 60;
+    }
+
+    public List<String> getServiceTypesDisplay() {
+        String configured = serviceTypes == null ? "" : serviceTypes.trim();
+        if (configured.isBlank()) {
+            return DEFAULT_SERVICE_TYPES;
+        }
+        List<String> parsed = Arrays.stream(configured.split("\\|"))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .collect(Collectors.toList());
+        return parsed.isEmpty() ? DEFAULT_SERVICE_TYPES : parsed;
     }
 
     public String getBookingBaseCity() { return cleanOrDefault(bookingBaseCity, "Itabirito"); }

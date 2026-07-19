@@ -1,6 +1,6 @@
 export type ServicoRequest = {
   serviceType: string;
-  serviceNotes: string;
+  serviceNotes?: string;
   date: string;
   time: string;
   clientFirstName: string;
@@ -17,6 +17,10 @@ export type ServicoRequest = {
   clientLatitude?: number;
   clientLongitude?: number;
   reservedPhonePassword?: string;
+};
+
+export type AdminServicoUpdateRequest = Omit<ServicoRequest, 'clientLastName' | 'reservedPhonePassword'> & {
+  serviceNotes?: string;
 };
 
 export type ServicoResponse = {
@@ -79,6 +83,7 @@ export type RecoverConfirmResponse = {
 
 export type PublicBootstrapResponse = {
   timezone: string;
+  services: string[];
   schedule: {
     cycleStart: string | null;
     workStart: string;

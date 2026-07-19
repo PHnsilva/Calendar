@@ -9,6 +9,7 @@ import com.google.api.services.calendar.model.Event;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -79,8 +80,18 @@ public class RoutesService {
         String state = ext.getOrDefault("clientState", "");
         String cep = ext.getOrDefault("clientCep", "");
 
-        String dest = (street + ", " + num + " - " + city + " " + state + " CEP " + cep).trim();
-        if (dest.replace(",", "").replace("-", "").isBlank()) {
+        List<String> parts = new ArrayList<>();
+        if (!street.isBlank() || !num.isBlank()) {
+            parts.add((street + (street.isBlank() || num.isBlank() ? "" : ", ") + num).trim());
+        }
+        if (!city.isBlank() || !state.isBlank()) {
+            parts.add((city + (city.isBlank() || state.isBlank() ? "" : "/") + state).trim());
+        }
+        if (!cep.isBlank()) {
+            parts.add("CEP " + cep);
+        }
+        String dest = String.join(" - ", parts);
+        if (dest.isBlank()) {
             throw new BadRequestException("Destino sem endereço para calcular rota");
         }
         return dest;

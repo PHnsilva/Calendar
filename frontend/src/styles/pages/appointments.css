@@ -6,3 +6,5 @@
  */
 
 @import "../appointments-wireframe-overrides.css";
+@import "../shared-booking-modal.css";
+@import "../admin-booking-details.css";

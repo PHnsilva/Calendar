@@ -1,0 +1,594 @@
+.cm-admin-booking-details,
+.cm-admin-booking-details * {
+  box-sizing: border-box;
+}
+
+.cm-admin-booking-details {
+  width: min(1600px, calc(100% - clamp(24px, 5vw, 88px)));
+  max-width: 100%;
+  min-width: 0;
+  margin: clamp(24px, 3.5vw, 52px) auto clamp(52px, 6vw, 96px);
+}
+
+.cm-admin-booking-details__header {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(12px, 1.8vw, 22px);
+  margin-bottom: clamp(22px, 3vw, 38px);
+}
+
+.cm-admin-booking-details__back {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d7e1ef;
+  border-radius: 15px;
+  background: #fff;
+  color: #061b52;
+  box-shadow: 0 8px 20px rgba(6, 27, 82, .07);
+}
+
+.cm-admin-booking-details__back .wf-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.cm-admin-booking-details__eyebrow,
+.cm-admin-route-map__header span,
+.cm-admin-booking-actions > div > span {
+  display: block;
+  margin-bottom: 5px;
+  color: #ff4f18;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.cm-admin-booking-details__header h1 {
+  margin: 0;
+  color: #061b52;
+  font-size: clamp(28px, 3.2vw, 48px);
+  line-height: 1.06;
+  letter-spacing: -.035em;
+}
+
+.cm-admin-booking-details__header p {
+  margin: 7px 0 0;
+  color: #647391;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.cm-admin-booking-details__layout {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(390px, .86fr) minmax(520px, 1.14fr);
+  grid-template-areas:
+    "information map"
+    "actions actions";
+  align-items: start;
+  gap: clamp(18px, 2.2vw, 30px);
+}
+
+.cm-admin-booking-details__information {
+  grid-area: information;
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.cm-admin-detail-section {
+  min-width: 0;
+  padding: clamp(18px, 2vw, 26px);
+  border: 1px solid #dce5f2;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 34px rgba(6, 27, 82, .06);
+}
+
+.cm-admin-detail-section > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.cm-admin-detail-section > header > span {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  color: var(--detail-accent, #0358ff);
+  background: var(--detail-soft, #edf4ff);
+}
+
+.cm-admin-detail-section--orange { --detail-accent: #e84a12; --detail-soft: #fff1eb; }
+.cm-admin-detail-section--blue { --detail-accent: #0358ff; --detail-soft: #edf4ff; }
+.cm-admin-detail-section--purple { --detail-accent: #7132e8; --detail-soft: #f3edff; }
+.cm-admin-detail-section--green { --detail-accent: #079447; --detail-soft: #eafbf1; }
+
+.cm-admin-detail-section > header .wf-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.cm-admin-detail-section h2 {
+  min-width: 0;
+  margin: 0;
+  color: #061b52;
+  font-size: clamp(18px, 1.5vw, 22px);
+  line-height: 1.2;
+}
+
+.cm-admin-detail-section dl {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+  margin: 0;
+}
+
+.cm-admin-detail-section dl > div {
+  min-width: 0;
+}
+
+.cm-admin-detail-section dl > div.is-wide {
+  grid-column: 1 / -1;
+}
+
+.cm-admin-detail-section dt {
+  margin-bottom: 5px;
+  color: #73809c;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+.cm-admin-detail-section dd {
+  margin: 0;
+  color: #1c315f;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+.cm-admin-route-map {
+  grid-area: map;
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+  padding: clamp(18px, 2.2vw, 28px);
+  border: 1px solid #d8e3f0;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 18px 46px rgba(6, 27, 82, .09);
+}
+
+.cm-admin-route-map__header {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cm-admin-route-map__header h2,
+.cm-admin-booking-actions h2 {
+  margin: 0;
+  color: #061b52;
+  font-size: clamp(20px, 2vw, 28px);
+  line-height: 1.15;
+}
+
+.cm-admin-route-map__controls {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cm-admin-route-map__controls a,
+.cm-admin-route-map__controls button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid #cedbec;
+  border-radius: 11px;
+  background: #fff;
+  color: #123269;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cm-admin-route-map__controls a:first-child {
+  border-color: #0358ff;
+  background: #0358ff;
+  color: #fff;
+}
+
+.cm-admin-route-map__controls .wf-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.cm-admin-route-map__visual {
+  position: relative;
+  min-width: 0;
+  min-height: clamp(330px, 37vw, 570px);
+  overflow: hidden;
+  border: 1px solid #ccd9e8;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #eaf2fb, #dce9f6);
+}
+
+.cm-admin-route-map__visual > img {
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  display: block;
+  object-fit: cover;
+}
+
+.cm-admin-route-map__fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px;
+  color: #3d547c;
+  text-align: center;
+}
+
+.cm-admin-route-map__fallback .wf-icon {
+  width: 52px;
+  height: 52px;
+  color: #0358ff;
+}
+
+.cm-admin-route-map__fallback strong {
+  color: #061b52;
+  font-size: 18px;
+}
+
+.cm-admin-route-map__fallback span {
+  max-width: 440px;
+  line-height: 1.5;
+}
+
+.cm-admin-route-map__attribution {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  max-width: calc(100% - 16px);
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .9);
+  color: #455879;
+  font-size: 10px;
+}
+
+.cm-admin-route-map__points {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(42px, .18fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.cm-admin-route-map__points article {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid #dce5f2;
+  border-radius: 14px;
+  background: #f9fbff;
+}
+
+.cm-admin-route-map__point {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.cm-admin-route-map__point--origin { color: #0358ff; background: #eaf2ff; }
+.cm-admin-route-map__point--destination { color: #e84a12; background: #fff0e9; }
+
+.cm-admin-route-map__point .wf-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.cm-admin-route-map__points small,
+.cm-admin-route-map__points strong,
+.cm-admin-route-map__points p {
+  display: block;
+  overflow-wrap: break-word;
+}
+
+.cm-admin-route-map__points small {
+  color: #71809e;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.cm-admin-route-map__points strong {
+  margin-top: 2px;
+  color: #061b52;
+  font-size: 13px;
+}
+
+.cm-admin-route-map__points p {
+  margin: 3px 0 0;
+  color: #60708e;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.cm-admin-route-map__connector {
+  height: 3px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(90deg, #6c8fc7 0 8px, transparent 8px 14px);
+}
+
+.cm-admin-route-map__state {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #edf4ff;
+  color: #234779;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cm-admin-route-map__state--error {
+  background: #fff0ee;
+  color: #b42318;
+}
+
+.cm-admin-route-map .route-summary-card {
+  margin: 0;
+}
+
+.cm-admin-booking-actions {
+  grid-area: actions;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(210px, .35fr) minmax(0, 1.65fr);
+  align-items: center;
+  gap: 20px;
+  padding: clamp(20px, 2.5vw, 30px);
+  border: 1px solid #dbe5f1;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(6, 27, 82, .06);
+}
+
+.cm-admin-booking-actions__grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.cm-admin-booking-actions__grid button {
+  min-width: 0;
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border: 1px solid #cfdbeb;
+  border-radius: 12px;
+  background: #fff;
+  color: #123269;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+}
+
+.cm-admin-booking-actions__grid .wf-icon {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.cm-admin-booking-actions__grid button.cm-admin-booking-actions__danger {
+  border-color: #f3c5bf;
+  background: #fff4f2;
+  color: #c52a1d;
+}
+
+.cm-admin-route-map__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1190;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: rgba(3, 13, 42, .72);
+  backdrop-filter: blur(5px);
+}
+
+.cm-admin-route-map.is-expanded {
+  position: fixed;
+  inset: clamp(10px, 2vw, 28px);
+  z-index: 1200;
+  max-height: calc(100dvh - clamp(20px, 4vw, 56px));
+  overflow-y: auto;
+  border-radius: 22px;
+}
+
+.cm-admin-route-map.is-expanded .cm-admin-route-map__visual {
+  min-height: clamp(440px, 62dvh, 900px);
+}
+
+.cm-admin-booking-details button:focus-visible,
+.cm-admin-booking-details a:focus-visible,
+.cm-admin-route-map button:focus-visible,
+.cm-admin-route-map a:focus-visible {
+  outline: 3px solid rgba(3, 88, 255, .38);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1180px) {
+  .cm-admin-booking-details__layout {
+    grid-template-columns: 1fr;
+    grid-template-areas: "map" "information" "actions";
+  }
+
+  .cm-admin-booking-details__information {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+@media (max-width: 820px) {
+  .cm-admin-booking-details {
+    width: min(100% - 24px, 760px);
+  }
+
+  .cm-admin-booking-details__information {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-admin-route-map__header,
+  .cm-admin-booking-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-admin-route-map__header {
+    display: grid;
+  }
+
+  .cm-admin-route-map__controls {
+    justify-content: stretch;
+  }
+
+  .cm-admin-route-map__controls > * {
+    flex: 1 1 170px;
+  }
+
+  .cm-admin-booking-actions__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .cm-admin-booking-details {
+    width: calc(100% - 20px);
+    margin-top: 18px;
+  }
+
+  .cm-admin-booking-details__header {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .cm-admin-booking-details__header > .wf-badge {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .cm-admin-booking-details__back {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .cm-admin-detail-section,
+  .cm-admin-route-map,
+  .cm-admin-booking-actions {
+    border-radius: 16px;
+  }
+
+  .cm-admin-detail-section dl {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-admin-detail-section dl > div.is-wide {
+    grid-column: auto;
+  }
+
+  .cm-admin-route-map__visual {
+    min-height: clamp(260px, 84vw, 390px);
+  }
+
+  .cm-admin-route-map__points {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-admin-route-map__connector {
+    width: 3px;
+    height: 28px;
+    justify-self: center;
+    background: repeating-linear-gradient(180deg, #6c8fc7 0 8px, transparent 8px 14px);
+  }
+
+  .cm-admin-booking-actions__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-admin-booking-actions__grid button {
+    justify-content: flex-start;
+    min-height: 48px;
+    text-align: left;
+  }
+
+  .cm-admin-route-map.is-expanded {
+    inset: 0;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 340px) {
+  .cm-admin-booking-details {
+    width: calc(100% - 16px);
+  }
+
+  .cm-admin-detail-section,
+  .cm-admin-route-map,
+  .cm-admin-booking-actions {
+    padding: 14px;
+  }
+
+  .cm-admin-route-map__controls {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .cm-admin-route-map__controls > * {
+    width: 100%;
+  }
+}

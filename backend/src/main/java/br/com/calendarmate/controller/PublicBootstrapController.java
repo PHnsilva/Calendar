@@ -50,6 +50,7 @@ public class PublicBootstrapController {
         serviceArea.setAllowedStates(props.getAllowedStatesDisplay());
         serviceArea.setDurationByCity(props.getBookingDurationByCityDisplay());
         response.setServiceArea(serviceArea);
+        response.setServices(props.getServiceTypesDisplay());
 
         return response;
     }

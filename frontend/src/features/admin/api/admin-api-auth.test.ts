@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AdminAuthConfirmResponse, ServicoRequest } from "../../../types/api";
+import type { AdminAuthConfirmResponse, AdminServicoUpdateRequest } from "../../../types/api";
 
 const admin = {
   id: "admin-1",
@@ -11,13 +11,12 @@ const admin = {
   sessionExpiresAt: Math.floor(Date.now() / 1000) + 3600,
 };
 
-const bookingPayload: ServicoRequest = {
+const bookingPayload: AdminServicoUpdateRequest = {
   serviceType: "Visita tecnica",
   serviceNotes: "Trocar tomada",
   date: "2026-07-10",
   time: "09:00",
   clientFirstName: "Pedro",
-  clientLastName: "Silva",
   clientEmail: "pedro@example.com",
   clientPhone: "31999999999",
   clientCep: "35450000",
@@ -55,6 +54,7 @@ describe("admin API authentication", () => {
     const { bulkCancelAdminBookings } = await import("./bulk-cancel-admin-bookings");
     const { computeAdminRoute } = await import("./compute-admin-route");
     const { deleteAdminBooking } = await import("./delete-admin-booking");
+    const { getAdminBooking } = await import("./get-admin-booking");
     const { getAdminBookings } = await import("./get-admin-bookings");
     const { getAdminDashboardSummary } = await import("./get-admin-dashboard-summary");
     const { getAdminHistory } = await import("./get-admin-history");
@@ -67,18 +67,22 @@ describe("admin API authentication", () => {
     await bulkCancelAdminBookings({ eventIds: ["event-1"], reason: "Indisponibilidade" });
     await computeAdminRoute({ eventId: "event-1", originLat: -20.25, originLng: -43.8 });
     await deleteAdminBooking("event-1");
+    await getAdminBooking("event-1");
     await getAdminBookings({ from: "2026-07-01", to: "2026-07-31", city: "Itabirito" });
     await getAdminDashboardSummary({ from: "2026-07-01", to: "2026-07-31", city: "Itabirito" });
     await getAdminHistory({ status: "CONFIRMED" });
     await listAdminBlocks({ mode: "BLOCK" });
     await updateAdminBooking("event-1", bookingPayload);
 
-    expect(fetchMock).toHaveBeenCalledTimes(11);
+    expect(fetchMock).toHaveBeenCalledTimes(12);
     for (const request of fetchMock.mock.calls) {
       expect(new Headers(request[1]?.headers).get("X-ADMIN-SESSION")).toBe("session-token");
     }
 
-    const bookingsUrl = new URL(String(fetchMock.mock.calls[6]?.[0]));
+    const detailsUrl = new URL(String(fetchMock.mock.calls[6]?.[0]));
+    expect(detailsUrl.pathname).toBe("/api/servicos/admin/event-1");
+
+    const bookingsUrl = new URL(String(fetchMock.mock.calls[7]?.[0]));
     expect(bookingsUrl.pathname).toBe("/api/servicos/admin");
     expect(bookingsUrl.searchParams.get("from")).toBe("2026-07-01");
     expect(bookingsUrl.searchParams.get("to")).toBe("2026-07-31");

@@ -11,8 +11,7 @@ public class ServicoRequest {
     @NotBlank
     private String serviceType;
 
-    @NotBlank(message = "Observação é obrigatória. Explique o que precisa de serviço, com pelo menos 10 caracteres. Exemplo: trocar tomada da sala")
-    @Size(min = 10, max = 2000, message = "Observação deve ter entre 10 e 2000 caracteres. Exemplo: trocar tomada da sala")
+    @Size(max = 2000, message = "Observação deve ter no máximo 2000 caracteres")
     private String serviceNotes;
 
     @NotNull

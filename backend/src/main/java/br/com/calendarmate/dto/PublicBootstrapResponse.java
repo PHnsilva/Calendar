@@ -72,6 +72,7 @@ public class PublicBootstrapResponse {
     private BookingConfig booking;
     private VerificationConfig verification;
     private ServiceAreaConfig serviceArea;
+    private List<String> services = new ArrayList<>();
     public String getTimezone() { return timezone; }
     public void setTimezone(String timezone) { this.timezone = timezone; }
     public ScheduleConfig getSchedule() { return schedule; }
@@ -82,4 +83,6 @@ public class PublicBootstrapResponse {
     public void setVerification(VerificationConfig verification) { this.verification = verification; }
     public ServiceAreaConfig getServiceArea() { return serviceArea; }
     public void setServiceArea(ServiceAreaConfig serviceArea) { this.serviceArea = serviceArea; }
+    public List<String> getServices() { return services; }
+    public void setServices(List<String> services) { this.services = services == null ? new ArrayList<>() : new ArrayList<>(services); }
 }

@@ -71,6 +71,18 @@ class AppPropertiesTest {
     }
 
     @Test
+    void exposesAConfigurableServiceCatalogWithoutDuplicatingBlankEntries() throws Exception {
+        AppProperties props = new AppProperties();
+        set(props, "serviceTypes", "Eletrica | Hidraulica | Eletrica |  ");
+
+        assertEquals(java.util.List.of("Eletrica", "Hidraulica"), props.getServiceTypesDisplay());
+
+        set(props, "serviceTypes", "");
+        assertTrue(props.getServiceTypesDisplay().contains("Montagem"));
+        assertTrue(props.getServiceTypesDisplay().contains("Orçamento"));
+    }
+
+    @Test
     void configuredProviderByIdOverridesDefaultPlaceholderPhone() throws Exception {
         AppProperties props = new AppProperties();
         set(props, "adminUsersCsv", "31988887777|Prestador Real|PROVIDER|provider-1");

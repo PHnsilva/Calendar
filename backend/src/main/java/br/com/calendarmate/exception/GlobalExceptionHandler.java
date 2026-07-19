@@ -25,6 +25,7 @@ public class GlobalExceptionHandler {
 
     private static final String MSG_GENERIC_RETRY = "Algo deu errado ao concluir a ação. Tente novamente.";
     private static final String MSG_DEPENDENCY_RETRY = "Não foi possível concluir agora. Tente novamente em alguns instantes.";
+    private static final String MSG_AUTH_DEPENDENCY_RETRY = "Não foi possível validar sua sessão agora. Tente novamente em instantes.";
     private static final String MSG_NETWORK_RETRY = "Verifique sua conexão e tente novamente.";
     private static final String MSG_PERMISSION = "Você não tem permissão para realizar essa ação.";
     private static final String MSG_SESSION_EXPIRED = "Sua sessão expirou. Entre novamente para continuar.";
@@ -338,6 +339,9 @@ public class GlobalExceptionHandler {
         String errorCode = normalize(ex.getErrorCode());
         String path = req.getRequestURI();
 
+        if (errorCode.contains("auth_dependency")) {
+            return descriptor(HttpStatus.SERVICE_UNAVAILABLE, "AUTH_DEPENDENCY_UNAVAILABLE", MSG_AUTH_DEPENDENCY_RETRY, true);
+        }
         if (errorCode.contains("timeout")) {
             return descriptor(HttpStatus.GATEWAY_TIMEOUT, dependencyCodeByPath(path, "DEPENDENCY_TIMEOUT"), messageByPath(path), true);
         }

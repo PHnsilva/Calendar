@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthContext } from '../../app/providers/auth-context';
+import { ApiError } from '../../lib/api-client';
 import { getStoredAdminSession, saveAdminSession, setAdminWorkspace } from '../../lib/storage';
 import type { AdminMeResponse, AvailabilityBlockResponse, ServicoResponse } from '../../types/api';
 
@@ -106,12 +107,40 @@ afterEach(() => {
 });
 
 describe('admin agenda flows', () => {
+  it('renders the wordmark-only admin navbar and accessible agenda controls', async () => {
+    await renderDashboard();
+
+    const brand = screen.getByRole('link', { name: 'SG Pequenos Reparos Agendamentos' });
+    expect(brand.getAttribute('href')).toBe('/admin');
+    expect(brand.querySelector('.cm-admin-navbar__mark')).toBeNull();
+    expect(brand.querySelector('img')?.getAttribute('src')).toContain('sg-navbar-logo-white-orange-v2');
+    brand.focus();
+    expect(document.activeElement).toBe(brand);
+    expect(screen.queryByRole('button', { name: 'Abrir menu administrativo' })).toBeNull();
+
+    const period = screen.getByRole('combobox', { name: 'Período da agenda' });
+    expect(period.closest('.wf-admin-week-agenda__week')?.querySelector('.wf-admin-week-agenda__select-chevron')).toBeTruthy();
+    period.focus();
+    expect(document.activeElement).toBe(period);
+
+    const createButtons = document.querySelectorAll('.wf-admin-week-agenda__new');
+    expect(createButtons.length).toBe(2);
+    createButtons.forEach((button) => {
+      expect(button.querySelector('.wf-admin-week-agenda__add-icon')).toBeTruthy();
+    });
+  });
+
   it('loads the authenticated tomorrow booking, filters every period, and opens the pre-blocked calendar', async () => {
     await renderDashboard();
 
     expect(await screen.findByText('Teste Amanhã')).toBeTruthy();
     expect(screen.queryByText(/Faça login administrativo/i)).toBeNull();
     expect(mocks.useAdminBookings).toHaveBeenCalledWith({ from: '2026-07-18', to: '2026-07-24' }, true);
+    const initialAppointmentsSummary = screen.getAllByText('Agendamentos').map((node) => node.closest('article')).find(Boolean);
+    const initialProviderSummary = screen.getByText('Sem prestador').closest('article');
+    expect(initialAppointmentsSummary?.textContent).toContain('1próximos 7 dias');
+    expect(initialProviderSummary?.textContent).toContain('1agendamentos');
+    expect(screen.getByText('1 agendamento')).toBeTruthy();
 
     const viewAction = screen.getByRole('button', { name: 'Ver' });
     expect(viewAction.querySelector('.wf-icon svg, .wf-icon img')).toBeTruthy();
@@ -139,18 +168,28 @@ describe('admin agenda flows', () => {
   });
 
   it('keeps an authenticated API failure distinct from a login failure', async () => {
+    const refetch = vi.fn();
+    const calendarError = new ApiError(
+      'Não foi possível consultar a agenda agora. Tente novamente em instantes.',
+      503,
+      { code: 'CALENDAR_UNAVAILABLE', retryable: true },
+      { code: 'CALENDAR_UNAVAILABLE', retryable: true },
+    );
     mocks.useAdminBookings.mockReturnValue({
       data: undefined,
+      error: calendarError,
       isError: true,
       isFetching: false,
       isPending: false,
-      refetch: vi.fn(),
+      refetch,
     });
 
     await renderDashboard();
 
-    expect(await screen.findByText(/Sua sessão está ativa, mas a agenda não respondeu/i)).toBeTruthy();
+    expect(await screen.findByText(/Não foi possível consultar a agenda agora/i)).toBeTruthy();
     expect(screen.queryByText(/Faça login administrativo/i)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 
   it('shows Filmagem com drones in Serviços prestados instead of Orçamento', async () => {

@@ -12,7 +12,6 @@ type AdminNavbarProps = {
   onCreate?: () => void;
   onEmailClick?: () => void;
   onMobileAdminClick?: () => void;
-  onMobileMenu?: () => void;
   onView?: (view: AdminNavView) => void;
   owner?: boolean;
 };
@@ -117,7 +116,6 @@ export default function AdminNavbar({
   onCreate,
   onEmailClick,
   onMobileAdminClick,
-  onMobileMenu,
   onView,
   owner = false,
 }: AdminNavbarProps) {
@@ -141,19 +139,14 @@ export default function AdminNavbar({
   );
 
   const mobileActions = (
-    <>
-      <button type="button" className="cm-admin-menu-button" onClick={onMobileMenu} aria-label="Abrir menu administrativo" title="Menu">
-        <NavbarIcon name="menu" />
-      </button>
-      <AdminProfileMenu
-        compact
-        firstName={firstName}
-        labelContent={<><NavbarIcon name="user" /> <span>{firstName}</span></>}
-        onBudgetClick={onBudgetClick}
-        onEmailClick={openEmail}
-        onLogout={logout}
-      />
-    </>
+    <AdminProfileMenu
+      compact
+      firstName={firstName}
+      labelContent={<><NavbarIcon name="user" /> <span>{firstName}</span></>}
+      onBudgetClick={onBudgetClick}
+      onEmailClick={openEmail}
+      onLogout={logout}
+    />
   );
 
   return (

@@ -187,17 +187,40 @@
   box-shadow: 0 16px 32px rgba(255, 75, 11, 0.22);
 }
 
+.wf-admin-week-agenda__new .wf-admin-week-agenda__add-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+}
+
+.wf-admin-week-agenda__new > span {
+  min-width: 0;
+  line-height: 1.1;
+}
+
 .wf-admin-week-agenda__week {
-  background: linear-gradient(135deg, var(--sg-navy), #073484);
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) 22px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 46%),
+    linear-gradient(135deg, var(--sg-navy), #073484);
   color: #fff;
   border-color: transparent;
   min-width: clamp(220px, 18vw, 360px);
+  padding: 0 18px;
+  gap: 12px;
   cursor: pointer;
+  box-shadow: 0 14px 30px rgba(6, 27, 82, 0.16);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 .wf-admin-week-agenda__week select {
   width: 100%;
+  height: 100%;
   min-width: 0;
+  padding: 0;
   border: 0;
   outline: 0;
   appearance: none;
@@ -205,8 +228,9 @@
   background: transparent;
   font: inherit;
   font-weight: 950;
-  text-align: center;
-  text-align-last: center;
+  line-height: 1.2;
+  text-align: left;
+  text-align-last: left;
   cursor: pointer;
 }
 
@@ -216,12 +240,31 @@
 }
 
 .wf-admin-week-agenda__week:focus-within {
-  outline: 3px solid rgba(3, 88, 255, 0.3);
+  outline: 3px solid rgba(3, 88, 255, 0.38);
   outline-offset: 3px;
+  box-shadow: 0 15px 32px rgba(6, 27, 82, 0.22);
 }
 
-.wf-admin-week-agenda__week .wf-icon--chevron {
+.wf-admin-week-agenda__select-chevron {
+  display: block;
+  width: 22px;
+  height: 22px;
+  justify-self: end;
   pointer-events: none;
+}
+
+@media (hover: hover) {
+  .wf-admin-week-agenda__week:hover {
+    box-shadow: 0 17px 34px rgba(6, 27, 82, 0.22);
+    transform: translateY(-1px);
+  }
+}
+
+.wf-admin-week-agenda__new:focus-visible,
+.wf-admin-week-agenda__calendar:focus-visible,
+.wf-admin-week-agenda__filter:focus-visible {
+  outline: 3px solid rgba(3, 88, 255, 0.38);
+  outline-offset: 3px;
 }
 
 .wf-admin-week-agenda__calendar {
@@ -362,6 +405,20 @@
 .wf-admin-week-agenda__list {
   display: grid;
   gap: clamp(18px, 1.7vw, 26px);
+}
+
+.wf-admin-week-agenda__list .wf-empty-state--loading {
+  border-color: #c8d9f4;
+  background: linear-gradient(145deg, #ffffff, #f4f8ff);
+}
+
+.wf-admin-week-agenda__list .wf-empty-state--error {
+  border-color: #f2b7ab;
+  background: linear-gradient(145deg, #ffffff, #fff4f1);
+}
+
+.wf-admin-week-agenda__list .wf-empty-state--error > .wf-icon {
+  color: #d83920;
 }
 
 .wf-admin-week-day {
@@ -1614,6 +1671,17 @@
     min-height: 70px !important;
     border-radius: 19px !important;
     font-size: clamp(1.02rem, 3vw, 1.2rem) !important;
+  }
+
+  .wf-admin-week-agenda__week {
+    grid-template-columns: 25px minmax(0, 1fr) 21px !important;
+    padding-inline: clamp(15px, 4vw, 20px) !important;
+    gap: clamp(9px, 2.8vw, 13px) !important;
+  }
+
+  .wf-admin-week-agenda__select-chevron {
+    width: 21px;
+    height: 21px;
   }
 
   .wf-admin-week-agenda__new--desktop,

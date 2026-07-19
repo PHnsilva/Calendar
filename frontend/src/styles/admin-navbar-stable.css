@@ -72,61 +72,45 @@ body {
 
 .cm-admin-navbar__brand {
   grid-column: 1 !important;
-  align-self: stretch !important;
-  justify-self: stretch !important;
+  align-self: center !important;
+  justify-self: start !important;
   display: flex !important;
-  align-items: stretch !important;
-  width: 100% !important;
+  align-items: center !important;
+  width: auto !important;
   min-width: 0 !important;
   max-width: 100% !important;
-  height: 100% !important;
+  height: auto !important;
   color: inherit !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 
-.cm-admin-navbar__mark,
 .cm-admin-navbar__wordmark {
   min-width: 0 !important;
-  height: 100% !important;
   display: flex !important;
   align-items: center !important;
   overflow: hidden !important;
-}
-
-.cm-admin-navbar__mark {
-  flex: 0 0 clamp(150px, 14vw, 230px) !important;
-  width: clamp(150px, 14vw, 230px) !important;
-  min-width: clamp(150px, 14vw, 230px) !important;
-  justify-content: center !important;
-  padding: 10px clamp(38px, 4vw, 64px) 10px clamp(18px, 3vw, 44px) !important;
-  background:
-    radial-gradient(circle at 28% 34%, rgba(65, 145, 255, 0.36), transparent 38%),
-    linear-gradient(130deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 42%),
-    linear-gradient(145deg, #031648 0%, #073c8d 56%, #041338 100%) !important;
-  clip-path: polygon(0 0, 82% 0, 100% 50%, 82% 100%, 0 100%) !important;
-}
-
-.cm-admin-navbar__mark img {
-  width: clamp(68px, 7vw, 116px) !important;
-  height: auto !important;
-  object-fit: contain !important;
-  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.34)) !important;
-}
-
-.cm-admin-navbar__wordmark {
-  flex: 1 1 auto !important;
+  flex: 0 1 auto !important;
+  height: clamp(62px, 6vw, 72px) !important;
   justify-content: flex-start !important;
-  padding: 0 clamp(12px, 1.5vw, 26px) !important;
-  background: #ffffff !important;
+  padding: 9px clamp(16px, 2vw, 28px) !important;
+  background: linear-gradient(135deg, #031648, #073c8d 58%, #041338) !important;
+  border-radius: 0 20px 20px 0 !important;
+  box-shadow: 0 10px 22px rgba(6, 27, 82, 0.12) !important;
 }
 
 .cm-admin-navbar__wordmark img {
-  width: clamp(210px, 18vw, 348px) !important;
+  width: clamp(210px, 19vw, 292px) !important;
   height: auto !important;
-  max-height: 74% !important;
+  max-height: 100% !important;
   object-fit: contain !important;
   object-position: left center !important;
   background: transparent !important;
+}
+
+.cm-admin-navbar__brand:focus-visible,
+.cm-admin-navbar button:focus-visible {
+  outline: 3px solid rgba(3, 88, 255, 0.42) !important;
+  outline-offset: 3px !important;
 }
 
 .cm-admin-navbar__actions {
@@ -154,7 +138,6 @@ body {
 }
 
 .cm-admin-create-button,
-.cm-admin-menu-button,
 .cm-admin-profile-trigger {
   appearance: none !important;
   border: 0 !important;
@@ -416,25 +399,12 @@ body {
     padding-right: 20px !important;
   }
 
-  .cm-admin-navbar__mark {
-    flex-basis: clamp(126px, 12vw, 168px) !important;
-    width: clamp(126px, 12vw, 168px) !important;
-    min-width: clamp(126px, 12vw, 168px) !important;
-    padding-left: 12px !important;
-    padding-right: clamp(28px, 3vw, 38px) !important;
-  }
-
-  .cm-admin-navbar__mark img {
-    width: clamp(56px, 6vw, 80px) !important;
-  }
-
   .cm-admin-navbar__wordmark {
-    padding-left: 10px !important;
-    padding-right: 4px !important;
+    height: 64px !important;
   }
 
   .cm-admin-navbar__wordmark img {
-    width: clamp(170px, 19vw, 258px) !important;
+    width: clamp(184px, 19vw, 236px) !important;
   }
 
   .cm-admin-create-button,
@@ -470,20 +440,8 @@ body {
     padding-right: 12px !important;
   }
 
-  .cm-admin-navbar__mark {
-    flex-basis: 112px !important;
-    width: 112px !important;
-    min-width: 112px !important;
-    padding-left: 7px !important;
-    padding-right: 24px !important;
-  }
-
-  .cm-admin-navbar__mark img {
-    width: 50px !important;
-  }
-
   .cm-admin-navbar__wordmark img {
-    width: clamp(150px, 17vw, 184px) !important;
+    width: clamp(164px, 18vw, 190px) !important;
   }
 
   .cm-admin-create-button,
@@ -536,13 +494,12 @@ body {
 
 @media (max-width: 900px) {
   .cm-admin-navbar {
-    --cm-admin-top-height: 104px;
-    --cm-mobile-actions-width: clamp(214px, 40vw, 296px);
+    --cm-admin-top-height: 88px;
     overflow: visible !important;
   }
 
   .cm-admin-navbar__top {
-    grid-template-columns: minmax(0, 1fr) var(--cm-mobile-actions-width) !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
     height: var(--cm-admin-top-height) !important;
     min-height: var(--cm-admin-top-height) !important;
     padding: 0 !important;
@@ -551,26 +508,22 @@ body {
   .cm-admin-navbar__brand {
     grid-column: 1 !important;
     max-width: 100% !important;
-    overflow: hidden !important;
-  }
-
-  .cm-admin-navbar__mark {
-    display: none !important;
+    overflow: visible !important;
   }
 
   .cm-admin-navbar__wordmark {
-    flex: 0 1 min(360px, 100%) !important;
-    width: min(360px, 100%) !important;
+    flex: 0 1 auto !important;
+    width: auto !important;
     max-width: 100% !important;
-    padding: 0 clamp(10px, 2.4vw, 22px) !important;
+    height: 62px !important;
+    padding: 9px clamp(12px, 2.4vw, 18px) !important;
     justify-content: flex-start !important;
-    background: #ffffff !important;
-    border-bottom-right-radius: 28px !important;
+    border-radius: 0 18px 18px 0 !important;
   }
 
   .cm-admin-navbar__wordmark img {
-    width: clamp(172px, 38vw, 248px) !important;
-    max-height: 78% !important;
+    width: clamp(144px, 35vw, 214px) !important;
+    max-height: 100% !important;
   }
 
   .cm-admin-navbar__actions {
@@ -581,35 +534,15 @@ body {
     grid-column: 2 !important;
     align-self: center !important;
     justify-self: end !important;
-    display: grid !important;
-    grid-template-columns: 64px minmax(136px, 172px) !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: end !important;
-    gap: 14px !important;
-    width: var(--cm-mobile-actions-width) !important;
+    gap: 0 !important;
+    width: auto !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    padding: 0 20px 0 8px !important;
+    padding: 0 16px 0 8px !important;
     overflow: visible !important;
-  }
-
-  .cm-admin-menu-button {
-    width: 64px !important;
-    min-width: 64px !important;
-    height: 64px !important;
-    min-height: 64px !important;
-    padding: 0 !important;
-    border: 1px solid #cbd8ec !important;
-    border-radius: 18px !important;
-    background: #ffffff !important;
-    color: var(--cm-admin-navy) !important;
-    box-shadow: 0 8px 18px rgba(6, 27, 82, 0.08) !important;
-  }
-
-  .cm-admin-menu-button .wf-icon {
-    width: 31px !important;
-    height: 31px !important;
-    min-width: 31px !important;
   }
 
   .cm-admin-navbar__mobile-actions .cm-admin-profile-menu-wrap {
@@ -683,37 +616,21 @@ body {
 
 @media (max-width: 560px) {
   .cm-admin-navbar {
-    --cm-admin-top-height: 94px;
-    --cm-mobile-actions-width: 172px;
+    --cm-admin-top-height: 82px;
   }
 
   .cm-admin-navbar__wordmark {
-    padding-left: 12px !important;
-    padding-right: 6px !important;
+    height: 56px !important;
+    padding: 8px 11px !important;
+    border-radius: 0 16px 16px 0 !important;
   }
 
   .cm-admin-navbar__wordmark img {
-    width: clamp(130px, 42vw, 174px) !important;
+    width: clamp(124px, 37vw, 158px) !important;
   }
 
   .cm-admin-navbar__mobile-actions {
-    grid-template-columns: 50px 112px !important;
-    gap: 8px !important;
-    padding: 0 8px 0 2px !important;
-  }
-
-  .cm-admin-menu-button {
-    width: 50px !important;
-    min-width: 50px !important;
-    height: 50px !important;
-    min-height: 50px !important;
-    border-radius: 14px !important;
-  }
-
-  .cm-admin-menu-button .wf-icon {
-    width: 27px !important;
-    height: 27px !important;
-    min-width: 27px !important;
+    padding: 0 8px 0 4px !important;
   }
 
   .cm-admin-navbar__mobile-actions .cm-admin-profile-trigger {
@@ -751,7 +668,7 @@ body {
 
 @media (max-width: 380px) {
   .cm-admin-navbar__wordmark img {
-    width: 122px !important;
+    width: 116px !important;
   }
 
   .cm-admin-navbar__tabs .wf-admin-tab {

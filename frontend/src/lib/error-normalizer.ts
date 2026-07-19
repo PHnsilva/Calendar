@@ -48,6 +48,7 @@ const CODE_MESSAGES: Record<string, string> = {
   ADDRESS_LOOKUP_UNAVAILABLE: "Não foi possível buscar o endereço agora. Confira os dados e tente novamente.",
   ADDRESS_NOT_FOUND: "Não encontramos esse CEP. Revise o número e tente novamente.",
   AVAILABILITY_BLOCK_CONFLICT: "Existem agendamentos nesse período. Revise a prévia antes de bloquear.",
+  AUTH_DEPENDENCY_UNAVAILABLE: "Não foi possível validar sua sessão agora. Tente novamente em instantes.",
   BOOKING_ALREADY_COMPLETED: "Esse agendamento já foi concluído.",
   BOOKING_INVALID_DATE: "Escolha uma data válida para continuar.",
   BOOKING_INVALID_TIME: "Escolha um horário válido para continuar.",

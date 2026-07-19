@@ -384,7 +384,9 @@ public class AdminAuthService {
                     ex.getProviderName() == null ? "admin_session_store" : ex.getProviderName(),
                     ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
                     safeExceptionMessage(ex));
-            throw ex;
+            throw ExternalServiceException.authDependencyUnavailable(
+                    ex.getProviderName() == null ? "admin_session_store" : ex.getProviderName(),
+                    ex);
         } catch (RuntimeException ex) {
             log.warn(
                     "Admin auth dependency failure phase=admin_session_lookup exceptionClass={} exceptionMessage={}",
@@ -476,7 +478,9 @@ public class AdminAuthService {
                     ex.getProviderName() == null ? "admin_user_store" : ex.getProviderName(),
                     ex.getProviderStatus() == null ? "n/a" : ex.getProviderStatus(),
                     safeExceptionMessage(ex));
-            throw ex;
+            throw ExternalServiceException.authDependencyUnavailable(
+                    ex.getProviderName() == null ? "admin_user_store" : ex.getProviderName(),
+                    ex);
         } catch (RuntimeException ex) {
             log.warn(
                     "Admin auth dependency failure phase={} exceptionClass={} exceptionMessage={}",

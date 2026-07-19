@@ -217,6 +217,29 @@ class ServicoServiceTest {
     }
 
     @Test
+    void adminListReturnsTomorrowBookingWithOneCalendarRead() throws IOException {
+        AppProperties props = new AppProperties();
+        TrackingCalendarClient calendar = new TrackingCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        LocalDate tomorrow = LocalDate.now(ZONE).plusDays(1);
+        Event expected = calendar.createEvent(confirmedBooking(tomorrow, LocalTime.of(9, 0)));
+        calendar.resetListBookingEventsCalls();
+
+        List<ServicoResponse> visible = service.listAllAdmin(
+                principal("owner-1", AdminRole.OWNER),
+                tomorrow,
+                tomorrow,
+                null,
+                null);
+
+        assertEquals(1, calendar.getListBookingEventsCalls());
+        assertEquals(1, visible.size());
+        assertEquals(expected.getId(), visible.get(0).getEventId());
+        assertEquals(tomorrow, visible.get(0).getStart().atZone(ZONE).toLocalDate());
+        assertEquals("CONFIRMED", visible.get(0).getStatus());
+    }
+
+    @Test
     void adminDefaultWindowUsesTodayThroughNextSevenDays() throws IOException {
         AppProperties props = new AppProperties();
         DummyCalendarClient calendar = new DummyCalendarClient();
@@ -472,6 +495,24 @@ class ServicoServiceTest {
         @Override
         public Duration getBookingMinLeadTime() {
             return Duration.ofHours(24).plusSeconds(1);
+        }
+    }
+
+    private static class TrackingCalendarClient extends DummyCalendarClient {
+        private int listBookingEventsCalls;
+
+        @Override
+        public List<Event> listBookingEvents(DateTime timeMin, DateTime timeMax) throws IOException {
+            listBookingEventsCalls++;
+            return super.listBookingEvents(timeMin, timeMax);
+        }
+
+        int getListBookingEventsCalls() {
+            return listBookingEventsCalls;
+        }
+
+        void resetListBookingEventsCalls() {
+            listBookingEventsCalls = 0;
         }
     }
 

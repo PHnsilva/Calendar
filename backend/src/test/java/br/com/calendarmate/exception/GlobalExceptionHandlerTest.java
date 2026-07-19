@@ -40,6 +40,15 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void keepsAdminSessionDependencyFailuresDistinctFromCalendarFailures() throws Exception {
+        mvc.perform(get("/api/servicos/admin/auth-dependency"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("AUTH_DEPENDENCY_UNAVAILABLE"))
+                .andExpect(jsonPath("$.message").value("Não foi possível validar sua sessão agora. Tente novamente em instantes."))
+                .andExpect(jsonPath("$.retryable").value(true));
+    }
+
+    @Test
     void mapsInvalidAdminPasswordToFriendlyMessage() throws Exception {
         mvc.perform(post("/api/admin/auth/password"))
                 .andExpect(status().isForbidden())
@@ -97,6 +106,11 @@ class GlobalExceptionHandlerTest {
                     "Supabase",
                     null,
                     null);
+        }
+
+        @GetMapping("/api/servicos/admin/auth-dependency")
+        void adminSessionDependencyFailure() {
+            throw ExternalServiceException.authDependencyUnavailable("admin_session_store", null);
         }
 
         @PostMapping("/api/admin/auth/password")

@@ -522,6 +522,7 @@ function useAdminBookingsData(filters: AdminFilters = {}) {
     bookings: sortBookings(bookings),
     isLoading: query.isPending || (query.isFetching && !query.data),
     isError: query.isError,
+    error: query.error,
     hasAdminSession,
     refetch: query.refetch,
   };
@@ -866,6 +867,22 @@ function Icon({ name }: { name: string }) {
   };
 
   return <SvgWrapper className={cx('wf-icon', `wf-icon--${name.replace(/[^a-zA-Z0-9-]/g, '-')}`)}>{icons[name] ?? icons.check}</SvgWrapper>;
+}
+
+function AdminAgendaAddIcon() {
+  return (
+    <svg className="wf-admin-week-agenda__add-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function AdminAgendaSelectChevron() {
+  return (
+    <svg className="wf-admin-week-agenda__select-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="m7 9.5 5 5 5-5" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 function LogoMark({ compact = false }: { compact?: boolean }) {
@@ -1306,9 +1323,9 @@ function BookingCard({
   );
 }
 
-function EmptyState({ title, text, action, onAction }: { title: string; text: string; action?: string; onAction?: () => void }) {
+function EmptyState({ title, text, action, onAction, tone = 'empty' }: { title: string; text: string; action?: string; onAction?: () => void; tone?: 'empty' | 'error' | 'loading' }) {
   return (
-    <article className="wf-empty-state">
+    <article className={cx('wf-empty-state', `wf-empty-state--${tone}`)} role={tone === 'error' ? 'alert' : tone === 'loading' ? 'status' : undefined} aria-live={tone === 'empty' ? undefined : 'polite'}>
       <Icon name="calendar" />
       <h2>{title}</h2>
       <p>{text}</p>
@@ -1627,7 +1644,6 @@ export function AdminLanding() {
           onCreate={() => setModal('create-client')}
           onEmailClick={() => setModal('email-admin')}
           onMobileAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
-          onMobileMenu={() => notifyUnavailable('Menu do administrador')}
           onView={openNavbarView}
         />
       )}
@@ -1709,7 +1725,6 @@ export function AdminDashboard() {
           onCreate={openCreate}
           onEmailClick={() => { setContext({}); setModal('email-admin'); }}
           onMobileAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
-          onMobileMenu={() => notifyUnavailable('Menu do administrador')}
           onView={selectAdminView}
         />
       )}
@@ -1926,7 +1941,7 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
   const { adminSession } = useAuth();
   const [rangeKey, setRangeKey] = useState<AdminAgendaRangeKey>('NEXT_7_DAYS');
   const range = useMemo(() => getAdminAgendaRange(rangeKey), [rangeKey]);
-  const { bookings, isLoading, isError, hasAdminSession, refetch } = useAdminBookingsData({ from: range.from, to: range.to });
+  const { bookings, isLoading, isError, error, hasAdminSession, refetch } = useAdminBookingsData({ from: range.from, to: range.to });
   const { blocks } = useAdminBlocksData();
   const owner = adminSession?.role === 'OWNER' && adminSession.workspace?.mode === 'ADMIN';
   const [search, setSearch] = useState('');
@@ -1962,7 +1977,7 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
           <h1 id="wf-admin-week-agenda-title">Agendamentos</h1>
           <p>{range.viewDescription}</p>
         </div>
-        {owner ? <button type="button" className="wf-admin-week-agenda__new wf-admin-week-agenda__new--desktop" onClick={() => openCreate()}><Icon name="plus" /> Novo agendamento</button> : null}
+        {owner ? <button type="button" className="wf-admin-week-agenda__new wf-admin-week-agenda__new--desktop" onClick={() => openCreate()}><AdminAgendaAddIcon /> <span>Novo agendamento</span></button> : null}
       </div>
 
       <div className="wf-admin-week-agenda__controls">
@@ -1974,11 +1989,11 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
             <option value="NEXT_7_DAYS">Próximos 7 dias</option>
             <option value="THIS_MONTH">Este mês</option>
           </select>
-          <Icon name="chevron" />
+          <AdminAgendaSelectChevron />
         </label>
         <button type="button" className="wf-admin-week-agenda__calendar" onClick={() => setModal('block-admin')}><Icon name="calendar" /> Abrir calendário</button>
         <span className="wf-admin-week-agenda__range"><Icon name="calendar" /> {range.label}</span>
-        {owner ? <button type="button" className="wf-admin-week-agenda__new wf-admin-week-agenda__new--mobile" onClick={() => openCreate()}><Icon name="plus" /> Novo agendamento</button> : null}
+        {owner ? <button type="button" className="wf-admin-week-agenda__new wf-admin-week-agenda__new--mobile" onClick={() => openCreate()}><AdminAgendaAddIcon /> <span>Novo agendamento</span></button> : null}
       </div>
 
       <div className="wf-admin-week-agenda__search-row">
@@ -1996,8 +2011,8 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
       </div>
 
       <div className="wf-admin-week-agenda__list">
-        {isLoading ? <EmptyState title="Carregando agendamentos" text="Buscando agendamentos da agenda." /> : null}
-        {isError && hasAdminSession ? <EmptyState title="Não foi possível carregar os agendamentos" text="Sua sessão está ativa, mas a agenda não respondeu. Tente novamente." action="Tentar novamente" onAction={() => void refetch()} /> : null}
+        {isLoading ? <EmptyState tone="loading" title="Carregando agendamentos" text="Buscando agendamentos da agenda." /> : null}
+        {isError && hasAdminSession ? <EmptyState tone="error" title="Não foi possível carregar os agendamentos" text={normalizeApiErrorMessage(error, { context: 'calendar', fallbackMessage: 'Sua sessão está ativa, mas a agenda não respondeu. Tente novamente.' })} action="Tentar novamente" onAction={() => void refetch()} /> : null}
         {!isLoading && !isError && dayGroups.length === 0 ? <EmptyState title="Nenhum agendamento no período" text={search ? 'Nenhum agendamento do período corresponde à busca atual.' : `Não há agendamentos para ${range.optionLabel.toLowerCase()}.`} /> : null}
         {dayGroups.map((group, index) => (
           <AdminWeekDayGroup
@@ -2163,7 +2178,6 @@ export function AdminBookingDetails() {
           onCreate={() => setModal('create-client')}
           onEmailClick={() => { setContext(booking ? { booking } : {}); setModal('email-admin'); }}
           onMobileAdminClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
-          onMobileMenu={() => notifyUnavailable('Menu do administrador')}
           onView={selectAdminView}
         />
       )}

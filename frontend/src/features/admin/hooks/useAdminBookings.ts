@@ -35,12 +35,13 @@ function mapServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
 export function useAdminBookings(filters: AdminFilters = {}, enabled = true) {
   const query = useQuery({
     queryKey: queryKeys.adminBookings(buildFiltersKey(filters)),
-    queryFn: () => getAdminBookings(filters),
+    queryFn: ({ signal }) => getAdminBookings(filters, signal),
     enabled,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchInterval: enabled ? 20_000 : false,
+    retry: 0,
+    staleTime: 30_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
   });
 
   return {

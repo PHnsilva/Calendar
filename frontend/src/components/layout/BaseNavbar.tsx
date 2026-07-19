@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import adminLogoMark from '../../assets/brand/admin-logo-mark.png';
 import defaultLogoSrc from '../../assets/brand/logowithname.webp';
+import adminWordmarkSrc from '../../assets/brand/sg-navbar-logo-white-orange-v2.png';
 
 type NavbarProfile = 'client' | 'admin' | 'provider';
 type NavbarButtonVariant = 'blue' | 'orange' | 'ghost';
@@ -132,8 +132,7 @@ export function NavbarIcon({ name }: { name: NavbarIconName }) {
     ),
     plus: (
       <svg {...common}>
-        <circle cx="32" cy="32" r="26" stroke="currentColor" strokeWidth="4.4" />
-        <path d="M32 19v26M19 32h26" stroke="currentColor" strokeWidth="5.4" strokeLinecap="round" />
+        <path d="M32 15v34M15 32h34" stroke="currentColor" strokeWidth="5.4" strokeLinecap="round" />
       </svg>
     ),
     user: (
@@ -188,18 +187,15 @@ export default function BaseNavbar({
   mobileActions,
   profile,
 }: BaseNavbarProps) {
-  const resolvedLogoSrc = logoSrc || (profile === 'admin' ? adminLogoMark : defaultLogoSrc);
+  const resolvedLogoSrc = logoSrc || (profile === 'admin' ? adminWordmarkSrc : defaultLogoSrc);
 
   if (profile === 'admin') {
     return (
       <header className={cx('cm-admin-navbar', className)} data-admin-navbar>
         <div className="cm-admin-navbar__top">
           <Link to={logoTo} className="cm-admin-navbar__brand" aria-label={logoLabel}>
-            <span className="cm-admin-navbar__mark" aria-hidden="true">
-              <img src={resolvedLogoSrc} alt="" />
-            </span>
             <span className="cm-admin-navbar__wordmark" aria-hidden="true">
-              <img src={defaultLogoSrc} alt="" />
+              <img src={resolvedLogoSrc} alt="" />
             </span>
           </Link>
           {actions ? <nav className="cm-admin-navbar__actions" aria-label="Ações principais">{actions}</nav> : null}

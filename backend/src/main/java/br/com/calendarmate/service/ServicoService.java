@@ -442,8 +442,6 @@ public class ServicoService {
 
     public List<ServicoResponse> listAllAdmin(AdminPrincipal principal, LocalDate fromDate, LocalDate toDate, String status, String city)
             throws IOException {
-        syncBookingHistory();
-
         LocalDate today = LocalDate.now(ZONE);
 
         LocalDate resolvedFrom;
@@ -464,12 +462,10 @@ public class ServicoService {
             }
         }
 
-        cleanupExpiredPendings(resolvedFrom, resolvedTo);
-
         ZonedDateTime from = resolvedFrom.atStartOfDay(ZONE);
         ZonedDateTime to = resolvedTo.plusDays(1).atStartOfDay(ZONE);
 
-        List<Event> events = listBookingEventsBetween(from, to);
+        List<Event> events = cleanupExpiredPendings(listBookingEventsBetween(from, to));
 
         String normalizedStatus = normalizeAdminStatus(status);
         String normalizedCity = normalizeAdminCity(city);
@@ -965,19 +961,27 @@ public class ServicoService {
     }
 
     private void cleanupExpiredPendings(ZonedDateTime from, ZonedDateTime to) throws IOException {
-        List<Event> events = calendar.listBookingEvents(
+        cleanupExpiredPendings(calendar.listBookingEvents(
                 new DateTime(Date.from(from.toInstant())),
-                new DateTime(Date.from(to.toInstant())));
-        if (events == null)
-            return;
+                new DateTime(Date.from(to.toInstant()))));
+    }
+
+    private List<Event> cleanupExpiredPendings(List<Event> events) throws IOException {
+        if (events == null || events.isEmpty())
+            return Collections.emptyList();
+
+        List<Event> active = new ArrayList<>(events.size());
 
         for (Event e : events) {
             Map<String, String> ext = privateExt(e);
             if (isExpiredPending(ext)) {
                 pendingStore.deleteByEventId(e.getId());
                 calendar.deleteEvent(e.getId());
+            } else {
+                active.add(e);
             }
         }
+        return active;
     }
 
     private boolean hasActivePendingForPhone(String phoneDigits) throws IOException {

@@ -94,6 +94,7 @@ export default function OtpConfirmModal({
           setCode(codeFromSms);
         }
       } catch {
+        // Web OTP is optional; the visible code inputs remain available.
       }
     })();
 

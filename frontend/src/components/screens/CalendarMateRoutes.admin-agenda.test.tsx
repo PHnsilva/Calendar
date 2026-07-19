@@ -38,8 +38,8 @@ const tomorrowBooking: ServicoResponse = {
   eventLink: '',
   serviceType: 'Instalação de luminária',
   serviceNotes: 'Agendamento de teste para amanhã.',
-  start: '2026-07-19T09:00:00',
-  end: '2026-07-19T10:00:00',
+  start: '2026-07-19T12:00:00Z',
+  end: '2026-07-19T13:00:00Z',
   clientFirstName: 'Teste',
   clientLastName: 'Amanhã',
   clientEmail: 'teste@example.test',
@@ -112,7 +112,8 @@ describe('admin agenda flows', () => {
 
     const brand = screen.getByRole('link', { name: 'SG Pequenos Reparos Agendamentos' });
     expect(brand.getAttribute('href')).toBe('/admin');
-    expect(brand.querySelector('.cm-admin-navbar__mark')).toBeNull();
+    expect(brand.querySelector('.cm-admin-navbar__mark')).toBeTruthy();
+    expect(brand.querySelector('.cm-admin-navbar__mark img')).toBeNull();
     expect(brand.querySelector('img')?.getAttribute('src')).toContain('sg-navbar-logo-white-orange-v2');
     brand.focus();
     expect(document.activeElement).toBe(brand);
@@ -123,17 +124,19 @@ describe('admin agenda flows', () => {
     period.focus();
     expect(document.activeElement).toBe(period);
 
-    const createButtons = document.querySelectorAll('.wf-admin-week-agenda__new');
-    expect(createButtons.length).toBe(2);
-    createButtons.forEach((button) => {
-      expect(button.querySelector('.wf-admin-week-agenda__add-icon')).toBeTruthy();
-    });
+    expect(document.querySelector('.wf-admin-week-agenda__new')).toBeNull();
+    const navbarCreateButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.cm-admin-create-button, .cm-admin-mobile-create-button'));
+    expect(navbarCreateButtons).toHaveLength(2);
+    expect(navbarCreateButtons.every((button) => Boolean(button.querySelector('svg')))).toBe(true);
+    navbarCreateButtons[1].focus();
+    expect(document.activeElement).toBe(navbarCreateButtons[1]);
   });
 
   it('loads the authenticated tomorrow booking, filters every period, and opens the pre-blocked calendar', async () => {
     await renderDashboard();
 
     expect(await screen.findByText('Teste Amanhã')).toBeTruthy();
+    expect(screen.getByText('09:00')).toBeTruthy();
     expect(screen.queryByText(/Faça login administrativo/i)).toBeNull();
     expect(mocks.useAdminBookings).toHaveBeenCalledWith({ from: '2026-07-18', to: '2026-07-24' }, true);
     const initialAppointmentsSummary = screen.getAllByText('Agendamentos').map((node) => node.closest('article')).find(Boolean);
@@ -190,6 +193,38 @@ describe('admin agenda flows', () => {
     expect(screen.queryByText(/Faça login administrativo/i)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a dedicated loading state while the authenticated request is pending', async () => {
+    mocks.useAdminBookings.mockReturnValue({
+      data: undefined,
+      error: null,
+      isError: false,
+      isFetching: true,
+      isPending: true,
+      refetch: vi.fn(),
+    });
+
+    await renderDashboard();
+
+    expect(await screen.findByText(/Carregando agendamentos/i)).toBeTruthy();
+    expect(screen.queryByText(/Nenhum agendamento no per/i)).toBeNull();
+  });
+
+  it('shows the real empty state only after a successful empty response', async () => {
+    mocks.useAdminBookings.mockReturnValue({
+      data: [],
+      error: null,
+      isError: false,
+      isFetching: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+
+    await renderDashboard();
+
+    expect(await screen.findByText(/Nenhum agendamento no per/i)).toBeTruthy();
+    expect(screen.queryByText(/Carregando agendamentos/i)).toBeNull();
   });
 
   it('shows Filmagem com drones in Serviços prestados instead of Orçamento', async () => {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { useHomeBookingSelection } from '../../../app/home-booking-provider';
+import { useHomeBookingSelection } from '../../../app/home-booking-context';
 import { buildMailtoUrl } from '../../../lib/mailto';
 import { getPhoneVerificationChangedEventName, getStoredPhoneVerification } from '../../../lib/storage';
 

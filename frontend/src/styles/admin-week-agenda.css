@@ -162,7 +162,6 @@
   font-weight: 700;
 }
 
-.wf-admin-week-agenda__new,
 .wf-admin-week-agenda__week,
 .wf-admin-week-agenda__calendar,
 .wf-admin-week-agenda__filter,
@@ -178,25 +177,6 @@
   font-weight: 950;
   color: var(--sg-navy);
   background: #fff;
-}
-
-.wf-admin-week-agenda__new {
-  border-color: #ff5a18;
-  background: linear-gradient(135deg, var(--sg-orange), #ff671e);
-  color: #fff;
-  box-shadow: 0 16px 32px rgba(255, 75, 11, 0.22);
-}
-
-.wf-admin-week-agenda__new .wf-admin-week-agenda__add-icon {
-  display: block;
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
-}
-
-.wf-admin-week-agenda__new > span {
-  min-width: 0;
-  line-height: 1.1;
 }
 
 .wf-admin-week-agenda__week {
@@ -260,7 +240,6 @@
   }
 }
 
-.wf-admin-week-agenda__new:focus-visible,
 .wf-admin-week-agenda__calendar:focus-visible,
 .wf-admin-week-agenda__filter:focus-visible {
   outline: 3px solid rgba(3, 88, 255, 0.38);
@@ -286,10 +265,6 @@
   margin-bottom: clamp(16px, 2vw, 26px);
 }
 
-.wf-admin-week-agenda__new--mobile {
-  display: none;
-}
-
 .wf-admin-week-agenda__search-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(132px, 190px);
@@ -313,7 +288,6 @@
 .wf-admin-week-agenda__filter .wf-icon,
 .wf-admin-week-agenda__week .wf-icon,
 .wf-admin-week-agenda__calendar .wf-icon,
-.wf-admin-week-agenda__new .wf-icon,
 .wf-admin-week-agenda__range .wf-icon {
   width: 26px;
   height: 26px;
@@ -904,13 +878,8 @@
     font-size: 1.22rem;
   }
 
-  .wf-admin-week-agenda__new--desktop,
   .wf-admin-week-agenda__range {
     display: none;
-  }
-
-  .wf-admin-week-agenda__new--mobile {
-    display: inline-flex;
   }
 
   .wf-admin-week-agenda__controls {
@@ -918,13 +887,8 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .wf-admin-week-agenda__new--mobile {
-    grid-column: 1 / -1;
-  }
-
   .wf-admin-week-agenda__week,
   .wf-admin-week-agenda__calendar,
-  .wf-admin-week-agenda__new,
   .wf-admin-week-agenda__filter {
     min-width: 0;
     min-height: 66px;
@@ -1665,7 +1629,6 @@
 
   .wf-admin-week-agenda__week,
   .wf-admin-week-agenda__calendar,
-  .wf-admin-week-agenda__new,
   .wf-admin-week-agenda__filter {
     min-width: 0 !important;
     min-height: 70px !important;
@@ -1684,14 +1647,8 @@
     height: 21px;
   }
 
-  .wf-admin-week-agenda__new--desktop,
   .wf-admin-week-agenda__range {
     display: none !important;
-  }
-
-  .wf-admin-week-agenda__new--mobile {
-    display: inline-flex !important;
-    grid-column: 1 / -1 !important;
   }
 
   .wf-admin-week-agenda__search-row {

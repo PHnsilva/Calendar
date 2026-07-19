@@ -4,7 +4,7 @@ function sanitizePixText(value: string, fallback: string, maxLength: number): st
   const normalized = value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^A-Za-z0-9 $%*+\-.\/:]/g, "")
+    .replace(/[^A-Za-z0-9 $%*+\-./:]/g, "")
     .trim()
     .toUpperCase();
   return (normalized || fallback).slice(0, maxLength);

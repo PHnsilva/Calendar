@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useHomeBookingSelection } from "../../../app/home-booking-provider";
+import { useHomeBookingSelection } from "../../../app/home-booking-context";
 import { getCityTone } from "../../../data/allowed-cities";
 import { apiClient } from "../../../lib/api-client";
 import { normalizeApiErrorMessage } from "../../../lib/errors";
+import { toBusinessDateTimeParts } from "../../../lib/dates";
 import {
   getManageTokenByEventId,
   getManageTokens,
@@ -133,12 +134,14 @@ function getMonthBadgeParts(monthStart: string) {
 
 function mapServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
   const customerName = `${servico.clientFirstName} ${servico.clientLastName}`.trim();
+  const start = toBusinessDateTimeParts(servico.start);
+  const end = toBusinessDateTimeParts(servico.end);
   return {
     id: servico.eventId,
     title: customerName || "Cliente",
-    date: servico.start.slice(0, 10),
-    startTime: servico.start.slice(11, 16),
-    endTime: servico.end.slice(11, 16),
+    date: start.date,
+    startTime: start.time,
+    endTime: end.time,
     city: servico.clientCity,
     customerName,
     customerAddress: servico.clientAddressLine,
@@ -318,11 +321,12 @@ export default function HomeBookingsTimeline({
     getBookingByToken(manageToken)
       .then((response) => {
         if (cancelled) return;
+        const responseStart = toBusinessDateTimeParts(response.start);
         setBookingDetails(response);
         saveManageToken(manageToken, response.eventId);
         setEditDraft({
-          date: response.start.slice(0, 10),
-          time: response.start.slice(11, 16),
+          date: responseStart.date,
+          time: responseStart.time,
           addressLine: extractAddressDraft(response),
           reservedPhonePassword: "",
         });

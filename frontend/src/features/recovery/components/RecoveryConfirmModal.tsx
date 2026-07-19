@@ -66,6 +66,7 @@ export function RecoveryConfirmModal({
           setCode(codeFromSms);
         }
       } catch {
+        // Web OTP is optional; the visible code input remains available.
       }
     })();
 

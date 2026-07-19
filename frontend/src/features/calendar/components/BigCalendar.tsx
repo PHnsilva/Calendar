@@ -98,14 +98,6 @@ export default function BigCalendar({
   );
 
   useEffect(() => {
-    if (!adminSelectionEnabled) {
-      setDragAnchor('');
-      setIsDragging(false);
-      setSelectionBoxStyle(null);
-    }
-  }, [adminSelectionEnabled]);
-
-  useEffect(() => {
     const updateSelectionBox = () => {
       if (!adminSelectionEnabled || compactMode || adminSelectedDates.length === 0 || !bodyRef.current) {
         setSelectionBoxStyle(null);

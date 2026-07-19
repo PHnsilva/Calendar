@@ -11,6 +11,44 @@ function parseDateInput(value: Date | string): Date {
   return new Date(normalized);
 }
 
+const DEFAULT_BUSINESS_TIME_ZONE = "America/Sao_Paulo";
+
+export type DateTimeParts = {
+  date: string;
+  time: string;
+};
+
+export function toBusinessDateTimeParts(
+  value: Date | string,
+  timeZone = DEFAULT_BUSINESS_TIME_ZONE,
+): DateTimeParts {
+  if (typeof value === "string") {
+    const localDateTime = value.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::\d{2}(?:\.\d+)?)?$/);
+    if (localDateTime) {
+      return { date: localDateTime[1], time: localDateTime[2] };
+    }
+  }
+
+  const date = parseDateInput(value);
+  if (Number.isNaN(date.getTime())) return { date: "", time: "" };
+
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? "";
+
+  return {
+    date: `${part("year")}-${part("month")}-${part("day")}`,
+    time: `${part("hour")}:${part("minute")}`,
+  };
+}
+
 function parseMonthInput(value: Date | string): { year: number; month: number } {
   if (value instanceof Date) {
     return { year: value.getFullYear(), month: value.getMonth() };

@@ -194,6 +194,7 @@ export default function BaseNavbar({
       <header className={cx('cm-admin-navbar', className)} data-admin-navbar>
         <div className="cm-admin-navbar__top">
           <Link to={logoTo} className="cm-admin-navbar__brand" aria-label={logoLabel}>
+            <span className="cm-admin-navbar__mark" aria-hidden="true" />
             <span className="cm-admin-navbar__wordmark" aria-hidden="true">
               <img src={resolvedLogoSrc} alt="" />
             </span>

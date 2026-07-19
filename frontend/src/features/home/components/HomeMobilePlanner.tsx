@@ -154,6 +154,7 @@ export default function HomeMobilePlanner({
   const [activeDate, setActiveDate] = useState(selectedDate || todayIso);
   const [isAllAgendaOpen, setIsAllAgendaOpen] = useState(false);
   const [overviewDate, setOverviewDate] = useState(selectedDate || todayIso);
+  const [lastSelectedDate, setLastSelectedDate] = useState(selectedDate);
   const unavailableSet = useMemo(() => new Set(unavailableDates), [unavailableDates]);
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -165,11 +166,11 @@ export default function HomeMobilePlanner({
     return map;
   }, [events]);
 
-  useEffect(() => {
-    if (!selectedDate) return;
+  if (selectedDate && selectedDate !== lastSelectedDate) {
+    setLastSelectedDate(selectedDate);
     setActiveDate(selectedDate);
     if (!isAllAgendaOpen) setOverviewDate(selectedDate);
-  }, [isAllAgendaOpen, selectedDate]);
+  }
 
   const weekPages = useMemo(
     () => buildWeekCells(todayIso, endOfMonth(nextAllowedMonth)),

@@ -1,6 +1,8 @@
 package br.com.calendarmate.service;
 
+import br.com.calendarmate.booking.application.GetAvailableSlotsUseCase;
 import br.com.calendarmate.config.AppProperties;
+import br.com.calendarmate.controller.ServicoController;
 import br.com.calendarmate.dto.AvailabilityBlockCreateRequest;
 import br.com.calendarmate.dto.AvailableSlotResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
@@ -9,6 +11,7 @@ import br.com.calendarmate.dto.ServicoResponse;
 import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.exception.ForbiddenException;
+import br.com.calendarmate.exception.GlobalExceptionHandler;
 import br.com.calendarmate.exception.ReservedAdminPhoneException;
 import br.com.calendarmate.google.DummyCalendarClient;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
@@ -20,12 +23,15 @@ import br.com.calendarmate.model.Servico;
 import br.com.calendarmate.service.store.AdminSessionStore;
 import br.com.calendarmate.service.store.AdminUserStore;
 import br.com.calendarmate.service.store.InMemoryAdminUserStore;
+import br.com.calendarmate.service.store.InMemoryAdminSessionStore;
 import br.com.calendarmate.service.store.InMemoryBookingHistoryStore;
 import br.com.calendarmate.service.store.InMemoryPendingStore;
 import br.com.calendarmate.service.store.VerificationStore;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.model.Event;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -45,6 +51,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class ServicoServiceTest {
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
@@ -237,6 +247,66 @@ class ServicoServiceTest {
         assertEquals(expected.getId(), visible.get(0).getEventId());
         assertEquals(tomorrow, visible.get(0).getStart().atZone(ZONE).toLocalDate());
         assertEquals("CONFIRMED", visible.get(0).getStatus());
+    }
+
+    @Test
+    void adminListIsReadOnlyAndStillReturnsTomorrowWhenExpiredPendingCleanupWouldFail() throws IOException {
+        AppProperties props = new AppProperties();
+        DeleteFailingCalendarClient calendar = new DeleteFailingCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        LocalDate tomorrow = LocalDate.now(ZONE).plusDays(1);
+        Event expected = calendar.createEvent(confirmedBooking(tomorrow, LocalTime.of(9, 0)));
+        Servico expiredPending = confirmedBooking(tomorrow, LocalTime.of(10, 0));
+        expiredPending.setStatus("PENDING_PHONE");
+        expiredPending.setPendingExpiresAt(Instant.now().minusSeconds(60));
+        calendar.createEvent(expiredPending);
+        calendar.resetListBookingEventsCalls();
+
+        List<ServicoResponse> visible = service.listAllAdmin(
+                principal("owner-1", AdminRole.OWNER),
+                tomorrow,
+                tomorrow,
+                null,
+                null);
+
+        assertEquals(1, calendar.getListBookingEventsCalls());
+        assertEquals(0, calendar.getDeleteEventCalls());
+        assertEquals(1, visible.size());
+        assertEquals(expected.getId(), visible.get(0).getEventId());
+    }
+
+    @Test
+    void authenticatedAdminEndpointReturnsTomorrowBookingForRequestedRange() throws Exception {
+        EndpointAdminProperties props = new EndpointAdminProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        AdminAuthService auth = new AdminAuthService(
+                new InMemoryAdminUserStore("+55 31 99999-9999|Owner|OWNER|owner-1"),
+                new InMemoryAdminSessionStore(),
+                new TrackingVerificationStore(),
+                new NoopOtpDeliveryClient(),
+                props);
+        String sessionToken = auth.passwordLogin("+55 31 99999-9999", "team-password").getSessionToken();
+        ServicoService service = serviceWith(calendar, props, auth);
+        LocalDate tomorrow = LocalDate.now(ZONE).plusDays(1);
+        Event expected = calendar.createEvent(confirmedBooking(tomorrow, LocalTime.of(9, 0)));
+        MockMvc mvc = MockMvcBuilders
+                .standaloneSetup(new ServicoController(
+                        service,
+                        new TokenUtil("test-secret", 600),
+                        auth,
+                        mock(GetAvailableSlotsUseCase.class)))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+
+        mvc.perform(get("/api/servicos/admin")
+                        .header("X-ADMIN-SESSION", sessionToken)
+                        .header("X-ADMIN-WORKSPACE", "ADMIN")
+                        .param("from", tomorrow.toString())
+                        .param("to", tomorrow.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].eventId").value(expected.getId()))
+                .andExpect(jsonPath("$[0].status").value("CONFIRMED"));
     }
 
     @Test
@@ -498,6 +568,13 @@ class ServicoServiceTest {
         }
     }
 
+    private static class EndpointAdminProperties extends AppProperties {
+        @Override
+        public String getAdminTempPassword() {
+            return "team-password";
+        }
+    }
+
     private static class TrackingCalendarClient extends DummyCalendarClient {
         private int listBookingEventsCalls;
 
@@ -513,6 +590,20 @@ class ServicoServiceTest {
 
         void resetListBookingEventsCalls() {
             listBookingEventsCalls = 0;
+        }
+    }
+
+    private static class DeleteFailingCalendarClient extends TrackingCalendarClient {
+        private int deleteEventCalls;
+
+        @Override
+        public void deleteEvent(String eventId) throws IOException {
+            deleteEventCalls++;
+            throw new IOException("Calendar delete unavailable");
+        }
+
+        int getDeleteEventCalls() {
+            return deleteEventCalls;
         }
     }
 

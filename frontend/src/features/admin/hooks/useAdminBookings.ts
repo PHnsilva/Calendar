@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '../../../lib/query-keys';
 import { getStoredAdminWorkspace } from '../../../lib/storage';
+import { toBusinessDateTimeParts } from '../../../lib/dates';
 import type { ServicoResponse } from '../../../types/api';
 import type { CalendarEvent } from '../../calendar/types';
 import { getAdminBookings } from '../api/get-admin-bookings';
@@ -15,13 +16,15 @@ function buildFiltersKey(filters: AdminFilters) {
 
 function mapServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
   const customerName = `${servico.clientFirstName} ${servico.clientLastName}`.trim();
+  const start = toBusinessDateTimeParts(servico.start);
+  const end = toBusinessDateTimeParts(servico.end);
 
   return {
     id: servico.eventId,
     title: customerName || servico.serviceType,
-    date: servico.start.slice(0, 10),
-    startTime: servico.start.slice(11, 16),
-    endTime: servico.end.slice(11, 16),
+    date: start.date,
+    startTime: start.time,
+    endTime: end.time,
     city: servico.clientCity,
     customerName,
     customerAddress: servico.clientAddressLine,

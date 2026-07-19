@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useHomeBookingSelection } from '../../../app/home-booking-provider';
+import { useHomeBookingSelection } from '../../../app/home-booking-context';
 import { getPhoneVerificationChangedEventName, getStoredPhoneVerification } from '../../../lib/storage';
 import type { CalendarEvent } from '../../calendar/types';
 

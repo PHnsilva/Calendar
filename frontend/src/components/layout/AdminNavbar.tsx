@@ -139,14 +139,25 @@ export default function AdminNavbar({
   );
 
   const mobileActions = (
-    <AdminProfileMenu
-      compact
-      firstName={firstName}
-      labelContent={<><NavbarIcon name="user" /> <span>{firstName}</span></>}
-      onBudgetClick={onBudgetClick}
-      onEmailClick={openEmail}
-      onLogout={logout}
-    />
+    <>
+      <button
+        type="button"
+        className="cm-admin-mobile-create-button"
+        onClick={onCreate}
+        aria-label="Novo agendamento"
+        title="Novo agendamento"
+      >
+        <NavbarIcon name="plus" />
+      </button>
+      <AdminProfileMenu
+        compact
+        firstName={firstName}
+        labelContent={<><NavbarIcon name="user" /> <span>{firstName}</span></>}
+        onBudgetClick={onBudgetClick}
+        onEmailClick={openEmail}
+        onLogout={logout}
+      />
+    </>
   );
 
   return (

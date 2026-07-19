@@ -21,13 +21,16 @@ export function useOtpFlow({
   const [resendCooldown, setResendCooldown] = useState(initialResendAfterSeconds);
   const [expiresIn, setExpiresIn] = useState(initialExpiresInSeconds);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const flowKey = `${verificationId}:${initialResendAfterSeconds}:${initialExpiresInSeconds}`;
+  const [activeFlowKey, setActiveFlowKey] = useState(flowKey);
 
-  useEffect(() => {
+  if (activeFlowKey !== flowKey) {
+    setActiveFlowKey(flowKey);
     setCode('');
     setResendCooldown(initialResendAfterSeconds);
     setExpiresIn(initialExpiresInSeconds);
     setFeedbackMessage(null);
-  }, [verificationId, initialResendAfterSeconds, initialExpiresInSeconds]);
+  }
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -43,7 +46,7 @@ export function useOtpFlow({
 
   const confirmMutation = useMutation({
     mutationFn: () => confirmVerification({ verificationId, code }),
-    onSuccess: async (response: any) => {
+    onSuccess: async (response) => {
       if (response.verified) {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] }),
@@ -57,7 +60,7 @@ export function useOtpFlow({
 
   const resendMutation = useMutation({
     mutationFn: () => resendVerification({ verificationId }),
-    onSuccess: (response: any) => {
+    onSuccess: (response) => {
       setResendCooldown(response.resendAfterSeconds);
       setExpiresIn(response.expiresInSeconds);
       setFeedbackMessage('Novo código enviado.');

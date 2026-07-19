@@ -24,7 +24,7 @@ function ActionCard({ icon, title, text, color, onClick, to }: { icon: string; t
 export function ClientLandingActions({ profile, setModal }: { profile: ClientProfileSnapshot; setModal: (modal: ModalKind) => void }) {
   void profile;
   return (
-    <div className="wf-actions-grid wf-actions-grid--client">
+    <nav className="wf-actions-grid wf-actions-grid--client" aria-label="Ações rápidas">
       <ActionCard icon="calendar-create" title="Criar agendamento" color="orange" onClick={() => setModal("create-client")} />
       <ActionCard icon="calendar-clock" title="Acompanhar" color="blue" to="/meus-agendamentos" />
       <ActionCard
@@ -34,6 +34,6 @@ export function ClientLandingActions({ profile, setModal }: { profile: ClientPro
         onClick={() => setModal("client-profile")}
       />
       <ActionCard icon="chat-bubbles" title="Fale conosco" color="purple" onClick={() => setModal("contact")} />
-    </div>
+    </nav>
   );
 }

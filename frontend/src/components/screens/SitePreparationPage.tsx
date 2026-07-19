@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import logo from "../../assets/brand/logowithname.png";
+import logo from "../../assets/brand/logowithname.webp";
+import { trackEvent, trackPageView } from "../../lib/analytics";
 
 const whatsappDigits = "553195415323";
 const whatsappDisplay = "+55 31 9541-5323";
@@ -62,6 +63,7 @@ export default function SitePreparationPage() {
   useEffect(() => {
     document.title = "SG Pequenos Reparos | Manutenção residencial e pequenos reparos";
     ensureMetaDescription();
+    trackPageView("/");
   }, []);
 
   useEffect(() => {
@@ -78,8 +80,8 @@ export default function SitePreparationPage() {
   return (
     <div className="site-prep-page">
       <header className="site-prep-header">
-        <img src={logo} alt="SG Pequenos Reparos" />
-        <a className="site-prep-whatsapp site-prep-whatsapp--header" href={whatsappUrl} target="_blank" rel="noreferrer">
+        <img src={logo} alt="SG Pequenos Reparos" width="400" height="171" decoding="async" />
+        <a className="site-prep-whatsapp site-prep-whatsapp--header" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackEvent("whatsapp_click")}>
           WhatsApp {whatsappDisplay}
         </a>
       </header>
@@ -92,9 +94,14 @@ export default function SitePreparationPage() {
             Estamos preparando a agenda online. Enquanto isso, fale pelo WhatsApp para solicitar montagem,
             elétrica, hidráulica, instalações, jardinagem, pequenos reparos ou orçamento.
           </p>
-          <a className="site-prep-whatsapp site-prep-whatsapp--main" href={whatsappUrl} target="_blank" rel="noreferrer">
+          <a className="site-prep-whatsapp site-prep-whatsapp--main" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => { trackEvent("booking_start"); trackEvent("whatsapp_click"); }}>
             Agendar pelo WhatsApp
           </a>
+        </section>
+        <section className="sr-only" aria-labelledby="site-prep-crawlable-services-title">
+          <h2 id="site-prep-crawlable-services-title">Serviços residenciais e cidades atendidas</h2>
+          <p>Realizamos montagem de móveis, serviços elétricos e hidráulicos, instalações, pequenos reparos, alvenaria, jardinagem, inspeções com drone e orçamentos.</p>
+          <p>Atendimento em Belo Horizonte, Itabirito, Ouro Preto, Moeda e Nova Lima, Minas Gerais.</p>
         </section>
       </main>
 
@@ -125,7 +132,7 @@ export default function SitePreparationPage() {
                 </article>
               ))}
             </div>
-            <a className="site-prep-whatsapp site-prep-whatsapp--modal" href={whatsappUrl} target="_blank" rel="noreferrer">
+            <a className="site-prep-whatsapp site-prep-whatsapp--modal" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => { trackEvent("booking_start"); trackEvent("whatsapp_click"); }}>
               Agendar pelo WhatsApp
             </a>
           </section>

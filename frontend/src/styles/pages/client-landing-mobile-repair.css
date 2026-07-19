@@ -53,7 +53,7 @@
   html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
     background-image:
       linear-gradient(90deg, rgba(6, 16, 43, 0.94) 0%, rgba(6, 16, 43, 0.78) 44%, rgba(6, 16, 43, 0.2) 72%, rgba(6, 16, 43, 0) 100%),
-      url("../../assets/wireframes/landing/sg-hero-drone-mobile-safe.png") !important;
+      url("/images/hero/sg-hero-drone-mobile-safe.webp") !important;
     background-repeat: no-repeat, no-repeat !important;
     background-size: cover, cover !important;
     background-position: center center, center center !important;
@@ -457,7 +457,7 @@
   html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
     background-image:
       linear-gradient(90deg, rgba(6, 16, 43, 0.94) 0%, rgba(6, 16, 43, 0.80) 40%, rgba(6, 16, 43, 0.24) 68%, rgba(6, 16, 43, 0.02) 100%),
-      url("../../assets/wireframes/landing/sg-hero-drone-mobile-750.png") !important;
+      url("/images/hero/sg-hero-drone-mobile-750.webp") !important;
     background-repeat: no-repeat, no-repeat !important;
     background-size: cover, cover !important;
     background-position: center center, center center !important;
@@ -503,7 +503,7 @@
   html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
     background-image:
       linear-gradient(90deg, rgba(6, 16, 43, 0.94) 0%, rgba(6, 16, 43, 0.80) 40%, rgba(6, 16, 43, 0.24) 68%, rgba(6, 16, 43, 0.02) 100%),
-      url("../../assets/wireframes/landing/sg-hero-drone-mobile-640.png") !important;
+      url("/images/hero/sg-hero-drone-mobile-640.webp") !important;
   }
 }
 
@@ -516,7 +516,7 @@
     border-radius: 0 !important;
     background-image:
       linear-gradient(90deg, rgba(6, 16, 43, 0.96) 0%, rgba(6, 16, 43, 0.84) 38%, rgba(6, 16, 43, 0.30) 64%, rgba(6, 16, 43, 0.02) 100%),
-      url("../../assets/wireframes/landing/sg-hero-drone-desktop-1440.png") !important;
+      url("/images/hero/sg-hero-drone-desktop-1440.webp") !important;
     background-repeat: no-repeat, no-repeat !important;
     background-size: cover, cover !important;
     background-position: center center, center center !important;
@@ -591,7 +591,7 @@
   html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
     background-image:
       linear-gradient(90deg, rgba(6, 16, 43, 0.94) 0%, rgba(6, 16, 43, 0.80) 42%, rgba(6, 16, 43, 0.22) 70%, rgba(6, 16, 43, 0.02) 100%),
-      url("../../assets/wireframes/landing/sg-hero-drone-mobile-480.png") !important;
+      url("/images/hero/sg-hero-drone-mobile-480.webp") !important;
   }
 }
 
@@ -599,7 +599,7 @@
   html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
     background-image:
       linear-gradient(90deg, rgba(6, 16, 43, 0.94) 0%, rgba(6, 16, 43, 0.80) 42%, rgba(6, 16, 43, 0.22) 70%, rgba(6, 16, 43, 0.02) 100%),
-      url("../../assets/wireframes/landing/sg-hero-drone-mobile-430.png") !important;
+      url("/images/hero/sg-hero-drone-mobile-430.webp") !important;
   }
 }
 
@@ -607,7 +607,7 @@
   html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
     background-image:
       linear-gradient(90deg, rgba(6, 16, 43, 0.94) 0%, rgba(6, 16, 43, 0.80) 42%, rgba(6, 16, 43, 0.20) 70%, rgba(6, 16, 43, 0.02) 100%),
-      url("../../assets/wireframes/landing/sg-hero-drone-mobile-390.png") !important;
+      url("/images/hero/sg-hero-drone-mobile-390.webp") !important;
   }
 }
 
@@ -615,7 +615,7 @@
   html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
     background-image:
       linear-gradient(90deg, rgba(6, 16, 43, 0.94) 0%, rgba(6, 16, 43, 0.80) 44%, rgba(6, 16, 43, 0.20) 72%, rgba(6, 16, 43, 0.02) 100%),
-      url("../../assets/wireframes/landing/sg-hero-drone-mobile-360.png") !important;
+      url("/images/hero/sg-hero-drone-mobile-360.webp") !important;
   }
 }
 
@@ -623,7 +623,7 @@
   html body .wf-client-landing .wf-hero.wf-hero--client.wf-hero--client-final {
     background-image:
       linear-gradient(90deg, rgba(6, 16, 43, 0.94) 0%, rgba(6, 16, 43, 0.82) 46%, rgba(6, 16, 43, 0.20) 74%, rgba(6, 16, 43, 0.02) 100%),
-      url("../../assets/wireframes/landing/sg-hero-drone-mobile-320.png") !important;
+      url("/images/hero/sg-hero-drone-mobile-320.webp") !important;
   }
 }
 

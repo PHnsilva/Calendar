@@ -1,7 +1,7 @@
-import houseCard from "../../../../assets/wireframes/cards/client-house-card.png";
+import houseCard from "../../../../assets/optimized/client-house-card.webp";
 import houseRouteDetail from "../../../../assets/wireframes/icons/client-house-route-detail.svg";
-import brandLogo from "../../../../assets/brand/logo.png";
-import instagramIcon from "../../../../assets/wireframes/icons/contact-instagram.png";
+import brandLogo from "../../../../assets/optimized/logo.webp";
+import instagramIcon from "../../../../assets/optimized/contact-instagram.webp";
 import type { ModalKind } from "../../../../components/screens/CalendarMateRoutes";
 import ServiceCarousel from "../../../../widgets/service-carousel";
 import { openExternal, supportInstagramUrl } from "./clientLandingConstants";
@@ -10,7 +10,7 @@ export function ClientLandingInfoRow({ setModal }: { setModal: (modal: ModalKind
   return (
     <section className="wf-info-row wf-info-row--mobile-priority" id="wf-why-use">
       <article className="wf-house-card">
-        <img className="wf-house-card__image" src={houseCard} alt="Casa atendida" />
+        <img className="wf-house-card__image" src={houseCard} alt="Residência atendida pela equipe de pequenos reparos" width="354" height="137" loading="lazy" decoding="async" />
         <div className="wf-house-card__copy">
           <h2>Agende quando e onde estiver</h2>
           <p>Do computador ou do celular, organize seus atendimentos de forma rápida e segura, 24 horas por dia.</p>
@@ -27,20 +27,19 @@ export function ClientLandingInfoRow({ setModal }: { setModal: (modal: ModalKind
       <button
         type="button"
         className="wf-social-spotlight-card"
-        aria-label="Abrir publicações em destaque no Instagram"
         onClick={() => openExternal(supportInstagramUrl)}
       >
         <span className="wf-social-spotlight-card__media" aria-hidden="true" />
         <span className="wf-social-spotlight-card__content">
           <span className="wf-social-spotlight-card__brand">
-            <img src={brandLogo} alt="SG Pequenos Reparos" />
+            <img src={brandLogo} alt="Logotipo SG Pequenos Reparos" width="246" height="233" loading="lazy" decoding="async" />
           </span>
           <span className="wf-social-spotlight-card__text">
             <strong>Publicações em destaque</strong>
             <small><span>Serviços gerais, montagens e instalações.</span><span>Filmagens com drone e mais.</span></small>
           </span>
           <span className="wf-social-spotlight-card__cta">
-            <img className="wf-social-spotlight-card__instagram" src={instagramIcon} alt="" aria-hidden="true" />
+            <img className="wf-social-spotlight-card__instagram" src={instagramIcon} alt="" width="64" height="64" loading="lazy" decoding="async" aria-hidden="true" />
             Ver no Instagram
           </span>
         </span>

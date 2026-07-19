@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import adminLogoMark from '../../assets/brand/admin-logo-mark.png';
-import defaultLogoSrc from '../../assets/brand/logowithname.png';
+import defaultLogoSrc from '../../assets/brand/logowithname.webp';
 
 type NavbarProfile = 'client' | 'admin' | 'provider';
 type NavbarButtonVariant = 'blue' | 'orange' | 'ghost';

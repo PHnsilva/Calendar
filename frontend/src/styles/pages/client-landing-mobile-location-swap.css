@@ -60,7 +60,7 @@ html body .wf-client-landing .wf-house-card__route-trigger .wf-house-card__route
     min-height: 76px !important;
     border: 0 !important;
     border-radius: 999px !important;
-    background: transparent url("../../assets/wireframes/icons/client-location-dot-down.png") center / contain no-repeat !important;
+    background: transparent url("../../assets/optimized/client-location-dot-down.webp") center / contain no-repeat !important;
     box-shadow: none !important;
     cursor: pointer !important;
     z-index: 6 !important;
@@ -628,9 +628,30 @@ html body .wf-client-landing .wf-services-showcase__image {
   }
 
   html body .wf-client-landing .wf-services-showcase__dot {
-    width: 18px !important;
-    height: 4px !important;
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
     border-radius: 999px !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  html body .wf-client-landing .wf-services-showcase__dot::before {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 18px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.36);
+    transform: translate(-50%, -50%);
+  }
+
+  html body .wf-client-landing .wf-services-showcase__dot-progress {
+    inset: 50% auto auto 50% !important;
+    width: calc(var(--wf-carousel-progress, 0) * 18px) !important;
+    height: 4px !important;
+    transform: translate(-9px, -50%) !important;
   }
 
   html body .wf-client-landing .wf-services-showcase__counter {
@@ -652,8 +673,8 @@ html body .wf-client-landing .wf-services-showcase__image {
   }
 
   html body .wf-client-landing .wf-services-showcase__dot {
-    width: 14px !important;
-    height: 4px !important;
+    width: 24px !important;
+    height: 24px !important;
   }
 
   html body .wf-client-landing .wf-services-showcase__counter {

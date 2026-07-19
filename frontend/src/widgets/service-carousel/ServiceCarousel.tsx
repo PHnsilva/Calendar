@@ -1,24 +1,33 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
-import servicePinturaDesktop from "../../assets/images/landing-carousel/full-2500w/01-servicos-de-pintor-2500w.png";
-import serviceMontagemDesktop from "../../assets/images/landing-carousel/full-2500w/02-montagem-e-instalacao-2500w.png";
-import servicePedreiroDesktop from "../../assets/images/landing-carousel/full-2500w/03-servicos-de-pedreiro-2500w.png";
-import serviceDroneDesktop from "../../assets/images/landing-carousel/full-2500w/04-filmagem-com-drone-2500w.png";
-import serviceHidraulicaDesktop from "../../assets/images/landing-carousel/full-2500w/05-hidraulica-2500w.png";
-import serviceEletricaDesktop from "../../assets/images/landing-carousel/full-2500w/06-eletrica-basica-2500w.png";
-import serviceJardinagemDesktop from "../../assets/images/landing-carousel/full-2500w/07-jardinagem-2500w.png";
-import servicePinturaMedium from "../../assets/images/landing-carousel/medium-1400w/01-servicos-de-pintor-1400w.png";
-import serviceMontagemMedium from "../../assets/images/landing-carousel/medium-1400w/02-montagem-e-instalacao-1400w.png";
-import servicePedreiroMedium from "../../assets/images/landing-carousel/medium-1400w/03-servicos-de-pedreiro-1400w.png";
-import serviceDroneMedium from "../../assets/images/landing-carousel/medium-1400w/04-filmagem-com-drone-1400w.png";
-import serviceHidraulicaMedium from "../../assets/images/landing-carousel/medium-1400w/05-hidraulica-1400w.png";
-import serviceEletricaMedium from "../../assets/images/landing-carousel/medium-1400w/06-eletrica-basica-1400w.png";
-import serviceJardinagemMedium from "../../assets/images/landing-carousel/medium-1400w/07-jardinagem-1400w.png";
+import { trackEvent } from "../../lib/analytics";
+import servicePinturaDesktop from "../../assets/images/landing-carousel/webp/full-2500w/01-servicos-de-pintor-2500w.webp";
+import serviceMontagemDesktop from "../../assets/images/landing-carousel/webp/full-2500w/02-montagem-e-instalacao-2500w.webp";
+import servicePedreiroDesktop from "../../assets/images/landing-carousel/webp/full-2500w/03-servicos-de-pedreiro-2500w.webp";
+import serviceDroneDesktop from "../../assets/images/landing-carousel/webp/full-2500w/04-filmagem-com-drone-2500w.webp";
+import serviceHidraulicaDesktop from "../../assets/images/landing-carousel/webp/full-2500w/05-hidraulica-2500w.webp";
+import serviceEletricaDesktop from "../../assets/images/landing-carousel/webp/full-2500w/06-eletrica-basica-2500w.webp";
+import serviceJardinagemDesktop from "../../assets/images/landing-carousel/webp/full-2500w/07-jardinagem-2500w.webp";
+import servicePinturaMedium from "../../assets/images/landing-carousel/webp/medium-1400w/01-servicos-de-pintor-1400w.webp";
+import serviceMontagemMedium from "../../assets/images/landing-carousel/webp/medium-1400w/02-montagem-e-instalacao-1400w.webp";
+import servicePedreiroMedium from "../../assets/images/landing-carousel/webp/medium-1400w/03-servicos-de-pedreiro-1400w.webp";
+import serviceDroneMedium from "../../assets/images/landing-carousel/webp/medium-1400w/04-filmagem-com-drone-1400w.webp";
+import serviceHidraulicaMedium from "../../assets/images/landing-carousel/webp/medium-1400w/05-hidraulica-1400w.webp";
+import serviceEletricaMedium from "../../assets/images/landing-carousel/webp/medium-1400w/06-eletrica-basica-1400w.webp";
+import serviceJardinagemMedium from "../../assets/images/landing-carousel/webp/medium-1400w/07-jardinagem-1400w.webp";
+import servicePinturaMobile from "../../assets/images/landing-carousel/webp/mobile-320w/01-servicos-de-pintor-320w.webp";
+import serviceMontagemMobile from "../../assets/images/landing-carousel/webp/mobile-320w/02-montagem-e-instalacao-320w.webp";
+import servicePedreiroMobile from "../../assets/images/landing-carousel/webp/mobile-320w/03-servicos-de-pedreiro-320w.webp";
+import serviceDroneMobile from "../../assets/images/landing-carousel/webp/mobile-320w/04-filmagem-com-drone-320w.webp";
+import serviceHidraulicaMobile from "../../assets/images/landing-carousel/webp/mobile-320w/05-hidraulica-320w.webp";
+import serviceEletricaMobile from "../../assets/images/landing-carousel/webp/mobile-320w/06-eletrica-basica-320w.webp";
+import serviceJardinagemMobile from "../../assets/images/landing-carousel/webp/mobile-320w/07-jardinagem-320w.webp";
 
 type ServiceShowcaseItem = {
   title: string;
   alt: string;
   desktopImage: string;
   mediumImage: string;
+  mobileImage: string;
 };
 
 const SERVICE_SHOWCASE_INTERVAL_MS = 4600;
@@ -29,42 +38,49 @@ const SERVICE_SHOWCASE_ITEMS: ServiceShowcaseItem[] = [
     alt: "Card do serviço de pintura",
     desktopImage: servicePinturaDesktop,
     mediumImage: servicePinturaMedium,
+    mobileImage: servicePinturaMobile,
   },
   {
     title: "Montagem e instalação",
     alt: "Card do serviço de montagem e instalação",
     desktopImage: serviceMontagemDesktop,
     mediumImage: serviceMontagemMedium,
+    mobileImage: serviceMontagemMobile,
   },
   {
     title: "Serviços de pedreiro",
     alt: "Card do serviço de pedreiro",
     desktopImage: servicePedreiroDesktop,
     mediumImage: servicePedreiroMedium,
+    mobileImage: servicePedreiroMobile,
   },
   {
     title: "Filmagem com drone",
     alt: "Card do serviço de filmagem com drone",
     desktopImage: serviceDroneDesktop,
     mediumImage: serviceDroneMedium,
+    mobileImage: serviceDroneMobile,
   },
   {
     title: "Hidráulica",
     alt: "Card do serviço de hidráulica",
     desktopImage: serviceHidraulicaDesktop,
     mediumImage: serviceHidraulicaMedium,
+    mobileImage: serviceHidraulicaMobile,
   },
   {
     title: "Elétrica básica",
     alt: "Card do serviço de elétrica básica",
     desktopImage: serviceEletricaDesktop,
     mediumImage: serviceEletricaMedium,
+    mobileImage: serviceEletricaMobile,
   },
   {
     title: "Jardinagem",
     alt: "Card do serviço de jardinagem",
     desktopImage: serviceJardinagemDesktop,
     mediumImage: serviceJardinagemMedium,
+    mobileImage: serviceJardinagemMobile,
   },
 ];
 
@@ -84,7 +100,9 @@ export function ServiceCarousel() {
   }, []);
 
   const goTo = useCallback((nextIndex: number) => {
-    setIndex(((nextIndex % SERVICE_SHOWCASE_ITEMS.length) + SERVICE_SHOWCASE_ITEMS.length) % SERVICE_SHOWCASE_ITEMS.length);
+    const normalizedIndex = ((nextIndex % SERVICE_SHOWCASE_ITEMS.length) + SERVICE_SHOWCASE_ITEMS.length) % SERVICE_SHOWCASE_ITEMS.length;
+    trackEvent("service_selected", { service: SERVICE_SHOWCASE_ITEMS[normalizedIndex].title });
+    setIndex(normalizedIndex);
     resetProgress();
   }, [resetProgress]);
 
@@ -97,15 +115,6 @@ export function ServiceCarousel() {
     setIndex((current) => (current + 1) % SERVICE_SHOWCASE_ITEMS.length);
     resetProgress();
   }, [resetProgress]);
-
-  useEffect(() => {
-    SERVICE_SHOWCASE_ITEMS.forEach((service) => {
-      [service.desktopImage, service.mediumImage].forEach((src) => {
-        const image = new Image();
-        image.src = src;
-      });
-    });
-  }, []);
 
   useEffect(() => {
     let animationFrame = 0;
@@ -185,29 +194,24 @@ export function ServiceCarousel() {
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
       >
-        {SERVICE_SHOWCASE_ITEMS.map((service, serviceIndex) => (
-          <picture
-            key={service.desktopImage}
-            className={cx("wf-services-showcase__picture", serviceIndex === index && "is-active")}
-            aria-hidden={serviceIndex !== index}
-          >
-            <source media="(max-width: 900px)" srcSet={service.mediumImage} />
-            <source media="(max-width: 1400px)" srcSet={`${service.mediumImage} 1400w, ${service.desktopImage} 2500w`} sizes="calc(100vw - 32px)" />
-            <img
-              className={cx("wf-services-showcase__image", serviceIndex === index && "is-active")}
-              src={service.desktopImage}
-              srcSet={`${service.mediumImage} 1400w, ${service.desktopImage} 2500w`}
-              sizes="calc(100vw - 32px)"
-              alt={service.alt}
-              loading={serviceIndex === 0 ? "eager" : "lazy"}
-              decoding="async"
-              draggable={false}
-            />
-          </picture>
-        ))}
+        <picture key={SERVICE_SHOWCASE_ITEMS[index].desktopImage} className="wf-services-showcase__picture is-active">
+          <source media="(max-width: 640px)" srcSet={`${SERVICE_SHOWCASE_ITEMS[index].mobileImage} 320w, ${SERVICE_SHOWCASE_ITEMS[index].mediumImage} 1400w`} sizes="calc(100vw - 32px)" />
+          <source media="(max-width: 1600px)" srcSet={SERVICE_SHOWCASE_ITEMS[index].mediumImage} />
+          <img
+            className="wf-services-showcase__image is-active"
+            src={SERVICE_SHOWCASE_ITEMS[index].desktopImage}
+            alt={SERVICE_SHOWCASE_ITEMS[index].alt}
+            width="2500"
+            height="833"
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+            draggable={false}
+          />
+        </picture>
 
         <div className="wf-services-showcase__overlay">
-          <div className="wf-services-showcase__dots" role="tablist" aria-label="Indicadores do carrossel">
+          <div className="wf-services-showcase__dots" role="group" aria-label="Indicadores do carrossel">
             {SERVICE_SHOWCASE_ITEMS.map((service, serviceIndex) => (
               <button
                 key={service.title}

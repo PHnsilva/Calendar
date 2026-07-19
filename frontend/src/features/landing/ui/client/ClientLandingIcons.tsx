@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import logo from "../../../../assets/brand/logowithname.png";
-import clientPhoneIcon from "../../../../assets/wireframes/icons/client-phone.png";
-import actionCreateCalendarIcon from "../../../../assets/wireframes/icons/action-create-calendar.png";
-import actionFollowClipboardClockIcon from "../../../../assets/wireframes/icons/action-follow-clipboard-clock.png";
-import actionProfileUserIcon from "../../../../assets/wireframes/icons/action-profile-user.png";
-import actionContactChatIcon from "../../../../assets/wireframes/icons/action-contact-chat.png";
-import footerWhatsAppWireframeIcon from "../../../../assets/wireframes/icons/footer-whatsapp-wireframe.png";
-import footerInstagramWireframeIcon from "../../../../assets/wireframes/icons/footer-instagram-wireframe.png";
-import footerEmailWireframeIcon from "../../../../assets/wireframes/icons/footer-email-wireframe.png";
+import logo from "../../../../assets/brand/logowithname.webp";
+import clientPhoneIcon from "../../../../assets/optimized/client-phone.webp";
+import actionCreateCalendarIcon from "../../../../assets/optimized/action-create-calendar.webp";
+import actionFollowClipboardClockIcon from "../../../../assets/optimized/action-follow-clipboard-clock.webp";
+import actionProfileUserIcon from "../../../../assets/optimized/action-profile-user.webp";
+import actionContactChatIcon from "../../../../assets/optimized/action-contact-chat.webp";
+import footerWhatsAppWireframeIcon from "../../../../assets/optimized/footer-whatsapp-wireframe.webp";
+import footerInstagramWireframeIcon from "../../../../assets/optimized/footer-instagram-wireframe.webp";
+import footerEmailWireframeIcon from "../../../../assets/optimized/footer-email-wireframe.webp";
 import footerPhoneWireframeIcon from "../../../../assets/footer/contact-phone-chat-green.svg";
 import footerMapWireframeIcon from "../../../../assets/footer/contact-location-red.svg";
 import { SvgWrapper } from "../../../../components/layout/ResponsivePrimitives";
@@ -34,7 +34,7 @@ export function LandingIcon({ name }: { name: string }) {
   if (imageIcon) {
     return (
       <SvgWrapper className={cx("wf-icon", "wf-icon--image", `wf-icon--${name.replace(/[^a-zA-Z0-9-]/g, "-")}`)}>
-        <img src={imageIcon} alt="" />
+        <img src={imageIcon} alt="" width="64" height="64" loading="lazy" decoding="async" />
       </SvgWrapper>
     );
   }
@@ -55,7 +55,7 @@ export function LandingIcon({ name }: { name: string }) {
 export function LogoMark({ compact = false }: { compact?: boolean }) {
   return (
     <Link to="/" className={cx("wf-logo", compact && "wf-logo--compact")}>
-      <img src={logo} alt="SG Pequenos Reparos Agendamentos" />
+      <img src={logo} alt="SG Pequenos Reparos Agendamentos" width="400" height="171" loading="lazy" decoding="async" />
     </Link>
   );
 }

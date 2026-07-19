@@ -1,19 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ClipboardEvent, type DragEvent, type InputHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import '../../styles/modal-entry.css';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import logo from '../../assets/brand/logowithname.png';
-import heroClient from '../../assets/wireframes/landing/sg-hero-drone-desktop-1920.png';
-import heroClientMobile from '../../assets/wireframes/landing/sg-hero-drone-mobile-900.png';
-import heroMobile320 from '../../assets/wireframes/landing/sg-hero-drone-mobile-320.png';
-import heroMobile360 from '../../assets/wireframes/landing/sg-hero-drone-mobile-360.png';
-import heroMobile390 from '../../assets/wireframes/landing/sg-hero-drone-mobile-390.png';
-import heroMobile430 from '../../assets/wireframes/landing/sg-hero-drone-mobile-430.png';
-import heroMobile480 from '../../assets/wireframes/landing/sg-hero-drone-mobile-480.png';
-import heroMobile640 from '../../assets/wireframes/landing/sg-hero-drone-mobile-640.png';
-import heroMobile750 from '../../assets/wireframes/landing/sg-hero-drone-mobile-750.png';
-import heroMobile900 from '../../assets/wireframes/landing/sg-hero-drone-mobile-900.png';
-import heroAdmin from '../../assets/wireframes/landing/sg-hero-drone-desktop-1920.png';
-import heroAdminMobile from '../../assets/wireframes/landing/sg-hero-drone-mobile-900.png';
+import logo from '../../assets/brand/logowithname.webp';
 import clientCreateCalendarIcon from '../../assets/wireframes/icons/client-create-calendar.png';
 import clientFollowCalendarIcon from '../../assets/wireframes/icons/client-follow-calendar.png';
 import clientPhoneIcon from '../../assets/wireframes/icons/client-phone.png';
@@ -124,6 +113,21 @@ import type { AdminAuthConfirmResponse, AdminProviderResponse, AdminWorkspaceCon
 import { assignAdminProvider } from '../../features/admin/api/assign-admin-provider';
 import { confirmAdminLogin, listAdminProviders, loginAdminWithPassword, resendAdminLogin, startAdminLogin } from '../../features/admin/api/admin-auth';
 import { applyAdminLoginDestination, resolveAdminLoginDestination, routeForAdminWorkspace } from '../../features/admin/services/admin-workspace-flow';
+import { trackEvent } from '../../lib/analytics';
+import { useDoubleBackToLeavePage, useModalBrowserBack } from '../../lib/navigation-history';
+
+const heroClient = '/images/hero/sg-hero-drone-desktop-1920.webp';
+const heroClientMobile = '/images/hero/sg-hero-drone-mobile-900.webp';
+const heroMobile320 = '/images/hero/sg-hero-drone-mobile-320.webp';
+const heroMobile360 = '/images/hero/sg-hero-drone-mobile-360.webp';
+const heroMobile390 = '/images/hero/sg-hero-drone-mobile-390.webp';
+const heroMobile430 = '/images/hero/sg-hero-drone-mobile-430.webp';
+const heroMobile480 = '/images/hero/sg-hero-drone-mobile-480.webp';
+const heroMobile640 = '/images/hero/sg-hero-drone-mobile-640.webp';
+const heroMobile750 = '/images/hero/sg-hero-drone-mobile-750.webp';
+const heroMobile900 = '/images/hero/sg-hero-drone-mobile-900.webp';
+const heroAdmin = heroClient;
+const heroAdminMobile = heroClientMobile;
 
 type ClientAvatarOption = {
   id: string;
@@ -227,89 +231,9 @@ const ptDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digi
 const ptWeekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' });
 const ptMonth = new Intl.DateTimeFormat('pt-BR', { month: 'short' });
 const ptLongDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-let suppressNextExitGuard = false;
 
 function cx(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(' ');
-}
-
-function useLatestRef<T>(value: T) {
-  const ref = useRef(value);
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-  return ref;
-}
-
-function useModalBrowserBack(open: boolean, key: string, onClose: () => void) {
-  const onCloseRef = useLatestRef(onClose);
-  const stateIdRef = useRef('');
-
-  useEffect(() => {
-    if (!open || typeof window === 'undefined') return undefined;
-
-    const stateId = `calendarMateModal:${key}:${Date.now()}`;
-    stateIdRef.current = stateId;
-    window.history.pushState({ ...(window.history.state ?? {}), calendarMateModal: stateId }, '', window.location.href);
-
-    const handlePopState = () => {
-      if (!stateIdRef.current) return;
-      stateIdRef.current = '';
-      onCloseRef.current();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      stateIdRef.current = '';
-    };
-  }, [key, onCloseRef, open]);
-
-  return useCallback(() => {
-    const stateId = stateIdRef.current;
-    if (
-      open
-      && stateId
-      && typeof window !== 'undefined'
-      && window.history.state?.calendarMateModal === stateId
-    ) {
-      suppressNextExitGuard = true;
-      window.history.back();
-      return;
-    }
-    onCloseRef.current();
-  }, [onCloseRef, open]);
-}
-
-export function useDoubleBackToLeavePage(enabled = true) {
-  const lastBackAtRef = useRef(0);
-
-  useEffect(() => {
-    if (!enabled || typeof window === 'undefined') return undefined;
-
-    const guardState = { ...(window.history.state ?? {}), calendarMateExitGuard: true };
-    window.history.pushState(guardState, '', window.location.href);
-
-    const handlePopState = () => {
-      if (suppressNextExitGuard) {
-        suppressNextExitGuard = false;
-        return;
-      }
-      const now = Date.now();
-      if (now - lastBackAtRef.current < 1600) {
-        window.removeEventListener('popstate', handlePopState);
-        window.history.back();
-        return;
-      }
-      lastBackAtRef.current = now;
-      window.history.pushState(guardState, '', window.location.href);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [enabled]);
 }
 
 function normalizeText(value: string): string {
@@ -618,10 +542,12 @@ function openExternal(url: string) {
 }
 
 function openSupportWhatsApp() {
+  trackEvent('whatsapp_click');
   openExternal(supportWhatsAppUrl);
 }
 
 function openSupportPhone() {
+  trackEvent('phone_click');
   window.location.href = `tel:+${supportPhoneDigits}`;
 }
 
@@ -2320,6 +2246,7 @@ export function CalendarMateModal({
 
   useEffect(() => {
     navigationInFlightRef.current = false;
+    if (modal === 'create-client') trackEvent('booking_start');
   }, [modal]);
 
   if (!modal) return null;
@@ -2589,6 +2516,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
   };
 
   const handleCityChange = (value: string) => {
+    trackEvent('city_selected', { city: value });
     setCity(value);
     setAddressInput('');
     setSelectedAddress(null);
@@ -2698,6 +2626,8 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         reservedPhonePassword: reservedPhonePassword.trim() || undefined,
       });
 
+      trackEvent('booking_success');
+
       saveClientProfile({
         name: cleanFormText(fullName),
         phone: phoneDigits,
@@ -2716,6 +2646,7 @@ function CreateBookingModal({ initialDate = '', onClose }: { initialDate?: strin
         navigate('/meus-agendamentos');
       }, 700);
     } catch (error) {
+      trackEvent('booking_error');
       createBookingInFlightRef.current = false;
       const message = mapBookingCreateError(error);
       if (message.toLowerCase().includes('senha') || (error instanceof ApiError && error.code === 'RESERVED_ACCESS')) {
@@ -3485,7 +3416,7 @@ function ContactModal({ onClose }: { onClose: () => void }) {
       <ModalTitle icon="chat-bubbles" title="Fale conosco" text="Escolha o canal de atendimento." />
       <div className="wf-contact-options wf-contact-options--wireframe">
         <ContactOption icon="contact-whatsapp" title="WhatsApp" text={`Atendimento pelo número ${supportPhoneDisplay}.`} color="green" onClick={openSupportWhatsApp} />
-        <ContactOption icon="contact-instagram" title="Instagram" text="Acompanhe e envie mensagem pelo perfil oficial." color="purple" onClick={() => openExternal(supportInstagramUrl)} />
+        <ContactOption icon="contact-instagram" title="Instagram" text="Acompanhe e envie mensagem pelo perfil oficial." color="purple" onClick={() => { trackEvent('instagram_click'); openExternal(supportInstagramUrl); }} />
         <ContactOption icon="contact-phone" title="Telefone" text={`Ligue para ${supportPhoneDisplay}.`} color="blue" onClick={openSupportPhone} />
         <ContactOption icon="contact-email" title="E-mail" text={supportEmail} mobileText={supportEmail.replace('@gmail.com', '')} color="orange" onClick={openSupportEmail} />
       </div>

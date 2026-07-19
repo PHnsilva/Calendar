@@ -1,4 +1,12 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /prestador
+Disallow: /meus-agendamentos
+Disallow: /my
+Disallow: /recover
+Disallow: /403
+Disallow: /500
+Disallow: /api/
 
 Sitemap: https://sgpequenosreparos.com.br/sitemap.xml

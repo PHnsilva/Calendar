@@ -11,26 +11,12 @@
 
 /* 2. Core page baselines */
 @import "./landing.css";
-@import "./admin.css";
-@import "./modals.css";
-@import "./charts.css";
 @import "./navbar.css";
 
 /* 3. Responsive baselines */
 @import "./landing-responsive.css";
-@import "./admin-responsive.css";
-@import "./modals-responsive.css";
-@import "./charts-responsive.css";
 @import "./navbar-responsive.css";
 @import "./responsive-foundation.css";
-
-/* 4. Page-specific legacy cascades. */
-@import "./pages/appointments.css";
-
-/* 5. Admin navigation tail. */
-@import "./admin-week-agenda.css";
-@import "./admin-navbar.css";
-@import "./admin-navbar-stable.css";
 
 /* 6. Client landing authority.
    Keep this last while legacy global CSS is still being retired: the landing
@@ -39,9 +25,3 @@
 
 /* Final scoped mobile repair. Keep last. */
 @import "./pages/client-landing-mobile-repair.css";
-
-/* Client appointments modal authority. */
-@import "./pages/appointments-modal.css";
-
-/* Admin-only modal authority. Keep last so legacy modal repairs cannot override it. */
-@import "./admin-modals.css";

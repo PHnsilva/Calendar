@@ -4,6 +4,10 @@
   "theme_color": "#07135d",
   "background_color": "#ffffff",
   "display": "standalone",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "pt-BR",
+  "description": "Agendamento de manutenção residencial e pequenos reparos.",
   "icons": [
     {
       "src": "/favicon-192x192.png",

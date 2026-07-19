@@ -1,68 +1,90 @@
+import { lazy, Suspense, type ReactElement } from "react";
 import { Navigate, type RouteObject } from "react-router-dom";
 import SitePreparationPage from "../../components/screens/SitePreparationPage";
 import PublicLayout from "../../layouts/PublicLayout";
-import AdminLayout from "../../layouts/AdminLayout";
 import LandingPage from "../../pages/landing/LandingPage";
-import MyBookingsPage from "../../pages/my/MyBookingsPage";
-import RecoverPage from "../../pages/recover/RecoverPage";
-import AdminGatePage from "../../pages/admin/AdminGatePage";
-import AdminDashboardPage from "../../pages/admin/AdminDashboardPage";
-import AdminBookingPage from "../../pages/admin/AdminBookingPage";
-import NotFoundPage from "../../pages/shared/NotFoundPage";
-import ForbiddenPage from "../../pages/shared/ForbiddenPage";
-import ServerErrorPage from "../../pages/shared/ServerErrorPage";
 import { isSiteHoldingPageEnabled } from "../../lib/holding-mode";
 import { AdminRouteGuard } from "./guards";
+import RouteObserver from "../route-observer";
+
+const AdminLayout = lazy(() => import("../../layouts/AdminLayout"));
+const MyBookingsPage = lazy(() => import("../../pages/my/MyBookingsPage"));
+const RecoverPage = lazy(() => import("../../pages/recover/RecoverPage"));
+const AdminGatePage = lazy(() => import("../../pages/admin/AdminGatePage"));
+const AdminDashboardPage = lazy(() => import("../../pages/admin/AdminDashboardPage"));
+const AdminBookingPage = lazy(() => import("../../pages/admin/AdminBookingPage"));
+const NotFoundPage = lazy(() => import("../../pages/shared/NotFoundPage"));
+const ForbiddenPage = lazy(() => import("../../pages/shared/ForbiddenPage"));
+const ServerErrorPage = lazy(() => import("../../pages/shared/ServerErrorPage"));
+const DeferredAppProvidersLayout = lazy(() => import("../providers/deferred-app-providers-layout"));
+
+function deferred(element: ReactElement) {
+  return <Suspense fallback={<main aria-busy="true" aria-live="polite" className="route-loading">Carregando…</main>}>{element}</Suspense>;
+}
 
 const holdingRoutes: RouteObject[] = [
   { path: "*", element: <SitePreparationPage /> },
 ];
 
-const applicationRoutes: RouteObject[] = [
+const applicationRoutes: RouteObject[] = [{
+  element: <RouteObserver />,
+  children: [
   {
     path: "/",
     element: <PublicLayout />,
     children: [
       { index: true, element: <LandingPage /> },
-      { path: "meus-agendamentos", element: <MyBookingsPage /> },
-      { path: "my", element: <Navigate to="/meus-agendamentos" replace /> },
-      { path: "recover", element: <RecoverPage /> },
-      { path: "403", element: <ForbiddenPage /> },
-      { path: "500", element: <ServerErrorPage /> },
     ],
   },
   {
-    path: "/admin",
-    element: <AdminRouteGuard requiredWorkspace="ADMIN" />,
+    element: deferred(<DeferredAppProvidersLayout />),
     children: [
       {
-        element: <AdminLayout />,
+        path: "/",
+        element: <PublicLayout />,
         children: [
-          { index: true, element: <AdminGatePage /> },
-          { path: "dashboard", element: <AdminDashboardPage /> },
-          { path: "booking/:eventId", element: <AdminBookingPage /> },
+      { path: "meus-agendamentos", element: deferred(<MyBookingsPage />) },
+      { path: "my", element: <Navigate to="/meus-agendamentos" replace /> },
+      { path: "recover", element: deferred(<RecoverPage />) },
+      { path: "403", element: deferred(<ForbiddenPage />) },
+      { path: "500", element: deferred(<ServerErrorPage />) },
         ],
       },
-    ],
-  },
-  {
-    path: "/prestador",
-    element: <AdminRouteGuard requiredWorkspace="PROVIDER" />,
-    children: [
       {
-        element: <AdminLayout />,
+        path: "/admin",
+        element: <AdminRouteGuard requiredWorkspace="ADMIN" />,
         children: [
-          { index: true, element: <AdminDashboardPage /> },
-          { path: "dashboard", element: <AdminDashboardPage /> },
-          { path: "booking/:eventId", element: <AdminBookingPage /> },
+          {
+            element: deferred(<AdminLayout />),
+            children: [
+              { index: true, element: deferred(<AdminGatePage />) },
+              { path: "dashboard", element: deferred(<AdminDashboardPage />) },
+              { path: "booking/:eventId", element: deferred(<AdminBookingPage />) },
+            ],
+          },
+        ],
+      },
+      {
+        path: "/prestador",
+        element: <AdminRouteGuard requiredWorkspace="PROVIDER" />,
+        children: [
+          {
+            element: deferred(<AdminLayout />),
+            children: [
+              { index: true, element: deferred(<AdminDashboardPage />) },
+              { path: "dashboard", element: deferred(<AdminDashboardPage />) },
+              { path: "booking/:eventId", element: deferred(<AdminBookingPage />) },
+            ],
+          },
         ],
       },
     ],
   },
   {
     path: "*",
-    element: <NotFoundPage />,
+    element: deferred(<NotFoundPage />),
   },
-];
+  ],
+}];
 
 export const routes = isSiteHoldingPageEnabled() ? holdingRoutes : applicationRoutes;

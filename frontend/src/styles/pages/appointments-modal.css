@@ -23,7 +23,7 @@ html body .appointments-modal-page__backdrop {
   z-index: -2;
   background:
     linear-gradient(135deg, rgba(5, 15, 49, .94), rgba(9, 41, 116, .82)),
-    url("../../assets/wireframes/landing/sg-hero-drone-desktop-1920.png") center / cover no-repeat;
+    url("/images/hero/sg-hero-drone-desktop-1920.webp") center / cover no-repeat;
 }
 
 html body .appointments-modal-page__backdrop::after {

@@ -1,4 +1,4 @@
-import logoWithName from "../../assets/brand/logowithname.png";
+import logoWithName from "../../assets/brand/logowithname.webp";
 
 export default function Logo() {
   return (
@@ -8,6 +8,9 @@ export default function Logo() {
           src={logoWithName}
           alt="SG Pequenos Reparos Agendamentos"
           className="brand-lockup__logo brand-lockup__logo--with-name"
+          width="400"
+          height="171"
+          decoding="async"
         />
       </span>
     </div>

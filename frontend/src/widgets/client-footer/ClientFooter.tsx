@@ -1,7 +1,8 @@
 import { useState, type MouseEvent, type ReactNode } from "react";
-import footerEmailContactIcon from "../../assets/wireframes/icons/footer-email-wireframe.png";
+import footerEmailContactIcon from "../../assets/optimized/footer-email-wireframe.webp";
 import footerLocationContactIcon from "../../assets/footer/contact-location-red.svg";
 import footerPhoneContactIcon from "../../assets/footer/contact-phone-chat-green.svg";
+import { trackEvent } from "../../lib/analytics";
 
 type FooterIconName = string;
 
@@ -51,6 +52,8 @@ function FooterContactAsset({ kind }: { kind: "phone" | "email" | "location" }) 
       className={`cm-footer__contact-asset cm-footer__contact-asset--${kind}`}
       src={iconSrc}
       alt=""
+      width="128"
+      height="128"
       aria-hidden="true"
       draggable={false}
     />
@@ -165,6 +168,7 @@ export function ClientFooter({
   };
 
   const handlePhoneAction = (event: MouseEvent<HTMLAnchorElement>) => {
+    trackEvent("phone_click");
     const isMobileFooter = window.matchMedia?.("(max-width: 900px)").matches;
     if (isMobileFooter) return;
     event.preventDefault();
@@ -202,7 +206,6 @@ export function ClientFooter({
               className="cm-footer__contact-row cm-footer__contact-row--phone"
               href={telHref}
               onClick={handlePhoneAction}
-              aria-label="Ligar no celular ou copiar telefone no desktop"
               title={supportPhoneDisplay}
             >
               <span className="cm-footer__row-icon cm-footer__row-icon--phone"><FooterContactAsset kind="phone" /></span>
@@ -212,7 +215,6 @@ export function ClientFooter({
               type="button"
               className="cm-footer__contact-row cm-footer__contact-row--email"
               onClick={handleEmailAction}
-              aria-label="Copiar e-mail no desktop ou abrir e-mail no celular"
               title={supportEmail}
             >
               <span className="cm-footer__row-icon cm-footer__row-icon--email"><FooterContactAsset kind="email" /></span>
@@ -229,7 +231,6 @@ export function ClientFooter({
             <button
               type="button"
               className="cm-footer__social-item cm-footer__social-item--instagram"
-              aria-label="Abrir Instagram da SG Pequenos Reparos"
               onClick={requestInstagramRedirect}
             >
               <span className="cm-footer__social-icon">{renderIcon("footer-instagram-social")}</span>
@@ -238,7 +239,6 @@ export function ClientFooter({
             <button
               type="button"
               className="cm-footer__social-item cm-footer__social-item--email"
-              aria-label="Copiar e-mail no desktop ou abrir e-mail no celular"
               onClick={handleEmailAction}
               title={supportEmail}
             >
@@ -248,7 +248,6 @@ export function ClientFooter({
             <button
               type="button"
               className="cm-footer__social-item cm-footer__social-item--whatsapp"
-              aria-label="Abrir WhatsApp da SG Pequenos Reparos"
               onClick={requestWhatsAppRedirect}
             >
               <span className="cm-footer__social-icon">{renderIcon("footer-whatsapp-social")}</span>

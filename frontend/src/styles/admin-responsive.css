@@ -784,7 +784,8 @@
       gap: clamp(4px, 1.7vw, 8px);
     }
 
-  .wf-mini-grid span {
+  .wf-mini-grid span,
+  .wf-mini-grid button {
       min-height: clamp(30px, 8vw, 44px);
     }
 

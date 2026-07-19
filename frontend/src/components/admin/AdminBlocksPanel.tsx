@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { AvailabilityBlockResponse } from '../../types/api';
+import { usePublicBootstrap } from '../../features/public-config/hooks/usePublicBootstrap';
+import { is4x4UnavailableDate } from '../../features/calendar/utils/schedule-rules';
 import {
   AdminButton,
   AdminIcon,
@@ -80,8 +82,10 @@ function buildMonthGrid(month: Date) {
 
 function BlockCalendar({ blocks }: { blocks: AvailabilityBlockResponse[] }) {
   const [month, setMonth] = useState(() => new Date());
+  const { data: bootstrap } = usePublicBootstrap();
   const grid = useMemo(() => buildMonthGrid(month), [month]);
   const blockedDates = useMemo(() => new Set(blocks.map(blockDate).filter(Boolean)), [blocks]);
+  const cycleStart = bootstrap?.schedule?.cycleStart;
   const label = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(month);
 
   const moveMonth = (delta: number) => {
@@ -106,14 +110,17 @@ function BlockCalendar({ blocks }: { blocks: AvailabilityBlockResponse[] }) {
           {grid.map((item) => (
             <span
               key={item.iso}
-              className={`${styles.calendarDay} ${!item.isCurrentMonth ? styles.calendarDayMuted : ''} ${blockedDates.has(item.iso) ? styles.calendarDayBlocked : ''}`}
-              aria-label={blockedDates.has(item.iso) ? `${item.iso}, com bloqueio` : item.iso}
+              className={`${styles.calendarDay} ${!item.isCurrentMonth ? styles.calendarDayMuted : ''} ${is4x4UnavailableDate(item.iso, cycleStart) ? styles.calendarDayScheduleBlocked : ''} ${blockedDates.has(item.iso) ? styles.calendarDayBlocked : ''}`}
+              aria-label={`${item.iso}${is4x4UnavailableDate(item.iso, cycleStart) ? ', indisponível pela escala 4x4' : ''}${blockedDates.has(item.iso) ? ', com bloqueio manual' : ''}`}
             >
               {item.day}
             </span>
           ))}
         </div>
-        <p className={styles.calendarLegend}>Dias destacados possuem um ou mais bloqueios.</p>
+        <div className={styles.calendarLegends} aria-label="Legenda do calendário">
+          <p className={styles.calendarLegend}>Bloqueio manual</p>
+          <p className={`${styles.calendarLegend} ${styles.calendarLegendSchedule}`}>Escala 4x4</p>
+        </div>
       </div>
     </section>
   );

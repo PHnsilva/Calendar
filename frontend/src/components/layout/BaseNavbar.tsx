@@ -198,6 +198,9 @@ export default function BaseNavbar({
             <span className="cm-admin-navbar__mark" aria-hidden="true">
               <img src={resolvedLogoSrc} alt="" />
             </span>
+            <span className="cm-admin-navbar__wordmark" aria-hidden="true">
+              <img src={defaultLogoSrc} alt="" />
+            </span>
           </Link>
           {actions ? <nav className="cm-admin-navbar__actions" aria-label="Ações principais">{actions}</nav> : null}
           {mobileActions ? <nav className="cm-admin-navbar__mobile-actions" aria-label="Ações rápidas">{mobileActions}</nav> : null}

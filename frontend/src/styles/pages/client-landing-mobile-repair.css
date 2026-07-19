@@ -1209,3 +1209,50 @@ html body .wf-client-landing .wf-badge svg {
     font-size: .62rem !important;
   }
 }
+
+/* Desktop location card: reserve a real grid column for the decoration so it
+   cannot cover the copy at laptop, desktop, or ultra-wide widths. */
+@media (min-width: 901px) {
+  html body .wf-client-landing .wf-info-row.wf-info-row--mobile-priority > .wf-house-card {
+    min-height: clamp(230px, 18vw, 300px) !important;
+    padding: clamp(20px, 2.2vw, 42px) !important;
+    grid-template-columns: clamp(112px, 14vw, 220px) minmax(0, 1fr) clamp(72px, 8vw, 140px) !important;
+    gap: clamp(14px, 1.6vw, 28px) !important;
+    align-items: center !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__image {
+    width: clamp(112px, 14vw, 220px) !important;
+    max-width: 100% !important;
+    justify-self: center !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__copy {
+    min-width: 0 !important;
+    padding: 0 !important;
+  }
+
+  html body .wf-client-landing .wf-house-card h2 {
+    margin-bottom: clamp(8px, .8vw, 14px) !important;
+    font-size: clamp(1.35rem, 1.7vw, 2.3rem) !important;
+    line-height: 1.1 !important;
+    text-wrap: balance !important;
+  }
+
+  html body .wf-client-landing .wf-house-card p {
+    font-size: clamp(.9rem, .9vw, 1.12rem) !important;
+    line-height: 1.45 !important;
+  }
+
+  html body .wf-client-landing .wf-house-card__route-trigger {
+    position: static !important;
+    grid-column: 3 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    width: clamp(72px, 8vw, 140px) !important;
+    max-width: 100% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+  }
+}

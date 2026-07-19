@@ -82,9 +82,11 @@ import { useAvailableSlots } from '../../features/calendar/hooks/useAvailableSlo
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
 import { createAdminBlocks, deleteAdminBlock, listAdminBlocks } from '../../features/admin/api/manage-admin-blocks';
 import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
+import type { AdminFilters } from '../../features/admin/types';
+import { getAdminAgendaRange, isDateInAdminAgendaRange, type AdminAgendaRangeKey } from '../../features/admin/utils/admin-agenda-range';
 import { useMyBookings } from '../../features/bookings/hooks/useMyBookings';
 import type { CalendarEvent } from '../../features/calendar/types';
-import { build4x4UnavailableDates } from '../../features/calendar/utils/schedule-rules';
+import { build4x4UnavailableDates, is4x4UnavailableDate } from '../../features/calendar/utils/schedule-rules';
 import { parseOfxToFinancialDashboard } from '../../features/finance/services/ofx-parser';
 import type { FinancialDashboardDTO } from '../../features/finance/types';
 import { usePublicBootstrap } from '../../features/public-config/hooks/usePublicBootstrap';
@@ -95,7 +97,6 @@ import {
   getLocalEventsChangedEventName,
   getManageTokens,
   getStoredAdminSession,
-  getStoredAdminToken,
   getStoredAdminWorkspace,
   getStoredClientProfile,
   getStoredPhoneVerification,
@@ -161,6 +162,7 @@ import { OTP_CODE_LENGTH, applyOtpInput, codeToOtpDigits } from '../../lib/otp';
 import ModalShell from '../../shared/ui/ModalShell';
 import PageTitle from '../../shared/ui/PageTitle';
 import ResponsiveAsset from '../../shared/ui/ResponsiveAsset';
+import { useAuth } from '../../app/providers/auth-context';
 
 function isProtectedStaffPhone(value: string): boolean {
   return isValidPhone(value) && resolveUserRoleByPhone(value) === 'admin';
@@ -511,16 +513,24 @@ function useClientBookingsData() {
   return { bookings: merged, isLoading: query.isFetching, isError: query.isError, hasTokens: tokens.length > 0 };
 }
 
-function useAdminBookingsData() {
-  const hasAdminToken = Boolean(getStoredAdminToken());
-  const query = useAdminBookings({}, hasAdminToken);
+function useAdminBookingsData(filters: AdminFilters = {}) {
+  const { adminSession, adminStatus } = useAuth();
+  const hasAdminSession = adminStatus === 'authenticated' && Boolean(adminSession?.sessionToken);
+  const query = useAdminBookings(filters, hasAdminSession);
   const bookings = useMemo(() => (query.data ?? []).map(bookingFromServico), [query.data]);
-  return { bookings: sortBookings(bookings), isLoading: query.isFetching, isError: query.isError, hasAdminToken };
+  return {
+    bookings: sortBookings(bookings),
+    isLoading: query.isPending || (query.isFetching && !query.data),
+    isError: query.isError,
+    hasAdminSession,
+    refetch: query.refetch,
+  };
 }
 
 function useAdminBlocksData() {
-  const hasAdminToken = Boolean(getStoredAdminToken());
-  const owner = isStoredAdminOwner();
+  const { adminSession, adminStatus } = useAuth();
+  const hasAdminToken = adminStatus === 'authenticated' && Boolean(adminSession?.sessionToken);
+  const owner = adminSession?.role === 'OWNER' && adminSession.workspace?.mode === 'ADMIN';
   const query = useQuery({
     queryKey: ['wireframe-admin-blocks'],
     queryFn: () => listAdminBlocks(),
@@ -692,6 +702,15 @@ function Icon({ name }: { name: string }) {
     ),
     calendar: <svg {...common}><rect x="12" y="14" width="40" height="38" rx="8" {...line}/><path d="M22 8v12M42 8v12M12 25h40" {...line}/><path d="M22 35h.01M32 35h.01M42 35h.01M22 44h.01M32 44h.01M42 44h.01" {...line}/></svg>,
     'calendar-create': calendarBase('#ff4b0b'),
+    'service-drone': <svg {...common}>
+      <path d="M25 28h14l5 8H20l5-8Z" fill="#eef4ff" stroke="currentColor" strokeWidth="3.8" strokeLinejoin="round" />
+      <rect x="27" y="36" width="10" height="8" rx="3" fill="#fff" stroke="currentColor" strokeWidth="3.4" />
+      <circle cx="32" cy="40" r="2.4" fill="currentColor" />
+      <path d="M25 31 15 22M39 31l10-9M18 22h-9M46 22h9M13 17v10M51 17v10" {...line} />
+      <circle cx="13" cy="22" r="7" stroke="currentColor" strokeWidth="3.2" />
+      <circle cx="51" cy="22" r="7" stroke="currentColor" strokeWidth="3.2" />
+      <path d="M27 44 23 53M37 44l4 9M20 53h24" {...line} />
+    </svg>,
     'site-schedule': <svg {...common}>
       <defs>
         <linearGradient id={`${uid}-site-schedule`} x1="10" y1="8" x2="54" y2="56"><stop stopColor="#ffffff"/><stop offset="1" stopColor="#e9efff"/></linearGradient>
@@ -1570,7 +1589,7 @@ export function AdminLanding() {
   const [modal, setModal] = useState<ModalKind>(null);
   const navigate = useNavigate();
   useDoubleBackToLeavePage();
-  const session = getStoredAdminSession();
+  const { adminSession: session } = useAuth();
   const openView = (view: AdminView) => {
     navigate(adminDashboardRoute(view));
   };
@@ -1583,9 +1602,9 @@ export function AdminLanding() {
   if (session.role === 'OWNER' && !session.workspace) {
     return <AdminWorkspaceSelectionGate onDone={(workspace) => navigate(routeForAdminWorkspace(workspace), { replace: true })} />;
   }
-  const workspace = getStoredAdminWorkspace();
+  const workspace = session.workspace;
   const providerWorkspace = workspace?.mode === 'PROVIDER';
-  const owner = isStoredAdminOwner();
+  const owner = session.role === 'OWNER' && workspace?.mode === 'ADMIN';
   return (
     <PageShell className="wf-page wf-admin-landing">
       {providerWorkspace ? (
@@ -1643,13 +1662,13 @@ function getInitialAdminView(): AdminView {
 
 export function AdminDashboard() {
   const navigate = useNavigate();
+  const { adminSession: session } = useAuth();
   const [view, setView] = useState<AdminView>(getInitialAdminView);
   const [modal, setModal] = useState<ModalKind>(null);
   const [context, setContext] = useState<ModalContext>({});
   const [importedFinanceDashboard, setImportedFinanceDashboard] = useState<FinancialDashboardDTO | null>(null);
   const openCreate = (date?: string) => { setContext(date ? { createDate: date } : {}); setModal('create-client'); };
-  const session = getStoredAdminSession();
-  const workspace = getStoredAdminWorkspace();
+  const workspace = session?.workspace;
   const providerWorkspace = workspace?.mode === 'PROVIDER';
   const owner = session?.role === 'OWNER' && workspace?.mode === 'ADMIN';
   const effectiveView = !owner && (view === 'extrato' || view === 'bloqueios' || view === 'historico') ? 'agendamentos' : view;
@@ -1705,41 +1724,8 @@ export function AdminDashboard() {
   );
 }
 
-function getAdminWindowStart(date = new Date()): Date {
-  const cursor = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  cursor.setHours(0, 0, 0, 0);
-  return cursor;
-}
-
-function getAdminWindowEnd(date = new Date()): Date {
-  const start = getAdminWindowStart(date);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 7);
-  end.setHours(23, 59, 59, 999);
-  return end;
-}
-
 function isSameIsoDate(a: string, b: string): boolean {
   return a === b;
-}
-
-function isInAdminFutureWindow(booking: BookingItem, reference = new Date()): boolean {
-  const date = toLocalDate(booking.date);
-  return date >= getAdminWindowStart(reference) && date <= getAdminWindowEnd(reference);
-}
-
-function getMonthRange(date = new Date()): { start: string; end: string } {
-  const start = new Date(date.getFullYear(), date.getMonth(), 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-  return { start: toIsoDate(start), end: toIsoDate(end) };
-}
-
-function getAdminWindowRangeLabel(reference = new Date()): string {
-  const start = getAdminWindowStart(reference);
-  const end = getAdminWindowEnd(reference);
-  const startLabel = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(start).replace('.', '');
-  const endLabel = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(end).replace('.', '');
-  return `${startLabel} – ${endLabel}`;
 }
 
 function getDayHeaderLabel(dateIso: string): string {
@@ -1834,7 +1820,7 @@ function AdminAgendaActionButton({ icon, label, danger = false, onClick }: { ico
   return (
     <button type="button" className={cx('wf-admin-agenda-action', danger && 'wf-admin-agenda-action--danger')} onClick={onClick} aria-label={label} title={label}>
       <Icon name={icon} />
-      <span>{label}</span>
+      <span className="wf-admin-agenda-action__label">{label}</span>
     </button>
   );
 }
@@ -1935,50 +1921,27 @@ function AdminWeekDayGroup({
   );
 }
 
-function AdminCalendarModal({ bookings, onClose, onCreate }: { bookings: BookingItem[]; onClose: () => void; onCreate?: (date?: string) => void }) {
-  return (
-    <ModalShell
-      open
-      ariaLabel="Calendário administrativo"
-      backdropClassName="wf-admin-calendar-modal cm-admin-modal-backdrop"
-      className="wf-admin-calendar-modal__panel cm-admin-modal cm-admin-modal--calendar"
-      closeIcon={<Icon name="close" />}
-      closeLabel="Fechar calendário"
-      closeOnBackdrop
-      closeOnEscape
-      focusCloseOnOpen
-      lockBodyScroll
-      onClose={onClose}
-    >
-      <header className="wf-admin-calendar-modal__header">
-        <div>
-          <h2>Calendário</h2>
-          <p>Consulte os agendamentos do mês e abra um novo atendimento pela data desejada.</p>
-        </div>
-      </header>
-      <CalendarBoard bookings={bookings} admin onCreate={onCreate ? (date) => { onClose(); onCreate(date); } : undefined} />
-    </ModalShell>
-  );
-}
-
 function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: ModalKind) => void; setContext: (context: ModalContext) => void }) {
   const navigate = useNavigate();
-  const { bookings, isLoading, isError, hasAdminToken } = useAdminBookingsData();
+  const { adminSession } = useAuth();
+  const [rangeKey, setRangeKey] = useState<AdminAgendaRangeKey>('NEXT_7_DAYS');
+  const range = useMemo(() => getAdminAgendaRange(rangeKey), [rangeKey]);
+  const { bookings, isLoading, isError, hasAdminSession, refetch } = useAdminBookingsData({ from: range.from, to: range.to });
   const { blocks } = useAdminBlocksData();
-  const owner = isStoredAdminOwner();
+  const owner = adminSession?.role === 'OWNER' && adminSession.workspace?.mode === 'ADMIN';
   const [search, setSearch] = useState('');
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const monthRange = getMonthRange();
-  const weekBookings = useMemo(
-    () => bookings.filter((booking) => isInAdminFutureWindow(booking)).filter((booking) => matchesAdminAgendaSearch(booking, search)),
-    [bookings, search],
+  const periodBookings = useMemo(
+    () => bookings
+      .filter((booking) => isDateInAdminAgendaRange(booking.date, range))
+      .filter((booking) => matchesAdminAgendaSearch(booking, search)),
+    [bookings, range, search],
   );
-  const dayGroups = useMemo(() => groupBookingsByDate(weekBookings), [weekBookings]);
-  const missingProviderCount = useMemo(() => bookings.filter((booking) => isInAdminFutureWindow(booking) && isWithoutProvider(booking)).length, [bookings]);
-  const monthBlocksCount = useMemo(() => blocks.filter((block) => {
+  const dayGroups = useMemo(() => groupBookingsByDate(periodBookings), [periodBookings]);
+  const missingProviderCount = useMemo(() => periodBookings.filter(isWithoutProvider).length, [periodBookings]);
+  const periodBlocksCount = useMemo(() => blocks.filter((block) => {
     const start = block.start?.slice(0, 10) || block.end?.slice(0, 10) || '';
-    return start >= monthRange.start && start <= monthRange.end;
-  }).length, [blocks, monthRange.end, monthRange.start]);
+    return isDateInAdminAgendaRange(start, range);
+  }).length, [blocks, range]);
 
   const openDetails = (booking: BookingItem) => {
     setContext({ booking });
@@ -1997,15 +1960,24 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
       <div className="wf-admin-week-agenda__hero">
         <div>
           <h1 id="wf-admin-week-agenda-title">Agendamentos</h1>
-          <p>Visão dos próximos 7 dias</p>
+          <p>{range.viewDescription}</p>
         </div>
         {owner ? <button type="button" className="wf-admin-week-agenda__new wf-admin-week-agenda__new--desktop" onClick={() => openCreate()}><Icon name="plus" /> Novo agendamento</button> : null}
       </div>
 
       <div className="wf-admin-week-agenda__controls">
-        <button type="button" className="wf-admin-week-agenda__week"><Icon name="calendar" /> Próximos 7 dias <Icon name="chevron" /></button>
-        <button type="button" className="wf-admin-week-agenda__calendar" onClick={() => setCalendarOpen(true)}><Icon name="calendar" /> Abrir calendário</button>
-        <span className="wf-admin-week-agenda__range"><Icon name="calendar" /> {getAdminWindowRangeLabel()}</span>
+        <label className="wf-admin-week-agenda__week">
+          <Icon name="calendar" />
+          <span className="sr-only">Período da agenda</span>
+          <select value={rangeKey} onChange={(event) => setRangeKey(event.target.value as AdminAgendaRangeKey)} aria-label="Período da agenda">
+            <option value="TODAY">Hoje</option>
+            <option value="NEXT_7_DAYS">Próximos 7 dias</option>
+            <option value="THIS_MONTH">Este mês</option>
+          </select>
+          <Icon name="chevron" />
+        </label>
+        <button type="button" className="wf-admin-week-agenda__calendar" onClick={() => setModal('block-admin')}><Icon name="calendar" /> Abrir calendário</button>
+        <span className="wf-admin-week-agenda__range"><Icon name="calendar" /> {range.label}</span>
         {owner ? <button type="button" className="wf-admin-week-agenda__new wf-admin-week-agenda__new--mobile" onClick={() => openCreate()}><Icon name="plus" /> Novo agendamento</button> : null}
       </div>
 
@@ -2019,14 +1991,14 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
 
       <div className="wf-admin-agenda-summary-grid">
         {owner ? <AdminAgendaSummaryCard tone="blue" icon="booking-field-user" title="Sem prestador" value={missingProviderCount} label="agendamentos" /> : null}
-        <AdminAgendaSummaryCard tone="orange" icon="calendar-create" title="Agendamentos" value={weekBookings.length} label="próximos 7 dias" />
-        {owner ? <AdminAgendaSummaryCard tone="green" icon="admin-blocks" title="Bloqueios do mês" value={monthBlocksCount} label="bloqueios" /> : null}
+        <AdminAgendaSummaryCard tone="orange" icon="calendar-create" title="Agendamentos" value={periodBookings.length} label={range.summaryLabel} />
+        {owner ? <AdminAgendaSummaryCard tone="green" icon="admin-blocks" title="Bloqueios" value={periodBlocksCount} label={range.summaryLabel} /> : null}
       </div>
 
       <div className="wf-admin-week-agenda__list">
         {isLoading ? <EmptyState title="Carregando agendamentos" text="Buscando agendamentos da agenda." /> : null}
-        {isError || !hasAdminToken ? <EmptyState title="Agendamentos não disponíveis" text="Faça login administrativo para carregar seus agendamentos." /> : null}
-        {!isLoading && !isError && dayGroups.length === 0 ? <EmptyState title="Nenhum agendamento nos próximos 7 dias" text={search ? 'Nenhum agendamento do período corresponde à busca atual.' : 'Os próximos 7 dias ainda não possuem agendamentos.'} /> : null}
+        {isError && hasAdminSession ? <EmptyState title="Não foi possível carregar os agendamentos" text="Sua sessão está ativa, mas a agenda não respondeu. Tente novamente." action="Tentar novamente" onAction={() => void refetch()} /> : null}
+        {!isLoading && !isError && dayGroups.length === 0 ? <EmptyState title="Nenhum agendamento no período" text={search ? 'Nenhum agendamento do período corresponde à busca atual.' : `Não há agendamentos para ${range.optionLabel.toLowerCase()}.`} /> : null}
         {dayGroups.map((group, index) => (
           <AdminWeekDayGroup
             key={group.date}
@@ -2042,7 +2014,6 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
         ))}
       </div>
 
-      {calendarOpen ? <AdminCalendarModal bookings={bookings} onClose={() => setCalendarOpen(false)} onCreate={owner ? openCreate : undefined} /> : null}
     </section>
   );
 }
@@ -2081,19 +2052,49 @@ function AdminBlocksView({ setModal }: { setModal: (modal: ModalKind) => void })
   );
 }
 
-function MiniMonth({ blocks = [] }: { blocks?: AvailabilityBlockResponse[] }) {
-  const monthStart = startOfMonth();
+function MiniMonth({
+  blocks = [],
+  cycleStart,
+  monthStart,
+  onMonthChange,
+  onSelectDate,
+  selectedDate,
+}: {
+  blocks?: AvailabilityBlockResponse[];
+  cycleStart?: string | null;
+  monthStart: string;
+  onMonthChange: (monthStart: string) => void;
+  onSelectDate: (date: string) => void;
+  selectedDate: string;
+}) {
   const grid = useMemo(() => getMonthGrid(monthStart), [monthStart]);
   const blockedDates = useMemo(() => new Set(blocks.map((block) => block.start?.slice(0, 10) || block.end?.slice(0, 10)).filter(Boolean)), [blocks]);
   const label = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(toLocalDate(monthStart));
-  const today = toIsoDate(new Date());
   return (
     <div className="wf-side-card wf-mini-month">
       <h2><Icon name="calendar" /> Calendário mensal</h2>
-      <div className="wf-month-nav"><button type="button" onClick={() => notifyUnavailable('Navegação do mês anterior')}>‹</button><strong>{label}</strong><button type="button" onClick={() => notifyUnavailable('Navegação do próximo mês')}>›</button></div>
+      <div className="wf-month-nav"><button type="button" aria-label="Mês anterior" onClick={() => onMonthChange(shiftMonthStart(monthStart, -1))}>‹</button><strong>{label}</strong><button type="button" aria-label="Próximo mês" onClick={() => onMonthChange(shiftMonthStart(monthStart, 1))}>›</button></div>
       <div className="wf-mini-grid">
         {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => <b key={d}>{d}</b>)}
-        {grid.map((item) => <span key={item.iso} className={cx(blockedDates.has(item.iso) && 'has-block', item.iso === today && 'is-active', !item.isCurrentMonth && 'is-muted')}>{item.day}</span>)}
+        {grid.map((item) => {
+          const manualBlock = blockedDates.has(item.iso);
+          const scheduleBlock = is4x4UnavailableDate(item.iso, cycleStart);
+          const stateLabel = [manualBlock && 'bloqueio manual', scheduleBlock && 'indisponível pela escala 4x4'].filter(Boolean).join(' e ');
+          return (
+            <button
+              key={item.iso}
+              type="button"
+              className={cx(manualBlock && 'has-block', scheduleBlock && 'has-schedule-block', item.iso === selectedDate && 'is-active', !item.isCurrentMonth && 'is-muted')}
+              disabled={scheduleBlock}
+              onClick={() => onSelectDate(item.iso)}
+              aria-label={`${item.iso}${stateLabel ? `, ${stateLabel}` : ''}`}
+              aria-pressed={item.iso === selectedDate}
+            >
+              {item.day}
+              {manualBlock || scheduleBlock ? <i className="wf-mini-grid__markers" aria-hidden="true">{manualBlock ? <i className="wf-mini-grid__marker wf-mini-grid__marker--manual" /> : null}{scheduleBlock ? <i className="wf-mini-grid__marker wf-mini-grid__marker--schedule" /> : null}</i> : null}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -2109,15 +2110,15 @@ function AdminFinanceView({ importedDashboard, onOpenOfx }: { importedDashboard?
 
 export function AdminBookingDetails() {
   const navigate = useNavigate();
+  const { adminSession: session } = useAuth();
   const [modal, setModal] = useState<ModalKind>(null);
   const [context, setContext] = useState<ModalContext>({});
   const { eventId } = useParams();
-  const { bookings, isLoading, hasAdminToken } = useAdminBookingsData();
+  const { bookings, isLoading } = useAdminBookingsData();
   const booking = useMemo(() => bookings.find((item) => item.id === eventId) ?? bookings[0], [bookings, eventId]);
-  const session = getStoredAdminSession();
-  const workspace = getStoredAdminWorkspace();
+  const workspace = session?.workspace;
   const providerWorkspace = workspace?.mode === 'PROVIDER';
-  const owner = isStoredAdminOwner();
+  const owner = session?.role === 'OWNER' && workspace?.mode === 'ADMIN';
 
   if (!session) {
     return <Navigate to="/" replace />;
@@ -2171,7 +2172,7 @@ export function AdminBookingDetails() {
           <Link to={adminDashboardRoute('agendamentos')} className="wf-back-btn"><Icon name="back" /></Link>
           <div><h1>Detalhes do agendamento</h1><p>{booking ? `Agendamento #${booking.id}` : 'Selecione um agendamento existente'}</p></div>
         </div>
-        {!hasAdminToken || (!booking && !isLoading) ? <EmptyState title="Agendamento não encontrado" text="Faça login administrativo ou selecione um agendamento existente." /> : null}
+        {!booking && !isLoading ? <EmptyState title="Agendamento não encontrado" text="O agendamento solicitado não está disponível na agenda carregada." /> : null}
         {booking ? (
           <div className="wf-details-grid">
             <section className="wf-details-cards">
@@ -3433,7 +3434,7 @@ const serviceCategories = [
   { title: 'Pequenos reparos', icon: 'service-pequenos-reparos', color: 'red', items: ['Consertos do dia a dia', 'Manutenção residencial', 'Correções rápidas'] },
   { title: 'Pintura', icon: 'service-pintura', color: 'purple', items: ['Pintura de paredes internas', 'Correções e acabamentos', 'Renovação de pequenos ambientes'] },
   { title: 'Jardinagem', icon: 'service-jardinagem', color: 'cyan', items: ['Poda e manutenção básica', 'Limpeza de jardim', 'Cuidados simples com áreas verdes'] },
-  { title: 'Orçamento', icon: 'service-orcamento', color: 'gray', items: ['Avaliação do serviço', 'Estimativa de materiais', 'Definição do atendimento'] },
+  { title: 'Filmagem com drones', icon: 'service-drone', color: 'gray', items: ['Filmagens aéreas de imóveis e áreas externas', 'Registros de obras, telhados e fachadas', 'Imagens em alta resolução sob solicitação'] },
 ];
 
 function ServicesInfoModal({ onSchedule }: { onSchedule: () => void }) {
@@ -3479,6 +3480,7 @@ function HelpContactModal() {
 function AdminBlockModal({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
   const [date, setDate] = useState(toIsoDate(new Date()));
+  const [displayMonthStart, setDisplayMonthStart] = useState(startOfMonth());
   const [fullDay, setFullDay] = useState(true);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [reason, setReason] = useState('');
@@ -3486,6 +3488,10 @@ function AdminBlockModal({ onClose }: { onClose: () => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const { blocks } = useAdminBlocksData();
+  const { data: bootstrap } = usePublicBootstrap();
+  const cycleStart = bootstrap?.schedule?.cycleStart;
+  const scheduleUnavailable = is4x4UnavailableDate(date, cycleStart);
 
   const toggleTime = (time: string) => {
     setSelectedTimes((current) => current.includes(time) ? current.filter((item) => item !== time) : [...current, time].sort());
@@ -3493,6 +3499,10 @@ function AdminBlockModal({ onClose }: { onClose: () => void }) {
 
   const save = async () => {
     if (saving) return;
+    if (scheduleUnavailable) {
+      setError('Esse dia já está indisponível pela escala 4x4. Selecione um dia de trabalho.');
+      return;
+    }
     setSaving(true);
     setError('');
     setMessage('');
@@ -3522,9 +3532,18 @@ function AdminBlockModal({ onClose }: { onClose: () => void }) {
       <div className="wf-admin-block-modal wf-admin-block-modal--wireframe">
         <section>
           <strong>Selecione os dias para bloquear</strong>
-          <label className="wf-block-date-field">Data do bloqueio<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
-          <MiniMonth />
-          <div className="wf-block-legend"><span>Seleção manual</span><button type="button" onClick={() => { setDate(toIsoDate(new Date())); setSelectedTimes([]); setReason(''); }}>Limpar seleção</button></div>
+          <label className="wf-block-date-field">Data do bloqueio<input type="date" value={date} aria-invalid={scheduleUnavailable} onChange={(event) => { setDate(event.target.value); setDisplayMonthStart(startOfMonth(toLocalDate(event.target.value))); }} /></label>
+          <MiniMonth
+            blocks={blocks}
+            cycleStart={cycleStart}
+            monthStart={displayMonthStart}
+            selectedDate={date}
+            onMonthChange={setDisplayMonthStart}
+            onSelectDate={(selected) => { setDate(selected); setDisplayMonthStart(startOfMonth(toLocalDate(selected))); setError(''); }}
+          />
+          <div className="wf-block-calendar-legend"><span><i className="wf-block-calendar-legend__manual" />Bloqueio manual</span><span><i className="wf-block-calendar-legend__schedule" />Escala 4x4</span></div>
+          {scheduleUnavailable ? <p className="booking-form__hint">Dia indisponível pela escala 4x4. Escolha um dia de trabalho para adicionar um bloqueio manual.</p> : null}
+          <div className="wf-block-legend"><span>Seleção manual</span><button type="button" onClick={() => { const today = toIsoDate(new Date()); setDate(today); setDisplayMonthStart(startOfMonth()); setSelectedTimes([]); setReason(''); setError(''); }}>Limpar seleção</button></div>
         </section>
         <section className="wf-admin-block-controls">
           <label>Bloquear dia inteiro <input type="checkbox" checked={fullDay} onChange={(event) => setFullDay(event.target.checked)} /></label>
@@ -3536,7 +3555,7 @@ function AdminBlockModal({ onClose }: { onClose: () => void }) {
       </div>
       {error ? <p className="booking-form__error">{error}</p> : null}
       {message ? <p className="booking-form__hint">{message}</p> : null}
-      <ModalActions primary={saving ? 'Salvando...' : 'Salvar bloqueio'} secondary="Cancelar" primaryIcon="lock-green" onSecondary={onClose} onPrimary={save} disabledPrimary={saving || !date || (!fullDay && selectedTimes.length === 0)} />
+      <ModalActions primary={saving ? 'Salvando...' : 'Salvar bloqueio'} secondary="Cancelar" primaryIcon="lock-green" onSecondary={onClose} onPrimary={save} disabledPrimary={saving || !date || scheduleUnavailable || (!fullDay && selectedTimes.length === 0)} />
     </>
   );
 }

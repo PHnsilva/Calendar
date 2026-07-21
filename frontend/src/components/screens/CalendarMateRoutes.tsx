@@ -78,7 +78,7 @@ import AddressAutocompleteField from '../../features/booking-form/components/Add
 import type { AddressSuggestion } from '../../features/booking-form/hooks/useAddressSuggestions';
 import { buildSuggestionInputValue, buildSuggestionStreetLine, getSuggestionHouseNumber, shouldShowManualHouseNumber } from '../../features/booking-form/utils/address-selection';
 import { useCreateBooking } from '../../features/bookings/hooks/useCreateBooking';
-import { buildClientServiceOptions } from '../../features/bookings/services/client-service-options';
+import { buildClientServiceOptions, normalizeClientServiceLabel } from '../../features/bookings/services/client-service-options';
 import { useAvailableSlots } from '../../features/calendar/hooks/useAvailableSlots';
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
 import { createAdminBlocks, deleteAdminBlock, listAdminBlocks } from '../../features/admin/api/manage-admin-blocks';
@@ -2843,8 +2843,12 @@ function SharedCreateBookingModal({
   };
 
   if (createdBooking && audience === 'client') {
-    const createdStart = toBusinessDateTimeParts(createdBooking.start);
+    const createdStart = toBusinessDateTimeParts(typeof createdBooking.start === 'string' ? createdBooking.start : '');
     const createdDateLabel = createdStart.date ? ptDate.format(toLocalDate(createdStart.date)) : 'Data confirmada';
+    const createdServiceLabel = normalizeClientServiceLabel(createdBooking.serviceType) || selectedService || 'Serviço confirmado';
+    const createdAddressLabel = cleanFormText(createdBooking.clientAddressLine)
+      || [cleanFormText(createdBooking.clientStreet), cleanFormText(createdBooking.clientNumber)].filter(Boolean).join(', ')
+      || 'Endereço confirmado';
     const openBookings = () => {
       onClose();
       navigate('/meus-agendamentos');
@@ -2858,12 +2862,12 @@ function SharedCreateBookingModal({
           <h2>Seu serviço foi agendado com sucesso</h2>
           <p>Confira os dados principais antes de fechar.</p>
           <dl className="wf-create-booking-success__summary">
-            <div><dt>Serviço</dt><dd>{createdBooking.serviceType}</dd></div>
+            <div><dt>Serviço</dt><dd>{createdServiceLabel}</dd></div>
             <div><dt>Data</dt><dd>{createdDateLabel}</dd></div>
-            <div><dt>Horário</dt><dd>{createdStart.time || activeSelectedTime}</dd></div>
-            <div><dt>Local</dt><dd>{createdBooking.clientAddressLine || `${createdBooking.clientStreet}, ${createdBooking.clientNumber}`}</dd></div>
+            <div><dt>Horário</dt><dd>{createdStart.time || activeSelectedTime || 'Horário confirmado'}</dd></div>
+            <div><dt>Local</dt><dd>{createdAddressLabel}</dd></div>
           </dl>
-          <p className="wf-create-booking-success__notice">Você pode editar ou reagendar até 12 horas antes do atendimento.</p>
+          <p className="wf-create-booking-success__notice">Você pode editar os dados do cliente ou reagendar até 12 horas antes do atendimento.</p>
         </div>
         <ModalActions primary="Ver meus agendamentos" secondary="Fechar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={openBookings} />
       </div>

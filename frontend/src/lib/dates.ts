@@ -7,6 +7,10 @@ function parseDateInput(value: Date | string): Date {
     return new Date(value.getTime());
   }
 
+  if (typeof value !== "string" || !value.trim()) {
+    return new Date(Number.NaN);
+  }
+
   const normalized = value.length <= 10 ? `${value}T12:00:00` : value;
   return new Date(normalized);
 }
@@ -117,6 +121,7 @@ export function isDateBlocked(
 
 export function formatDate(value: Date | string): string {
   const date = parseDateInput(value);
+  if (Number.isNaN(date.getTime())) return "Data não informada";
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "2-digit",
@@ -126,6 +131,7 @@ export function formatDate(value: Date | string): string {
 
 export function formatDateTime(value: Date | string): string {
   const date = parseDateInput(value);
+  if (Number.isNaN(date.getTime())) return "Data e horário não informados";
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "2-digit",
@@ -137,6 +143,7 @@ export function formatDateTime(value: Date | string): string {
 
 export function isWithinHours(value: Date | string, hours: number): boolean {
   const date = parseDateInput(value);
+  if (Number.isNaN(date.getTime())) return true;
   return date.getTime() - Date.now() < hours * 60 * 60 * 1000;
 }
 

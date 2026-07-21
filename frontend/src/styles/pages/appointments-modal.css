@@ -936,3 +936,39 @@ html body .appointments-detail-overlay .booking-detail__edit-rule {
   font-size: .88rem;
   font-weight: 750;
 }
+
+/* Customer edit form: editable contact and address fields stay inside the modal. */
+html body .appointments-detail-overlay .booking-detail__form label,
+html body .appointments-detail-overlay .booking-detail__form-grid {
+  min-width: 0;
+}
+
+html body .appointments-detail-overlay .booking-detail__form input,
+html body .appointments-detail-overlay .booking-detail__form select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid rgba(7, 19, 93, .16);
+  border-radius: 10px;
+  background: #fff;
+  color: #07135d;
+  font: inherit;
+}
+
+html body .appointments-detail-overlay .booking-detail__form select {
+  padding-right: 38px;
+}
+
+html body .appointments-detail-overlay .booking-detail__form-grid--address {
+  grid-template-columns: minmax(0, 1fr) minmax(92px, 132px);
+}
+
+@media (max-width: 640px) {
+  html body .appointments-detail-overlay .booking-detail__form-grid,
+  html body .appointments-detail-overlay .booking-detail__form-grid--address {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

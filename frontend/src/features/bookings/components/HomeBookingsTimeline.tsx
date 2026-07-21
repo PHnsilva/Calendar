@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useHomeBookingSelection } from "../../../app/home-booking-context";
 import { getCityTone } from "../../../data/allowed-cities";
 import { apiClient } from "../../../lib/api-client";
+import { formatPhoneInput, isValidPhone, normalizePhone } from "../../../lib/authRole";
 import { normalizeApiErrorMessage } from "../../../lib/errors";
 import { toBusinessDateTimeParts } from "../../../lib/dates";
 import {
@@ -51,6 +52,11 @@ type EditDraft = {
   serviceType: string;
   date: string;
   time: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  street: string;
+  number: string;
 };
 
 function toLocalDate(dateString: string): Date {
@@ -132,10 +138,24 @@ function getMonthBadgeParts(monthStart: string) {
   };
 }
 
+function splitFullName(value: string): { firstName: string; lastName: string } {
+  const parts = value.trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts.shift() ?? "",
+    lastName: parts.join(" "),
+  };
+}
+
+function isEmailValid(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 function mapServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
-  const customerName = `${servico.clientFirstName} ${servico.clientLastName}`.trim();
-  const start = toBusinessDateTimeParts(servico.start);
-  const end = toBusinessDateTimeParts(servico.end);
+  const customerName = `${servico.clientFirstName ?? ""} ${servico.clientLastName ?? ""}`.trim();
+  const start = toBusinessDateTimeParts(typeof servico.start === "string" ? servico.start : "");
+  const end = toBusinessDateTimeParts(typeof servico.end === "string" ? servico.end : "");
+  const customerAddress = servico.clientAddressLine
+    || [servico.clientStreet, servico.clientNumber].filter(Boolean).join(", ");
   return {
     id: servico.eventId,
     title: customerName || "Cliente",
@@ -144,10 +164,10 @@ function mapServicoToCalendarEvent(servico: ServicoResponse): CalendarEvent {
     endTime: end.time,
     city: servico.clientCity,
     customerName,
-    customerAddress: servico.clientAddressLine,
+    customerAddress,
     customerEmail: servico.clientEmail,
     customerPhone: servico.clientPhone,
-    serviceLabel: normalizeClientServiceLabel(servico.serviceType),
+    serviceLabel: normalizeClientServiceLabel(servico.serviceType) || "Serviço não informado",
     status: "booked",
   };
 }
@@ -167,24 +187,29 @@ function canManageEvent(event: CalendarEvent | null): boolean {
 }
 
 function buildUpdatePayload(servico: ServicoResponse, draft: EditDraft): ServicoRequest {
+  const { firstName, lastName } = splitFullName(draft.fullName);
+  const addressChanged = draft.street.trim() !== (servico.clientStreet ?? "").trim()
+    || draft.number.trim() !== (servico.clientNumber ?? "").trim();
+
   return {
     serviceType: draft.serviceType.trim(),
     serviceNotes: undefined,
     date: draft.date,
     time: draft.time,
-    clientFirstName: servico.clientFirstName,
-    clientLastName: servico.clientLastName,
-    clientEmail: servico.clientEmail,
-    clientPhone: servico.clientPhone,
+    clientFirstName: firstName,
+    clientLastName: lastName,
+    clientEmail: draft.email.trim(),
+    clientPhone: normalizePhone(draft.phone),
     clientCity: servico.clientCity,
     clientState: servico.clientState,
-    clientStreet: servico.clientStreet,
-    clientNumber: servico.clientNumber,
+    clientStreet: draft.street.trim(),
+    clientNumber: draft.number.trim(),
     clientNeighborhood: servico.clientNeighborhood,
     clientCep: servico.clientCep,
     clientComplement: servico.clientComplement,
-    clientLatitude: servico.clientLatitude,
-    clientLongitude: servico.clientLongitude,
+    clientLatitude: addressChanged ? undefined : servico.clientLatitude,
+    clientLongitude: addressChanged ? undefined : servico.clientLongitude,
+    reservedPhonePassword: undefined,
   };
 }
 
@@ -217,7 +242,16 @@ export default function HomeBookingsTimeline({
   const [detailError, setDetailError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [editDraft, setEditDraft] = useState<EditDraft>({ serviceType: "", date: "", time: "" });
+  const [editDraft, setEditDraft] = useState<EditDraft>({
+    serviceType: "",
+    date: "",
+    time: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    street: "",
+    number: "",
+  });
   const [editTimes, setEditTimes] = useState<string[]>([]);
   const [editLoadingTimes, setEditLoadingTimes] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -287,6 +321,11 @@ export default function HomeBookingsTimeline({
           serviceType: normalizeClientServiceLabel(response.serviceType),
           date: responseStart.date,
           time: responseStart.time,
+          fullName: `${response.clientFirstName ?? ""} ${response.clientLastName ?? ""}`.trim(),
+          email: response.clientEmail ?? "",
+          phone: formatPhoneInput(response.clientPhone ?? ""),
+          street: response.clientStreet ?? "",
+          number: response.clientNumber ?? "",
         });
       })
       .catch((error) => {
@@ -432,6 +471,23 @@ export default function HomeBookingsTimeline({
     const minimumStart = Date.now() + 12 * 60 * 60 * 1000;
     if (!editDraft.serviceType.trim() || Number.isNaN(editedStart.getTime()) || editedStart.getTime() < minimumStart) {
       setEditError("Escolha um serviço, uma data e um horário com pelo menos 12 horas de antecedência.");
+      return;
+    }
+    const { firstName, lastName } = splitFullName(editDraft.fullName);
+    if (!firstName || !lastName) {
+      setEditError("Informe o nome e o sobrenome do cliente.");
+      return;
+    }
+    if (!isEmailValid(editDraft.email)) {
+      setEditError("Informe um e-mail válido.");
+      return;
+    }
+    if (!isValidPhone(editDraft.phone)) {
+      setEditError("Informe um telefone válido com DDD.");
+      return;
+    }
+    if (!editDraft.street.trim() || !editDraft.number.trim()) {
+      setEditError("Informe o endereço e o número do local do serviço.");
       return;
     }
     try {
@@ -600,24 +656,29 @@ export default function HomeBookingsTimeline({
           {editOpen ? (
             <div className="booking-detail-modal__overlay" role="dialog" aria-modal="true">
               <button type="button" className="booking-detail-modal__overlay-backdrop" onClick={() => setEditOpen(false)} aria-label="Fechar edição" />
-              <div className="booking-detail-modal__overlay-card">
+              <div className="booking-detail-modal__overlay-card booking-detail-modal__overlay-card--client-edit">
                 <div className="booking-detail-modal__header booking-detail-modal__header--compact">
                   <div>
                     <span className="booking-preview-modal__eyebrow">Editar atendimento</span>
-                    <h3 className="booking-preview-modal__title">Escolha nova data e horário</h3>
+                    <h3 className="booking-preview-modal__title">Editar agendamento</h3>
                   </div>
                   <button type="button" className="booking-preview-modal__close" onClick={() => setEditOpen(false)} aria-label="Fechar edição">×</button>
                 </div>
-                <div className="booking-detail-modal__edit-grid">
+                <div className="booking-detail-modal__edit-grid booking-detail-modal__edit-grid--client">
                   <label className="booking-detail-modal__field booking-detail-modal__field--full"><span>Serviço</span><select value={editDraft.serviceType} onChange={(event) => { setEditDraft((current) => ({ ...current, serviceType: event.target.value })); setEditError(null); }}>{serviceOptions.map((service) => <option key={service} value={service}>{service}</option>)}</select></label>
                   <label className="booking-detail-modal__field"><span>Data</span><input type="date" value={editDraft.date} min={todayIso} onChange={(event) => { setEditDraft((current) => ({ ...current, date: event.target.value })); setEditError(null); }} /></label>
                   <label className="booking-detail-modal__field"><span>Horário</span><select value={editDraft.time} onChange={(event) => { setEditDraft((current) => ({ ...current, time: event.target.value })); setEditError(null); }} disabled={editLoadingTimes || editTimes.length === 0}>{editTimes.map((time) => <option key={time} value={time}>{time} - {addMinutes(time, slotMinutes)}</option>)}</select></label>
+                  <label className="booking-detail-modal__field booking-detail-modal__field--full"><span>Nome completo</span><input type="text" autoComplete="name" value={editDraft.fullName} onChange={(event) => { setEditDraft((current) => ({ ...current, fullName: event.target.value })); setEditError(null); }} /></label>
+                  <label className="booking-detail-modal__field"><span>E-mail</span><input type="email" autoComplete="email" value={editDraft.email} onChange={(event) => { setEditDraft((current) => ({ ...current, email: event.target.value })); setEditError(null); }} /></label>
+                  <label className="booking-detail-modal__field"><span>Telefone</span><input type="tel" inputMode="tel" autoComplete="tel" value={editDraft.phone} onChange={(event) => { setEditDraft((current) => ({ ...current, phone: formatPhoneInput(event.target.value) })); setEditError(null); }} /></label>
+                  <label className="booking-detail-modal__field"><span>Endereço</span><input type="text" autoComplete="street-address" value={editDraft.street} onChange={(event) => { setEditDraft((current) => ({ ...current, street: event.target.value })); setEditError(null); }} /></label>
+                  <label className="booking-detail-modal__field"><span>Número</span><input type="text" value={editDraft.number} onChange={(event) => { setEditDraft((current) => ({ ...current, number: event.target.value })); setEditError(null); }} /></label>
                 </div>
-                <p className="booking-detail-modal__helper">Altere somente o serviço, a data ou o horário. Edições e reagendamentos são permitidos até 12 horas antes do atendimento.</p>
+                <p className="booking-detail-modal__helper">Você pode editar os dados do cliente e reagendar até 12 horas antes do atendimento. Não é necessária senha administrativa.</p>
                 {editError ? <p className="booking-form__feedback booking-form__feedback--error">{editError}</p> : null}
                 <div className="booking-detail-modal__actions booking-detail-modal__actions--overlay">
                   <button type="button" className="secondary-action" onClick={() => setEditOpen(false)}>Voltar</button>
-                  <button type="button" className="primary-action" onClick={handleSaveEdit} disabled={actionLoading || !editDraft.serviceType.trim() || !editDraft.date || !editDraft.time}>Salvar edição</button>
+                  <button type="button" className="primary-action" onClick={handleSaveEdit} disabled={actionLoading || !editDraft.serviceType.trim() || !editDraft.date || !editDraft.time || !editDraft.fullName.trim() || !editDraft.email.trim() || !editDraft.phone.trim() || !editDraft.street.trim() || !editDraft.number.trim()}>Salvar edição</button>
                 </div>
               </div>
             </div>

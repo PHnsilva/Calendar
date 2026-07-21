@@ -11,6 +11,7 @@ import viewIcon from "../../../assets/wireframes/icons/booking-action-eye.svg";
 import type { Booking } from "../../../entities/booking";
 import type { ServicoRequest } from "../../../types/api";
 import { formatDateTime, isWithinTwelveHours } from "../../../lib/dates";
+import { formatPhoneInput, isValidPhone, normalizePhone } from "../../../lib/authRole";
 import { normalizeApiErrorMessage } from "../../../lib/errors";
 import { removeLocalCalendarEvent, removeManageToken, resolveManageToken } from "../../../lib/storage";
 import { buildClientServiceOptions, normalizeClientServiceLabel } from "../services/client-service-options";
@@ -26,6 +27,15 @@ type BookingDetailCardProps = {
   onDeleted?: () => void;
 };
 
+type EditableField =
+  | "serviceType"
+  | "date"
+  | "time"
+  | "clientEmail"
+  | "clientPhone"
+  | "clientStreet"
+  | "clientNumber";
+
 function toFormState(booking: Booking): ServicoRequest {
   const start = booking.startsAt;
   const pad = (value: number) => String(value).padStart(2, "0");
@@ -36,7 +46,7 @@ function toFormState(booking: Booking): ServicoRequest {
     clientFirstName: booking.client.firstName,
     clientLastName: booking.client.lastName,
     clientEmail: booking.client.email ?? "",
-    clientPhone: booking.client.phone ?? "",
+    clientPhone: formatPhoneInput(booking.client.phone ?? ""),
     clientCep: booking.client.address.postalCode ?? "",
     clientStreet: booking.client.address.street ?? "",
     clientNeighborhood: booking.client.address.neighborhood ?? "",
@@ -47,6 +57,18 @@ function toFormState(booking: Booking): ServicoRequest {
     clientLatitude: booking.client.address.latitude ?? undefined,
     clientLongitude: booking.client.address.longitude ?? undefined,
   };
+}
+
+function splitFullName(value: string): { firstName: string; lastName: string } {
+  const parts = value.trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts.shift() ?? "",
+    lastName: parts.join(" "),
+  };
+}
+
+function isEmailValid(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
 function DetailIcon({ src }: { src: string }) {
@@ -75,6 +97,7 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
   const [isEditing, setIsEditing] = useState(initialMode === "edit");
   const [confirmCancel, setConfirmCancel] = useState(initialMode === "cancel");
   const [form, setForm] = useState<ServicoRequest>(() => toFormState(booking));
+  const [fullName, setFullName] = useState(() => booking.client.fullName || `${booking.client.firstName} ${booking.client.lastName}`.trim());
   const [validationError, setValidationError] = useState("");
   const { updateBooking, deleteBooking, isUpdating, isDeleting, updateError, deleteError } = useBookingMutations();
 
@@ -82,16 +105,34 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
     () => buildClientServiceOptions([], form.serviceType),
     [form.serviceType],
   );
-  const displayedService = normalizeClientServiceLabel(booking.serviceType);
+  const displayedService = normalizeClientServiceLabel(booking.serviceType) || "Serviço não informado";
   const lockedByTime = isWithinTwelveHours(booking.startsAt);
   const isCancelled = booking.status.code === "cancelled";
   const canManage = Boolean(token) && !lockedByTime && !isCancelled;
   const editedStart = form.date && form.time ? new Date(`${form.date}T${form.time}:00`) : null;
   const editedStartIsValid = Boolean(editedStart && !Number.isNaN(editedStart.getTime()));
   const editedStartIsTooSoon = Boolean(editedStartIsValid && editedStart && isWithinTwelveHours(editedStart));
+  const parsedFullName = splitFullName(fullName);
+  const addressChanged =
+    form.clientStreet.trim() !== (booking.client.address.street ?? "").trim()
+    || form.clientNumber.trim() !== (booking.client.address.number ?? "").trim();
+  const contactAndAddressAreValid =
+    Boolean(parsedFullName.firstName && parsedFullName.lastName)
+    && isEmailValid(form.clientEmail)
+    && isValidPhone(form.clientPhone)
+    && Boolean(form.clientStreet.trim() && form.clientNumber.trim());
+  const formIsValid = Boolean(form.serviceType.trim())
+    && editedStartIsValid
+    && !editedStartIsTooSoon
+    && contactAndAddressAreValid;
 
-  const onChange = (field: "serviceType" | "date" | "time", value: string) => {
+  const onChange = (field: EditableField, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
+    setValidationError("");
+  };
+
+  const onFullNameChange = (value: string) => {
+    setFullName(value);
     setValidationError("");
   };
 
@@ -99,6 +140,23 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
     if (!token) return;
     if (!form.serviceType.trim() || !editedStartIsValid || editedStartIsTooSoon) {
       setValidationError("Escolha um serviço, uma data e um horário com pelo menos 12 horas de antecedência.");
+      return;
+    }
+    const { firstName, lastName } = splitFullName(fullName);
+    if (!firstName || !lastName) {
+      setValidationError("Informe o nome e o sobrenome do cliente.");
+      return;
+    }
+    if (!isEmailValid(form.clientEmail)) {
+      setValidationError("Informe um e-mail válido.");
+      return;
+    }
+    if (!isValidPhone(form.clientPhone)) {
+      setValidationError("Informe um telefone válido com DDD.");
+      return;
+    }
+    if (!form.clientStreet.trim() || !form.clientNumber.trim()) {
+      setValidationError("Informe o endereço e o número do local do serviço.");
       return;
     }
 
@@ -110,6 +168,14 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
           ...form,
           serviceType: form.serviceType.trim(),
           serviceNotes: undefined,
+          clientFirstName: firstName,
+          clientLastName: lastName,
+          clientEmail: form.clientEmail.trim(),
+          clientPhone: normalizePhone(form.clientPhone),
+          clientStreet: form.clientStreet.trim(),
+          clientNumber: form.clientNumber.trim(),
+          clientLatitude: addressChanged ? undefined : form.clientLatitude,
+          clientLongitude: addressChanged ? undefined : form.clientLongitude,
           reservedPhonePassword: undefined,
         },
       });
@@ -149,7 +215,7 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
 
       {isEditing ? (
         <div className="booking-detail__form booking-detail__form--essential">
-          <p className="booking-detail__edit-intro">Altere somente o serviço, a data ou o horário. Os dados do cliente e do endereço permanecem iguais.</p>
+          <p className="booking-detail__edit-intro">Altere o serviço, a data, o horário, os dados de contato ou o endereço do atendimento.</p>
           <label>
             <span>Serviço</span>
             <select value={form.serviceType} onChange={(event) => onChange("serviceType", event.target.value)}>
@@ -160,7 +226,16 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
             <label><span>Data</span><input type="date" min={todayInputValue()} value={form.date} onChange={(event) => onChange("date", event.target.value)} /></label>
             <label><span>Horário</span><input type="time" value={form.time} onChange={(event) => onChange("time", event.target.value)} /></label>
           </div>
-          <p className="booking-detail__edit-rule">Edições e reagendamentos são permitidos até 12 horas antes do atendimento.</p>
+          <label><span>Nome completo</span><input type="text" autoComplete="name" value={fullName} onChange={(event) => onFullNameChange(event.target.value)} /></label>
+          <div className="booking-detail__form-grid">
+            <label><span>E-mail</span><input type="email" autoComplete="email" value={form.clientEmail} onChange={(event) => onChange("clientEmail", event.target.value)} /></label>
+            <label><span>Telefone</span><input type="tel" inputMode="tel" autoComplete="tel" value={form.clientPhone} onChange={(event) => onChange("clientPhone", formatPhoneInput(event.target.value))} /></label>
+          </div>
+          <div className="booking-detail__form-grid booking-detail__form-grid--address">
+            <label><span>Endereço</span><input type="text" autoComplete="street-address" value={form.clientStreet} onChange={(event) => onChange("clientStreet", event.target.value)} /></label>
+            <label><span>Número</span><input type="text" inputMode="text" value={form.clientNumber} onChange={(event) => onChange("clientNumber", event.target.value)} /></label>
+          </div>
+          <p className="booking-detail__edit-rule">Edições e reagendamentos são permitidos até 12 horas antes do atendimento. Não é necessária senha administrativa para o cliente.</p>
           {validationError ? <p className="booking-detail__error">{validationError}</p> : null}
           {updateError ? <p className="booking-detail__error">{normalizeApiErrorMessage(updateError, { context: "editBooking" })}</p> : null}
           <div className="booking-detail__actions">
@@ -168,7 +243,7 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
               <DetailIcon src={viewIcon} />
               Fechar edição
             </button>
-            <button type="button" className="primary-action" onClick={() => void submitUpdate()} disabled={!canManage || isUpdating || !form.serviceType || !editedStartIsValid || editedStartIsTooSoon}>
+            <button type="button" className="primary-action" onClick={() => void submitUpdate()} disabled={!canManage || isUpdating || !formIsValid}>
               <DetailIcon src={editIcon} />
               {isUpdating ? "Salvando..." : "Salvar alterações"}
             </button>

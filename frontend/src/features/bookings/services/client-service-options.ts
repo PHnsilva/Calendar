@@ -11,17 +11,24 @@ const defaultClientServiceOptions = [
   'Outros',
 ] as const;
 
-function normalizeForComparison(value: string): string {
-  return value
-    .normalize('NFD')
+function toSafeText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return '';
+  return String(value);
+}
+
+function normalizeForComparison(value: unknown): string {
+  const text = toSafeText(value);
+  const decomposed = typeof text.normalize === 'function' ? text.normalize('NFD') : text;
+  return decomposed
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-function repairServiceEncoding(value: string): string {
-  return value
+function repairServiceEncoding(value: unknown): string {
+  return toSafeText(value)
     .replace(/\u00c3\u00a0/g, 'à')
     .replace(/\u00c3\u00a1/g, 'á')
     .replace(/\u00c3\u00a2/g, 'â')
@@ -40,8 +47,10 @@ function repairServiceEncoding(value: string): string {
     .trim();
 }
 
-export function normalizeClientServiceLabel(value: string): string {
+export function normalizeClientServiceLabel(value: unknown): string {
   const repaired = repairServiceEncoding(value);
+  if (!repaired) return '';
+
   const normalized = normalizeForComparison(repaired);
   const aliases: Record<string, string> = {
     eletrica: 'Elétrica',
@@ -61,13 +70,13 @@ export function normalizeClientServiceLabel(value: string): string {
   return aliases[normalized] ?? repaired;
 }
 
-export function buildClientServiceOptions(rawServices: string[] = [], currentService = ''): string[] {
+export function buildClientServiceOptions(rawServices: readonly unknown[] = [], currentService: unknown = ''): string[] {
   const normalizedCurrentService = normalizeClientServiceLabel(currentService);
   const options = [
     ...rawServices.map(normalizeClientServiceLabel),
     normalizedCurrentService,
     ...defaultClientServiceOptions,
-  ].filter(Boolean);
+  ].filter((service): service is string => Boolean(service));
 
   return [...new Set(options)];
 }

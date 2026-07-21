@@ -777,10 +777,14 @@
       line-height: 1.35;
     }
 
-  .wf-create-booking-form,
-    .wf-form-grid,
+  .wf-form-grid,
     .wf-form-grid--email {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+  .wf-modal-backdrop[data-modal='create-client'] .wf-create-booking-form {
+      grid-template-columns: minmax(0, 1fr);
       gap: 12px;
     }
 
@@ -1497,5 +1501,55 @@
     height: 31px !important;
     border-radius: 9px !important;
     font-size: 11px !important;
+  }
+}
+/* Client create-booking modal: the 431-640px range used to reactivate a
+   two-column grid. Keep every field contained and let date/time rows scroll
+   inside the modal instead of increasing the page width. */
+@media (min-width: 431px) and (max-width: 640px) {
+  .wf-modal-backdrop[data-modal='create-client'] .wf-create-booking-form,
+  .wf-modal-backdrop[data-modal='create-client'] .wf-create-booking-form--wireframe {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .wf-modal-backdrop[data-modal='create-client'] .wf-create-booking-form--wireframe > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    grid-column: 1 / -1 !important;
+  }
+
+  .wf-modal-backdrop[data-modal='create-client'] .wf-create-address-row,
+  .wf-modal-backdrop[data-modal='create-client'] .wf-create-address-row--with-number,
+  .wf-modal-backdrop[data-modal='create-client'] .wf-create-address-row--details {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .wf-modal-backdrop[data-modal='create-client'] .wf-modal-field,
+  .wf-modal-backdrop[data-modal='create-client'] .wf-input-shell,
+  .wf-modal-backdrop[data-modal='create-client'] .wf-city-select-launcher,
+  .wf-modal-backdrop[data-modal='create-client'] .booking-address-autocomplete,
+  .wf-modal-backdrop[data-modal='create-client'] .booking-address-autocomplete input,
+  .wf-modal-backdrop[data-modal='create-client'] .wf-create-field--service select {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .wf-modal-backdrop[data-modal='create-client'] .wf-date-options--scroll,
+  .wf-modal-backdrop[data-modal='create-client'] .wf-time-options--scroll {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
   }
 }

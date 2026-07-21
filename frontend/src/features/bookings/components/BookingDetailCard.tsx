@@ -29,8 +29,6 @@ type BookingDetailCardProps = {
 
 type EditableField =
   | "serviceType"
-  | "date"
-  | "time"
   | "clientEmail"
   | "clientPhone"
   | "clientStreet"
@@ -83,12 +81,6 @@ function formatTimeOnly(value: Date): string {
   return value.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function todayInputValue(): string {
-  const now = new Date();
-  const pad = (value: number) => String(value).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-}
-
 function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: BookingDetailCardProps) {
   const token = useMemo(
     () => resolveManageToken({ eventId: booking.id, manageToken: booking.manageToken ?? undefined }),
@@ -109,9 +101,6 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
   const lockedByTime = isWithinTwelveHours(booking.startsAt);
   const isCancelled = booking.status.code === "cancelled";
   const canManage = Boolean(token) && !lockedByTime && !isCancelled;
-  const editedStart = form.date && form.time ? new Date(`${form.date}T${form.time}:00`) : null;
-  const editedStartIsValid = Boolean(editedStart && !Number.isNaN(editedStart.getTime()));
-  const editedStartIsTooSoon = Boolean(editedStartIsValid && editedStart && isWithinTwelveHours(editedStart));
   const parsedFullName = splitFullName(fullName);
   const addressChanged =
     form.clientStreet.trim() !== (booking.client.address.street ?? "").trim()
@@ -122,8 +111,6 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
     && isValidPhone(form.clientPhone)
     && Boolean(form.clientStreet.trim() && form.clientNumber.trim());
   const formIsValid = Boolean(form.serviceType.trim())
-    && editedStartIsValid
-    && !editedStartIsTooSoon
     && contactAndAddressAreValid;
 
   const onChange = (field: EditableField, value: string) => {
@@ -138,8 +125,8 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
 
   const submitUpdate = async () => {
     if (!token) return;
-    if (!form.serviceType.trim() || !editedStartIsValid || editedStartIsTooSoon) {
-      setValidationError("Escolha um serviço, uma data e um horário com pelo menos 12 horas de antecedência.");
+    if (!form.serviceType.trim()) {
+      setValidationError("Escolha um serviço.");
       return;
     }
     const { firstName, lastName } = splitFullName(fullName);
@@ -215,17 +202,16 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
 
       {isEditing ? (
         <div className="booking-detail__form booking-detail__form--essential">
-          <p className="booking-detail__edit-intro">Altere o serviço, a data, o horário, os dados de contato ou o endereço do atendimento.</p>
+          <p className="booking-detail__edit-intro">Altere o serviço, os dados de contato ou o endereço do atendimento.</p>
           <label>
             <span>Serviço</span>
             <select value={form.serviceType} onChange={(event) => onChange("serviceType", event.target.value)}>
               {serviceOptions.map((service) => <option key={service} value={service}>{service}</option>)}
             </select>
           </label>
-          <div className="booking-detail__form-grid">
-            <label><span>Data</span><input type="date" min={todayInputValue()} value={form.date} onChange={(event) => onChange("date", event.target.value)} /></label>
-            <label><span>Horário</span><input type="time" value={form.time} onChange={(event) => onChange("time", event.target.value)} /></label>
-          </div>
+          <p className="booking-detail__edit-rule">
+            A data e o horário não podem ser alterados por aqui. Para reagendar, entre em contato com o prestador responsável pelo atendimento.
+          </p>
           <label><span>Nome completo</span><input type="text" autoComplete="name" value={fullName} onChange={(event) => onFullNameChange(event.target.value)} /></label>
           <div className="booking-detail__form-grid">
             <label><span>E-mail</span><input type="email" autoComplete="email" value={form.clientEmail} onChange={(event) => onChange("clientEmail", event.target.value)} /></label>
@@ -235,7 +221,7 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
             <label><span>Endereço</span><input type="text" autoComplete="street-address" value={form.clientStreet} onChange={(event) => onChange("clientStreet", event.target.value)} /></label>
             <label><span>Número</span><input type="text" inputMode="text" value={form.clientNumber} onChange={(event) => onChange("clientNumber", event.target.value)} /></label>
           </div>
-          <p className="booking-detail__edit-rule">Edições e reagendamentos são permitidos até 12 horas antes do atendimento. Não é necessária senha administrativa para o cliente.</p>
+          <p className="booking-detail__edit-rule">As demais alterações podem ser feitas até 12 horas antes do atendimento. Não é necessária senha administrativa para o cliente.</p>
           {validationError ? <p className="booking-detail__error">{validationError}</p> : null}
           {updateError ? <p className="booking-detail__error">{normalizeApiErrorMessage(updateError, { context: "editBooking" })}</p> : null}
           <div className="booking-detail__actions">

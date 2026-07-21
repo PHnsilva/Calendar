@@ -2594,6 +2594,54 @@ function CitySelectField({
 
 const modalTimeOptions = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
+const requiredClientServiceOptions = ['Filmagem de drone', 'Outros'] as const;
+
+function repairServiceEncoding(value: string): string {
+  return value
+    .replace(/\u00c3\u00a0/g, 'à')
+    .replace(/\u00c3\u00a1/g, 'á')
+    .replace(/\u00c3\u00a2/g, 'â')
+    .replace(/\u00c3\u00a3/g, 'ã')
+    .replace(/\u00c3\u00a7/g, 'ç')
+    .replace(/\u00c3\u00a8/g, 'è')
+    .replace(/\u00c3\u00a9/g, 'é')
+    .replace(/\u00c3\u00aa/g, 'ê')
+    .replace(/\u00c3\u00ad/g, 'í')
+    .replace(/\u00c3\u00b3/g, 'ó')
+    .replace(/\u00c3\u00b4/g, 'ô')
+    .replace(/\u00c3\u00b5/g, 'õ')
+    .replace(/\u00c3\u00ba/g, 'ú')
+    .replace(/\u00c2/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeClientServiceLabel(value: string): string {
+  const repaired = repairServiceEncoding(value);
+  const normalized = normalizeText(repaired).replace(/\s+/g, ' ').trim();
+  const aliases: Record<string, string> = {
+    eletrica: 'Elétrica',
+    hidraulica: 'Hidráulica',
+    instalacoes: 'Instalações',
+    'servico de pedreiro': 'Serviços de pedreiro',
+    'servicos de pedreiro': 'Serviços de pedreiro',
+    'servicos com drone': 'Filmagem de drone',
+    'filmagem com drone': 'Filmagem de drone',
+    'filmagem com drones': 'Filmagem de drone',
+    'filmagem de drone': 'Filmagem de drone',
+    orcamento: 'Outros',
+    outro: 'Outros',
+    outros: 'Outros',
+  };
+
+  return aliases[normalized] ?? repaired;
+}
+
+function buildClientServiceOptions(rawServices: string[]): string[] {
+  const services = rawServices.map(normalizeClientServiceLabel).filter(Boolean);
+  return [...new Set([...services, ...requiredClientServiceOptions])];
+}
+
 type CreateBookingField =
   | 'fullName'
   | 'phone'
@@ -2623,10 +2671,11 @@ function SharedCreateBookingModal({
   const queryClient = useQueryClient();
   const bootstrapQuery = usePublicBootstrap(true);
   const bootstrap = bootstrapQuery.data;
-  const services = useMemo(
-    () => [...new Set((bootstrap?.services ?? []).map((service) => service.trim()).filter(Boolean))],
-    [bootstrap?.services],
-  );
+  const services = useMemo(() => {
+    const bootstrapServices = bootstrap?.services ?? [];
+    if (audience === 'client') return buildClientServiceOptions(bootstrapServices);
+    return [...new Set(bootstrapServices.map((service) => service.trim()).filter(Boolean))];
+  }, [audience, bootstrap?.services]);
   const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
   const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
   const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);

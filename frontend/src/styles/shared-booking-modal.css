@@ -274,3 +274,35 @@
     font-size: 11px !important;
   }
 }
+
+/* Keep the client booking form in one column throughout the intermediate
+   mobile range. The legacy modal cascade briefly re-enabled two columns from
+   431px to 640px, which displaced and clipped address, date and service fields. */
+@media (min-width: 431px) and (max-width: 640px) {
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-booking-form,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-booking-form--wireframe {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-booking-form--wireframe > *,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-address-row,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-field--complement,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-choice-block {
+    min-width: 0 !important;
+    width: 100% !important;
+    grid-column: 1 / -1 !important;
+  }
+
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-address-row--with-number {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .wf-modal-backdrop[data-modal="create-client"] .wf-input-shell,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-city-select-launcher,
+  .wf-modal-backdrop[data-modal="create-client"] .booking-address-autocomplete,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-field--service select {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}

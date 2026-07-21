@@ -900,3 +900,39 @@ html body .appointments-detail-overlay .booking-detail__confirm-heading > .booki
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Client edit/rebooking: keep only the essential fields and style the service select consistently. */
+html body .appointments-detail-overlay .booking-detail__form select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 38px 10px 12px;
+  border: 1px solid rgba(7, 19, 93, .16);
+  border-radius: 10px;
+  background: #fff;
+  color: #07135d;
+  font: inherit;
+}
+
+html body .appointments-detail-overlay .booking-detail__form--essential {
+  gap: 14px;
+}
+
+html body .appointments-detail-overlay .booking-detail__edit-intro,
+html body .appointments-detail-overlay .booking-detail__edit-rule {
+  margin: 0;
+  line-height: 1.5;
+}
+
+html body .appointments-detail-overlay .booking-detail__edit-intro {
+  color: #07135d;
+  font-weight: 750;
+}
+
+html body .appointments-detail-overlay .booking-detail__edit-rule {
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #f2f6ff;
+  color: #28427f;
+  font-size: .88rem;
+  font-weight: 750;
+}

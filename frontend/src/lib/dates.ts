@@ -135,7 +135,15 @@ export function formatDateTime(value: Date | string): string {
   }).format(date);
 }
 
-export function isWithinTwoHours(value: Date | string): boolean {
+export function isWithinHours(value: Date | string, hours: number): boolean {
   const date = parseDateInput(value);
-  return date.getTime() - Date.now() < 2 * 60 * 60 * 1000;
+  return date.getTime() - Date.now() < hours * 60 * 60 * 1000;
+}
+
+export function isWithinTwoHours(value: Date | string): boolean {
+  return isWithinHours(value, 2);
+}
+
+export function isWithinTwelveHours(value: Date | string): boolean {
+  return isWithinHours(value, 12);
 }

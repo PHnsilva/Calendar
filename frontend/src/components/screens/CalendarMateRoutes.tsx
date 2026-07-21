@@ -78,6 +78,7 @@ import AddressAutocompleteField from '../../features/booking-form/components/Add
 import type { AddressSuggestion } from '../../features/booking-form/hooks/useAddressSuggestions';
 import { buildSuggestionInputValue, buildSuggestionStreetLine, getSuggestionHouseNumber, shouldShowManualHouseNumber } from '../../features/booking-form/utils/address-selection';
 import { useCreateBooking } from '../../features/bookings/hooks/useCreateBooking';
+import { buildClientServiceOptions } from '../../features/bookings/services/client-service-options';
 import { useAvailableSlots } from '../../features/calendar/hooks/useAvailableSlots';
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
 import { createAdminBlocks, deleteAdminBlock, listAdminBlocks } from '../../features/admin/api/manage-admin-blocks';
@@ -2594,54 +2595,6 @@ function CitySelectField({
 
 const modalTimeOptions = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
-const requiredClientServiceOptions = ['Filmagem de drone', 'Outros'] as const;
-
-function repairServiceEncoding(value: string): string {
-  return value
-    .replace(/\u00c3\u00a0/g, 'à')
-    .replace(/\u00c3\u00a1/g, 'á')
-    .replace(/\u00c3\u00a2/g, 'â')
-    .replace(/\u00c3\u00a3/g, 'ã')
-    .replace(/\u00c3\u00a7/g, 'ç')
-    .replace(/\u00c3\u00a8/g, 'è')
-    .replace(/\u00c3\u00a9/g, 'é')
-    .replace(/\u00c3\u00aa/g, 'ê')
-    .replace(/\u00c3\u00ad/g, 'í')
-    .replace(/\u00c3\u00b3/g, 'ó')
-    .replace(/\u00c3\u00b4/g, 'ô')
-    .replace(/\u00c3\u00b5/g, 'õ')
-    .replace(/\u00c3\u00ba/g, 'ú')
-    .replace(/\u00c2/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function normalizeClientServiceLabel(value: string): string {
-  const repaired = repairServiceEncoding(value);
-  const normalized = normalizeText(repaired).replace(/\s+/g, ' ').trim();
-  const aliases: Record<string, string> = {
-    eletrica: 'Elétrica',
-    hidraulica: 'Hidráulica',
-    instalacoes: 'Instalações',
-    'servico de pedreiro': 'Serviços de pedreiro',
-    'servicos de pedreiro': 'Serviços de pedreiro',
-    'servicos com drone': 'Filmagem de drone',
-    'filmagem com drone': 'Filmagem de drone',
-    'filmagem com drones': 'Filmagem de drone',
-    'filmagem de drone': 'Filmagem de drone',
-    orcamento: 'Outros',
-    outro: 'Outros',
-    outros: 'Outros',
-  };
-
-  return aliases[normalized] ?? repaired;
-}
-
-function buildClientServiceOptions(rawServices: string[]): string[] {
-  const services = rawServices.map(normalizeClientServiceLabel).filter(Boolean);
-  return [...new Set([...services, ...requiredClientServiceOptions])];
-}
-
 type CreateBookingField =
   | 'fullName'
   | 'phone'
@@ -2699,6 +2652,7 @@ function SharedCreateBookingModal({
   const [fieldErrors, setFieldErrors] = useState<CreateBookingErrors>({});
   const [submitError, setSubmitError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [createdBooking, setCreatedBooking] = useState<ServicoResponse | null>(null);
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
   const createBookingInFlightRef = useRef(false);
   const selectedCity = allowedCities.includes(city) ? city : defaultCity;
@@ -2768,7 +2722,7 @@ function SharedCreateBookingModal({
   };
 
   const handleCreateBooking = async () => {
-    if (createBookingInFlightRef.current || createBookingMutation.isPending || successMessage) return;
+    if (createBookingInFlightRef.current || createBookingMutation.isPending || successMessage || createdBooking) return;
 
     const { firstName, lastName } = splitFullName(fullName);
     const phoneDigits = digitsOnly(phone);
@@ -2792,7 +2746,7 @@ function SharedCreateBookingModal({
       nextErrors.protectedPassword = 'Senha obrigatória para usar telefone de administrador ou prestador.';
     }
     if (!isEmailValid(email)) {
-      nextErrors.email = 'E-mail: use @ e dominio valido. Exemplo: voce@email.com.';
+      nextErrors.email = 'E-mail: use @ e domínio válido. Exemplo: voce@email.com.';
     }
     if (!selectedCity) {
       nextErrors.city = 'Ainda não atendemos essa cidade. Escolha uma das cidades atendidas.';
@@ -2807,7 +2761,7 @@ function SharedCreateBookingModal({
       nextErrors.date = 'Data: selecione um dia disponível.';
     }
     if (!activeSelectedTime) {
-      nextErrors.time = 'Horario: selecione um horario disponivel para a data escolhida.';
+      nextErrors.time = 'Horário: selecione um horário disponível para a data escolhida.';
     } else if (!isAtLeast24HoursAhead(activeSelectedDate, activeSelectedTime)) {
       nextErrors.time = 'Escolha uma data com pelo menos 24 horas de antecedência.';
     }
@@ -2865,16 +2819,15 @@ function SharedCreateBookingModal({
         queryClient.invalidateQueries({ queryKey: ['my-bookings'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-bookings'] }),
       ]);
-      setSuccessMessage(audience === 'admin'
-        ? 'Agendamento criado. Atualizando a agenda administrativa...'
-        : 'Agendamento criado. Abrindo seus agendamentos...');
+      if (audience === 'client') {
+        setCreatedBooking(response.servico);
+        onSubmissionChange(false);
+        return;
+      }
+
+      setSuccessMessage('Agendamento criado. Atualizando a agenda administrativa...');
       onSubmissionChange(false);
-      window.setTimeout(() => {
-        onClose();
-        if (audience === 'client') {
-          navigate('/meus-agendamentos');
-        }
-      }, 700);
+      window.setTimeout(onClose, 700);
     } catch (error) {
       trackEvent('booking_error');
       createBookingInFlightRef.current = false;
@@ -2888,6 +2841,34 @@ function SharedCreateBookingModal({
       window.setTimeout(focusFirstCreateBookingError, 0);
     }
   };
+
+  if (createdBooking && audience === 'client') {
+    const createdStart = toBusinessDateTimeParts(createdBooking.start);
+    const createdDateLabel = createdStart.date ? ptDate.format(toLocalDate(createdStart.date)) : 'Data confirmada';
+    const openBookings = () => {
+      onClose();
+      navigate('/meus-agendamentos');
+    };
+
+    return (
+      <div className="wf-create-booking-modal wf-create-booking-modal--success">
+        <div className="wf-create-booking-modal__scroll wf-create-booking-success" role="status" aria-live="polite">
+          <div className="wf-create-booking-success__icon" aria-hidden="true">✓</div>
+          <span className="wf-create-booking-success__eyebrow">Agendamento confirmado</span>
+          <h2>Seu serviço foi agendado com sucesso</h2>
+          <p>Confira os dados principais antes de fechar.</p>
+          <dl className="wf-create-booking-success__summary">
+            <div><dt>Serviço</dt><dd>{createdBooking.serviceType}</dd></div>
+            <div><dt>Data</dt><dd>{createdDateLabel}</dd></div>
+            <div><dt>Horário</dt><dd>{createdStart.time || activeSelectedTime}</dd></div>
+            <div><dt>Local</dt><dd>{createdBooking.clientAddressLine || `${createdBooking.clientStreet}, ${createdBooking.clientNumber}`}</dd></div>
+          </dl>
+          <p className="wf-create-booking-success__notice">Você pode editar ou reagendar até 12 horas antes do atendimento.</p>
+        </div>
+        <ModalActions primary="Ver meus agendamentos" secondary="Fechar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={openBookings} />
+      </div>
+    );
+  }
 
   return (
     <div className="wf-create-booking-modal">

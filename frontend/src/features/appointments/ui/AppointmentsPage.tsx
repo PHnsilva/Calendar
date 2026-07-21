@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import logo from "../../../assets/brand/sg-navbar-logo-white-orange-v2.png";
 import viewIcon from "../../../assets/wireframes/icons/booking-action-eye.svg";
 import editIcon from "../../../assets/wireframes/icons/booking-action-pencil.svg";
@@ -13,9 +13,8 @@ import { BookingDetailCard, type BookingDetailMode } from "../../bookings/compon
 import { BookingStatusBadge } from "../../bookings/components/BookingStatusBadge";
 import { useMyBookings } from "../../bookings/hooks/useMyBookings";
 import type { BookingListEntry } from "../../bookings/types";
-import { formatDateTime, isWithinTwelveHours } from "../../../lib/dates";
+import { formatDateTime, isWithinTwoHours } from "../../../lib/dates";
 import { getManageTokens, resolveManageToken } from "../../../lib/storage";
-import { normalizeClientServiceLabel } from "../../bookings/services/client-service-options";
 
 type SelectedBooking = {
   entry: BookingListEntry;
@@ -33,7 +32,7 @@ function openProviderWhatsApp(booking: Booking): boolean {
   if (!phone) return false;
 
   const message = encodeURIComponent(
-    `Olá! Gostaria de falar sobre meu agendamento de ${normalizeClientServiceLabel(booking.serviceType)}, marcado para ${formatDateTime(booking.startsAt)}.`,
+    `Olá! Gostaria de falar sobre meu agendamento de ${booking.serviceType}, marcado para ${formatDateTime(booking.startsAt)}.`,
   );
   window.open(`https://wa.me/${phone}?text=${message}`, "_blank", "noopener,noreferrer");
   return true;
@@ -51,10 +50,9 @@ function BookingSummaryCard({
   const booking = entry.model;
   const token = resolveManageToken({ eventId: booking.id, manageToken: booking.manageToken ?? undefined });
   const isCancelled = booking.status.code === "cancelled";
-  const isLocked = isWithinTwelveHours(booking.startsAt);
+  const isLocked = isWithinTwoHours(booking.startsAt);
   const canManage = Boolean(token) && !isCancelled && !isLocked;
   const providerName = booking.assignedProvider?.name?.trim();
-  const serviceLabel = normalizeClientServiceLabel(booking.serviceType);
 
   return (
     <article className="appointments-modal-card">
@@ -63,7 +61,7 @@ function BookingSummaryCard({
           <span className="appointments-modal-card__service-mark" aria-hidden="true">SG</span>
           <div>
             <p>Serviço agendado</p>
-            <h2>{serviceLabel}</h2>
+            <h2>{booking.serviceType}</h2>
           </div>
         </div>
         <BookingStatusBadge status={booking.status} />
@@ -75,8 +73,10 @@ function BookingSummaryCard({
         <span><b>Responsável</b>{providerName || "Aguardando definição"}</span>
       </div>
 
+      {booking.serviceNotes ? <p className="appointments-modal-card__notes">{booking.serviceNotes}</p> : null}
+
       {!token ? <p className="appointments-modal-card__notice">Recupere o acesso para editar ou cancelar este agendamento.</p> : null}
-      {isLocked && !isCancelled ? <p className="appointments-modal-card__notice">Alterações e reagendamentos ficam bloqueados nas 12 horas anteriores ao atendimento.</p> : null}
+      {isLocked && !isCancelled ? <p className="appointments-modal-card__notice">Alterações ficam bloqueadas nas 2 horas anteriores ao atendimento.</p> : null}
 
       <div className="appointments-modal-card__actions">
         <button type="button" className="appointments-card-action appointments-card-action--primary" onClick={() => onOpen("view")}>
@@ -195,9 +195,8 @@ export default function AppointmentsPage() {
             <section className="appointments-modal__empty">
               <span aria-hidden="true">🔐</span>
               <h2>Nenhum acesso salvo neste navegador</h2>
-              <p>Recupere seus agendamentos pelo telefone usado no cadastro ou crie um novo serviço.</p>
+              <p>Crie um novo serviço para começar.</p>
               <div>
-                <Link to="/recover">Recuperar agendamentos</Link>
                 <button type="button" onClick={() => setChildModal("create-client")}>Criar agendamento</button>
               </div>
             </section>
@@ -248,13 +247,13 @@ export default function AppointmentsPage() {
       </section>
 
       {selected ? (
-        <div className="appointments-detail-overlay" role="dialog" aria-modal="true" aria-label={`Detalhes de ${normalizeClientServiceLabel(selected.entry.model.serviceType)}`}>
+        <div className="appointments-detail-overlay" role="dialog" aria-modal="true" aria-label={`Detalhes de ${selected.entry.model.serviceType}`}>
           <button type="button" className="appointments-detail-overlay__backdrop" onClick={() => setSelected(null)} aria-label="Fechar detalhes" />
           <section className="appointments-detail-overlay__panel">
             <header>
               <div>
                 <span>Gerenciar serviço</span>
-                <strong>{normalizeClientServiceLabel(selected.entry.model.serviceType)}</strong>
+                <strong>{selected.entry.model.serviceType}</strong>
               </div>
               <button type="button" onClick={() => setSelected(null)} aria-label="Fechar detalhes">×</button>
             </header>

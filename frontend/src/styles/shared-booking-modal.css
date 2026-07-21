@@ -275,34 +275,95 @@
   }
 }
 
-/* Keep the client booking form in one column throughout the intermediate
-   mobile range. The legacy modal cascade briefly re-enabled two columns from
-   431px to 640px, which displaced and clipped address, date and service fields. */
-@media (min-width: 431px) and (max-width: 640px) {
+/* Client booking modal: keep every form control inside the viewport from
+   320px through 640px. This final scoped layer overrides the legacy modal
+   cascade without changing any other modal or desktop layout. */
+@media (max-width: 640px) {
+  .wf-modal-backdrop[data-modal="create-client"],
+  .wf-modal-backdrop[data-modal="create-client"] .wf-modal--shared-create,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-booking-modal,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-booking-modal__scroll,
   .wf-modal-backdrop[data-modal="create-client"] .wf-create-booking-form,
   .wf-modal-backdrop[data-modal="create-client"] .wf-create-booking-form--wireframe {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-booking-form,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-booking-form--wireframe {
+    display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
   .wf-modal-backdrop[data-modal="create-client"] .wf-create-booking-form--wireframe > *,
-  .wf-modal-backdrop[data-modal="create-client"] .wf-create-address-row,
-  .wf-modal-backdrop[data-modal="create-client"] .wf-create-field--complement,
-  .wf-modal-backdrop[data-modal="create-client"] .wf-choice-block {
-    min-width: 0 !important;
+  .wf-modal-backdrop[data-modal="create-client"] .wf-modal-field,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-choice-block,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-field--complement {
     width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
     grid-column: 1 / -1 !important;
   }
 
-  .wf-modal-backdrop[data-modal="create-client"] .wf-create-address-row--with-number {
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-address-row,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-address-row--with-number,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-address-row--details {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
   .wf-modal-backdrop[data-modal="create-client"] .wf-input-shell,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-input-shell--address,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-input-shell--select {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+  }
+
   .wf-modal-backdrop[data-modal="create-client"] .wf-city-select-launcher,
   .wf-modal-backdrop[data-modal="create-client"] .booking-address-autocomplete,
-  .wf-modal-backdrop[data-modal="create-client"] .wf-create-field--service select {
-    min-width: 0 !important;
+  .wf-modal-backdrop[data-modal="create-client"] .booking-address-autocomplete .booking-form__input,
+  .wf-modal-backdrop[data-modal="create-client"] .booking-address-autocomplete input,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-input-shell input,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-create-field--service select,
+  .wf-modal-backdrop[data-modal="create-client"] textarea {
     width: 100% !important;
+    min-width: 0 !important;
     max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .wf-modal-backdrop[data-modal="create-client"] .wf-date-options--scroll,
+  .wf-modal-backdrop[data-modal="create-client"] .wf-time-options--scroll {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin-inline: 0 !important;
+    padding-inline: 0 !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-x: contain !important;
+  }
+
+  .wf-modal-backdrop[data-modal="create-client"] .wf-date-options--scroll button {
+    flex: 0 0 clamp(76px, 24vw, 96px) !important;
+    min-width: 0 !important;
+  }
+
+  .wf-modal-backdrop[data-modal="create-client"] .wf-date-options--scroll .wf-date-next-button {
+    flex-basis: 38px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+  }
+
+  .wf-modal-backdrop[data-modal="create-client"] .wf-time-options--scroll button {
+    flex: 0 0 clamp(62px, 20vw, 78px) !important;
+    min-width: 0 !important;
   }
 }

@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import type { ServicoCreateResponse } from '../../types/api';
+import type { CreateBookingPrefill } from '../../features/appointments/model/booking-history';
 
 vi.setConfig({ testTimeout: 30000 });
 
@@ -103,7 +104,7 @@ const createResponse: ServicoCreateResponse = {
 };
 
 const bootstrapData = {
-  services: ['Eletrica', 'Hidraulica'],
+  services: ['Elétrica', 'Hidráulica'],
   schedule: { cycleStart: '2026-05-16', workStart: '08:00', workEnd: '18:00', lunchStart: '12:00', lunchEnd: '13:00' },
   booking: { slotMinutes: 60, maxFutureMonthsAhead: 1 },
   serviceArea: { allowedCities: ['Itabirito'], allowedStates: ['MG'], durationByCity: { Itabirito: 60 } },
@@ -114,7 +115,7 @@ function LocationProbe() {
   return <output data-testid="location">{location.pathname}</output>;
 }
 
-async function renderCreateModal(audience: 'client' | 'admin') {
+async function renderCreateModal(audience: 'client' | 'admin', createPrefill?: CreateBookingPrefill) {
   const { CalendarMateModal } = await import('./CalendarMateRoutes');
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -127,6 +128,7 @@ async function renderCreateModal(audience: 'client' | 'admin') {
         <CalendarMateModal
           modal="create-client"
           bookingAudience={audience}
+          context={{ createPrefill }}
           onClose={onClose}
         />
         <LocationProbe />
@@ -151,7 +153,7 @@ function fillValidBooking() {
   if (!dateButton) throw new Error('Expected an available date button');
   fireEvent.click(dateButton);
   fireEvent.click(screen.getByRole('button', { name: '09:00' }));
-  fireEvent.change(screen.getByRole('combobox', { name: /Servi/ }), { target: { value: 'Eletrica' } });
+  fireEvent.change(screen.getByRole('combobox', { name: /Servi/ }), { target: { value: 'Elétrica' } });
 }
 
 beforeEach(() => {
@@ -223,9 +225,11 @@ describe('shared client and admin booking creation modal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar agendamento' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar agendamento' }));
 
+    expect(Array.from(document.querySelectorAll('.wf-field-error')).map((node) => node.textContent)).toEqual([]);
+
     await waitFor(() => expect(mocks.mutateAsync).toHaveBeenCalledTimes(1));
     expect(mocks.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({
-      serviceType: 'Eletrica',
+      serviceType: 'Elétrica',
       date: '2026-07-20',
       time: '09:00',
       clientFirstName: 'Cliente',
@@ -236,9 +240,13 @@ describe('shared client and admin booking creation modal', () => {
     }));
     expect(mocks.mutateAsync.mock.calls[0]?.[0]).not.toHaveProperty('serviceNotes');
 
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(700);
-    });
+    if (audience === 'client') {
+      fireEvent.click(await screen.findByRole('button', { name: 'Ver meus agendamentos' }));
+    } else {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(700);
+      });
+    }
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('location').textContent).toBe(expectedPath);
@@ -265,6 +273,55 @@ describe('shared client and admin booking creation modal', () => {
     expect(screen.getByText(/N.o foi poss.vel carregar os servi/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts a fresh validated booking from history with only service, client, and address prefilled', async () => {
+    await renderCreateModal('client', {
+      serviceType: 'Elétrica',
+      client: { fullName: 'Maria Souza', phone: '31988888888', email: 'maria@example.test' },
+      address: {
+        postalCode: '35450000',
+        street: 'Rua Um',
+        neighborhood: 'Centro',
+        number: '10',
+        complement: 'Casa',
+        city: 'Itabirito',
+        state: 'MG',
+        latitude: -20.25,
+        longitude: -43.8,
+      },
+    });
+
+    expect((screen.getByPlaceholderText('Digite seu nome completo') as HTMLInputElement).value).toBe('Maria Souza');
+    expect((screen.getByPlaceholderText('(11) 99999-9999') as HTMLInputElement).value).toBe('(31) 98888-8888');
+    expect((screen.getByPlaceholderText('seu@email.com') as HTMLInputElement).value).toBe('maria@example.test');
+    expect((screen.getByLabelText('Endereco do atendimento') as HTMLInputElement).value).toBe('Rua Um, Centro');
+    expect((screen.getByPlaceholderText('123 ou S/N') as HTMLInputElement).value).toBe('10');
+    expect((screen.getByRole('combobox', { name: /Servi/ }) as HTMLSelectElement).value).toBe('Elétrica');
+    expect(document.querySelector('.wf-date-options .is-active')).toBeNull();
+    expect(document.querySelector('.wf-time-options .is-active')).toBeNull();
+
+    const dateButton = document.querySelector<HTMLButtonElement>('.wf-date-options button:not(.wf-date-next-button)');
+    if (!dateButton) throw new Error('Expected an available date button');
+    fireEvent.click(dateButton);
+    fireEvent.click(screen.getByRole('button', { name: '09:00' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar agendamento' }));
+
+    await waitFor(() => expect(mocks.mutateAsync).toHaveBeenCalledTimes(1));
+    expect(mocks.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      serviceType: 'Elétrica',
+      date: '2026-07-20',
+      time: '09:00',
+      clientFirstName: 'Maria',
+      clientLastName: 'Souza',
+      clientCep: '35450000',
+      clientStreet: 'Rua Um',
+      clientNeighborhood: 'Centro',
+      clientNumber: '10',
+      clientComplement: 'Casa',
+      clientLatitude: -20.25,
+      clientLongitude: -43.8,
+    }));
   });
 
   it('keeps actions outside the scrolling form and closes only from the real overlay', async () => {

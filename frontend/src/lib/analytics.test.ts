@@ -14,13 +14,13 @@ describe("analytics privacy and page-view tracking", () => {
     window.gtag = gtag;
     document.title = "Página privada";
 
-    trackPageView("/recover");
-    trackPageView("/recover");
+    trackPageView("/meus-agendamentos");
+    trackPageView("/meus-agendamentos");
 
     expect(gtag).toHaveBeenCalledTimes(1);
     expect(gtag).toHaveBeenCalledWith("event", "page_view", expect.objectContaining({
-      page_location: `${window.location.origin}/recover`,
-      page_path: "/recover",
+      page_location: `${window.location.origin}/meus-agendamentos`,
+      page_path: "/meus-agendamentos",
     }));
   });
 

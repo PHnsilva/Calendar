@@ -27,7 +27,7 @@ declare global {
 }
 
 const SAFE_PARAMETER_KEYS = new Set<keyof SafeEventParameters>(["city", "service"]);
-const SAFE_STATIC_PATHS = new Set(["/", "/meus-agendamentos", "/recover", "/403", "/500", "/admin", "/admin/dashboard", "/prestador", "/prestador/dashboard"]);
+const SAFE_STATIC_PATHS = new Set(["/", "/meus-agendamentos", "/403", "/500", "/admin", "/admin/dashboard", "/prestador", "/prestador/dashboard"]);
 let lastPagePath = "";
 const recentEvents = new Map<string, number>();
 

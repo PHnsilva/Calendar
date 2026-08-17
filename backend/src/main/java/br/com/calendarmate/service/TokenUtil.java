@@ -25,6 +25,20 @@ public class TokenUtil {
     }
 
     public VerifiedToken verify(String token) {
+        return verify(token, true);
+    }
+
+    /**
+     * Validates the signed token without enforcing its management expiry.
+     *
+     * <p>This is intentionally limited to read-only booking history lookup. Mutating
+     * operations must continue to use {@link #verify(String)}.</p>
+     */
+    public VerifiedToken verifyForHistory(String token) {
+        return verify(token, false);
+    }
+
+    private VerifiedToken verify(String token, boolean enforceExpiry) {
         try {
             byte[] dec = Base64.getUrlDecoder().decode(token);
             String decoded = new String(dec, StandardCharsets.UTF_8);
@@ -42,7 +56,7 @@ public class TokenUtil {
             String expected = hmacSha256(payload, secret);
 
             if (!expected.equals(sig)) return null;
-            if (Instant.now().getEpochSecond() > exp) return null;
+            if (enforceExpiry && Instant.now().getEpochSecond() > exp) return null;
 
             return new VerifiedToken(eventId, clientEmail, exp);
         } catch (Exception e) {

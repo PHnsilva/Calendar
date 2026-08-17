@@ -75,7 +75,7 @@ describe("useMyBookings", () => {
     queryClient.clear();
   });
 
-  it("filters cancelled bookings and appointments from past dates", async () => {
+  it("keeps past appointments in client history while filtering cancelled bookings", async () => {
     const upcoming = booking("event-upcoming", "2099-07-12T12:00:00Z");
     const cancelled = {
       ...booking("event-cancelled", "2099-07-13T12:00:00Z"),
@@ -93,7 +93,7 @@ describe("useMyBookings", () => {
     const { result } = renderHook(() => useMyBookings(["manage-token"]), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.map((entry) => entry.model.id)).toEqual(["event-upcoming"]);
+    expect(result.current.data?.map((entry) => entry.model.id)).toEqual(["event-past", "event-upcoming"]);
 
     queryClient.clear();
   });

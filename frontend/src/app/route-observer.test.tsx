@@ -32,10 +32,10 @@ describe("route metadata", () => {
     expect(document.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe("https://sgpequenosreparos.com.br/");
   });
 
-  it("marks recovery and other private routes noindex", async () => {
-    renderAt("/recover");
-    await waitFor(() => expect(document.title).toContain("Recuperar acesso"));
+  it("marks the client appointments route noindex", async () => {
+    renderAt("/meus-agendamentos");
+    await waitFor(() => expect(document.title).toContain("Meus agendamentos"));
     expect(document.querySelector('meta[name="robots"]')?.getAttribute("content")).toBe("noindex, nofollow, noarchive");
-    expect(document.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe("https://sgpequenosreparos.com.br/recover");
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe("https://sgpequenosreparos.com.br/meus-agendamentos");
   });
 });

@@ -11,10 +11,6 @@ const PRIVATE_METADATA: Record<string, { title: string; description: string }> =
     title: "Meus agendamentos | SG Pequenos Reparos",
     description: "Área privada para acompanhar seus agendamentos com a SG Pequenos Reparos.",
   },
-  "/recover": {
-    title: "Recuperar acesso | SG Pequenos Reparos",
-    description: "Área segura para recuperar o acesso aos seus agendamentos.",
-  },
   "/403": { title: "Acesso restrito | SG Pequenos Reparos", description: "Esta área possui acesso restrito." },
   "/500": { title: "Serviço indisponível | SG Pequenos Reparos", description: "O serviço está temporariamente indisponível." },
 };

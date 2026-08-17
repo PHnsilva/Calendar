@@ -223,7 +223,6 @@
 @media (max-width: 900px) {
   .my-bookings__panel-header,
     .booking-detail__header,
-    .recovery-card__actions,
     .my-bookings__actions,
     .booking-detail__actions {
       flex-direction: column;

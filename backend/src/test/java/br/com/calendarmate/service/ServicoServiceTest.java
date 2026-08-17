@@ -230,6 +230,37 @@ class ServicoServiceTest {
     }
 
     @Test
+    void listMyReturnsPastAppointmentsWithAnExpiredSignedManageToken() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        Event past = calendar.createEvent(confirmedBooking(LocalDate.now(ZONE).minusDays(10), LocalTime.of(9, 0)));
+        calendar.createEvent(confirmedBooking(LocalDate.now(ZONE).plusDays(2), LocalTime.of(9, 0)));
+        TokenUtil tokenUtil = new TokenUtil("test-secret", -1);
+        String expiredToken = tokenUtil.generate(past.getId(), "maria@example.com");
+
+        List<ServicoResponse> bookings = service.listMy(expiredToken);
+
+        assertNull(tokenUtil.verify(expiredToken));
+        assertEquals(1, bookings.size());
+        assertEquals(past.getId(), bookings.get(0).getEventId());
+        assertTrue(bookings.get(0).getStart().isBefore(Instant.now()));
+    }
+
+    @Test
+    void listMyReturnsEmptyWhenTheSignedBookingIsOutsideHistoryRetention() throws IOException {
+        AppProperties props = new AppProperties();
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        ServicoService service = serviceWith(calendar, props);
+        Event old = calendar.createEvent(confirmedBooking(LocalDate.now(ZONE).minusMonths(4), LocalTime.of(9, 0)));
+        String token = new TokenUtil("test-secret", 600).generate(old.getId(), "maria@example.com");
+
+        List<ServicoResponse> bookings = service.listMy(token);
+
+        assertTrue(bookings.isEmpty());
+    }
+
+    @Test
     void createUsesSelectedServiceWhenOptionalNotesAndCepAreOmitted() throws IOException {
         AppProperties props = new AppProperties();
         DummyCalendarClient calendar = new DummyCalendarClient();

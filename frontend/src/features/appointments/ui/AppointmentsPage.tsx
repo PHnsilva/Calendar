@@ -15,6 +15,7 @@ import { useMyBookings } from "../../bookings/hooks/useMyBookings";
 import type { BookingListEntry } from "../../bookings/types";
 import { formatDateTime, isWithinTwoHours } from "../../../lib/dates";
 import { getManageTokens, resolveManageToken } from "../../../lib/storage";
+import { buildRebookingPrefill, partitionClientBookings, type CreateBookingPrefill } from "../model/booking-history";
 
 type SelectedBooking = {
   entry: BookingListEntry;
@@ -42,10 +43,14 @@ function BookingSummaryCard({
   entry,
   onOpen,
   onContact,
+  onRebook,
+  isPast,
 }: {
   entry: BookingListEntry;
   onOpen: (mode: BookingDetailMode) => void;
   onContact: () => void;
+  onRebook: () => void;
+  isPast: boolean;
 }) {
   const booking = entry.model;
   const token = resolveManageToken({ eventId: booking.id, manageToken: booking.manageToken ?? undefined });
@@ -75,26 +80,35 @@ function BookingSummaryCard({
 
       {booking.serviceNotes ? <p className="appointments-modal-card__notes">{booking.serviceNotes}</p> : null}
 
-      {!token ? <p className="appointments-modal-card__notice">Recupere o acesso para editar ou cancelar este agendamento.</p> : null}
-      {isLocked && !isCancelled ? <p className="appointments-modal-card__notice">Alterações ficam bloqueadas nas 2 horas anteriores ao atendimento.</p> : null}
+      {!isPast && !token ? <p className="appointments-modal-card__notice">O código de gerenciamento deste agendamento não está salvo neste navegador.</p> : null}
+      {!isPast && isLocked && !isCancelled ? <p className="appointments-modal-card__notice">Alterações ficam bloqueadas nas 2 horas anteriores ao atendimento.</p> : null}
 
       <div className="appointments-modal-card__actions">
         <button type="button" className="appointments-card-action appointments-card-action--primary" onClick={() => onOpen("view")}>
           <img src={viewIcon} alt="" aria-hidden="true" />
           Ver detalhes
         </button>
-        <button type="button" className="appointments-card-action" onClick={() => onOpen("edit")} disabled={!canManage}>
-          <img src={editIcon} alt="" aria-hidden="true" />
-          Editar / reagendar
-        </button>
+        {isPast ? (
+          <button type="button" className="appointments-card-action appointments-card-action--primary" onClick={onRebook}>
+            <img src={calendarIcon} alt="" aria-hidden="true" />
+            Agendar novamente
+          </button>
+        ) : (
+          <button type="button" className="appointments-card-action" onClick={() => onOpen("edit")} disabled={!canManage}>
+            <img src={editIcon} alt="" aria-hidden="true" />
+            Editar / reagendar
+          </button>
+        )}
         <button type="button" className="appointments-card-action" onClick={onContact}>
           <img src={contactIcon} alt="" aria-hidden="true" />
           {booking.assignedProvider?.phone ? "Falar com prestador" : "Fale conosco"}
         </button>
-        <button type="button" className="appointments-card-action appointments-card-action--danger" onClick={() => onOpen("cancel")} disabled={!canManage}>
-          <img src={cancelIcon} alt="" aria-hidden="true" />
-          Cancelar
-        </button>
+        {!isPast ? (
+          <button type="button" className="appointments-card-action appointments-card-action--danger" onClick={() => onOpen("cancel")} disabled={!canManage}>
+            <img src={cancelIcon} alt="" aria-hidden="true" />
+            Cancelar
+          </button>
+        ) : null}
       </div>
 
       {booking.eventLink ? (
@@ -112,9 +126,11 @@ export default function AppointmentsPage() {
   const [tokens, setTokens] = useState<string[]>(() => getManageTokens());
   const [selected, setSelected] = useState<SelectedBooking | null>(null);
   const [childModal, setChildModal] = useState<ModalKind>(null);
+  const [createPrefill, setCreatePrefill] = useState<CreateBookingPrefill | undefined>();
   const bookingsQuery = useMyBookings(tokens);
   const bookings = useMemo(() => bookingsQuery.data ?? [], [bookingsQuery.data]);
   const hasBookings = bookings.length > 0;
+  const { upcoming, history } = useMemo(() => partitionClientBookings(bookings), [bookings]);
   const showAccessEmpty = tokens.length === 0;
   const showInitialLoading = tokens.length > 0 && bookingsQuery.isLoading && !hasBookings;
   const showLoadError = tokens.length > 0 && bookingsQuery.isError && !hasBookings;
@@ -138,7 +154,18 @@ export default function AppointmentsPage() {
 
   const closeChildModal = () => {
     setChildModal(null);
+    setCreatePrefill(undefined);
     setTokens(getManageTokens());
+  };
+
+  const openCreate = () => {
+    setCreatePrefill(undefined);
+    setChildModal("create-client");
+  };
+
+  const rebook = (booking: Booking) => {
+    setCreatePrefill(buildRebookingPrefill(booking));
+    setChildModal("create-client");
   };
 
   const handleDeleted = () => {
@@ -166,7 +193,7 @@ export default function AppointmentsPage() {
           </div>
 
           <div className="appointments-modal__header-actions">
-            <button type="button" className="appointments-modal__create" onClick={() => setChildModal("create-client")}>+ Novo agendamento</button>
+            <button type="button" className="appointments-modal__create" onClick={openCreate}>+ Novo agendamento</button>
             <button type="button" className="appointments-modal__profile" onClick={() => setChildModal("client-profile")}>Perfil</button>
             <button type="button" className="appointments-modal__close" onClick={() => navigate("/")} aria-label="Fechar meus agendamentos">×</button>
           </div>
@@ -197,7 +224,7 @@ export default function AppointmentsPage() {
               <h2>Nenhum acesso salvo neste navegador</h2>
               <p>Crie um novo serviço para começar.</p>
               <div>
-                <button type="button" onClick={() => setChildModal("create-client")}>Criar agendamento</button>
+                <button type="button" onClick={openCreate}>Criar agendamento</button>
               </div>
             </section>
           ) : null}
@@ -223,24 +250,36 @@ export default function AppointmentsPage() {
             <section className="appointments-modal__empty">
               <span aria-hidden="true">📅</span>
               <h2>Nenhum agendamento encontrado</h2>
-              <p>Crie um novo atendimento ou recupere serviços feitos em outro navegador.</p>
+              <p>Crie um novo atendimento para começar.</p>
               <div>
-                <Link to="/recover">Recuperar</Link>
-                <button type="button" onClick={() => setChildModal("create-client")}>Criar agendamento</button>
+                <button type="button" onClick={openCreate}>Criar agendamento</button>
               </div>
             </section>
           ) : null}
 
           {hasBookings ? (
-            <div className="appointments-modal__grid">
-              {bookings.map((entry) => (
-                <BookingSummaryCard
-                  key={entry.model.id}
-                  entry={entry}
-                  onOpen={(mode) => setSelected({ entry, mode })}
-                  onContact={() => handleContact(entry.model)}
-                />
-              ))}
+            <div className="appointments-modal__sections">
+              <section className="appointments-modal__section" aria-labelledby="upcoming-appointments-title">
+                <header><h2 id="upcoming-appointments-title">Próximos agendamentos</h2><span>{upcoming.length}</span></header>
+                {upcoming.length > 0 ? (
+                  <div className="appointments-modal__grid">
+                    {upcoming.map((entry) => (
+                      <BookingSummaryCard key={entry.model.id} entry={entry} isPast={false} onOpen={(mode) => setSelected({ entry, mode })} onContact={() => handleContact(entry.model)} onRebook={() => rebook(entry.model)} />
+                    ))}
+                  </div>
+                ) : <p className="appointments-modal__section-empty">Nenhum agendamento futuro.</p>}
+              </section>
+
+              <section className="appointments-modal__section appointments-modal__section--history" aria-labelledby="booking-history-title">
+                <header><h2 id="booking-history-title">Histórico</h2><span>{history.length}</span></header>
+                {history.length > 0 ? (
+                  <div className="appointments-modal__grid">
+                    {history.map((entry) => (
+                      <BookingSummaryCard key={entry.model.id} entry={entry} isPast onOpen={(mode) => setSelected({ entry, mode })} onContact={() => handleContact(entry.model)} onRebook={() => rebook(entry.model)} />
+                    ))}
+                  </div>
+                ) : <p className="appointments-modal__section-empty">Seu histórico ainda está vazio.</p>}
+              </section>
             </div>
           ) : null}
         </div>
@@ -268,7 +307,7 @@ export default function AppointmentsPage() {
         </div>
       ) : null}
 
-      <CalendarMateModal modal={childModal} onClose={closeChildModal} onOpenModal={setChildModal} />
+      <CalendarMateModal modal={childModal} context={{ createPrefill }} onClose={closeChildModal} onOpenModal={setChildModal} />
     </main>
   );
 }

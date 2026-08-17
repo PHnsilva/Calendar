@@ -90,6 +90,7 @@ import type { AdminFilters } from '../../features/admin/types';
 import { getAdminAgendaRange, isDateInAdminAgendaRange, type AdminAgendaRangeKey } from '../../features/admin/utils/admin-agenda-range';
 import { useMyBookings } from '../../features/bookings/hooks/useMyBookings';
 import type { CalendarEvent } from '../../features/calendar/types';
+import type { CreateBookingPrefill } from '../../features/appointments/model/booking-history';
 import { build4x4UnavailableDates, is4x4UnavailableDate } from '../../features/calendar/utils/schedule-rules';
 import { parseOfxToFinancialDashboard } from '../../features/finance/services/ofx-parser';
 import type { FinancialDashboardDTO } from '../../features/finance/types';
@@ -224,6 +225,7 @@ type BookingItem = {
 type ModalContext = {
   booking?: BookingItem;
   createDate?: string;
+  createPrefill?: CreateBookingPrefill;
 };
 
 type BudgetDraftItem = {
@@ -2460,7 +2462,7 @@ export function CalendarMateModal({
       focusCloseOnOpen
       lockBodyScroll
     >
-        {modal === 'create-client' ? <SharedCreateBookingModal audience={bookingAudience} initialDate={context.createDate} onClose={requestClose} onSubmissionChange={(busy) => setBusyModal(busy ? modal : null)} /> : null}
+        {modal === 'create-client' ? <SharedCreateBookingModal audience={bookingAudience} initialDate={context.createDate} initialPrefill={context.createPrefill} onClose={requestClose} onSubmissionChange={(busy) => setBusyModal(busy ? modal : null)} /> : null}
         {modal === 'confirm-phone' ? <ClientProfileModal onClose={requestClose} onNavigate={navigateFromModal} /> : null}
         {modal === 'client-profile' ? <ClientProfileModal onClose={requestClose} onNavigate={navigateFromModal} /> : null}
         {modal === 'client-details' ? <ClientDetailsModal booking={context.booking} onClose={requestClose} /> : null}
@@ -2612,11 +2614,13 @@ type CreateBookingErrors = Partial<Record<CreateBookingField, string>>;
 function SharedCreateBookingModal({
   audience,
   initialDate = '',
+  initialPrefill,
   onClose,
   onSubmissionChange,
 }: {
   audience: BookingAudience;
   initialDate?: string;
+  initialPrefill?: CreateBookingPrefill;
   onClose: () => void;
   onSubmissionChange: (busy: boolean) => void;
 }) {
@@ -2634,18 +2638,18 @@ function SharedCreateBookingModal({
   const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);
   const slotMinutes = getSlotMinutes(bootstrap);
   const maxFutureMonthsAhead = getMaxFutureMonthsAhead(bootstrap);
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [fullName, setFullName] = useState(initialPrefill?.client.fullName ?? '');
+  const [phone, setPhone] = useState(() => formatPhoneInput(initialPrefill?.client.phone ?? ''));
   const [reservedPhonePassword, setReservedPhonePassword] = useState('');
   const [forceReservedPhonePassword, setForceReservedPhonePassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [city, setCity] = useState(defaultCity);
-  const [addressInput, setAddressInput] = useState('');
+  const [email, setEmail] = useState(initialPrefill?.client.email ?? '');
+  const [city, setCity] = useState(initialPrefill?.address.city || defaultCity);
+  const [addressInput, setAddressInput] = useState(() => [initialPrefill?.address.street, initialPrefill?.address.neighborhood].filter(Boolean).join(', '));
   const [selectedAddress, setSelectedAddress] = useState<AddressSuggestion | null>(null);
-  const [houseNumber, setHouseNumber] = useState('');
-  const [complement, setComplement] = useState('');
+  const [houseNumber, setHouseNumber] = useState(initialPrefill?.address.number ?? '');
+  const [complement, setComplement] = useState(initialPrefill?.address.complement ?? '');
   const [referencePoint, setReferencePoint] = useState('');
-  const [selectedService, setSelectedService] = useState('');
+  const [selectedService, setSelectedService] = useState(initialPrefill?.serviceType ?? '');
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectedTime, setSelectedTime] = useState('');
   const [monthStart] = useState(() => startOfMonth());
@@ -2654,6 +2658,7 @@ function SharedCreateBookingModal({
   const [successMessage, setSuccessMessage] = useState('');
   const [createdBooking, setCreatedBooking] = useState<ServicoResponse | null>(null);
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
+  const [prefilledAddressActive, setPrefilledAddressActive] = useState(Boolean(initialPrefill));
   const createBookingInFlightRef = useRef(false);
   const selectedCity = allowedCities.includes(city) ? city : defaultCity;
   const bookingDurationMinutes = getBookingDurationMinutesByCity(bootstrap, selectedCity);
@@ -2696,6 +2701,7 @@ function SharedCreateBookingModal({
     setCity(value);
     setAddressInput('');
     setSelectedAddress(null);
+    setPrefilledAddressActive(false);
     setHouseNumber('');
     setSelectedDate('');
     setSelectedTime('');
@@ -2706,6 +2712,7 @@ function SharedCreateBookingModal({
   const handleAddressChange = (value: string) => {
     setAddressInput(value);
     setSelectedAddress(null);
+    setPrefilledAddressActive(false);
     setHouseNumber('');
     setFieldErrors((current) => ({ ...current, address: undefined, number: undefined }));
     setSubmitError('');
@@ -2714,6 +2721,7 @@ function SharedCreateBookingModal({
   const handleAddressSelect = (suggestion: AddressSuggestion) => {
     const houseNumberFromSuggestion = getSuggestionHouseNumber(suggestion);
     setSelectedAddress(suggestion);
+    setPrefilledAddressActive(false);
     setAddressInput(buildSuggestionInputValue(suggestion));
     setHouseNumber(houseNumberFromSuggestion);
     setComplement('');
@@ -2729,10 +2737,11 @@ function SharedCreateBookingModal({
     const houseNumberFromSuggestion = getSuggestionHouseNumber(selectedAddress);
     const effectiveHouseNumber = houseNumberFromSuggestion || houseNumber;
     const manualAddress = parseManualBookingAddress(addressInput, effectiveHouseNumber, selectedCity);
-    const clientStreet = selectedAddress ? cleanFormText(buildSuggestionStreetLine(selectedAddress)) : manualAddress.street;
+    const reusableAddress = prefilledAddressActive ? initialPrefill?.address : undefined;
+    const clientStreet = selectedAddress ? cleanFormText(buildSuggestionStreetLine(selectedAddress)) : cleanFormText(reusableAddress?.street) || manualAddress.street;
     const clientNeighborhood = selectedAddress
       ? cleanFormText(selectedAddress.neighborhood || selectedAddress.addressLine2 || manualAddress.neighborhood)
-      : manualAddress.neighborhood;
+      : cleanFormText(reusableAddress?.neighborhood) || manualAddress.neighborhood;
     const clientNumber = normalizeHouseNumber(effectiveHouseNumber || manualAddress.number);
     const nextErrors: CreateBookingErrors = {};
 
@@ -2791,15 +2800,15 @@ function SharedCreateBookingModal({
         clientLastName: lastName,
         clientEmail: cleanFormText(email),
         clientPhone: phoneDigits,
-        clientCep: '',
+        clientCep: cleanFormText(reusableAddress?.postalCode),
         clientStreet,
         clientNeighborhood,
         clientNumber,
         clientComplement: cleanFormText([complement, referencePoint].filter(Boolean).join(' | ')) || undefined,
         clientCity: selectedCity,
-        clientState: cleanFormText(selectedAddress?.stateCode || selectedAddress?.state || defaultState).slice(0, 2).toUpperCase(),
-        clientLatitude: selectedAddress?.lat ?? selectedAddress?.latitude,
-        clientLongitude: selectedAddress?.lon ?? selectedAddress?.longitude,
+        clientState: cleanFormText(selectedAddress?.stateCode || selectedAddress?.state || reusableAddress?.state || defaultState).slice(0, 2).toUpperCase(),
+        clientLatitude: selectedAddress?.lat ?? selectedAddress?.latitude ?? reusableAddress?.latitude ?? undefined,
+        clientLongitude: selectedAddress?.lon ?? selectedAddress?.longitude ?? reusableAddress?.longitude ?? undefined,
         reservedPhonePassword: reservedPhonePassword.trim() || undefined,
       });
 
@@ -2899,7 +2908,7 @@ function SharedCreateBookingModal({
             {fieldErrors.address ? <small className="wf-field-error">{fieldErrors.address}</small> : null}
           </label>
           {needsManualHouseNumber ? (
-            <ModalField className="wf-create-number-field" label="Número" icon="home" placeholder="123 ou S/N" required value={houseNumber} inputMode="text" onChange={setHouseNumber} error={fieldErrors.number} />
+            <ModalField className="wf-create-number-field" label="Número" icon="home" placeholder="123 ou S/N" required value={houseNumber} inputMode="text" onChange={(value) => { setHouseNumber(value); setPrefilledAddressActive(false); }} error={fieldErrors.number} />
           ) : null}
         </div>
         <ModalField className="wf-span-2 wf-create-field--complement" label="Complemento (opcional)" icon="edit" placeholder="Ex.: Apto 101, Bloco B, Fundos" value={complement} onChange={setComplement} />

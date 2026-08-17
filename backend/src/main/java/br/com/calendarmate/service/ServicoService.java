@@ -199,9 +199,11 @@ public class ServicoService {
     }
 
     public List<ServicoResponse> listMy(String token) throws IOException {
-        TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
+        // History is read-only and must remain reachable from the signed capability
+        // saved when the booking was created, even after its mutation window expires.
+        TokenUtil.VerifiedToken vt = tokenUtil.verifyForHistory(token);
         if (vt == null) {
-            throw new ForbiddenException("Token inválido ou expirado");
+            throw new ForbiddenException("Token inválido");
         }
 
         cleanupExpiredPendings();
@@ -221,7 +223,20 @@ public class ServicoService {
         String phone = ext.getOrDefault("clientPhone", "");
         phone = normalizePhone(phone);
 
-        return listByPhone(phone);
+        List<ServicoResponse> bookings = listByPhone(phone);
+        if (vt.getExp() >= Instant.now().getEpochSecond()) {
+            return bookings;
+        }
+
+        // An expired capability may recover history, but it must not become a
+        // permanent way to inspect new/future appointments for the same phone.
+        Instant now = Instant.now();
+        return bookings.stream()
+                .filter(booking -> {
+                    Instant end = booking.getEnd() == null ? booking.getStart() : booking.getEnd();
+                    return end != null && !end.isAfter(now);
+                })
+                .collect(Collectors.toList());
     }
 
     public List<ServicoResponse> listByPhone(String phoneDigits) throws IOException {

@@ -718,6 +718,54 @@ html body .appointments-detail-overlay .booking-detail__error {
   }
 }
 
+html body .appointments-modal__sections,
+html body .appointments-modal__section {
+  display: grid;
+  gap: 16px;
+}
+
+html body .appointments-modal__sections {
+  gap: clamp(24px, 3vw, 38px);
+}
+
+html body .appointments-modal__section > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+html body .appointments-modal__section > header h2 {
+  margin: 0;
+  color: #07135d;
+  font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+}
+
+html body .appointments-modal__section > header span {
+  min-width: 28px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eef3ff;
+  color: #064ce1;
+  font-size: .78rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+html body .appointments-modal__section--history {
+  padding-top: 22px;
+  border-top: 1px solid rgba(7, 19, 93, .1);
+}
+
+html body .appointments-modal__section-empty {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed rgba(7, 19, 93, .18);
+  border-radius: 14px;
+  background: rgba(238, 243, 255, .45);
+  color: #64708c;
+  font-weight: 700;
+}
+
 /* Appointment management polish: cards, action icons, and detail/cancel panels. */
 html body .appointments-modal__grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr));

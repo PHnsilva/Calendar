@@ -18,17 +18,9 @@ function mergeBookings(items: Booking[][]): Booking[] {
   return [...map.values()].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 }
 
-function startOfToday(): Date {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
-}
-
-export function isVisibleClientBooking(booking: Booking, now: Date = new Date()): boolean {
+export function isVisibleClientBooking(booking: Booking): boolean {
   if (booking.status.code === "cancelled") return false;
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-  return booking.startsAt >= today;
+  return true;
 }
 
 export function useMyBookings(tokens: string[]) {
@@ -64,7 +56,7 @@ export function useMyBookings(tokens: string[]) {
         }
 
         return mergeBookings(fulfilled)
-          .filter((booking) => booking.status.code !== "cancelled" && booking.startsAt >= startOfToday())
+          .filter(isVisibleClientBooking)
           .map((model) => ({
             model,
             legacy: toLegacyBookingResponse(model),

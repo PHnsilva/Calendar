@@ -9,7 +9,6 @@ import RouteObserver from "../route-observer";
 
 const AdminLayout = lazy(() => import("../../layouts/AdminLayout"));
 const MyBookingsPage = lazy(() => import("../../pages/my/MyBookingsPage"));
-const RecoverPage = lazy(() => import("../../pages/recover/RecoverPage"));
 const AdminGatePage = lazy(() => import("../../pages/admin/AdminGatePage"));
 const AdminDashboardPage = lazy(() => import("../../pages/admin/AdminDashboardPage"));
 const AdminBookingPage = lazy(() => import("../../pages/admin/AdminBookingPage"));
@@ -45,7 +44,6 @@ const applicationRoutes: RouteObject[] = [{
         children: [
       { path: "meus-agendamentos", element: deferred(<MyBookingsPage />) },
       { path: "my", element: <Navigate to="/meus-agendamentos" replace /> },
-      { path: "recover", element: deferred(<RecoverPage />) },
       { path: "403", element: deferred(<ForbiddenPage />) },
       { path: "500", element: deferred(<ServerErrorPage />) },
         ],

@@ -28,6 +28,8 @@ public class ServicoResponse {
 
     private String clientAddressLine;
     private String status;
+    private Instant cancellationAt;
+    private String cancellationSource;
     private String manageToken;
     private String assignedProviderId;
     private String assignedProviderName;
@@ -95,6 +97,12 @@ public class ServicoResponse {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Instant getCancellationAt() { return cancellationAt; }
+    public void setCancellationAt(Instant cancellationAt) { this.cancellationAt = cancellationAt; }
+
+    public String getCancellationSource() { return cancellationSource; }
+    public void setCancellationSource(String cancellationSource) { this.cancellationSource = cancellationSource; }
 
     public String getManageToken() { return manageToken; }
     public void setManageToken(String manageToken) { this.manageToken = manageToken; }

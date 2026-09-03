@@ -1,7 +1,10 @@
 package br.com.calendarmate.service.store;
 
 import br.com.calendarmate.dto.ServicoResponse;
+import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.integrations.supabase.SupabaseClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -10,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SupabaseBookingHistoryStore implements BookingHistoryStore {
+    private static final Logger log = LoggerFactory.getLogger(SupabaseBookingHistoryStore.class);
     private final SupabaseClient sb;
     private final String table;
 
@@ -47,7 +51,26 @@ public class SupabaseBookingHistoryStore implements BookingHistoryStore {
         row.put("assigned_provider_name", booking.getAssignedProviderName());
         row.put("assigned_provider_phone", booking.getAssignedProviderPhone());
         row.put("archived_at", archivedAtEpochSec);
-        sb.upsert(table, row, "event_id");
+        boolean hasCancellationMetadata = booking.getCancellationAt() != null
+                || booking.getCancellationSource() != null && !booking.getCancellationSource().isBlank();
+        if (!hasCancellationMetadata) {
+            sb.upsert(table, row, "event_id");
+            return;
+        }
+
+        row.put("cancellation_at", booking.getCancellationAt() == null ? null : booking.getCancellationAt().getEpochSecond());
+        row.put("cancellation_source", booking.getCancellationSource());
+        try {
+            sb.upsert(table, row, "event_id");
+        } catch (ExternalServiceException ex) {
+            if (!"SUPABASE_REJECTED_REQUEST".equals(ex.getErrorCode())) throw ex;
+            // Backward-compatible deployment path while the documented optional
+            // cancellation metadata columns are being added to an existing table.
+            row.remove("cancellation_at");
+            row.remove("cancellation_source");
+            log.warn("Booking history cancellation metadata columns unavailable; persisting status without optional columns");
+            sb.upsert(table, row, "event_id");
+        }
     }
 
     @Override
@@ -69,6 +92,15 @@ public class SupabaseBookingHistoryStore implements BookingHistoryStore {
             }
             out.add(map(row));
         }
+        return out;
+    }
+
+    @Override
+    public List<ServicoResponse> listByPhone(String phoneDigits, int limit) {
+        List<Map> rows = sb.select(table, Map.of("client_phone", phoneDigits), Math.max(1, limit), "start_epoch.desc");
+        if (rows == null) return List.of();
+        List<ServicoResponse> out = new ArrayList<>();
+        for (Map row : rows) out.add(map(row));
         return out;
     }
 
@@ -98,6 +130,8 @@ public class SupabaseBookingHistoryStore implements BookingHistoryStore {
         out.setClientState(str(row.get("client_state")));
         out.setClientAddressLine(str(row.get("client_address_line")));
         out.setStatus(str(row.get("status")));
+        out.setCancellationAt(toInstant(row.get("cancellation_at")));
+        out.setCancellationSource(str(row.get("cancellation_source")));
         out.setAssignedProviderId(str(row.get("assigned_provider_id")));
         out.setAssignedProviderName(str(row.get("assigned_provider_name")));
         out.setAssignedProviderPhone(str(row.get("assigned_provider_phone")));

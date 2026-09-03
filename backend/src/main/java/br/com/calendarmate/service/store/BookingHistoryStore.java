@@ -10,5 +10,7 @@ public interface BookingHistoryStore {
 
     List<ServicoResponse> list(Instant fromInclusive, Instant toExclusive, String assignedProviderId);
 
+    List<ServicoResponse> listByPhone(String phoneDigits, int limit);
+
     int deleteOlderThan(Instant olderThan);
 }

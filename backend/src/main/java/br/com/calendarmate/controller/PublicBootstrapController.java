@@ -37,6 +37,7 @@ public class PublicBootstrapController {
         booking.setMaxFutureMonthsAhead(props.getMaxFutureMonthsAhead());
         booking.setPendingTtlSeconds(props.getPendingTtl().getSeconds());
         booking.setBlockOtherBookingsWhenPending(props.isBlockOtherBookingsWhenPending());
+        booking.setCancellationNoticeHours(props.getBookingCancellationNoticeHours());
         booking.setStatuses(List.of("PENDING_PHONE", "CONFIRMED", "CANCELLED"));
         response.setBooking(booking);
 

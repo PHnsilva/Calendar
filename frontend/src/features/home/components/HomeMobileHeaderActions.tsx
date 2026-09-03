@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useHomeBookingSelection } from '../../../app/home-booking-context';
 import { buildMailtoUrl } from '../../../lib/mailto';
 import { getPhoneVerificationChangedEventName, getStoredPhoneVerification } from '../../../lib/storage';
+import { buildBusinessWhatsAppUrl } from '../../../lib/support-contact';
 
 const PHONE_NUMBER = '+55 31 9541-5323';
 const COMPANY_EMAIL = 'SGpequenosReparos@gmail.com';
@@ -237,7 +238,7 @@ export default function HomeMobileHeaderActions() {
             <div className="mobile-header-contact-actions">
               <a
                 className="mobile-header-contact-action"
-                href="https://wa.me/553195415323"
+                href={buildBusinessWhatsAppUrl()}
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Abrir WhatsApp"

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import logo from "../../assets/brand/logowithname.webp";
 import { trackEvent, trackPageView } from "../../lib/analytics";
+import { buildBusinessWhatsAppUrl } from "../../lib/support-contact";
 
-const whatsappDigits = "553195415323";
 const whatsappDisplay = "+55 31 9541-5323";
 const whatsappMessage = "Olá! Vim pelo site da SG Pequenos Reparos e quero agendar um serviço.";
-const whatsappUrl = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`;
+const whatsappUrl = buildBusinessWhatsAppUrl(whatsappMessage);
 
 const services = [
   {

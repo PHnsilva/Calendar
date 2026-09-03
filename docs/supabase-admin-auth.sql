@@ -45,6 +45,8 @@ create table if not exists public.booking_history_records (
   client_state text,
   client_address_line text,
   status text,
+  cancellation_at bigint,
+  cancellation_source text,
   assigned_provider_id text,
   assigned_provider_name text,
   assigned_provider_phone text,
@@ -54,8 +56,13 @@ create table if not exists public.booking_history_records (
 alter table public.booking_history_records
   add column if not exists service_notes text;
 
+alter table public.booking_history_records
+  add column if not exists cancellation_at bigint,
+  add column if not exists cancellation_source text;
+
 create index if not exists idx_booking_history_start_epoch on public.booking_history_records(start_epoch desc);
 create index if not exists idx_booking_history_provider on public.booking_history_records(assigned_provider_id);
+create index if not exists idx_booking_history_client_phone on public.booking_history_records(client_phone);
 
 -- Required owner seed used by the default backend allowlist.
 insert into public.admin_users (id, phone_digits, name, role, active)

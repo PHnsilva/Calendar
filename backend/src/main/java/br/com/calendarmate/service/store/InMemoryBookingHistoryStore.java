@@ -30,6 +30,15 @@ public class InMemoryBookingHistoryStore implements BookingHistoryStore {
     }
 
     @Override
+    public List<ServicoResponse> listByPhone(String phoneDigits, int limit) {
+        return byEventId.values().stream()
+                .filter(item -> phoneDigits.equals(item.getClientPhone()))
+                .sorted(Comparator.comparing(ServicoResponse::getStart, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(Math.max(1, limit))
+                .toList();
+    }
+
+    @Override
     public int deleteOlderThan(Instant olderThan) {
         int before = byEventId.size();
         byEventId.entrySet().removeIf(entry -> entry.getValue().getStart() != null && entry.getValue().getStart().isBefore(olderThan));

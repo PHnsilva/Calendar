@@ -35,6 +35,8 @@ public class Servico {
 
     private String status; // PENDING_PHONE / CONFIRMED etc
     private Instant pendingExpiresAt;
+    private Instant cancellationAt;
+    private String cancellationSource;
 
     private String assignedProviderId;
     private String assignedProviderName;
@@ -114,6 +116,12 @@ public class Servico {
 
     public Instant getPendingExpiresAt() { return pendingExpiresAt; }
     public void setPendingExpiresAt(Instant pendingExpiresAt) { this.pendingExpiresAt = pendingExpiresAt; }
+
+    public Instant getCancellationAt() { return cancellationAt; }
+    public void setCancellationAt(Instant cancellationAt) { this.cancellationAt = cancellationAt; }
+
+    public String getCancellationSource() { return cancellationSource; }
+    public void setCancellationSource(String cancellationSource) { this.cancellationSource = cancellationSource; }
 
     public String getAssignedProviderId() { return assignedProviderId; }
     public void setAssignedProviderId(String assignedProviderId) { this.assignedProviderId = assignedProviderId; }

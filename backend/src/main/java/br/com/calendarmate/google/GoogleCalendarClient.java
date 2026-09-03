@@ -35,6 +35,11 @@ public class GoogleCalendarClient implements CalendarClient {
     private final Calendar service;
     private final String calendarId;
 
+    GoogleCalendarClient(Calendar service, String calendarId) {
+        this.service = Objects.requireNonNull(service);
+        this.calendarId = calendarId;
+    }
+
     public GoogleCalendarClient(
             String clientId,
             String clientSecret,
@@ -77,6 +82,8 @@ public class GoogleCalendarClient implements CalendarClient {
         ext.put("serviceType", safe(s.getTitle()));
         ext.put("serviceNotes", safe(s.getServiceNotes()));
         ext.put("status", safe(s.getStatus()));
+        putInstantIfPresent(ext, "cancellationAt", s.getCancellationAt());
+        putIfNotBlank(ext, "cancellationSource", s.getCancellationSource());
 
         if (s.getPendingExpiresAt() != null) {
             ext.put("pendingExpiresAt", String.valueOf(s.getPendingExpiresAt().getEpochSecond()));
@@ -143,6 +150,12 @@ public class GoogleCalendarClient implements CalendarClient {
         ext.put("serviceType", safe(s.getTitle()));
         ext.put("serviceNotes", safe(s.getServiceNotes()));
         ext.put("status", safe(s.getStatus()));
+        putInstantIfPresent(ext, "cancellationAt", s.getCancellationAt());
+        if (s.getCancellationSource() == null || s.getCancellationSource().isBlank()) {
+            ext.remove("cancellationSource");
+        } else {
+            ext.put("cancellationSource", s.getCancellationSource().trim());
+        }
 
         ext.put("clientFirstName", safe(s.getClientFirstName()));
         ext.put("clientLastName", safe(s.getClientLastName()));
@@ -177,6 +190,7 @@ public class GoogleCalendarClient implements CalendarClient {
         }
 
         event.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
+        event.setTransparency("CANCELLED".equalsIgnoreCase(s.getStatus()) ? "transparent" : "opaque");
         event.setStart(new EventDateTime().setDateTime(new DateTime(Date.from(s.getStart()))).setTimeZone(ZONE.toString()));
         event.setEnd(new EventDateTime().setDateTime(new DateTime(Date.from(s.getEnd()))).setTimeZone(ZONE.toString()));
 
@@ -317,25 +331,27 @@ public class GoogleCalendarClient implements CalendarClient {
     }
 
     private List<Event> listSystemEvents(DateTime timeMin, DateTime timeMax) throws IOException {
-        Events events = service.events().list(calendarId)
-                .setTimeMin(timeMin)
-                .setTimeMax(timeMax)
-                .setOrderBy("startTime")
-                .setSingleEvents(true)
-                .setShowDeleted(false)
-                .setFields("items(id,status,summary,description,location,htmlLink,start,end,attendees,extendedProperties,transparency),nextPageToken")
-                .execute();
-
-        List<Event> items = events.getItems();
-        if (items == null) return Collections.emptyList();
-
         List<Event> onlySystem = new ArrayList<>();
-        for (Event e : items) {
-            if ("cancelled".equalsIgnoreCase(e.getStatus())) continue;
-            if (isSystemEvent(e)) {
-                onlySystem.add(e);
+        String pageToken = null;
+        do {
+            Calendar.Events.List request = service.events().list(calendarId)
+                    .setTimeMin(timeMin)
+                    .setTimeMax(timeMax)
+                    .setOrderBy("startTime")
+                    .setSingleEvents(true)
+                    .setShowDeleted(false)
+                    .setFields("items(id,status,summary,description,location,htmlLink,start,end,attendees,extendedProperties,transparency),nextPageToken");
+            if (pageToken != null) request.setPageToken(pageToken);
+            Events events = request.execute();
+            List<Event> items = events.getItems();
+            if (items != null) {
+                for (Event e : items) {
+                    if ("cancelled".equalsIgnoreCase(e.getStatus())) continue;
+                    if (isSystemEvent(e)) onlySystem.add(e);
+                }
             }
-        }
+            pageToken = events.getNextPageToken();
+        } while (pageToken != null && !pageToken.isBlank());
         return onlySystem;
     }
 
@@ -399,6 +415,7 @@ public class GoogleCalendarClient implements CalendarClient {
 
         if ("PENDING_PHONE".equals(st)) return t + " (Pendente confirmação)";
         if ("CONFIRMED".equals(st)) return t + " (Confirmado)";
+        if ("CANCELLED".equals(st)) return t + " (Cancelado)";
         return t;
     }
 

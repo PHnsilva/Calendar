@@ -150,6 +150,22 @@ public class GlobalExceptionHandler {
                 true), req);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiError> rateLimitExceeded(RateLimitExceededException ex, HttpServletRequest req) {
+        log.warn("Public booking rate limit exceeded at {}", req.getRequestURI());
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(new ApiError(
+                        HttpStatus.TOO_MANY_REQUESTS.value(),
+                        "RATE_LIMITED",
+                        "Muitas tentativas. Aguarde alguns instantes e tente novamente.",
+                        req.getRequestURI(),
+                        true,
+                        null,
+                        null));
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiError> constraint(ConstraintViolationException ex, HttpServletRequest req) {
         log.warn("Validation failure at {} exceptionMessage={}", req.getRequestURI(), safeExceptionMessage(ex));

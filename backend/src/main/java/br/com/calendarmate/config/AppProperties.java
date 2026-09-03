@@ -70,6 +70,9 @@ public class AppProperties {
     @Value("${app.booking.minLeadHours:24}")
     private long bookingMinLeadHours = 24;
 
+    @Value("${app.booking.cancellationNoticeHours:${BOOKING_CANCELLATION_NOTICE_HOURS:2}}")
+    private long bookingCancellationNoticeHours = 2;
+
     @Value("${app.booking.distant.blockBeforeHours:2}")
     private int distantBookingBlockBeforeHours = 2;
 
@@ -135,6 +138,33 @@ public class AppProperties {
 
     @Value("${app.publicDomain:${APP_PUBLIC_DOMAIN:calendar-mate.vercel.app}}")
     private String publicDomain;
+
+    @Value("${app.security.trustProxyHeaders:${TRUST_PROXY_HEADERS:false}}")
+    private boolean trustProxyHeaders;
+
+    @Value("${app.security.trustedProxyAddresses:${TRUSTED_PROXY_ADDRESSES:}}")
+    private String trustedProxyAddresses;
+
+    @Value("${app.publicBooking.rateLimit.maxEntries:${PUBLIC_BOOKING_RATE_LIMIT_MAX_ENTRIES:10000}}")
+    private int publicRateLimitMaxEntries = 10_000;
+
+    @Value("${app.publicBooking.rateLimit.lookup.windowSeconds:${PUBLIC_BOOKING_LOOKUP_RATE_WINDOW_SECONDS:600}}")
+    private long publicLookupRateLimitWindowSeconds = 600;
+
+    @Value("${app.publicBooking.rateLimit.lookup.perIp:${PUBLIC_BOOKING_LOOKUP_RATE_PER_IP:10}}")
+    private int publicLookupRateLimitPerIp = 10;
+
+    @Value("${app.publicBooking.rateLimit.lookup.perPhone:${PUBLIC_BOOKING_LOOKUP_RATE_PER_PHONE:10}}")
+    private int publicLookupRateLimitPerPhone = 10;
+
+    @Value("${app.publicBooking.rateLimit.cancel.windowSeconds:${PUBLIC_BOOKING_CANCEL_RATE_WINDOW_SECONDS:3600}}")
+    private long publicCancellationRateLimitWindowSeconds = 3_600;
+
+    @Value("${app.publicBooking.rateLimit.cancel.perIp:${PUBLIC_BOOKING_CANCEL_RATE_PER_IP:3}}")
+    private int publicCancellationRateLimitPerIp = 3;
+
+    @Value("${app.publicBooking.rateLimit.cancel.perPhone:${PUBLIC_BOOKING_CANCEL_RATE_PER_PHONE:3}}")
+    private int publicCancellationRateLimitPerPhone = 3;
 
     @Value("${verification.channel:${VERIFICATION_CHANNEL:DUMMY}}")
     private String verificationChannel;
@@ -327,6 +357,8 @@ public class AppProperties {
         return !normalized.isBlank() && !normalized.equals(getBookingBaseCityNormalized());
     }
     public Duration getBookingMinLeadTime() { return Duration.ofHours(Math.max(1, Math.min(bookingMinLeadHours, 168))); }
+    public Duration getBookingCancellationNotice() { return Duration.ofHours(Math.max(0, Math.min(bookingCancellationNoticeHours, 168))); }
+    public long getBookingCancellationNoticeHours() { return getBookingCancellationNotice().toHours(); }
     public int getDistantBookingBlockBeforeMinutes() {
         return Math.max(0, Math.min(distantBookingBlockBeforeHours, 12)) * 60;
     }
@@ -409,6 +441,21 @@ public class AppProperties {
 
     public String getFrontendUrl() { return frontendUrl == null ? "" : frontendUrl.trim(); }
     public String getPublicDomain() { return cleanOrDefault(publicDomain, "calendar-mate.vercel.app"); }
+    public boolean isTrustProxyHeaders() { return trustProxyHeaders; }
+    public Set<String> getTrustedProxyAddresses() {
+        if (trustedProxyAddresses == null || trustedProxyAddresses.isBlank()) return Collections.emptySet();
+        return Arrays.stream(trustedProxyAddresses.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.toUnmodifiableSet());
+    }
+    public int getPublicRateLimitMaxEntries() { return Math.max(100, Math.min(publicRateLimitMaxEntries, 100_000)); }
+    public long getPublicLookupRateLimitWindowSeconds() { return Math.max(1, Math.min(publicLookupRateLimitWindowSeconds, 86_400)); }
+    public int getPublicLookupRateLimitPerIp() { return Math.max(1, Math.min(publicLookupRateLimitPerIp, 1_000)); }
+    public int getPublicLookupRateLimitPerPhone() { return Math.max(1, Math.min(publicLookupRateLimitPerPhone, 1_000)); }
+    public long getPublicCancellationRateLimitWindowSeconds() { return Math.max(1, Math.min(publicCancellationRateLimitWindowSeconds, 86_400)); }
+    public int getPublicCancellationRateLimitPerIp() { return Math.max(1, Math.min(publicCancellationRateLimitPerIp, 1_000)); }
+    public int getPublicCancellationRateLimitPerPhone() { return Math.max(1, Math.min(publicCancellationRateLimitPerPhone, 1_000)); }
     public String getVerificationChannel() { return verificationChannel == null ? "DUMMY" : verificationChannel.trim().toUpperCase(Locale.ROOT); }
     public boolean isSmsNotificationApiEnabled() { return smsNotificationApiEnabled; }
     public String getSmsNotificationApiApiKey() { return clean(smsNotificationApiKey); }

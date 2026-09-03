@@ -4,6 +4,9 @@ import br.com.calendarmate.booking.application.GetAvailableSlotsUseCase;
 import br.com.calendarmate.dto.AdminAssignProviderRequest;
 import br.com.calendarmate.dto.AdminServicoUpdateRequest;
 import br.com.calendarmate.dto.AvailableSlotResponse;
+import br.com.calendarmate.dto.PublicBookingCancellationRequest;
+import br.com.calendarmate.dto.PublicBookingLookupRequest;
+import br.com.calendarmate.dto.PublicBookingResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.dto.ServicoResponse;
@@ -11,9 +14,12 @@ import br.com.calendarmate.exception.ForbiddenException;
 import br.com.calendarmate.model.AdminPrincipal;
 import br.com.calendarmate.model.AdminUser;
 import br.com.calendarmate.service.AdminAuthService;
+import br.com.calendarmate.service.ClientIpResolver;
+import br.com.calendarmate.service.PublicBookingRateLimiter;
 import br.com.calendarmate.service.ServicoService;
 import br.com.calendarmate.service.TokenUtil;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,16 +36,22 @@ public class ServicoController {
     private final TokenUtil tokenUtil;
     private final AdminAuthService adminAuthService;
     private final GetAvailableSlotsUseCase getAvailableSlotsUseCase;
+    private final PublicBookingRateLimiter publicBookingRateLimiter;
+    private final ClientIpResolver clientIpResolver;
 
     public ServicoController(
             ServicoService service,
             TokenUtil tokenUtil,
             AdminAuthService adminAuthService,
-            GetAvailableSlotsUseCase getAvailableSlotsUseCase) {
+            GetAvailableSlotsUseCase getAvailableSlotsUseCase,
+            PublicBookingRateLimiter publicBookingRateLimiter,
+            ClientIpResolver clientIpResolver) {
         this.service = service;
         this.tokenUtil = tokenUtil;
         this.adminAuthService = adminAuthService;
         this.getAvailableSlotsUseCase = getAvailableSlotsUseCase;
+        this.publicBookingRateLimiter = publicBookingRateLimiter;
+        this.clientIpResolver = clientIpResolver;
     }
 
     // PUBLIC
@@ -121,6 +133,24 @@ public class ServicoController {
         adminAuthService.requireOwner(session, workspace, providerId);
         service.deleteByIdAdmin(eventId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/public/lookup")
+    public ResponseEntity<List<PublicBookingResponse>> listPublicByPhone(
+            @Valid @RequestBody PublicBookingLookupRequest body,
+            HttpServletRequest request) throws IOException {
+        String phone = br.com.calendarmate.util.PhoneNumberNormalizer.normalizeBrazilianMobilePhone(body.getPhone());
+        publicBookingRateLimiter.checkLookup(clientIpResolver.resolve(request), phone);
+        return ResponseEntity.ok(service.listPublicBookingsByPhone(phone));
+    }
+
+    @PostMapping("/public/cancel")
+    public ResponseEntity<PublicBookingResponse> cancelPublicByPhone(
+            @Valid @RequestBody PublicBookingCancellationRequest body,
+            HttpServletRequest request) throws IOException {
+        String phone = br.com.calendarmate.util.PhoneNumberNormalizer.normalizeBrazilianMobilePhone(body.getPhone());
+        publicBookingRateLimiter.checkCancellation(clientIpResolver.resolve(request), phone);
+        return ResponseEntity.ok(service.cancelPublicBooking(body.getEventId(), phone));
     }
 
     @GetMapping("/admin/{eventId}")

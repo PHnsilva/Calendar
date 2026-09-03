@@ -8,6 +8,7 @@ import br.com.calendarmate.dto.AdminServicoUpdateRequest;
 import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.dto.ServicoResponse;
+import br.com.calendarmate.dto.PublicBookingResponse;
 import br.com.calendarmate.exception.BadRequestException;
 import br.com.calendarmate.exception.ConflictException;
 import br.com.calendarmate.exception.ExternalServiceException;
@@ -27,13 +28,19 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.TimePeriod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ServicoService {
+
+    private static final Logger log = LoggerFactory.getLogger(ServicoService.class);
 
     private final CalendarClient calendar;
     private final TokenUtil tokenUtil;
@@ -160,6 +167,7 @@ public class ServicoService {
 
         ServicoResponse servico = mapEventToResponse(created);
         servico.setStatus("CONFIRMED");
+        persistBookingSnapshot(servico);
 
         ServicoCreateResponse out = new ServicoCreateResponse();
         out.setServico(servico);
@@ -249,6 +257,88 @@ public class ServicoService {
                 .collect(Collectors.toList());
     }
 
+    public List<PublicBookingResponse> listPublicBookingsByPhone(String phoneDigits) throws IOException {
+        String phone = normalizePhone(phoneDigits);
+        log.info("Public booking lookup attempted phone={}", fingerprint(phone));
+        cleanupExpiredPendings();
+
+        List<ServicoResponse> live = listEventsByPhone(phone).stream()
+                .map(this::mapEventToResponse)
+                .toList();
+        List<ServicoResponse> stored = bookingHistoryStore.listByPhone(phone, 1000);
+        List<PublicBookingResponse> result = mergeBookingRecords(live, stored).stream()
+                .filter(item -> phone.equals(normalizePhoneOrBlank(item.getClientPhone())))
+                .sorted(Comparator.comparing(ServicoResponse::getStart, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::toPublicBooking)
+                .toList();
+        log.info("Public booking lookup completed phone={} count={}", fingerprint(phone), result.size());
+        return result;
+    }
+
+    public PublicBookingResponse cancelPublicBooking(String eventId, String phoneDigits) throws IOException {
+        String phone = normalizePhone(phoneDigits);
+        String normalizedEventId = eventId == null ? "" : eventId.trim();
+        if (normalizedEventId.isBlank()) throw new BadRequestException("eventId e obrigatorio");
+        log.info("Public booking cancellation attempted booking={} phone={}", fingerprint(normalizedEventId), fingerprint(phone));
+
+        ServicoResponse stored = bookingHistoryStore.listByPhone(phone, 1000).stream()
+                .filter(item -> normalizedEventId.equals(item.getEventId()))
+                .findFirst()
+                .orElse(null);
+        Event event = calendar.getEvent(normalizedEventId);
+
+        if (event == null) {
+            if (stored != null) {
+                if ("CANCELLED".equalsIgnoreCase(stored.getStatus())) {
+                    return toPublicBooking(stored);
+                }
+                validateManageWindow(stored.getStart());
+                stored.setStatus("CANCELLED");
+                stored.setCancellationAt(Instant.now());
+                stored.setCancellationSource("CUSTOMER_PHONE_LOOKUP");
+                persistBookingSnapshot(stored);
+                log.info("Public booking cancellation succeeded booking={} phone={} idempotent=false providerEventMissing=true",
+                        fingerprint(normalizedEventId), fingerprint(phone));
+                return toPublicBooking(stored);
+            }
+            log.warn("Public cancellation ownership check failed booking={} phone={}", fingerprint(normalizedEventId), fingerprint(phone));
+            throw new NotFoundException("Agendamento nao encontrado");
+        }
+
+        String ownerPhone = normalizePhoneOrBlank(privateExt(event).getOrDefault("clientPhone", ""));
+        if (!phone.equals(ownerPhone)) {
+            log.warn("Public cancellation ownership check failed booking={} phone={}", fingerprint(normalizedEventId), fingerprint(phone));
+            throw new NotFoundException("Agendamento nao encontrado");
+        }
+
+        Map<String, String> ext = privateExt(event);
+        boolean alreadyCancelled = "CANCELLED".equalsIgnoreCase(ext.getOrDefault("status", ""))
+                || stored != null && "CANCELLED".equalsIgnoreCase(stored.getStatus());
+        if (!alreadyCancelled) validateManageWindow(event);
+
+        Servico cancelled = servicoFromEvent(event);
+        cancelled.setStatus("CANCELLED");
+        cancelled.setCancellationAt(stored != null && stored.getCancellationAt() != null ? stored.getCancellationAt() : Instant.now());
+        cancelled.setCancellationSource("CUSTOMER_PHONE_LOOKUP");
+
+        ServicoResponse snapshot = mapEventToResponse(event);
+        snapshot.setStatus("CANCELLED");
+        snapshot.setCancellationAt(cancelled.getCancellationAt());
+        snapshot.setCancellationSource(cancelled.getCancellationSource());
+
+        // Persist history before releasing the active slot. A retry completes the
+        // calendar update when persistence succeeded but the provider call failed.
+        persistBookingSnapshot(snapshot);
+        Event updated = calendar.updateEvent(cancelled);
+        pendingStore.deleteByEventId(normalizedEventId);
+
+        ServicoResponse result = updated == null ? snapshot : mapEventToResponse(updated);
+        persistBookingSnapshot(result);
+        log.info("Public booking cancellation succeeded booking={} phone={} idempotent={}",
+                fingerprint(normalizedEventId), fingerprint(phone), alreadyCancelled);
+        return toPublicBooking(result);
+    }
+
     public List<ServicoResponse> confirmPendingByPhone(String phoneDigits) throws IOException {
         String phone = normalizePhone(phoneDigits);
 
@@ -302,7 +392,6 @@ public class ServicoService {
         validateTime(req.getTime());
         validatePublicLeadTime(req.getDate(), req.getTime());
         validateServiceArea(req);
-        String serviceNotes = normalizeServiceNotes(req.getServiceNotes(), req.getServiceType());
 
         TokenUtil.VerifiedToken vt = tokenUtil.verify(token);
         if (vt == null || !vt.getEventId().equals(eventId)) {
@@ -314,6 +403,7 @@ public class ServicoService {
             throw new NotFoundException("Agendamento não encontrado");
         }
 
+        String serviceNotes = normalizeUpdatedServiceNotes(req.getServiceNotes(), existing);
         Map<String, String> ext0 = privateExt(existing);
         if (isExpiredPending(ext0)) {
             pendingStore.deleteByEventId(existing.getId());
@@ -417,7 +507,9 @@ public class ServicoService {
             pendingStore.deleteByEventId(eventId);
         }
 
-        return mapEventToResponse(updated);
+        ServicoResponse response = mapEventToResponse(updated);
+        persistBookingSnapshot(response);
+        return response;
     }
 
     public void cancelByToken(String eventId, String token) throws IOException {
@@ -439,8 +531,7 @@ public class ServicoService {
 
         validateManageWindow(e);
 
-        pendingStore.deleteByEventId(eventId);
-        calendar.deleteEvent(eventId);
+        cancelEventAndPreserveHistory(e, "CUSTOMER_MANAGE_TOKEN", null);
     }
 
     public List<ServicoResponse> listAllAdmin() throws IOException {
@@ -501,7 +592,7 @@ public class ServicoService {
         syncBookingHistory();
 
         Instant retentionStart = historyRetentionStartInstant();
-        Instant historyEnd = historyCutoffInstant();
+        Instant historyEnd = LocalDate.now(ZONE).plusDays(1).atStartOfDay(ZONE).toInstant();
 
         Instant from = fromDate == null ? retentionStart : fromDate.atStartOfDay(ZONE).toInstant();
         Instant to = toDate == null ? historyEnd : toDate.plusDays(1).atStartOfDay(ZONE).toInstant();
@@ -519,9 +610,18 @@ public class ServicoService {
         String normalizedStatus = normalizeAdminStatus(status);
         String normalizedCity = normalizeAdminCity(city);
 
-        return bookingHistoryStore.list(from, to, assignedProviderId).stream()
+        List<ServicoResponse> stored = bookingHistoryStore.list(from, to, assignedProviderId);
+        List<ServicoResponse> live = listBookingEventsBetween(
+                ZonedDateTime.ofInstant(from, ZONE),
+                ZonedDateTime.ofInstant(to, ZONE)).stream()
+                .filter(event -> canPrincipalAccessEvent(principal, event))
+                .map(this::mapEventToResponse)
+                .toList();
+
+        return mergeBookingRecords(live, stored).stream()
                 .filter(item -> normalizedStatus.isBlank() || normalizedStatus.equalsIgnoreCase(item.getStatus()))
                 .filter(item -> normalizedCity.isBlank() || normalizedCity.equals(LocationNormalizer.normalizeCity(item.getClientCity())))
+                .sorted(Comparator.comparing(ServicoResponse::getStart, Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
     }
 
@@ -609,8 +709,7 @@ public class ServicoService {
             throw new NotFoundException("Agendamento não encontrado");
         }
 
-        pendingStore.deleteByEventId(eventId);
-        calendar.deleteEvent(eventId);
+        cancelEventAndPreserveHistory(e, "ADMIN", null);
     }
 
     public ServicoResponse getByIdAdmin(String eventId, AdminPrincipal principal) throws IOException {
@@ -641,7 +740,9 @@ public class ServicoService {
         s.setAssignedProviderName(provider.getName());
         s.setAssignedProviderPhone(provider.getPhoneDigits());
         Event updated = calendar.updateEvent(s);
-        return mapEventToResponse(updated == null ? existing : updated);
+        ServicoResponse response = mapEventToResponse(updated == null ? existing : updated);
+        persistBookingSnapshot(response);
+        return response;
     }
 
     public void requireActiveAdminAccess(String eventId, AdminPrincipal principal) throws IOException {
@@ -672,7 +773,7 @@ public class ServicoService {
         validateAdminDateWindow(req.getDate());
         validateTime(req.getTime());
         validateServiceArea(req.getClientCity(), req.getClientState());
-        String serviceNotes = normalizeServiceNotes(req.getServiceNotes(), req.getServiceType());
+        String serviceNotes = normalizeUpdatedServiceNotes(req.getServiceNotes(), existing);
 
         BookingWindow window = resolveBookingWindow(req.getDate(), req.getTime(), req.getClientCity());
         Instant start = window.blockStart();
@@ -724,7 +825,9 @@ public class ServicoService {
         }
 
         Event updated = calendar.updateEvent(s);
-        return mapEventToResponse(updated == null ? existing : updated);
+        ServicoResponse response = mapEventToResponse(updated == null ? existing : updated);
+        persistBookingSnapshot(response);
+        return response;
     }
 
     public List<AvailableSlotResponse> getAvailableSlots(LocalDate date, String city, int slotMinutes) throws IOException {
@@ -761,13 +864,7 @@ public class ServicoService {
 
     private String normalizeServiceNotes(String value, String serviceType) {
         String notes = value == null ? "" : value.trim().replaceAll("\\s+", " ");
-        if (notes.isBlank()) {
-            String fallback = serviceType == null ? "" : serviceType.trim().replaceAll("\\s+", " ");
-            if (fallback.isBlank()) {
-                throw new BadRequestException("Servico e obrigatorio");
-            }
-            return fallback;
-        }
+        if (notes.isBlank()) return "";
         if (notes.length() < 10) {
             throw new BadRequestException("Observacao deve ter pelo menos 10 caracteres quando informada");
         }
@@ -775,6 +872,11 @@ public class ServicoService {
             throw new BadRequestException("Observacao deve ter no maximo 2000 caracteres");
         }
         return notes;
+    }
+
+    private String normalizeUpdatedServiceNotes(String value, Event existing) {
+        if (value == null) return resolveServiceNotes(privateExt(existing), existing);
+        return normalizeServiceNotes(value, null);
     }
 
     private String resolveServiceNotes(Map<String, String> ext, Event event) {
@@ -891,14 +993,17 @@ public class ServicoService {
 
 
     private void validateManageWindow(Event event) {
-        Instant start = instantFrom(event.getStart());
+        validateManageWindow(instantFrom(event.getStart()));
+    }
+
+    private void validateManageWindow(Instant start) {
         if (start == null) {
             throw new BadRequestException("Agendamento inválido");
         }
 
-        Instant cutoff = ZonedDateTime.now(ZONE).plusHours(2).toInstant();
+        Instant cutoff = ZonedDateTime.now(ZONE).plus(props.getBookingCancellationNotice()).toInstant();
         if (!start.isAfter(cutoff)) {
-            throw new BadRequestException("Edição e cancelamento exigem pelo menos 2 horas de antecedência");
+            throw new BadRequestException("Cancelamento exige pelo menos " + props.getBookingCancellationNoticeHours() + " horas de antecedencia");
         }
     }
 
@@ -922,6 +1027,76 @@ public class ServicoService {
 
     private String normalizePhone(String phone) {
         return PhoneNumberNormalizer.normalizeBrazilianMobilePhone(phone);
+    }
+
+    private String normalizePhoneOrBlank(String phone) {
+        return PhoneNumberNormalizer.normalizeBrazilianMobilePhoneOrBlank(phone);
+    }
+
+    private List<ServicoResponse> mergeBookingRecords(List<ServicoResponse> live, List<ServicoResponse> stored) {
+        Map<String, ServicoResponse> byId = new LinkedHashMap<>();
+        if (stored != null) {
+            for (ServicoResponse item : stored) {
+                if (item != null && item.getEventId() != null) byId.put(item.getEventId(), item);
+            }
+        }
+        if (live != null) {
+            for (ServicoResponse item : live) {
+                if (item == null || item.getEventId() == null) continue;
+                ServicoResponse existing = byId.get(item.getEventId());
+                if (existing != null
+                        && "CANCELLED".equalsIgnoreCase(existing.getStatus())
+                        && !"CANCELLED".equalsIgnoreCase(item.getStatus())) {
+                    continue;
+                }
+                byId.put(item.getEventId(), item);
+            }
+        }
+        return new ArrayList<>(byId.values());
+    }
+
+    private PublicBookingResponse toPublicBooking(ServicoResponse source) {
+        PublicBookingResponse out = new PublicBookingResponse();
+        out.setEventId(source.getEventId());
+        out.setServiceType(source.getServiceType());
+        out.setStart(source.getStart());
+        out.setStatus(source.getStatus());
+        return out;
+    }
+
+    private void persistBookingSnapshot(ServicoResponse booking) {
+        bookingHistoryStore.upsert(booking, Instant.now().getEpochSecond());
+    }
+
+    private ServicoResponse cancelEventAndPreserveHistory(Event event, String source, ServicoResponse stored) throws IOException {
+        Servico cancelled = servicoFromEvent(event);
+        cancelled.setStatus("CANCELLED");
+        cancelled.setCancellationAt(stored != null && stored.getCancellationAt() != null ? stored.getCancellationAt() : Instant.now());
+        cancelled.setCancellationSource(source);
+
+        ServicoResponse snapshot = mapEventToResponse(event);
+        snapshot.setStatus("CANCELLED");
+        snapshot.setCancellationAt(cancelled.getCancellationAt());
+        snapshot.setCancellationSource(source);
+        persistBookingSnapshot(snapshot);
+
+        Event updated = calendar.updateEvent(cancelled);
+        pendingStore.deleteByEventId(event.getId());
+        ServicoResponse result = updated == null ? snapshot : mapEventToResponse(updated);
+        persistBookingSnapshot(result);
+        return result;
+    }
+
+    private String fingerprint(String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest((value == null ? "" : value).getBytes(StandardCharsets.UTF_8));
+            StringBuilder out = new StringBuilder();
+            for (int i = 0; i < Math.min(6, digest.length); i++) out.append(String.format("%02x", digest[i]));
+            return out.toString();
+        } catch (Exception ignored) {
+            return "unavailable";
+        }
     }
 
     private void validateReservedPhonePassword(String phoneDigits, String password) {
@@ -1072,6 +1247,8 @@ public class ServicoService {
 
         s.setClientAddressLine(buildAddressLine(s));
         s.setStatus(ext.getOrDefault("status", "PENDING_PHONE"));
+        s.setCancellationAt(instantFromExt(ext, "cancellationAt", null));
+        s.setCancellationSource(ext.getOrDefault("cancellationSource", ""));
         s.setAssignedProviderId(ext.getOrDefault("assignedProviderId", ""));
         s.setAssignedProviderName(ext.getOrDefault("assignedProviderName", ""));
         s.setAssignedProviderPhone(ext.getOrDefault("assignedProviderPhone", ""));
@@ -1141,6 +1318,8 @@ public class ServicoService {
         s.setClientLongitude(doubleFromExt(ext, "clientLongitude"));
 
         s.setStatus(ext.getOrDefault("status", "PENDING_PHONE"));
+        s.setCancellationAt(instantFromExt(ext, "cancellationAt", null));
+        s.setCancellationSource(ext.getOrDefault("cancellationSource", ""));
         s.setAssignedProviderId(ext.getOrDefault("assignedProviderId", ""));
         s.setAssignedProviderName(ext.getOrDefault("assignedProviderName", ""));
         s.setAssignedProviderPhone(ext.getOrDefault("assignedProviderPhone", ""));

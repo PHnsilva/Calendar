@@ -45,6 +45,8 @@ export type ServicoResponse = {
   clientLongitude?: number;
   clientAddressLine: string;
   status: string;
+  cancellationAt?: string;
+  cancellationSource?: string;
   manageToken?: string;
   assignedProviderId?: string;
   assignedProviderName?: string;
@@ -97,6 +99,7 @@ export type PublicBootstrapResponse = {
     maxFutureMonthsAhead: number;
     pendingTtlSeconds: number;
     blockOtherBookingsWhenPending: boolean;
+    cancellationNoticeHours: number;
     statuses: string[];
   };
   verification: {
@@ -110,6 +113,13 @@ export type PublicBootstrapResponse = {
     allowedStates: string[];
     durationByCity?: Record<string, number>;
   };
+};
+
+export type PublicBookingResponse = {
+  eventId: string;
+  serviceType: string;
+  start: string;
+  status: string;
 };
 
 export type CepLookupResponse = {

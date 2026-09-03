@@ -193,6 +193,10 @@ public class DummyCalendarClient implements CalendarClient {
             Instant en = eventEndInstant(e);
             if (s == null || en == null) continue;
 
+            if ("CANCELLED".equalsIgnoreCase(privateProps(e).getOrDefault("status", ""))) {
+                continue;
+            }
+
             if (isOpenAvailabilityRule(e)) {
                 continue;
             }
@@ -217,6 +221,12 @@ public class DummyCalendarClient implements CalendarClient {
         ext.put("serviceType", safe(s.getTitle()));
         ext.put("serviceNotes", safe(s.getServiceNotes()));
         ext.put("status", safe(s.getStatus()));
+        putInstantIfPresent(ext, "cancellationAt", s.getCancellationAt());
+        if (s.getCancellationSource() == null || s.getCancellationSource().isBlank()) {
+            ext.remove("cancellationSource");
+        } else {
+            ext.put("cancellationSource", s.getCancellationSource().trim());
+        }
 
         if (s.getPendingExpiresAt() != null) {
             ext.put("pendingExpiresAt", String.valueOf(s.getPendingExpiresAt().getEpochSecond()));

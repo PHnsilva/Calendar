@@ -31,6 +31,7 @@ public class PublicBootstrapResponse {
         private int maxFutureMonthsAhead;
         private long pendingTtlSeconds;
         private boolean blockOtherBookingsWhenPending;
+        private long cancellationNoticeHours;
         private List<String> statuses = new ArrayList<>();
         public int getSlotMinutes() { return slotMinutes; }
         public void setSlotMinutes(int slotMinutes) { this.slotMinutes = slotMinutes; }
@@ -42,6 +43,8 @@ public class PublicBootstrapResponse {
         public void setPendingTtlSeconds(long pendingTtlSeconds) { this.pendingTtlSeconds = pendingTtlSeconds; }
         public boolean isBlockOtherBookingsWhenPending() { return blockOtherBookingsWhenPending; }
         public void setBlockOtherBookingsWhenPending(boolean blockOtherBookingsWhenPending) { this.blockOtherBookingsWhenPending = blockOtherBookingsWhenPending; }
+        public long getCancellationNoticeHours() { return cancellationNoticeHours; }
+        public void setCancellationNoticeHours(long cancellationNoticeHours) { this.cancellationNoticeHours = cancellationNoticeHours; }
         public List<String> getStatuses() { return statuses; }
         public void setStatuses(List<String> statuses) { this.statuses = statuses; }
     }

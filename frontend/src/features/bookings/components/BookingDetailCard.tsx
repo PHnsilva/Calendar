@@ -10,7 +10,7 @@ import cancelIcon from "../../../assets/wireframes/icons/booking-action-cancel.s
 import viewIcon from "../../../assets/wireframes/icons/booking-action-eye.svg";
 import type { Booking } from "../../../entities/booking";
 import type { ServicoRequest } from "../../../types/api";
-import { formatDateTime, isWithinTwelveHours } from "../../../lib/dates";
+import { formatDateTime, isWithinHours } from "../../../lib/dates";
 import { formatPhoneInput, isValidPhone, normalizePhone } from "../../../lib/authRole";
 import { normalizeApiErrorMessage } from "../../../lib/errors";
 import { removeLocalCalendarEvent, removeManageToken, resolveManageToken } from "../../../lib/storage";
@@ -18,6 +18,7 @@ import { buildClientServiceOptions, normalizeClientServiceLabel } from "../servi
 import { BookingActions } from "./BookingActions";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { useBookingMutations } from "../hooks/useBookingMutations";
+import { usePublicBootstrap } from "../../public-config/hooks/usePublicBootstrap";
 
 export type BookingDetailMode = "view" | "edit" | "cancel";
 
@@ -39,6 +40,7 @@ function toFormState(booking: Booking): ServicoRequest {
   const pad = (value: number) => String(value).padStart(2, "0");
   return {
     serviceType: normalizeClientServiceLabel(booking.serviceType),
+    serviceNotes: booking.serviceNotes ?? "",
     date: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
     time: `${pad(start.getHours())}:${pad(start.getMinutes())}`,
     clientFirstName: booking.client.firstName,
@@ -82,6 +84,8 @@ function formatTimeOnly(value: Date): string {
 }
 
 function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: BookingDetailCardProps) {
+  const { data: bootstrap } = usePublicBootstrap();
+  const cancellationNoticeHours = bootstrap?.booking?.cancellationNoticeHours ?? 2;
   const token = useMemo(
     () => resolveManageToken({ eventId: booking.id, manageToken: booking.manageToken ?? undefined }),
     [booking.id, booking.manageToken],
@@ -98,7 +102,7 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
     [form.serviceType],
   );
   const displayedService = normalizeClientServiceLabel(booking.serviceType) || "Serviço não informado";
-  const lockedByTime = isWithinTwelveHours(booking.startsAt);
+  const lockedByTime = isWithinHours(booking.startsAt, cancellationNoticeHours);
   const isCancelled = booking.status.code === "cancelled";
   const canManage = Boolean(token) && !lockedByTime && !isCancelled;
   const parsedFullName = splitFullName(fullName);
@@ -154,7 +158,7 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
         payload: {
           ...form,
           serviceType: form.serviceType.trim(),
-          serviceNotes: undefined,
+          serviceNotes: form.serviceNotes ?? "",
           clientFirstName: firstName,
           clientLastName: lastName,
           clientEmail: form.clientEmail.trim(),
@@ -196,7 +200,7 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
         <BookingStatusBadge status={booking.status} />
       </div>
 
-      {lockedByTime && !isCancelled ? <p className="booking-detail__notice">Alterações só podem ser feitas com pelo menos 12 horas de antecedência.</p> : null}
+      {lockedByTime && !isCancelled ? <p className="booking-detail__notice">Cancelamentos só podem ser feitos com pelo menos {cancellationNoticeHours} horas de antecedência.</p> : null}
       {isCancelled ? <p className="booking-detail__notice">Este agendamento já foi cancelado e não pode mais ser alterado.</p> : null}
       {!token ? <p className="booking-detail__notice">Este atendimento não tem código de acesso salvo neste navegador. Use a recuperação para restaurar o acesso.</p> : null}
 
@@ -221,7 +225,7 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
             <label><span>Endereço</span><input type="text" autoComplete="street-address" value={form.clientStreet} onChange={(event) => onChange("clientStreet", event.target.value)} /></label>
             <label><span>Número</span><input type="text" inputMode="text" value={form.clientNumber} onChange={(event) => onChange("clientNumber", event.target.value)} /></label>
           </div>
-          <p className="booking-detail__edit-rule">As demais alterações podem ser feitas até 12 horas antes do atendimento. Não é necessária senha administrativa para o cliente.</p>
+          <p className="booking-detail__edit-rule">As demais alterações podem ser feitas até {cancellationNoticeHours} horas antes do atendimento. Não é necessária senha administrativa para o cliente.</p>
           {validationError ? <p className="booking-detail__error">{validationError}</p> : null}
           {updateError ? <p className="booking-detail__error">{normalizeApiErrorMessage(updateError, { context: "editBooking" })}</p> : null}
           <div className="booking-detail__actions">
@@ -272,7 +276,7 @@ function BookingDetailCardContent({ booking, initialMode = "view", onDeleted }: 
         </div>
       )}
 
-      {!isEditing && !confirmCancel ? <BookingActions canManage={canManage} onEdit={() => setIsEditing(true)} onCancel={() => setConfirmCancel(true)} /> : null}
+      {!isEditing && !confirmCancel ? <BookingActions canManage={canManage} onCancel={() => setConfirmCancel(true)} /> : null}
 
       {confirmCancel ? (
         <div className="booking-detail__confirm">

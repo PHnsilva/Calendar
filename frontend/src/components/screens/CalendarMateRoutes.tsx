@@ -67,6 +67,7 @@ import confirmPhoneSecurityIllustration from '../../assets/wireframes/modals/con
 import emailIllustrationAsset from '../../assets/wireframes/modals/email-illustration.png';
 import { FinancialStatementPanel } from '../admin/FinancialStatementPanel';
 import { HistoryPanel } from '../admin/HistoryPanel';
+import { buildBusinessWhatsAppUrl, getBusinessWhatsAppNumber } from '../../lib/support-contact';
 import { AdminBlocksPanel } from '../admin/AdminBlocksPanel';
 import AdminNavbar, { type AdminNavView } from '../layout/AdminNavbar';
 import ProviderNavbar from '../layout/ProviderNavbar';
@@ -569,9 +570,9 @@ function useAdminBlocksData() {
   return { blocks: owner ? query.data ?? [] : [], isLoading: owner && query.isFetching, isError: owner && query.isError, hasAdminToken };
 }
 
-const supportPhoneDigits = '553195415323';
+const supportPhoneDigits = getBusinessWhatsAppNumber();
 const supportPhoneDisplay = '(31) 9541-5323';
-const supportWhatsAppUrl = `https://wa.me/${supportPhoneDigits}`;
+const supportWhatsAppUrl = buildBusinessWhatsAppUrl();
 const supportInstagramUrl = 'https://www.instagram.com/sg_pequenos_reparos/';
 const supportEmail = 'sgpequenosreparos@gmail.com';
 
@@ -2607,6 +2608,7 @@ type CreateBookingField =
   | 'number'
   | 'date'
   | 'time'
+  | 'serviceNotes'
   | 'service';
 
 type CreateBookingErrors = Partial<Record<CreateBookingField, string>>;
@@ -2648,7 +2650,7 @@ function SharedCreateBookingModal({
   const [selectedAddress, setSelectedAddress] = useState<AddressSuggestion | null>(null);
   const [houseNumber, setHouseNumber] = useState(initialPrefill?.address.number ?? '');
   const [complement, setComplement] = useState(initialPrefill?.address.complement ?? '');
-  const [referencePoint, setReferencePoint] = useState('');
+  const [serviceNotes, setServiceNotes] = useState('');
   const [selectedService, setSelectedService] = useState(initialPrefill?.serviceType ?? '');
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectedTime, setSelectedTime] = useState('');
@@ -2779,6 +2781,12 @@ function SharedCreateBookingModal({
         ? 'Não foi possível carregar os serviços. Tente novamente.'
         : 'Serviço: selecione uma opção disponível.';
     }
+    const normalizedServiceNotes = cleanFormText(serviceNotes);
+    if (normalizedServiceNotes && normalizedServiceNotes.length < 10) {
+      nextErrors.serviceNotes = 'Additional notes must contain at least 10 characters when provided.';
+    } else if (normalizedServiceNotes.length > 2000) {
+      nextErrors.serviceNotes = 'Additional notes must contain at most 2000 characters.';
+    }
 
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -2794,17 +2802,18 @@ function SharedCreateBookingModal({
     try {
       const response = await createBookingMutation.mutateAsync({
         serviceType: selectedService,
+        serviceNotes: normalizedServiceNotes,
         date: activeSelectedDate,
         time: activeSelectedTime,
         clientFirstName: firstName,
         clientLastName: lastName,
         clientEmail: cleanFormText(email),
         clientPhone: phoneDigits,
-        clientCep: cleanFormText(reusableAddress?.postalCode),
+        clientCep: digitsOnly(selectedAddress?.postcode || reusableAddress?.postalCode || ''),
         clientStreet,
         clientNeighborhood,
         clientNumber,
-        clientComplement: cleanFormText([complement, referencePoint].filter(Boolean).join(' | ')) || undefined,
+        clientComplement: cleanFormText(complement) || undefined,
         clientCity: selectedCity,
         clientState: cleanFormText(selectedAddress?.stateCode || selectedAddress?.state || reusableAddress?.state || defaultState).slice(0, 2).toUpperCase(),
         clientLatitude: selectedAddress?.lat ?? selectedAddress?.latitude ?? reusableAddress?.latitude ?? undefined,
@@ -2876,7 +2885,7 @@ function SharedCreateBookingModal({
             <div><dt>Horário</dt><dd>{createdStart.time || activeSelectedTime || 'Horário confirmado'}</dd></div>
             <div><dt>Local</dt><dd>{createdAddressLabel}</dd></div>
           </dl>
-          <p className="wf-create-booking-success__notice">Você pode editar os dados do cliente ou reagendar até 12 horas antes do atendimento.</p>
+          <p className="wf-create-booking-success__notice">Para alterar ou conferir informações adicionais, entre em contato com o prestador.</p>
         </div>
         <ModalActions primary="Ver meus agendamentos" secondary="Fechar" primaryIcon="arrow-right" onSecondary={onClose} onPrimary={openBookings} />
       </div>
@@ -2927,7 +2936,11 @@ function SharedCreateBookingModal({
           <div className="wf-time-options wf-time-options--scroll">{availableSlots.map((slot) => <button className={activeSelectedTime === slot.startTime ? 'is-active' : ''} type="button" key={`${slot.date}-${slot.startTime}`} onClick={() => setSelectedTime(slot.startTime)}>{slot.startTime}</button>)}</div>
           {fieldErrors.time ? <small className="wf-field-error">{fieldErrors.time}</small> : null}
         </div>
-          <ModalField className="wf-create-field wf-create-field--reference" label="Ponto de referência (opcional)" icon="map" placeholder="Ex.: Próximo ao mercado, padaria, etc." value={referencePoint} onChange={setReferencePoint} />
+          <label className="wf-modal-field wf-create-field wf-create-field--reference">
+            <span className="wf-field-label">Additional notes (optional)</span>
+            <textarea aria-label="Additional notes (optional)" maxLength={2000} placeholder="Add any useful information for the service provider." value={serviceNotes} onChange={(event) => { setServiceNotes(event.target.value); setFieldErrors((current) => ({ ...current, serviceNotes: undefined })); }} />
+            {fieldErrors.serviceNotes ? <small className="wf-field-error">{fieldErrors.serviceNotes}</small> : null}
+          </label>
           <label className="wf-modal-field wf-create-field wf-create-field--service">
             <span className="wf-field-label">Serviço<em>*</em></span>
             <span className="wf-input-shell wf-input-shell--select">
@@ -3484,7 +3497,6 @@ function ClientProfileModal({ onClose, onNavigate }: { onClose: () => void; onNa
       </div>
 
       <div className="wf-client-profile-modal__status" aria-label="Resumo do perfil">
-        <span className="wf-client-profile-modal__status-item wf-client-profile-modal__status-item--active"><Icon name="shield-check" /> <strong>Conta ativa</strong></span>
         <span className="wf-client-profile-modal__status-item wf-client-profile-modal__status-item--phone"><Icon name="phone-call" /> <strong>{phoneStatus}</strong></span>
         <span className="wf-client-profile-modal__status-item wf-client-profile-modal__status-item--profile"><Icon name="user-blue-solid" /> <strong>Perfil do cliente</strong></span>
       </div>
@@ -3832,9 +3844,7 @@ function EditAdminBookingModal({ booking, onClose, onSubmissionChange }: { booki
     setError('');
     const payload: AdminServicoUpdateRequest = {
       serviceType: normalizedServiceType,
-      serviceNotes: normalizedServiceNotes && normalizeText(normalizedServiceNotes) !== normalizeText(normalizedServiceType)
-        ? normalizedServiceNotes
-        : undefined,
+      serviceNotes: normalizedServiceNotes,
       date,
       time,
       clientFirstName: firstName.trim(),

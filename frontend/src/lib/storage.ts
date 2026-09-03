@@ -212,8 +212,9 @@ export function saveClientProfile(patch: ClientProfilePatch): StoredClientProfil
   const validPhone = phone && isValidBrazilianPhone(phone) ? phone : undefined;
   const name = cleanOptionalText(patch.name) ?? current?.name;
   const email = cleanOptionalEmail(patch.email) ?? current?.email;
-  const phoneVerifiedAt = patch.phoneVerifiedAt ?? current?.phoneVerifiedAt;
-  const recoveredCount = patch.recoveredCount ?? current?.recoveredCount;
+  const phoneChanged = patch.phone !== undefined && validPhone !== current?.phone;
+  const phoneVerifiedAt = phoneChanged ? patch.phoneVerifiedAt : patch.phoneVerifiedAt ?? current?.phoneVerifiedAt;
+  const recoveredCount = phoneChanged ? patch.recoveredCount : patch.recoveredCount ?? current?.recoveredCount;
   const city = cleanOptionalText(patch.city) ?? current?.city;
   const avatarId = cleanOptionalText(patch.avatarId) ?? current?.avatarId;
 
@@ -231,6 +232,10 @@ export function saveClientProfile(patch: ClientProfilePatch): StoredClientProfil
   };
 
   writeJson(CLIENT_PROFILE_KEY, profile);
+  if (phoneChanged && !patch.phoneVerifiedAt) {
+    getStorage()?.removeItem(PHONE_VERIFICATION_KEY);
+    dispatchPhoneVerificationChanged();
+  }
   dispatchClientProfileChanged();
   return profile;
 }

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useHomeBookingSelection } from "../../../app/home-booking-context";
 import { getCityTone } from "../../../data/allowed-cities";
 import { apiClient } from "../../../lib/api-client";
-import { formatPhoneInput, isValidPhone, normalizePhone } from "../../../lib/authRole";
+import { formatPhoneInput, isValidPhone } from "../../../lib/authRole";
 import { normalizeApiErrorMessage } from "../../../lib/errors";
 import { toBusinessDateTimeParts } from "../../../lib/dates";
 import {
@@ -26,7 +26,8 @@ import { deleteBooking } from "../api/delete-booking";
 import { getBookingByToken } from "../api/get-booking-by-token";
 import { updateBooking } from "../api/update-booking";
 import { buildClientServiceOptions, normalizeClientServiceLabel } from "../services/client-service-options";
-import type { ServicoRequest, ServicoResponse } from "../../../types/api";
+import type { ServicoResponse } from "../../../types/api";
+import { buildHomeBookingUpdatePayload, type HomeBookingEditDraft } from "./home-booking-update";
 
 type TimelineGroup = {
   date: string;
@@ -46,17 +47,6 @@ type HomeBookingsTimelineProps = {
   title?: string;
   isAdminMode?: boolean;
   focusRequestId?: number;
-};
-
-type EditDraft = {
-  serviceType: string;
-  date: string;
-  time: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  street: string;
-  number: string;
 };
 
 function toLocalDate(dateString: string): Date {
@@ -179,38 +169,11 @@ function resolveManageToken(eventId: string): string {
   return tokens.length === 1 ? tokens[0] ?? "" : "";
 }
 
-function canManageEvent(event: CalendarEvent | null): boolean {
+function canManageEvent(event: CalendarEvent | null, noticeHours: number): boolean {
   if (!event) return false;
   const now = new Date();
-  const limit = new Date(now.getTime() + 12 * 60 * 60 * 1000);
-  return toStartDateTime(event.date, event.startTime).getTime() >= limit.getTime();
-}
-
-function buildUpdatePayload(servico: ServicoResponse, draft: EditDraft): ServicoRequest {
-  const { firstName, lastName } = splitFullName(draft.fullName);
-  const addressChanged = draft.street.trim() !== (servico.clientStreet ?? "").trim()
-    || draft.number.trim() !== (servico.clientNumber ?? "").trim();
-
-  return {
-    serviceType: draft.serviceType.trim(),
-    serviceNotes: undefined,
-    date: draft.date,
-    time: draft.time,
-    clientFirstName: firstName,
-    clientLastName: lastName,
-    clientEmail: draft.email.trim(),
-    clientPhone: normalizePhone(draft.phone),
-    clientCity: servico.clientCity,
-    clientState: servico.clientState,
-    clientStreet: draft.street.trim(),
-    clientNumber: draft.number.trim(),
-    clientNeighborhood: servico.clientNeighborhood,
-    clientCep: servico.clientCep,
-    clientComplement: servico.clientComplement,
-    clientLatitude: addressChanged ? undefined : servico.clientLatitude,
-    clientLongitude: addressChanged ? undefined : servico.clientLongitude,
-    reservedPhonePassword: undefined,
-  };
+  const limit = new Date(now.getTime() + noticeHours * 60 * 60 * 1000);
+  return toStartDateTime(event.date, event.startTime).getTime() > limit.getTime();
 }
 
 function DetailPortal({ children }: { children: ReactNode }) {
@@ -242,7 +205,7 @@ export default function HomeBookingsTimeline({
   const [detailError, setDetailError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [editDraft, setEditDraft] = useState<EditDraft>({
+  const [editDraft, setEditDraft] = useState<HomeBookingEditDraft>({
     serviceType: "",
     date: "",
     time: "",
@@ -260,6 +223,7 @@ export default function HomeBookingsTimeline({
   const { requestOpenProfile } = useHomeBookingSelection();
   const { data: bootstrap } = usePublicBootstrap(Boolean(activeEvent));
   const slotMinutes = bootstrap?.booking?.slotMinutes ?? 60;
+  const cancellationNoticeHours = bootstrap?.booking?.cancellationNoticeHours ?? 2;
   const serviceOptions = useMemo(() => buildClientServiceOptions(bootstrap?.services ?? [], bookingDetails?.serviceType ?? editDraft.serviceType), [bootstrap?.services, bookingDetails?.serviceType, editDraft.serviceType]);
   const { coords, error: locationError, isLoading: isLocating, requestLocation } = useUserGeolocation();
   const routeQuery = useAdminRoute(
@@ -270,7 +234,7 @@ export default function HomeBookingsTimeline({
   );
 
   const manageToken = activeEvent && !isAdminMode ? resolveManageToken(activeEvent.id) : "";
-  const canManage = !isAdminMode && canManageEvent(activeEvent);
+  const canManage = !isAdminMode && canManageEvent(activeEvent, cancellationNoticeHours);
 
   useEffect(() => {
     if (isAdminMode) return;
@@ -455,11 +419,6 @@ export default function HomeBookingsTimeline({
     return true;
   }
 
-  function handleEditRequest() {
-    if (requirePhoneVerification()) return;
-    setEditOpen(true);
-  }
-
   function handleCancelRequest() {
     if (requirePhoneVerification()) return;
     setCancelOpen(true);
@@ -468,9 +427,9 @@ export default function HomeBookingsTimeline({
   async function handleSaveEdit() {
     if (!activeEvent || !bookingDetails || !manageToken) return;
     const editedStart = toStartDateTime(editDraft.date, editDraft.time);
-    const minimumStart = Date.now() + 12 * 60 * 60 * 1000;
+    const minimumStart = Date.now() + cancellationNoticeHours * 60 * 60 * 1000;
     if (!editDraft.serviceType.trim() || Number.isNaN(editedStart.getTime()) || editedStart.getTime() < minimumStart) {
-      setEditError("Escolha um serviço, uma data e um horário com pelo menos 12 horas de antecedência.");
+      setEditError(`Escolha um serviço, uma data e um horário com pelo menos ${cancellationNoticeHours} horas de antecedência.`);
       return;
     }
     const { firstName, lastName } = splitFullName(editDraft.fullName);
@@ -493,7 +452,7 @@ export default function HomeBookingsTimeline({
     try {
       setActionLoading(true);
       setEditError(null);
-      const payload = buildUpdatePayload(bookingDetails, editDraft);
+      const payload = buildHomeBookingUpdatePayload(bookingDetails, editDraft);
       const updated = await updateBooking({ eventId: activeEvent.id, token: manageToken, payload });
       const updatedEvent = mapServicoToCalendarEvent(updated);
       saveLocalCalendarEvent(updatedEvent);
@@ -546,8 +505,8 @@ export default function HomeBookingsTimeline({
                 <div className="booking-detail-modal__notice booking-detail-modal__notice--inline">
                   <strong>
                     {canManage
-                      ? "Você ainda pode editar ou cancelar este atendimento."
-                      : "Esse atendimento só pode ser alterado com pelo menos 12 horas de antecedência."}
+                      ? "Você ainda pode cancelar este atendimento."
+                      : `Esse atendimento só pode ser cancelado com pelo menos ${cancellationNoticeHours} horas de antecedência.`}
                   </strong>
                   {!manageToken ? <span>{detailError ?? "Não foi possível localizar o código de acesso deste agendamento neste navegador."}</span> : null}
                   {manageToken && detailError && !detailLoading ? <span>{detailError}</span> : null}
@@ -647,7 +606,6 @@ export default function HomeBookingsTimeline({
 
           {!isAdminMode ? (
             <div className="booking-detail-modal__actions">
-              <button type="button" className="secondary-action" onClick={handleEditRequest} disabled={!canManage || !manageToken || detailLoading}>Editar</button>
               <button type="button" className="secondary-action booking-detail-modal__danger" onClick={handleCancelRequest} disabled={!canManage || !manageToken || detailLoading}>Cancelar</button>
               <button type="button" className="primary-action" onClick={() => setActiveEvent(null)}>Fechar</button>
             </div>
@@ -674,7 +632,7 @@ export default function HomeBookingsTimeline({
                   <label className="booking-detail-modal__field"><span>Endereço</span><input type="text" autoComplete="street-address" value={editDraft.street} onChange={(event) => { setEditDraft((current) => ({ ...current, street: event.target.value })); setEditError(null); }} /></label>
                   <label className="booking-detail-modal__field"><span>Número</span><input type="text" value={editDraft.number} onChange={(event) => { setEditDraft((current) => ({ ...current, number: event.target.value })); setEditError(null); }} /></label>
                 </div>
-                <p className="booking-detail-modal__helper">Você pode editar os dados do cliente e reagendar até 12 horas antes do atendimento. Não é necessária senha administrativa.</p>
+                <p className="booking-detail-modal__helper">Você pode editar os dados do cliente e reagendar até {cancellationNoticeHours} horas antes do atendimento. Não é necessária senha administrativa.</p>
                 {editError ? <p className="booking-form__feedback booking-form__feedback--error">{editError}</p> : null}
                 <div className="booking-detail-modal__actions booking-detail-modal__actions--overlay">
                   <button type="button" className="secondary-action" onClick={() => setEditOpen(false)}>Voltar</button>

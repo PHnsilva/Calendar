@@ -53,6 +53,16 @@ export function toBusinessDateTimeParts(
   };
 }
 
+export function getBusinessTodayIso(timeZone = DEFAULT_BUSINESS_TIME_ZONE): string {
+  return toBusinessDateTimeParts(new Date(), timeZone).date;
+}
+
+export function shiftIsoCalendarDate(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days, 12));
+  return shifted.toISOString().slice(0, 10);
+}
+
 function parseMonthInput(value: Date | string): { year: number; month: number } {
   if (value instanceof Date) {
     return { year: value.getFullYear(), month: value.getMonth() };
@@ -144,13 +154,5 @@ export function formatDateTime(value: Date | string): string {
 export function isWithinHours(value: Date | string, hours: number): boolean {
   const date = parseDateInput(value);
   if (Number.isNaN(date.getTime())) return true;
-  return date.getTime() - Date.now() < hours * 60 * 60 * 1000;
-}
-
-export function isWithinTwoHours(value: Date | string): boolean {
-  return isWithinHours(value, 2);
-}
-
-export function isWithinTwelveHours(value: Date | string): boolean {
-  return isWithinHours(value, 12);
+  return date.getTime() - Date.now() <= hours * 60 * 60 * 1000;
 }

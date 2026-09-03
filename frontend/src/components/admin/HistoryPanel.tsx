@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { useAdminBookings } from '../../features/admin/hooks/useAdminBookings';
+import { useAdminHistory } from '../../features/admin/hooks/useAdminHistory';
 import { getStoredAdminToken } from '../../lib/storage';
+import { getBusinessTodayIso, shiftIsoCalendarDate, toBusinessDateTimeParts } from '../../lib/dates';
 import type { ServicoResponse } from '../../types/api';
 import {
   AdminButton,
@@ -12,8 +13,6 @@ import {
   type AdminIconName,
 } from './AdminWorkspaceUi';
 import styles from './AdminWorkspaceUi.module.css';
-
-type PeriodFilter = '30' | '90' | 'ALL';
 
 type HistoryBooking = {
   id: string;
@@ -27,9 +26,11 @@ type HistoryBooking = {
   service: string;
   status: string;
   time: string;
+  startsAt: number;
 };
 
-const ptDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const BUSINESS_TIME_ZONE = 'America/Sao_Paulo';
+const ptDate = new Intl.DateTimeFormat('pt-BR', { timeZone: BUSINESS_TIME_ZONE, day: '2-digit', month: '2-digit', year: 'numeric' });
 
 function toLocalDate(date: string): Date {
   return new Date(`${date}T12:00:00`);
@@ -63,32 +64,22 @@ function statusTone(status: string): 'danger' | 'info' | 'success' | 'warning' {
   return 'info';
 }
 
-function isCompleted(status: string): boolean {
-  return normalize(status).includes('concl') || normalize(status).includes('complete') || normalize(status).includes('done');
-}
-
 function mapBooking(booking: ServicoResponse): HistoryBooking {
-  const date = booking.start?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+  const dateTime = toBusinessDateTimeParts(booking.start, BUSINESS_TIME_ZONE);
   return {
     id: booking.eventId,
     address: addressFromBooking(booking),
     client: fullClientName(booking),
-    date,
+    date: dateTime.date,
     email: booking.clientEmail || 'Não informado',
     notes: booking.serviceNotes || 'Sem observações registradas.',
     phone: booking.clientPhone || 'Não informado',
     provider: booking.assignedProviderName || 'A definir',
     service: booking.serviceType || 'Serviço não informado',
     status: formatStatus(booking.status),
-    time: booking.start?.slice(11, 16) || '--:--',
+    time: dateTime.time || '--:--',
+    startsAt: new Date(booking.start).getTime(),
   };
-}
-
-function inPeriod(booking: HistoryBooking, period: PeriodFilter): boolean {
-  if (period === 'ALL') return true;
-  const floor = new Date();
-  floor.setDate(floor.getDate() - Number(period));
-  return toLocalDate(booking.date).getTime() >= new Date(floor.getFullYear(), floor.getMonth(), floor.getDate()).getTime();
 }
 
 function Avatar({ name }: { name: string }) {
@@ -108,34 +99,31 @@ function DetailRow({ icon, label, value }: { icon: AdminIconName; label: string;
 
 export function HistoryPanel() {
   const hasAdminToken = Boolean(getStoredAdminToken());
-  const query = useAdminBookings({}, hasAdminToken);
+  const today = getBusinessTodayIso(BUSINESS_TIME_ZONE);
+  const historyRange = { from: shiftIsoCalendarDate(today, -29), to: today };
+  const query = useAdminHistory(historyRange, hasAdminToken);
   const [selectedId, setSelectedId] = useState('');
-  const [period, setPeriod] = useState<PeriodFilter>('30');
   const [client, setClient] = useState('ALL');
   const [provider, setProvider] = useState('ALL');
   const [search, setSearch] = useState('');
 
-  const allBookings = useMemo(() => (query.data ?? []).map(mapBooking).sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`)), [query.data]);
-  const completedBookings = useMemo(() => allBookings.filter((booking) => isCompleted(booking.status)), [allBookings]);
-  const sourceBookings = completedBookings.length ? completedBookings : allBookings;
+  const sourceBookings = useMemo(() => (query.data ?? []).map(mapBooking).sort((a, b) => b.startsAt - a.startsAt), [query.data]);
   const clientOptions = useMemo(() => Array.from(new Set(sourceBookings.map((booking) => booking.client))).sort(), [sourceBookings]);
   const providerOptions = useMemo(() => Array.from(new Set(sourceBookings.map((booking) => booking.provider))).sort(), [sourceBookings]);
 
   const filteredBookings = useMemo(() => {
     const term = normalize(search.trim());
     return sourceBookings.filter((booking) => {
-      const byPeriod = inPeriod(booking, period);
       const byClient = client === 'ALL' || booking.client === client;
       const byProvider = provider === 'ALL' || booking.provider === provider;
       const bySearch = !term || normalize(`${booking.id} ${booking.client} ${booking.provider} ${booking.phone} ${booking.email} ${booking.address} ${booking.service} ${booking.notes}`).includes(term);
-      return byPeriod && byClient && byProvider && bySearch;
+      return byClient && byProvider && bySearch;
     });
-  }, [client, period, provider, search, sourceBookings]);
+  }, [client, provider, search, sourceBookings]);
 
   const selected = filteredBookings.find((booking) => booking.id === selectedId) ?? filteredBookings[0];
-  const filtersActive = period !== '30' || client !== 'ALL' || provider !== 'ALL' || Boolean(search.trim());
+  const filtersActive = client !== 'ALL' || provider !== 'ALL' || Boolean(search.trim());
   const clearFilters = () => {
-    setPeriod('30');
     setClient('ALL');
     setProvider('ALL');
     setSearch('');
@@ -148,17 +136,15 @@ export function HistoryPanel() {
         <AdminPageHeader
           icon="history"
           title="Histórico"
-          description="Consulte atendimentos concluídos e todas as informações registradas pelos clientes."
+          description="Consulte os atendimentos dos últimos 30 dias e todas as informações registradas pelos clientes."
         />
       </div>
 
       <section className={styles.filters} aria-label="Filtros do histórico">
         <label className={styles.field}>
           <span className={styles.fieldLabel}><AdminIcon name="calendar" size={15} /> Período</span>
-          <select className={styles.fieldControl} value={period} onChange={(event) => setPeriod(event.target.value as PeriodFilter)}>
+          <select className={styles.fieldControl} value="30" disabled>
             <option value="30">Últimos 30 dias</option>
-            <option value="90">Últimos 90 dias</option>
-            <option value="ALL">Todo o histórico</option>
           </select>
         </label>
         <label className={styles.field}>
@@ -188,7 +174,7 @@ export function HistoryPanel() {
         <section className={`${styles.panel} ${styles.historyList}`} aria-label="Atendimentos do histórico">
           <AdminSectionHeader
             icon="history"
-            title={completedBookings.length ? 'Atendimentos concluídos' : 'Atendimentos registrados'}
+            title="Atendimentos registrados"
             description="Selecione um registro para consultar os detalhes completos."
             meta={<AdminStatusBadge tone="info">{filteredBookings.length} registro(s)</AdminStatusBadge>}
           />

@@ -3,6 +3,7 @@ export const queryKeys = {
   publicBootstrap: ["public-bootstrap"] as const,
   availableSlots: (date: string, city = "", slotMinutes = 60, durationMinutes = slotMinutes) => ["available-slots", date, city.trim().toLowerCase(), slotMinutes, durationMinutes] as const,
   adminBookings: (filtersKey: string) => ["admin-bookings", filtersKey] as const,
+  adminHistory: (filtersKey: string) => ["admin-history", filtersKey] as const,
   adminBooking: (eventId: string) => ["admin-booking", eventId] as const,
   adminSummary: (filtersKey: string) => ["admin-summary", filtersKey] as const,
   adminBlocks: (filtersKey: string) => ["admin-blocks", filtersKey] as const,

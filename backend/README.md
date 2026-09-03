@@ -18,6 +18,25 @@ On Windows PowerShell:
 .\gradlew.bat build
 ```
 
+## Public Booking Lookup And Cancellation
+
+Customer lookup no longer depends on a manage token or browser storage:
+
+```http
+POST /api/servicos/public/lookup
+Content-Type: application/json
+
+{"phone":"31999999999"}
+```
+
+The response DTO contains only `eventId`, `serviceType`, `start`, and `status`. Cancellation uses `POST /api/servicos/public/cancel` with both `eventId` and `phone`; the service normalizes the phone and verifies ownership before persisting `CANCELLED`. Repeated cancellation is idempotent. A cancelled Google event is retained as transparent so it releases availability without deleting history.
+
+Production must enable Google Calendar so events and occupied slots survive a process restart, and should also enable Supabase for resilient history snapshots. `DummyCalendarClient` and the in-memory history store are development fallbacks only. Apply `docs/supabase-admin-auth.sql` before or alongside deployment; the backend remains compatible while the optional cancellation metadata columns roll out.
+
+The lookup and cancellation rate limits are configurable with `PUBLIC_BOOKING_*_RATE_*`. Forwarded IP headers remain ignored unless both `TRUST_PROXY_HEADERS=true` and an exact direct-proxy allowlist in `TRUSTED_PROXY_ADDRESSES` are configured.
+
+The administrative history endpoint is `GET /api/servicos/admin/history`; the frontend requests today minus 29 days through today using `America/Sao_Paulo` calendar boundaries.
+
 ## Admin And Provider Registry
 
 Production should use the Supabase `admin_users` table:

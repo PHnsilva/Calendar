@@ -187,7 +187,7 @@ describe('admin appointment details flow', () => {
     await waitFor(() => expect(mocks.updateAdminBooking).toHaveBeenCalledTimes(1));
     expect(mocks.updateAdminBooking).toHaveBeenCalledWith('event-detail-1', expect.objectContaining({ clientFirstName: 'Paula' }));
     expect(mocks.updateAdminBooking.mock.calls[0]?.[1]).not.toHaveProperty('clientLastName');
-    expect(JSON.parse(JSON.stringify(mocks.updateAdminBooking.mock.calls[0]?.[1]))).not.toHaveProperty('serviceNotes');
+    expect(mocks.updateAdminBooking.mock.calls[0]?.[1]).toHaveProperty('serviceNotes', booking.serviceType);
   });
 
   it('uses the custom confirmation and removes cached list/detail data after cancellation', async () => {

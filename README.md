@@ -38,8 +38,8 @@ Render  -> backend Dockerizado
 - Confirmação por OTP.
 - Canal de OTP alternável: `DUMMY`, `SMS/NotificationAPI` ou `META/WHATSAPP`.
 - Consulta de horários disponíveis por dia.
-- Token de gerenciamento sem login.
-- Recuperação de agendamentos por telefone.
+- Consulta pública de agendamentos por telefone, sem token, conta ou OTP.
+- Cancelamento público por telefone com verificação de pertencimento, histórico e limite de tentativas.
 - Painel admin por telefone/SMS, sessao temporaria e papeis `OWNER`/`PROVIDER`.
 - Apos confirmar o telefone do owner `31995438467`, selecao de workspace entre Admin e prestadores cadastrados.
 - Bloqueios de disponibilidade e escala 4x4.
@@ -74,8 +74,20 @@ FRONTEND_URL=https://seu-front.vercel.app
 HMAC_SECRET=troque-este-segredo-longo
 ADMIN_SESSION_TTL_DAYS=7
 ADMIN_BOOKING_ACTIVE_PAST_DAYS=10
+BOOKING_CANCELLATION_NOTICE_HOURS=2
 APP_HISTORY_RETENTION_MONTHS=2.0
+PUBLIC_BOOKING_LOOKUP_RATE_WINDOW_SECONDS=600
+PUBLIC_BOOKING_LOOKUP_RATE_PER_IP=10
+PUBLIC_BOOKING_LOOKUP_RATE_PER_PHONE=10
+PUBLIC_BOOKING_CANCEL_RATE_WINDOW_SECONDS=3600
+PUBLIC_BOOKING_CANCEL_RATE_PER_IP=3
+PUBLIC_BOOKING_CANCEL_RATE_PER_PHONE=3
+PUBLIC_BOOKING_RATE_LIMIT_MAX_ENTRIES=10000
+TRUST_PROXY_HEADERS=false
+TRUSTED_PROXY_ADDRESSES=
 ```
+
+Os cabeçalhos `X-Forwarded-For`/`X-Real-IP` só são considerados quando `TRUST_PROXY_HEADERS=true` e o endereço do proxy direto está na lista exata `TRUSTED_PROXY_ADDRESSES`. O aviso mínimo de cancelamento é compartilhado pelo backend e pelo frontend por meio do bootstrap público.
 
 ### Confirmação por SMS
 
@@ -119,6 +131,8 @@ SUPABASE_KEY=...
 SUPABASE_SCHEMA=public
 ```
 
+Execute [docs/supabase-admin-auth.sql](docs/supabase-admin-auth.sql) para criar/atualizar o histórico, inclusive o índice de telefone e os metadados opcionais de cancelamento. Em produção, mantenha `GOOGLE_CALENDAR_ENABLED=true` para que eventos e ocupação de horários sobrevivam a reinícios; use também `SUPABASE_ENABLED=true` para snapshots históricos resilientes. O `DummyCalendarClient` é apenas um fallback local em memória. As consultas públicas combinam os eventos persistidos do Google Calendar com os snapshots do Supabase e removem duplicatas pelo identificador.
+
 ### Banco Inter
 
 ```env
@@ -149,7 +163,19 @@ Arquivo base: `frontend/.env.example`.
 VITE_API_BASE_URL=https://seu-backend.onrender.com
 VITE_GEOAPIFY_PUBLIC_KEY=...
 VITE_ADMIN_ENABLED=true
+VITE_SUPPORT_WHATSAPP_NUMBER=553195415323
 ```
+
+`VITE_SUPPORT_WHATSAPP_NUMBER` deve conter o telefone comercial no formato internacional, somente dígitos. Ele é usado de forma centralizada pelos links `wa.me`.
+
+## Consulta pública de agendamentos
+
+O cliente informa o telefone na tela “My Bookings”. O telefone é enviado somente no corpo de requisições `POST`:
+
+- `POST /api/servicos/public/lookup` com `{ "phone": "..." }`;
+- `POST /api/servicos/public/cancel` com `{ "eventId": "...", "phone": "..." }`.
+
+A listagem pública retorna apenas `eventId`, `serviceType`, `start` e `status`. Nome, e-mail, endereço, complemento, CEP, observações, dados administrativos, links privados e tokens não fazem parte desse DTO. O `localStorage` guarda no máximo o telefone para preencher o campo; o backend é a fonte de verdade. O histórico administrativo consulta exatamente os 30 dias de calendário incluindo hoje, com limites e exibição em `America/Sao_Paulo`.
 
 No Vercel, configure `VITE_API_BASE_URL` com a URL pública do backend no Render e `VITE_GEOAPIFY_PUBLIC_KEY` no mesmo ambiente (Production/Preview/Development conforme o deploy). A chave pública precisa permitir o domínio do Vercel nas restrições do Geoapify. O backend também deve ter `GEOAPIFY_API_KEY` configurada para o proxy de autocomplete/fallback seguro e `FRONTEND_URL` deve incluir os domínios do Vercel permitidos no CORS. Depois de alterar variáveis `VITE_`, faça um novo deploy para o bundle receber os valores.
 

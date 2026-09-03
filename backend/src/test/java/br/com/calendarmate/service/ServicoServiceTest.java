@@ -273,7 +273,7 @@ class ServicoServiceTest {
         ServicoResponse created = service.create(request).getServico();
 
         assertEquals("Eletrica", created.getServiceType());
-        assertEquals("Eletrica", created.getServiceNotes());
+        assertEquals("", created.getServiceNotes());
         assertFalse(created.getClientAddressLine().contains("CEP"));
 
         AdminServicoUpdateRequest update = adminUpdateRequest(created, request.getDate());
@@ -282,7 +282,7 @@ class ServicoServiceTest {
                 created.getEventId(),
                 principal("owner-1", AdminRole.OWNER),
                 update);
-        assertEquals("Eletrica", updated.getServiceNotes());
+        assertEquals("", updated.getServiceNotes());
     }
 
     @Test
@@ -353,7 +353,9 @@ class ServicoServiceTest {
                         service,
                         new TokenUtil("test-secret", 600),
                         auth,
-                        mock(GetAvailableSlotsUseCase.class)))
+                        mock(GetAvailableSlotsUseCase.class),
+                        mock(PublicBookingRateLimiter.class),
+                        mock(ClientIpResolver.class)))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
 
@@ -382,7 +384,8 @@ class ServicoServiceTest {
         mvc.perform(get("/api/servicos/admin/{eventId}", expected.getId())
                         .header("X-ADMIN-SESSION", sessionToken)
                         .header("X-ADMIN-WORKSPACE", "ADMIN"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
 
     @Test

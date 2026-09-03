@@ -16,6 +16,10 @@ vi.mock("../hooks/useBookingMutations", () => ({
   }),
 }));
 
+vi.mock("../../public-config/hooks/usePublicBootstrap", () => ({
+  usePublicBootstrap: () => ({ data: { booking: { cancellationNoticeHours: 2 } } }),
+}));
+
 afterEach(() => {
   cleanup();
   window.localStorage.clear();

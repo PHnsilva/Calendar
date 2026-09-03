@@ -8,6 +8,8 @@ import br.com.calendarmate.service.AdminAuthService;
 import br.com.calendarmate.service.AdminBookingOpsService;
 import br.com.calendarmate.service.AdminFinanceService;
 import br.com.calendarmate.service.AvailabilityBlockService;
+import br.com.calendarmate.service.ClientIpResolver;
+import br.com.calendarmate.service.PublicBookingRateLimiter;
 import br.com.calendarmate.service.ServicoService;
 import br.com.calendarmate.service.TokenUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,7 +68,9 @@ class AdminControllerAuthorizationTest {
                 service,
                 mock(TokenUtil.class),
                 adminAuthService,
-                mock(GetAvailableSlotsUseCase.class));
+                mock(GetAvailableSlotsUseCase.class),
+                mock(PublicBookingRateLimiter.class),
+                mock(ClientIpResolver.class));
         AdminAssignProviderRequest assignment = new AdminAssignProviderRequest();
         assignment.setProviderId("provider-2");
 

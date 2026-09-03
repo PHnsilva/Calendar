@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
-import { toBusinessDateTimeParts } from './dates';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getBusinessTodayIso, shiftIsoCalendarDate, toBusinessDateTimeParts } from './dates';
+
+afterEach(() => vi.useRealTimers());
 
 describe('toBusinessDateTimeParts', () => {
   it('converts backend UTC instants to the Sao Paulo appointment date and time', () => {
@@ -14,5 +16,15 @@ describe('toBusinessDateTimeParts', () => {
       date: '2026-07-20',
       time: '09:00',
     });
+  });
+
+  it('uses Sao Paulo calendar boundaries even when UTC is already on the next day', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-01T02:30:00Z'));
+
+    const today = getBusinessTodayIso('America/Sao_Paulo');
+
+    expect(today).toBe('2026-08-31');
+    expect(shiftIsoCalendarDate(today, -29)).toBe('2026-08-02');
   });
 });

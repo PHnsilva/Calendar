@@ -13,10 +13,12 @@ const mocks = vi.hoisted(() => ({
   getFinanceHealth: vi.fn(),
   getStatement: vi.fn(),
   useAdminBookings: vi.fn(),
+  useAdminHistory: vi.fn(),
   usePublicBootstrap: vi.fn(),
 }));
 
 vi.mock('../../features/admin/hooks/useAdminBookings', () => ({ useAdminBookings: mocks.useAdminBookings }));
+vi.mock('../../features/admin/hooks/useAdminHistory', () => ({ useAdminHistory: mocks.useAdminHistory }));
 vi.mock('../../features/public-config/hooks/usePublicBootstrap', () => ({ usePublicBootstrap: mocks.usePublicBootstrap }));
 vi.mock('../../features/finance/api/get-finance-config', () => ({ getFinanceConfig: mocks.getFinanceConfig }));
 vi.mock('../../features/finance/api/get-finance-health', () => ({ getFinanceHealth: mocks.getFinanceHealth }));
@@ -60,8 +62,10 @@ beforeEach(() => {
   mocks.getFinanceHealth.mockReset();
   mocks.getStatement.mockReset();
   mocks.useAdminBookings.mockReset();
+  mocks.useAdminHistory.mockReset();
   mocks.usePublicBootstrap.mockReset();
   mocks.useAdminBookings.mockReturnValue({ data: [bookingFixture()], isError: false, isFetching: false, refetch: vi.fn() });
+  mocks.useAdminHistory.mockReturnValue({ data: [bookingFixture()], isError: false, isFetching: false, refetch: vi.fn() });
   mocks.usePublicBootstrap.mockReturnValue({ data: { schedule: { cycleStart: '2026-05-16' } } });
   mocks.getFinanceConfig.mockResolvedValue({
     features: { interPjEnabled: true },
@@ -131,6 +135,10 @@ describe('Admin workspace redesigned panels', () => {
 
   it('shows complete history details and preserves filters', () => {
     renderWithQuery(<HistoryPanel />);
+
+    const range = mocks.useAdminHistory.mock.calls[0]?.[0] as { from: string; to: string };
+    const inclusiveDays = Math.round((Date.parse(`${range.to}T12:00:00Z`) - Date.parse(`${range.from}T12:00:00Z`)) / 86_400_000) + 1;
+    expect(inclusiveDays).toBe(30);
 
     expect(screen.getByRole('heading', { name: 'Histórico' })).toBeTruthy();
     expect(screen.getAllByText('Maria Silva').length).toBeGreaterThan(1);

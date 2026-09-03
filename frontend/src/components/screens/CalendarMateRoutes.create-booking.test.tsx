@@ -154,6 +154,7 @@ function fillValidBooking() {
   fireEvent.click(dateButton);
   fireEvent.click(screen.getByRole('button', { name: '09:00' }));
   fireEvent.change(screen.getByRole('combobox', { name: /Servi/ }), { target: { value: 'Elétrica' } });
+  fireEvent.change(screen.getByLabelText('Additional notes (optional)'), { target: { value: 'Please use the side entrance.' } });
 }
 
 beforeEach(() => {
@@ -237,8 +238,10 @@ describe('shared client and admin booking creation modal', () => {
       clientStreet: 'Rua do Teste',
       clientNeighborhood: 'Centro',
       clientNumber: '10',
+      clientCep: '35450000',
+      clientComplement: undefined,
+      serviceNotes: 'Please use the side entrance.',
     }));
-    expect(mocks.mutateAsync.mock.calls[0]?.[0]).not.toHaveProperty('serviceNotes');
 
     if (audience === 'client') {
       fireEvent.click(await screen.findByRole('button', { name: 'Ver meus agendamentos' }));

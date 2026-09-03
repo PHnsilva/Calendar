@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Booking } from "../../../entities/booking";
 import { BookingDetailCard } from "./BookingDetailCard";
 
+const mutations = vi.hoisted(() => ({ updateBooking: vi.fn(), deleteBooking: vi.fn() }));
+
 vi.mock("../hooks/useBookingMutations", () => ({
   useBookingMutations: () => ({
-    updateBooking: vi.fn(),
-    deleteBooking: vi.fn(),
+    updateBooking: mutations.updateBooking,
+    deleteBooking: mutations.deleteBooking,
     isUpdating: false,
     isDeleting: false,
     updateError: null,
@@ -15,7 +17,13 @@ vi.mock("../hooks/useBookingMutations", () => ({
   }),
 }));
 
+vi.mock("../../public-config/hooks/usePublicBootstrap", () => ({
+  usePublicBootstrap: () => ({ data: { booking: { cancellationNoticeHours: 2 } } }),
+}));
+
 beforeEach(() => {
+  mutations.updateBooking.mockReset().mockResolvedValue(undefined);
+  mutations.deleteBooking.mockReset().mockResolvedValue(undefined);
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-07-01T12:00:00Z"));
 });
@@ -86,15 +94,29 @@ describe("BookingDetailCard", () => {
       },
     });
 
-    const view = render(<BookingDetailCard booking={first} />);
-    fireEvent.click(screen.getByRole("button", { name: "Editar / reagendar" }));
+    const view = render(<BookingDetailCard booking={first} initialMode="edit" />);
     expect(screen.getByDisplayValue("Visita tecnica")).toBeTruthy();
 
-    view.rerender(<BookingDetailCard booking={second} />);
+    view.rerender(<BookingDetailCard booking={second} initialMode="view" />);
 
     expect(screen.queryByDisplayValue("Visita tecnica")).toBeNull();
     expect(screen.getByRole("heading", { name: "Instalacao" })).toBeTruthy();
     expect(screen.getByText("Maria Souza")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Editar / reagendar" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Editar|reagendar/i })).toBeNull();
+    expect(screen.getByRole("button", { name: "Cancelar" })).toBeTruthy();
+  });
+
+  it("preserves existing service notes when another field is updated", () => {
+    render(<BookingDetailCard booking={booking("event-1")} initialMode="edit" />);
+
+    fireEvent.change(screen.getByDisplayValue("pedro@example.com"), { target: { value: "novo@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
+
+    expect(mutations.updateBooking).toHaveBeenCalledWith(expect.objectContaining({
+      payload: expect.objectContaining({
+        clientEmail: "novo@example.com",
+        serviceNotes: "Trocar tomada",
+      }),
+    }));
   });
 });

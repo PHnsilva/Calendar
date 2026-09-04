@@ -154,7 +154,7 @@ function fillValidBooking() {
   fireEvent.click(dateButton);
   fireEvent.click(screen.getByRole('button', { name: '09:00' }));
   fireEvent.change(screen.getByRole('combobox', { name: /Servi/ }), { target: { value: 'Elétrica' } });
-  fireEvent.change(screen.getByLabelText('Additional notes (optional)'), { target: { value: 'Please use the side entrance.' } });
+  fireEvent.change(screen.getByLabelText('Observações adicionais (opcional)'), { target: { value: 'Utilize a entrada lateral, por favor.' } });
 }
 
 beforeEach(() => {
@@ -198,6 +198,11 @@ describe('shared client and admin booking creation modal', () => {
   it('uses the same responsive form structure and validation in both entry points', async () => {
     const clientView = await renderCreateModal('client');
     const clientLabels = fieldLabels(clientView.container);
+    const notes = screen.getByLabelText('Observações adicionais (opcional)');
+    expect(notes.tagName).toBe('TEXTAREA');
+    expect(notes.getAttribute('placeholder')).toBe('Adicione informações úteis para a realização do serviço.');
+    expect(notes.closest('.wf-create-field--notes')).toBeTruthy();
+    expect(notes.closest('.wf-create-field--complement')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar agendamento' }));
     const clientErrors = Array.from(clientView.container.querySelectorAll('.wf-field-error')).map((node) => node.textContent);
     expect(clientErrors.length).toBeGreaterThan(0);
@@ -240,7 +245,7 @@ describe('shared client and admin booking creation modal', () => {
       clientNumber: '10',
       clientCep: '35450000',
       clientComplement: undefined,
-      serviceNotes: 'Please use the side entrance.',
+      serviceNotes: 'Utilize a entrada lateral, por favor.',
     }));
 
     if (audience === 'client') {

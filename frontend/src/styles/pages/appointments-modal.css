@@ -39,7 +39,7 @@ html body .appointments-modal {
   height: min(930px, calc(100dvh - clamp(20px, 4vw, 56px)));
   min-height: 560px;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .28);
   border-radius: clamp(18px, 2vw, 30px);
@@ -314,8 +314,27 @@ html body .appointments-modal-card__notice {
 
 html body .appointments-modal-card__actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+}
+
+html body .appointments-modal-card__contact {
+  padding-top: 14px;
+  display: grid;
+  gap: 11px;
+  border-top: 1px solid rgba(7, 19, 93, .1);
+}
+
+html body .appointments-modal-card__contact p {
+  margin: 0;
+  color: #53607d;
+  font-size: .84rem;
+  line-height: 1.45;
+}
+
+html body .appointments-modal-card__contact a {
+  width: 100%;
+  text-decoration: none;
 }
 
 html body .appointments-card-action {
@@ -593,6 +612,32 @@ html body .appointments-detail-overlay .booking-detail__actions button:disabled 
   cursor: not-allowed;
 }
 
+html body .appointments-detail-overlay .appointments-modal-card__summary > div {
+  min-width: 0;
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+html body .appointments-detail-overlay .appointments-modal-card__summary dt,
+html body .appointments-detail-overlay .appointments-modal-card__summary dd {
+  margin: 0;
+}
+
+html body .appointments-detail-overlay .appointments-modal-card__summary dt {
+  color: #07135d;
+  font-size: .72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+html body .appointments-detail-overlay .appointments-modal-card__summary dd {
+  color: #44506d;
+  overflow-wrap: anywhere;
+}
+
 html body .appointments-detail-overlay .booking-detail__notice,
 html body .appointments-detail-overlay .booking-detail__error {
   margin: 0;
@@ -610,7 +655,7 @@ html body .appointments-detail-overlay .booking-detail__error {
 
 @media (max-width: 1050px) {
   html body .appointments-modal__header {
-    grid-template-columns: minmax(190px, 250px) minmax(0, 1fr);
+    grid-template-columns: minmax(190px, 250px) minmax(0, 1fr) auto;
   }
 
   html body .appointments-modal__header-actions {
@@ -650,6 +695,12 @@ html body .appointments-detail-overlay .booking-detail__error {
   html body .appointments-modal__heading {
     grid-column: 1 / -1;
     grid-row: 2;
+  }
+
+  html body .appointments-modal__close {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
   }
 
   html body .appointments-modal__heading p {

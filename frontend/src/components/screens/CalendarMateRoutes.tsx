@@ -2783,9 +2783,9 @@ function SharedCreateBookingModal({
     }
     const normalizedServiceNotes = cleanFormText(serviceNotes);
     if (normalizedServiceNotes && normalizedServiceNotes.length < 10) {
-      nextErrors.serviceNotes = 'Additional notes must contain at least 10 characters when provided.';
+      nextErrors.serviceNotes = 'As observações devem ter pelo menos 10 caracteres quando informadas.';
     } else if (normalizedServiceNotes.length > 2000) {
-      nextErrors.serviceNotes = 'Additional notes must contain at most 2000 characters.';
+      nextErrors.serviceNotes = 'As observações devem ter no máximo 2000 caracteres.';
     }
 
     setFieldErrors(nextErrors);
@@ -2936,9 +2936,9 @@ function SharedCreateBookingModal({
           <div className="wf-time-options wf-time-options--scroll">{availableSlots.map((slot) => <button className={activeSelectedTime === slot.startTime ? 'is-active' : ''} type="button" key={`${slot.date}-${slot.startTime}`} onClick={() => setSelectedTime(slot.startTime)}>{slot.startTime}</button>)}</div>
           {fieldErrors.time ? <small className="wf-field-error">{fieldErrors.time}</small> : null}
         </div>
-          <label className="wf-modal-field wf-create-field wf-create-field--reference">
-            <span className="wf-field-label">Additional notes (optional)</span>
-            <textarea aria-label="Additional notes (optional)" maxLength={2000} placeholder="Add any useful information for the service provider." value={serviceNotes} onChange={(event) => { setServiceNotes(event.target.value); setFieldErrors((current) => ({ ...current, serviceNotes: undefined })); }} />
+          <label className="wf-modal-field wf-create-field wf-create-field--notes">
+            <span className="wf-field-label">Observações adicionais (opcional)</span>
+            <textarea aria-label="Observações adicionais (opcional)" maxLength={2000} placeholder="Adicione informações úteis para a realização do serviço." value={serviceNotes} onChange={(event) => { setServiceNotes(event.target.value); setFieldErrors((current) => ({ ...current, serviceNotes: undefined })); }} />
             {fieldErrors.serviceNotes ? <small className="wf-field-error">{fieldErrors.serviceNotes}</small> : null}
           </label>
           <label className="wf-modal-field wf-create-field wf-create-field--service">

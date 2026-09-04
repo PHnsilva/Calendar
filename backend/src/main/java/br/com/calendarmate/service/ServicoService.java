@@ -312,28 +312,22 @@ public class ServicoService {
         }
 
         Map<String, String> ext = privateExt(event);
-        boolean alreadyCancelled = "CANCELLED".equalsIgnoreCase(ext.getOrDefault("status", ""))
-                || stored != null && "CANCELLED".equalsIgnoreCase(stored.getStatus());
+        boolean providerAlreadyCancelled = "CANCELLED".equalsIgnoreCase(ext.getOrDefault("status", ""));
+        boolean historyAlreadyCancelled = stored != null && "CANCELLED".equalsIgnoreCase(stored.getStatus());
+        if (providerAlreadyCancelled) {
+            ServicoResponse result = stored == null ? mapEventToResponse(event) : stored;
+            log.info("Public booking cancellation succeeded booking={} phone={} idempotent=true",
+                    fingerprint(normalizedEventId), fingerprint(phone));
+            return toPublicBooking(result);
+        }
+
+        boolean alreadyCancelled = historyAlreadyCancelled;
         if (!alreadyCancelled) validateManageWindow(event);
 
-        Servico cancelled = servicoFromEvent(event);
-        cancelled.setStatus("CANCELLED");
-        cancelled.setCancellationAt(stored != null && stored.getCancellationAt() != null ? stored.getCancellationAt() : Instant.now());
-        cancelled.setCancellationSource("CUSTOMER_PHONE_LOOKUP");
-
-        ServicoResponse snapshot = mapEventToResponse(event);
-        snapshot.setStatus("CANCELLED");
-        snapshot.setCancellationAt(cancelled.getCancellationAt());
-        snapshot.setCancellationSource(cancelled.getCancellationSource());
-
-        // Persist history before releasing the active slot. A retry completes the
-        // calendar update when persistence succeeded but the provider call failed.
-        persistBookingSnapshot(snapshot);
-        Event updated = calendar.updateEvent(cancelled);
-        pendingStore.deleteByEventId(normalizedEventId);
-
-        ServicoResponse result = updated == null ? snapshot : mapEventToResponse(updated);
-        persistBookingSnapshot(result);
+        ServicoResponse result = cancelEventAndPreserveHistory(
+                event,
+                "CUSTOMER_PHONE_LOOKUP",
+                stored);
         log.info("Public booking cancellation succeeded booking={} phone={} idempotent={}",
                 fingerprint(normalizedEventId), fingerprint(phone), alreadyCancelled);
         return toPublicBooking(result);
@@ -1069,18 +1063,18 @@ public class ServicoService {
     }
 
     private ServicoResponse cancelEventAndPreserveHistory(Event event, String source, ServicoResponse stored) throws IOException {
-        Servico cancelled = servicoFromEvent(event);
-        cancelled.setStatus("CANCELLED");
-        cancelled.setCancellationAt(stored != null && stored.getCancellationAt() != null ? stored.getCancellationAt() : Instant.now());
-        cancelled.setCancellationSource(source);
-
         ServicoResponse snapshot = mapEventToResponse(event);
         snapshot.setStatus("CANCELLED");
-        snapshot.setCancellationAt(cancelled.getCancellationAt());
+        snapshot.setCancellationAt(stored != null && stored.getCancellationAt() != null
+                ? stored.getCancellationAt()
+                : Instant.now());
         snapshot.setCancellationSource(source);
-        persistBookingSnapshot(snapshot);
 
-        Event updated = calendar.updateEvent(cancelled);
+        // Persist first so the complete booking survives a provider failure. The
+        // calendar operation then patches only cancellation metadata, avoiding a
+        // full event rewrite and keeping the cancelled item available to history.
+        persistBookingSnapshot(snapshot);
+        Event updated = calendar.cancelEvent(event.getId(), snapshot.getCancellationAt(), source);
         pendingStore.deleteByEventId(event.getId());
         ServicoResponse result = updated == null ? snapshot : mapEventToResponse(updated);
         persistBookingSnapshot(result);

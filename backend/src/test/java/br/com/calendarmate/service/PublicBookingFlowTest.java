@@ -39,6 +39,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 class PublicBookingFlowTest {
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
@@ -82,11 +88,12 @@ class PublicBookingFlowTest {
     @Test
     void rejectsCrossPhoneCancellationAndCancelsTheOwnerBookingIdempotently() throws IOException {
         AppProperties props = new AppProperties();
-        DummyCalendarClient calendar = new DummyCalendarClient();
+        DummyCalendarClient calendar = spy(new DummyCalendarClient());
         InMemoryBookingHistoryStore history = new InMemoryBookingHistoryStore();
         ServicoService service = serviceWith(calendar, props, history);
         ServicoCreateResponse created = service.create(nextAvailableRequest(service, props, PHONE));
         String eventId = created.getServico().getEventId();
+        clearInvocations(calendar);
 
         assertThrows(NotFoundException.class, () -> service.cancelPublicBooking(eventId, "31988888888"));
 
@@ -97,6 +104,9 @@ class PublicBookingFlowTest {
         assertEquals("CANCELLED", retry.getStatus());
         assertEquals(eventId, retry.getEventId());
         assertEquals("CANCELLED", history.listByPhone(PHONE, 10).get(0).getStatus());
+        verify(calendar).cancelEvent(eq(eventId), any(), eq("CUSTOMER_PHONE_LOOKUP"));
+        verify(calendar, never()).deleteEvent(any());
+        verify(calendar, never()).updateEvent(any());
         assertTrue(calendar.freeBusy(
                 new com.google.api.client.util.DateTime(created.getServico().getStart().minusSeconds(1).toEpochMilli()),
                 new com.google.api.client.util.DateTime(created.getServico().getEnd().plusSeconds(1).toEpochMilli())).isEmpty());

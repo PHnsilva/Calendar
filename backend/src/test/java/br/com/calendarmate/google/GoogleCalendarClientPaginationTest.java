@@ -4,19 +4,58 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class GoogleCalendarClientPaginationTest {
+    @Test
+    void cancellationPatchesOnlyStatusMetadataAndPreservesTheCalendarEvent() throws Exception {
+        Calendar service = mock(Calendar.class);
+        Calendar.Events eventsResource = mock(Calendar.Events.class);
+        Calendar.Events.Get getRequest = mock(Calendar.Events.Get.class);
+        Calendar.Events.Patch patchRequest = mock(Calendar.Events.Patch.class);
+        Event existing = systemBooking("booking-1")
+                .setSummary("Tomada (Confirmado)");
+        existing.getExtendedProperties().getPrivate().put("serviceType", "Tomada");
+        Event updated = systemBooking("booking-1");
+        ArgumentCaptor<Event> body = ArgumentCaptor.forClass(Event.class);
+
+        when(service.events()).thenReturn(eventsResource);
+        when(eventsResource.get("primary", "booking-1")).thenReturn(getRequest);
+        when(getRequest.execute()).thenReturn(existing);
+        when(eventsResource.patch(eq("primary"), eq("booking-1"), body.capture())).thenReturn(patchRequest);
+        when(patchRequest.setSendUpdates("all")).thenReturn(patchRequest);
+        when(patchRequest.execute()).thenReturn(updated);
+
+        Instant cancelledAt = Instant.parse("2026-09-04T04:30:00Z");
+        GoogleCalendarClient client = new GoogleCalendarClient(service, "primary");
+        Event result = client.cancelEvent("booking-1", cancelledAt, "CUSTOMER_PHONE_LOOKUP");
+
+        assertEquals(updated, result);
+        assertEquals("Tomada (Cancelado)", body.getValue().getSummary());
+        assertEquals("transparent", body.getValue().getTransparency());
+        assertEquals("CANCELLED", body.getValue().getExtendedProperties().getPrivate().get("status"));
+        assertEquals(cancelledAt.toString(), body.getValue().getExtendedProperties().getPrivate().get("cancellationAt"));
+        assertEquals("CUSTOMER_PHONE_LOOKUP", body.getValue().getExtendedProperties().getPrivate().get("cancellationSource"));
+        assertNull(body.getValue().getStart());
+        assertNull(body.getValue().getEnd());
+        assertNull(body.getValue().getAttendees());
+    }
+
     @Test
     void followsEveryGoogleCalendarEventPage() throws Exception {
         Calendar service = mock(Calendar.class);
@@ -47,8 +86,8 @@ class GoogleCalendarClientPaginationTest {
     private static Event systemBooking(String id) {
         return new Event()
                 .setId(id)
-                .setExtendedProperties(new Event.ExtendedProperties().setPrivate(Map.of(
+                .setExtendedProperties(new Event.ExtendedProperties().setPrivate(new HashMap<>(Map.of(
                         "appSource", "calendar-backend",
-                        "entityType", "booking")));
+                        "entityType", "booking"))));
     }
 }

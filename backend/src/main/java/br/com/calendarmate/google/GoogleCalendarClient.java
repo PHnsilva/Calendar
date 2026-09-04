@@ -208,6 +208,37 @@ public class GoogleCalendarClient implements CalendarClient {
     }
 
     @Override
+    public Event cancelEvent(String eventId, Instant cancellationAt, String cancellationSource) throws IOException {
+        Event existing = service.events().get(calendarId, eventId).execute();
+        if (existing == null) {
+            return null;
+        }
+        if (!isSystemEvent(existing)) {
+            throw new IllegalArgumentException("Evento não pertence ao sistema (não será cancelado).");
+        }
+
+        Map<String, String> ext = privateProps(existing);
+        ext.put("status", "CANCELLED");
+        putInstantIfPresent(ext, "cancellationAt", cancellationAt);
+        if (cancellationSource == null || cancellationSource.isBlank()) {
+            ext.remove("cancellationSource");
+        } else {
+            ext.put("cancellationSource", cancellationSource.trim());
+        }
+
+        String serviceType = ext.getOrDefault("serviceType", existing.getSummary());
+        Event patch = new Event()
+                .setSummary(withStatusInSummary(serviceType, "CANCELLED"))
+                .setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext))
+                .setTransparency("transparent");
+
+        return service.events()
+                .patch(calendarId, eventId, patch)
+                .setSendUpdates("all")
+                .execute();
+    }
+
+    @Override
     public void deleteEvent(String eventId) throws IOException {
         Event e = getEvent(eventId);
         if (e == null) return;

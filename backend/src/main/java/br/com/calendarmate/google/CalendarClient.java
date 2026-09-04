@@ -12,6 +12,7 @@ import java.util.List;
 public interface CalendarClient {
     Event createEvent(Servico s) throws IOException;
     Event updateEvent(Servico s) throws IOException;
+    Event cancelEvent(String eventId, Instant cancellationAt, String cancellationSource) throws IOException;
     void deleteEvent(String eventId) throws IOException;
 
     Event getEvent(String eventId) throws IOException;

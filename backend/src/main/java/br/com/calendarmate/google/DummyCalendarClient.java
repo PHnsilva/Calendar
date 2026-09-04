@@ -67,6 +67,23 @@ public class DummyCalendarClient implements CalendarClient {
     }
 
     @Override
+    public Event cancelEvent(String eventId, Instant cancellationAt, String cancellationSource) throws IOException {
+        Event ev = store.get(eventId);
+        if (ev == null) {
+            return null;
+        }
+
+        Map<String, String> ext = privateProps(ev);
+        ext.put("status", "CANCELLED");
+        putInstantIfPresent(ext, "cancellationAt", cancellationAt);
+        putIfNotBlank(ext, "cancellationSource", cancellationSource);
+        ev.setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext));
+        ev.setTransparency("transparent");
+        store.put(eventId, ev);
+        return ev;
+    }
+
+    @Override
     public void deleteEvent(String eventId) throws IOException {
         store.remove(eventId);
     }

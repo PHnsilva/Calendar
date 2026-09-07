@@ -7,4 +7,9 @@ import java.util.List;
 public interface RouteClient {
 
     List<RouteComputeResponse.RouteOption> computeRoutes(double originLat, double originLng, String destinationAddress);
+
+    default List<RouteComputeResponse.RouteOption> computeRoutes(double originLat, double originLng,
+            String destinationAddress, Double destinationLat, Double destinationLng) {
+        return computeRoutes(originLat, originLng, destinationAddress);
+    }
 }

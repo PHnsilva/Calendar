@@ -45,9 +45,20 @@ public class GeoapifyRoutesClient implements RouteClient {
 
     @Override
     public List<RouteComputeResponse.RouteOption> computeRoutes(double originLat, double originLng, String destinationAddress) {
-        validateInput(destinationAddress);
+        return computeRoutes(originLat, originLng, destinationAddress, null, null);
+    }
 
-        double[] destination = geocodeDestination(destinationAddress);
+    @Override
+    public List<RouteComputeResponse.RouteOption> computeRoutes(double originLat, double originLng,
+            String destinationAddress, Double destinationLat, Double destinationLng) {
+        if (apiKey.isBlank()) throw new BadRequestException("Geoapify API key não configurada");
+        double[] destination;
+        if (destinationLat != null && destinationLng != null) {
+            destination = new double[]{destinationLat, destinationLng};
+        } else {
+            validateInput(destinationAddress);
+            destination = geocodeDestination(destinationAddress);
+        }
         URI routingUri = UriComponentsBuilder.fromHttpUrl(ROUTING_ENDPOINT)
                 .queryParam("waypoints", formatWaypoint(originLat, originLng) + "|" + formatWaypoint(destination[0], destination[1]))
                 .queryParam("mode", routingMode)

@@ -7,6 +7,7 @@ import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.dto.ServicoResponse;
 import br.com.calendarmate.exception.NotFoundException;
+import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.google.CalendarClient;
 import br.com.calendarmate.google.DummyCalendarClient;
 import br.com.calendarmate.integrations.OtpDeliveryClient;
@@ -24,6 +25,8 @@ import br.com.calendarmate.service.store.VerificationStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.calendar.model.Event;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -42,6 +45,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -126,6 +133,87 @@ class PublicBookingFlowTest {
         assertEquals(1, restored.size());
         assertEquals(created.getServico().getEventId(), restored.get(0).getEventId());
         assertEquals("CANCELLED", cancelled.getStatus());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"PUBLIC", "TOKEN", "ADMIN"})
+    void providerFailureKeepsBookingActiveAndRetryReleasesTheSlot(String audience) throws IOException {
+        DummyCalendarClient calendar = spy(new DummyCalendarClient());
+        InMemoryBookingHistoryStore history = new InMemoryBookingHistoryStore();
+        ServicoService service = serviceWith(calendar, new AppProperties(), history);
+        ZonedDateTime start = ZonedDateTime.now(ZONE).plusDays(3);
+        Event event = calendar.createEvent(eventAt(start, "CONFIRMED"));
+        history.upsert(storedBooking(event.getId(), start.toInstant(), PHONE, "CONFIRMED"), 0);
+        doThrow(new IOException("Calendar unavailable")).when(calendar).cancelEvent(eq(event.getId()), any(), any());
+
+        assertThrows(IOException.class, () -> cancelForAudience(service, event.getId(), audience));
+
+        assertEquals("CONFIRMED", service.listPublicBookingsByPhone(PHONE).get(0).getStatus());
+        assertEquals("CONFIRMED", history.listByPhone(PHONE, 10).get(0).getStatus());
+        assertFalse(calendar.freeBusy(new com.google.api.client.util.DateTime(start.toInstant().toEpochMilli()),
+                new com.google.api.client.util.DateTime(start.plusHours(1).toInstant().toEpochMilli())).isEmpty());
+
+        doCallRealMethod().when(calendar).cancelEvent(eq(event.getId()), any(), any());
+        cancelForAudience(service, event.getId(), audience);
+        String cancellationAt = calendar.getEvent(event.getId()).getExtendedProperties().getPrivate().get("cancellationAt");
+        clearInvocations(calendar);
+        cancelForAudience(service, event.getId(), audience);
+
+        assertEquals("CANCELLED", service.listPublicBookingsByPhone(PHONE).get(0).getStatus());
+        assertEquals(cancellationAt, calendar.getEvent(event.getId()).getExtendedProperties().getPrivate().get("cancellationAt"));
+        verify(calendar, never()).cancelEvent(any(), any(), any());
+        assertTrue(calendar.freeBusy(new com.google.api.client.util.DateTime(start.toInstant().toEpochMilli()),
+                new com.google.api.client.util.DateTime(start.plusHours(1).toInstant().toEpochMilli())).isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"PUBLIC", "TOKEN", "ADMIN"})
+    void secondaryStoreOutageDoesNotBlockCancellationAndRetryRepairsHistory(String audience) throws IOException {
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        InMemoryBookingHistoryStore history = spy(new InMemoryBookingHistoryStore());
+        InMemoryPendingStore pending = spy(new InMemoryPendingStore());
+        ServicoService service = serviceWith(calendar, new AppProperties(), history, pending);
+        ZonedDateTime start = ZonedDateTime.now(ZONE).plusDays(3);
+        Event event = calendar.createEvent(eventAt(start, "CONFIRMED"));
+        history.upsert(storedBooking(event.getId(), start.toInstant(), PHONE, "CONFIRMED"), 0);
+        doThrow(new ExternalServiceException("History unavailable")).when(history).upsert(any(), anyLong());
+        doThrow(new ExternalServiceException("History unavailable")).when(history).listByPhone(any(), anyInt());
+        doThrow(new ExternalServiceException("Pending store unavailable")).when(pending).deleteByEventId(any());
+
+        cancelForAudience(service, event.getId(), audience);
+
+        assertEquals("CANCELLED", calendar.getEvent(event.getId()).getExtendedProperties().getPrivate().get("status"));
+        doCallRealMethod().when(history).listByPhone(any(), anyInt());
+        assertEquals("CANCELLED", service.listPublicBookingsByPhone(PHONE).get(0).getStatus());
+        doCallRealMethod().when(history).upsert(any(), anyLong());
+        doCallRealMethod().when(pending).deleteByEventId(any());
+        cancelForAudience(service, event.getId(), audience);
+
+        assertEquals("CANCELLED", history.listByPhone(PHONE, 10).get(0).getStatus());
+        assertEquals(calendar.getEvent(event.getId()).getExtendedProperties().getPrivate().get("cancellationAt"),
+                history.listByPhone(PHONE, 10).get(0).getCancellationAt().toString());
+    }
+
+    @Test
+    void failedLegacyCancellationSnapshotDoesNotHideAnActiveCalendarEvent() throws IOException {
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        InMemoryBookingHistoryStore history = new InMemoryBookingHistoryStore();
+        ZonedDateTime start = ZonedDateTime.now(ZONE).plusDays(3);
+        Event event = calendar.createEvent(eventAt(start, "CONFIRMED"));
+        history.upsert(storedBooking(event.getId(), start.toInstant(), PHONE, "CANCELLED"), 0);
+        ServicoService service = serviceWith(calendar, new AppProperties(), history);
+
+        assertEquals("CONFIRMED", service.listPublicBookingsByPhone(PHONE).get(0).getStatus());
+        assertEquals("CANCELLED", service.cancelPublicBooking(event.getId(), PHONE).getStatus());
+    }
+
+    private static void cancelForAudience(ServicoService service, String eventId, String audience) throws IOException {
+        switch (audience) {
+            case "PUBLIC" -> assertEquals("CANCELLED", service.cancelPublicBooking(eventId, PHONE).getStatus());
+            case "TOKEN" -> service.cancelByToken(eventId, new TokenUtil("test-secret", 600).generate(eventId, "maria@example.test"));
+            case "ADMIN" -> service.deleteByIdAdmin(eventId);
+            default -> throw new IllegalArgumentException(audience);
+        }
     }
 
     @Test
@@ -268,8 +356,11 @@ class PublicBookingFlowTest {
     }
 
     private static ServicoService serviceWith(CalendarClient calendar, AppProperties props, BookingHistoryStore history) {
+        return serviceWith(calendar, props, history, new InMemoryPendingStore());
+    }
+
+    private static ServicoService serviceWith(CalendarClient calendar, AppProperties props, BookingHistoryStore history, InMemoryPendingStore pending) {
         TokenUtil tokens = new TokenUtil("test-secret", 600);
-        InMemoryPendingStore pending = new InMemoryPendingStore();
         AdminAuthService auth = new AdminAuthService(new EmptyAdminUsers(), new EmptyAdminSessions(), new NoopVerificationStore(), codeDelivery(), props);
         VerificationService verification = new VerificationService(calendar, tokens, new NoopVerificationStore(), pending, codeDelivery(), props, auth);
         return new ServicoService(calendar, tokens, verification, pending, props, new AvailabilityPolicyService(calendar, props), auth, history);

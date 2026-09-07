@@ -227,13 +227,14 @@ public class GoogleCalendarClient implements CalendarClient {
         }
 
         String serviceType = ext.getOrDefault("serviceType", existing.getSummary());
-        Event patch = new Event()
-                .setSummary(withStatusInSummary(serviceType, "CANCELLED"))
-                .setExtendedProperties(new Event.ExtendedProperties().setPrivate(ext))
-                .setTransparency("transparent");
+        existing.setSummary(withStatusInSummary(serviceType, "CANCELLED"));
+        existing.getExtendedProperties().setPrivate(ext);
+        existing.setTransparency("transparent");
 
+        // NetHttpTransport does not support PATCH. PUT the complete event fetched
+        // above so cancellation preserves times, attendees and shared metadata.
         return service.events()
-                .patch(calendarId, eventId, patch)
+                .update(calendarId, eventId, existing)
                 .setSendUpdates("all")
                 .execute();
     }

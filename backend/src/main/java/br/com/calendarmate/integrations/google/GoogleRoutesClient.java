@@ -28,9 +28,16 @@ public class GoogleRoutesClient implements RouteClient {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public java.util.List<RouteComputeResponse.RouteOption> computeRoutes(double originLat, double originLng, String destinationAddress) {
-        if (destinationAddress == null || destinationAddress.isBlank()) {
+        return computeRoutes(originLat, originLng, destinationAddress, null, null);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<RouteComputeResponse.RouteOption> computeRoutes(double originLat, double originLng,
+            String destinationAddress, Double destinationLat, Double destinationLng) {
+        boolean hasCoordinates = destinationLat != null && destinationLng != null;
+        if (!hasCoordinates && (destinationAddress == null || destinationAddress.isBlank())) {
             throw new BadRequestException("Destino inválido para calcular rota");
         }
         if (apiKey == null || apiKey.isBlank()) {
@@ -45,9 +52,9 @@ public class GoogleRoutesClient implements RouteClient {
                 )
         ));
 
-        body.put("destination", Map.of(
-                "address", destinationAddress
-        ));
+        body.put("destination", hasCoordinates
+                ? Map.of("location", Map.of("latLng", Map.of("latitude", destinationLat, "longitude", destinationLng)))
+                : Map.of("address", destinationAddress));
 
         body.put("travelMode", "DRIVE");
         body.put("computeAlternativeRoutes", true);

@@ -55,8 +55,20 @@ public class RoutesService {
     }
 
     private RouteComputeResponse computeFromEvent(Event event, double originLat, double originLng) {
+        if (!validCoordinates(originLat, originLng)) throw new BadRequestException("Origem inválida para calcular rota");
+        Map<String, String> ext = privateExt(event);
+        Double destinationLat = coordinate(ext.get("clientLatitude"));
+        Double destinationLng = coordinate(ext.get("clientLongitude"));
+        if (!validCoordinates(destinationLat, destinationLng)) {
+            destinationLat = null;
+            destinationLng = null;
+        }
         String destination = extractDestinationAddress(event);
-        List<RouteComputeResponse.RouteOption> options = routeClient.computeRoutes(originLat, originLng, destination);
+        if (destination.isBlank() && destinationLat == null) {
+            throw new BadRequestException("Destino sem endereço para calcular rota");
+        }
+        List<RouteComputeResponse.RouteOption> options = routeClient.computeRoutes(
+                originLat, originLng, destination, destinationLat, destinationLng);
         if (options.isEmpty()) {
             throw new BadRequestException("Nenhuma rota encontrada");
         }
@@ -70,15 +82,17 @@ public class RoutesService {
     }
 
     private String extractDestinationAddress(Event ev) {
-        String loc = ev.getLocation();
-        if (loc != null && !loc.isBlank()) return loc.trim();
-
         Map<String, String> ext = privateExt(ev);
         String street = ext.getOrDefault("clientStreet", "");
         String num = ext.getOrDefault("clientNumber", "");
         String city = ext.getOrDefault("clientCity", "");
         String state = ext.getOrDefault("clientState", "");
         String cep = ext.getOrDefault("clientCep", "");
+        // Apartment/access notes in the calendar location can prevent geocoding.
+        // Prefer the structured address; keep location for legacy bookings.
+        if (street.isBlank() && ev.getLocation() != null && !ev.getLocation().isBlank()) {
+            return ev.getLocation().trim();
+        }
 
         List<String> parts = new ArrayList<>();
         if (!street.isBlank() || !num.isBlank()) {
@@ -90,11 +104,20 @@ public class RoutesService {
         if (!cep.isBlank()) {
             parts.add("CEP " + cep);
         }
-        String dest = String.join(" - ", parts);
-        if (dest.isBlank()) {
-            throw new BadRequestException("Destino sem endereço para calcular rota");
+        return String.join(" - ", parts);
+    }
+
+    private Double coordinate(String value) {
+        try {
+            return value == null ? null : Double.valueOf(value);
+        } catch (NumberFormatException ex) {
+            return null;
         }
-        return dest;
+    }
+
+    private boolean validCoordinates(Double lat, Double lng) {
+        return lat != null && lng != null && Double.isFinite(lat) && Double.isFinite(lng)
+                && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
     }
 
     private Map<String, String> privateExt(Event e) {

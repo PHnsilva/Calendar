@@ -79,7 +79,7 @@ import AddressAutocompleteField from '../../features/booking-form/components/Add
 import type { AddressSuggestion } from '../../features/booking-form/hooks/useAddressSuggestions';
 import { buildSuggestionInputValue, buildSuggestionStreetLine, getSuggestionHouseNumber, shouldShowManualHouseNumber } from '../../features/booking-form/utils/address-selection';
 import { useCreateBooking } from '../../features/bookings/hooks/useCreateBooking';
-import { buildClientServiceOptions, normalizeClientServiceLabel } from '../../features/bookings/services/client-service-options';
+import { buildClientServiceOptions, normalizeClientServiceLabel, repairServiceEncoding } from '../../features/bookings/services/client-service-options';
 import { useAvailableSlots } from '../../features/calendar/hooks/useAvailableSlots';
 import { useAvailableMonthDates } from '../../features/calendar/hooks/useAvailableMonthDates';
 import { createAdminBlocks, deleteAdminBlock, listAdminBlocks } from '../../features/admin/api/manage-admin-blocks';
@@ -458,7 +458,7 @@ function bookingFromServico(servico: ServicoResponse, index = 0): BookingItem {
     email: servico.clientEmail,
     address,
     city: servico.clientCity,
-    service: servico.serviceType || 'Serviço não informado',
+    service: repairServiceEncoding(servico.serviceType) || 'Serviço não informado',
     date: bookingDate,
     day: `${date.getDate()}`.padStart(2, '0'),
     weekday: ptWeekday.format(date).replace('.', '').toUpperCase(),
@@ -1649,7 +1649,7 @@ export function AdminLanding() {
           actions={[
             { label: 'Agenda', icon: 'calendar', active: true, onClick: () => openNavbarView('agendamentos') },
             { label: 'Email', icon: 'mail', onClick: () => setModal('email-admin') },
-            { label: 'Orcamento', icon: 'budget', onClick: () => setModal('budget-admin') },
+            { label: 'Orçamento', icon: 'budget', onClick: () => setModal('budget-admin') },
           ]}
           onMenu={() => notifyUnavailable('Menu do prestador')}
           onProviderClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
@@ -1729,7 +1729,7 @@ export function AdminDashboard() {
           actions={[
             { label: 'Agenda', icon: 'calendar', active: true, onClick: () => selectAdminView('agendamentos') },
             { label: 'Email', icon: 'mail', onClick: () => { setContext({}); setModal('email-admin'); } },
-            { label: 'Orcamento', icon: 'budget', onClick: () => { setContext({}); setModal('budget-admin'); } },
+            { label: 'Orçamento', icon: 'budget', onClick: () => { setContext({}); setModal('budget-admin'); } },
           ]}
           onMenu={() => notifyUnavailable('Menu do prestador')}
           onProviderClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
@@ -2223,7 +2223,7 @@ export function AdminBookingDetails() {
           actions={[
             { label: 'Agenda', icon: 'calendar', active: true, onClick: () => selectAdminView('agendamentos') },
             { label: 'Email', icon: 'mail', onClick: () => { setContext(booking ? { booking } : {}); setModal('email-admin'); } },
-            { label: 'Orcamento', icon: 'budget', onClick: () => { setContext(booking ? { booking } : {}); setModal('budget-admin'); } },
+            { label: 'Orçamento', icon: 'budget', onClick: () => { setContext(booking ? { booking } : {}); setModal('budget-admin'); } },
           ]}
           onMenu={() => notifyUnavailable('Menu do prestador')}
           onProviderClick={() => { clearAdminToken(); navigate('/', { replace: true }); }}
@@ -2632,9 +2632,8 @@ function SharedCreateBookingModal({
   const bootstrap = bootstrapQuery.data;
   const services = useMemo(() => {
     const bootstrapServices = bootstrap?.services ?? [];
-    if (audience === 'client') return buildClientServiceOptions(bootstrapServices);
-    return [...new Set(bootstrapServices.map((service) => service.trim()).filter(Boolean))];
-  }, [audience, bootstrap?.services]);
+    return buildClientServiceOptions(bootstrapServices);
+  }, [bootstrap?.services]);
   const allowedCities = useMemo(() => getAllowedCities(bootstrap), [bootstrap]);
   const defaultCity = useMemo(() => getDefaultCity(bootstrap), [bootstrap]);
   const defaultState = useMemo(() => getDefaultState(bootstrap), [bootstrap]);
@@ -2821,21 +2820,30 @@ function SharedCreateBookingModal({
         reservedPhonePassword: reservedPhonePassword.trim() || undefined,
       });
 
-      trackEvent('booking_success');
+      try {
+        trackEvent('booking_success');
+      } catch {
+        console.warn('Não foi possível registrar a métrica do agendamento.');
+      }
 
       if (audience === 'client') {
-        saveClientProfile({
-          name: cleanFormText(fullName),
-          phone: phoneDigits,
-          email: cleanFormText(email),
-          city: selectedCity,
-        });
-        saveManageToken(response.manageToken, response.servico.eventId);
-        saveLocalCalendarEvent(mapCreatedServicoToCalendarEvent(response.servico));
+        try {
+          saveClientProfile({
+            name: cleanFormText(fullName),
+            phone: phoneDigits,
+            email: cleanFormText(email),
+            city: selectedCity,
+          });
+          saveManageToken(response.manageToken, response.servico.eventId);
+          saveLocalCalendarEvent(mapCreatedServicoToCalendarEvent(response.servico));
+        } catch {
+          console.warn('Agendamento criado; não foi possível atualizar os dados salvos neste navegador.');
+        }
       }
       void Promise.allSettled([
         queryClient.invalidateQueries({ queryKey: ['my-bookings'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-history'] }),
       ]);
       if (audience === 'client') {
         setCreatedBooking(response.servico);
@@ -3821,7 +3829,7 @@ function EditAdminBookingModal({ booking, onClose, onSubmissionChange }: { booki
   const [date, setDate] = useState(booking?.date ?? '');
   const [time, setTime] = useState(booking?.time ?? '');
   const [serviceType, setServiceType] = useState(source?.serviceType || booking?.service || '');
-  const [serviceNotes, setServiceNotes] = useState(source?.serviceNotes || booking?.notes || 'Observacao detalhada nao informada.');
+  const [serviceNotes, setServiceNotes] = useState(source?.serviceNotes || booking?.notes || 'Observação detalhada não informada.');
   const [firstName, setFirstName] = useState(source?.clientFirstName || booking?.name.split(' ')[0] || '');
   const [email, setEmail] = useState(source?.clientEmail || booking?.email || '');
   const [phone, setPhone] = useState(source?.clientPhone || booking?.phone || '');
@@ -3876,21 +3884,21 @@ function EditAdminBookingModal({ booking, onClose, onSubmissionChange }: { booki
 
   return (
     <>
-      <ModalTitle icon="edit" title="Editar agendamento" text="Ajuste data, horario e dados principais do atendimento." />
-      {!source ? <EmptyState title="Dados incompletos" text="Abra a edicao a partir de um agendamento existente." /> : null}
+      <ModalTitle icon="edit" title="Editar agendamento" text="Ajuste data, horário e dados principais do atendimento." />
+      {!source ? <EmptyState title="Dados incompletos" text="Abra a edição a partir de um agendamento existente." /> : null}
       {source ? (
         <section className="wf-form-grid">
-          <ModalField label="Servico" icon="edit" value={serviceType} onChange={setServiceType} />
-          <label className="wf-span-2">Observacao<textarea value={serviceNotes} onChange={(event) => setServiceNotes(event.target.value)} placeholder="Explique o servico solicitado pelo cliente." /></label>
+          <ModalField label="Serviço" icon="edit" value={serviceType} onChange={setServiceType} />
+          <label className="wf-span-2">Observação<textarea value={serviceNotes} onChange={(event) => setServiceNotes(event.target.value)} placeholder="Explique o serviço solicitado pelo cliente." /></label>
           <ModalField label="Data" icon="calendar" type="date" value={date} onChange={setDate} />
-          <ModalField label="Horario" icon="clock" type="time" value={time} onChange={setTime} />
+          <ModalField label="Horário" icon="clock" type="time" value={time} onChange={setTime} />
           <ModalField label="Telefone" icon="phone" value={phone} onChange={setPhone} />
           <ModalField label="Nome" icon="user" value={firstName} onChange={setFirstName} />
           <ModalField className="wf-span-2" label="E-mail" icon="mail" value={email} onChange={setEmail} />
         </section>
       ) : null}
       {error ? <p className="booking-form__error">{error}</p> : null}
-      <ModalActions primary={saving ? 'Salvando...' : 'Salvar alteracoes'} secondary="Cancelar" primaryIcon="edit" onSecondary={onClose} onPrimary={save} disabledPrimary={saving} disabledSecondary={saving} />
+      <ModalActions primary={saving ? 'Salvando...' : 'Salvar alterações'} secondary="Cancelar" primaryIcon="edit" onSecondary={onClose} onPrimary={save} disabledPrimary={saving} disabledSecondary={saving} />
     </>
   );
 }
@@ -3924,6 +3932,7 @@ function CancelAdminBookingModal({
       void Promise.allSettled([
         queryClient.invalidateQueries({ queryKey: ['admin-bookings'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-history'] }),
       ]);
       setSuccess('Agendamento cancelado com sucesso. A agenda já foi atualizada.');
       onSubmissionChange(false);

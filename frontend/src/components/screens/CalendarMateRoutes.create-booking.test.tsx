@@ -263,7 +263,7 @@ describe('shared client and admin booking creation modal', () => {
     expect(Boolean(window.localStorage.getItem('calendar.localEvents'))).toBe(persistsClientData);
   });
 
-  it('renders service loading, empty, and error states from the shared API catalog', async () => {
+  it('renders service loading and error states with a default catalog when empty', async () => {
     const refetch = vi.fn();
     mocks.usePublicBootstrap.mockReturnValueOnce({ data: undefined, isLoading: true, isError: false, refetch });
     const loadingView = await renderCreateModal('client');
@@ -273,7 +273,7 @@ describe('shared client and admin booking creation modal', () => {
 
     mocks.usePublicBootstrap.mockReturnValueOnce({ data: { ...bootstrapData, services: [] }, isLoading: false, isError: false, refetch });
     const emptyView = await renderCreateModal('admin');
-    expect(screen.getByText(/Nenhum servi.*dispon.vel/i)).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Outros' })).toBeTruthy();
     emptyView.unmount();
 
     mocks.usePublicBootstrap.mockReturnValueOnce({ data: undefined, isLoading: false, isError: true, refetch });
@@ -281,6 +281,36 @@ describe('shared client and admin booking creation modal', () => {
     expect(screen.getByText(/N.o foi poss.vel carregar os servi/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['client', 'admin'] as const)('normalizes service accents and includes Outros for %s', async (audience) => {
+    mocks.usePublicBootstrap.mockReturnValue({
+      data: { ...bootstrapData, services: ['El\u00c3\u00a9trica', 'Instala\u00c3\u00a7\u00c3\u00b5es', 'Or\u00c3\u00a7amento'] },
+      isLoading: false, isError: false, refetch: vi.fn(),
+    });
+    await renderCreateModal(audience);
+    expect(screen.getAllByRole('option', { name: 'Outros' })).toHaveLength(1);
+    expect(screen.getAllByRole('option', { name: 'Elétrica' })).toHaveLength(1);
+    expect(screen.getAllByRole('option', { name: 'Instalações' })).toHaveLength(1);
+    expect(screen.queryByRole('option', { name: /Orçamento|Ã/ })).toBeNull();
+  });
+
+  it('still confirms a committed booking when browser persistence fails', async () => {
+    await renderCreateModal('client');
+    fillValidBooking();
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const storage = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage full', 'QuotaExceededError');
+    });
+    try {
+      fireEvent.click(screen.getByRole('button', { name: 'Confirmar agendamento' }));
+      expect(await screen.findByText('Seu serviço foi agendado com sucesso')).toBeTruthy();
+      expect(mocks.mutateAsync).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole('button', { name: 'Confirmar agendamento' })).toBeNull();
+    } finally {
+      storage.mockRestore();
+      warning.mockRestore();
+    }
   });
 
   it('starts a fresh validated booking from history with only service, client, and address prefilled', async () => {

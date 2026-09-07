@@ -3,6 +3,7 @@ import { useAdminHistory } from '../../features/admin/hooks/useAdminHistory';
 import { getStoredAdminToken } from '../../lib/storage';
 import { getBusinessTodayIso, shiftIsoCalendarDate, toBusinessDateTimeParts } from '../../lib/dates';
 import type { ServicoResponse } from '../../types/api';
+import { repairServiceEncoding } from '../../features/bookings/services/client-service-options';
 import {
   AdminButton,
   AdminIcon,
@@ -75,7 +76,7 @@ function mapBooking(booking: ServicoResponse): HistoryBooking {
     notes: booking.serviceNotes || 'Sem observações registradas.',
     phone: booking.clientPhone || 'Não informado',
     provider: booking.assignedProviderName || 'A definir',
-    service: booking.serviceType || 'Serviço não informado',
+    service: repairServiceEncoding(booking.serviceType) || 'Serviço não informado',
     status: formatStatus(booking.status),
     time: dateTime.time || '--:--',
     startsAt: new Date(booking.start).getTime(),
@@ -136,7 +137,7 @@ export function HistoryPanel() {
         <AdminPageHeader
           icon="history"
           title="Histórico"
-          description="Consulte os atendimentos dos últimos 30 dias e todas as informações registradas pelos clientes."
+          description="Consulte os atendimentos e cancelamentos dos últimos 30 dias e as informações registradas pelos clientes."
         />
       </div>
 

@@ -8,6 +8,7 @@ import { buildBusinessWhatsAppUrl } from "../../../lib/support-contact";
 import { usePublicBootstrap } from "../../public-config/hooks/usePublicBootstrap";
 import { cancelPublicBooking, lookupPublicBookings } from "../../bookings/api/public-bookings";
 import type { PublicBookingResponse } from "../../../types/api";
+import { repairServiceEncoding } from "../../bookings/services/client-service-options";
 
 const ClientProfileModal = lazy(() => import("../../../components/screens/CalendarMateRoutes")
   .then(({ CalendarMateModal }) => ({ default: CalendarMateModal })));
@@ -51,7 +52,7 @@ function canCancel(booking: PublicBookingResponse, noticeHours: number) {
 function providerMessage(booking: PublicBookingResponse) {
   const start = new Date(booking.start);
   return [
-    `Serviço: ${booking.serviceType}`,
+    `Serviço: ${repairServiceEncoding(booking.serviceType)}`,
     `Data: ${bookingDate.format(start)}`,
     `Horário: ${bookingTime.format(start)}`,
   ].join("\n");
@@ -112,7 +113,7 @@ export default function AppointmentsPage() {
     void lookupPublicBookings(normalizedProfilePhone)
       .then((result) => {
         if (!active || generation !== lookupGeneration.current) return;
-        setBookings(result);
+        setBookings(result.filter((item) => item.status?.toUpperCase() !== "CANCELLED"));
         setSubmittedPhone(normalizedProfilePhone);
         setLoaded(true);
       })
@@ -143,7 +144,7 @@ export default function AppointmentsPage() {
     try {
       const cancelled = await cancelPublicBooking(bookingToCancel.eventId, phoneUsedForLookup);
       if (generation === lookupGeneration.current) {
-        setBookings((current) => current.map((item) => item.eventId === cancelled.eventId ? cancelled : item));
+        setBookings((current) => current.filter((item) => item.eventId !== cancelled.eventId));
         setSelected(null);
       }
     } catch (cancelError) {
@@ -201,7 +202,7 @@ export default function AppointmentsPage() {
             <div className="appointments-modal__grid" aria-live="polite">
               {bookings.map((booking) => (
                 <article className="appointments-modal-card" key={booking.eventId}>
-                  <header className="appointments-modal-card__header"><div className="appointments-modal-card__title"><div><p>Serviço</p><h2>{booking.serviceType}</h2></div></div></header>
+                  <header className="appointments-modal-card__header"><div className="appointments-modal-card__title"><div><p>Serviço</p><h2>{repairServiceEncoding(booking.serviceType)}</h2></div></div></header>
                   <div className="appointments-modal-card__summary">
                     <span><b>Data e horário</b>{bookingDateTime.format(new Date(booking.start))}</span>
                     <span><b>Status</b>{statusLabel(booking.status)}</span>
@@ -227,7 +228,7 @@ export default function AppointmentsPage() {
             <header><div><span>Cancelamento</span><strong id="cancel-booking-title">Tem certeza de que deseja cancelar este agendamento?</strong></div></header>
             <div className="appointments-detail-overlay__body">
               <dl className="appointments-modal-card__summary">
-                <div><dt>Serviço</dt><dd>{selected.serviceType}</dd></div>
+                <div><dt>Serviço</dt><dd>{repairServiceEncoding(selected.serviceType)}</dd></div>
                 <div><dt>Data e horário</dt><dd>{bookingDateTime.format(new Date(selected.start))}</dd></div>
               </dl>
               <div className="booking-detail__actions">

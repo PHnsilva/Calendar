@@ -27,7 +27,7 @@ function normalizeForComparison(value: unknown): string {
     .trim();
 }
 
-function repairServiceEncoding(value: unknown): string {
+export function repairServiceEncoding(value: unknown): string {
   return toSafeText(value)
     .replace(/\u00c3\u00a0/g, 'à')
     .replace(/\u00c3\u00a1/g, 'á')
@@ -43,6 +43,7 @@ function repairServiceEncoding(value: unknown): string {
     .replace(/\u00c3\u00b5/g, 'õ')
     .replace(/\u00c3\u00ba/g, 'ú')
     .replace(/\u00c2/g, '')
+    .replace(/\bor[$\ufffd]amento(s?)\b/gi, (_match, plural: string) => `Orçamento${plural}`)
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -63,6 +64,7 @@ export function normalizeClientServiceLabel(value: unknown): string {
     'filmagem com drones': 'Filmagem de drone',
     'filmagem de drone': 'Filmagem de drone',
     orcamento: 'Outros',
+    orcamentos: 'Outros',
     outro: 'Outros',
     outros: 'Outros',
   };

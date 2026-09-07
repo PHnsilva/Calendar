@@ -145,9 +145,17 @@ describe("consulta de agendamentos pelo telefone do perfil", () => {
     expect((confirm as HTMLButtonElement).disabled).toBe(true);
 
     await act(async () => resolveCancellation({ ...booking, status: "CANCELLED" }));
-    await waitFor(() => expect(screen.getByText("Cancelado")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Nenhum agendamento encontrado")).toBeTruthy());
+    expect(screen.queryByText("Serviço elétrico")).toBeNull();
     expect(screen.queryByRole("button", { name: "Cancelar" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Falar com o prestador" })).toBeTruthy();
+  });
+
+  it("não exibe cancelados ao consultar novamente a agenda", async () => {
+    mocks.lookup.mockResolvedValue([{ ...booking, status: "CANCELLED" }]);
+    saveProfilePhone();
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Nenhum agendamento encontrado")).toBeTruthy());
+    expect(screen.queryByText("Serviço elétrico")).toBeNull();
   });
 
   it("mostra em português a mensagem de rate limiting", async () => {

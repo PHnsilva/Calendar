@@ -182,7 +182,7 @@ describe('admin appointment details flow', () => {
     const dialog = screen.getByRole('dialog', { name: 'Editar agendamento' });
     expect(within(dialog).queryByText(/Sobrenome/i)).toBeNull();
     fireEvent.change(within(dialog).getByLabelText('Nome'), { target: { value: 'Paula' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar alteracoes' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar alterações' }));
 
     await waitFor(() => expect(mocks.updateAdminBooking).toHaveBeenCalledTimes(1));
     expect(mocks.updateAdminBooking).toHaveBeenCalledWith('event-detail-1', expect.objectContaining({ clientFirstName: 'Paula' }));

@@ -22,8 +22,7 @@ public class InMemoryBookingHistoryStore implements BookingHistoryStore {
     public List<ServicoResponse> list(Instant fromInclusive, Instant toExclusive, String assignedProviderId) {
         return byEventId.values().stream()
                 .filter(item -> item.getStart() != null)
-                .filter(item -> !item.getStart().isBefore(fromInclusive))
-                .filter(item -> item.getStart().isBefore(toExclusive))
+                .filter(item -> BookingHistoryStore.isInPeriod(item, fromInclusive, toExclusive))
                 .filter(item -> assignedProviderId == null || assignedProviderId.isBlank() || assignedProviderId.equals(item.getAssignedProviderId()))
                 .sorted(Comparator.comparing(ServicoResponse::getStart).reversed())
                 .toList();

@@ -6,6 +6,8 @@ import br.com.calendarmate.dto.PublicBookingResponse;
 import br.com.calendarmate.dto.ServicoCreateResponse;
 import br.com.calendarmate.dto.ServicoRequest;
 import br.com.calendarmate.dto.ServicoResponse;
+import br.com.calendarmate.controller.ServicoController;
+import br.com.calendarmate.exception.GlobalExceptionHandler;
 import br.com.calendarmate.exception.NotFoundException;
 import br.com.calendarmate.exception.ExternalServiceException;
 import br.com.calendarmate.google.CalendarClient;
@@ -21,12 +23,19 @@ import br.com.calendarmate.service.store.AdminUserStore;
 import br.com.calendarmate.service.store.BookingHistoryStore;
 import br.com.calendarmate.service.store.InMemoryBookingHistoryStore;
 import br.com.calendarmate.service.store.InMemoryPendingStore;
+import br.com.calendarmate.service.store.SupabaseBookingHistoryStore;
+import br.com.calendarmate.integrations.supabase.SupabaseClient;
 import br.com.calendarmate.service.store.VerificationStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.calendar.model.Event;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -56,6 +65,112 @@ import static org.mockito.Mockito.verify;
 class PublicBookingFlowTest {
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
     private static final String PHONE = "31999999999";
+
+    @ParameterizedTest
+    @ValueSource(ints = {403, 400, 503})
+    void creationReturns201WhenTheHistoryProviderRejectsTheSnapshot(int upstreamStatus) throws Exception {
+        RestTemplate http = new RestTemplate();
+        MockRestServiceServer upstream = MockRestServiceServer.bindTo(http).build();
+        upstream.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo(
+                        "https://history.example.test/rest/v1/booking_history_records?on_conflict=event_id"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withStatus(HttpStatus.valueOf(upstreamStatus)));
+        BookingHistoryStore history = new SupabaseBookingHistoryStore(
+                new SupabaseClient(http, "https://history.example.test", "sb_secret_test", "public"), null);
+        DummyCalendarClient calendar = spy(new DummyCalendarClient());
+        InMemoryPendingStore pending = spy(new InMemoryPendingStore());
+        doThrow(new ExternalServiceException("Pending unavailable")).when(pending).deleteByEventId(any());
+        AppProperties props = new AppProperties();
+        ServicoService service = serviceWith(calendar, props, history, pending);
+        ServicoRequest request = nextAvailableRequest(service, props, PHONE);
+        ObjectMapper json = new ObjectMapper().findAndRegisterModules();
+        var mvc = MockMvcBuilders.standaloneSetup(new ServicoController(service, null, null, null, null, null))
+                .setControllerAdvice(new GlobalExceptionHandler()).build();
+
+        var response = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/servicos")
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsBytes(request)))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isCreated())
+                .andReturn().getResponse();
+        ServicoCreateResponse created = json.readValue(response.getContentAsByteArray(), ServicoCreateResponse.class);
+
+        assertEquals("CONFIRMED", created.getServico().getStatus());
+        assertEquals(created.getServico().getEventId(), service.getByToken(created.getManageToken()).getEventId());
+        verify(calendar).createEvent(any());
+        verify(pending, never()).deleteByEventId(any());
+        upstream.verify();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"READ", "WRITE", "CLEANUP", "ALL"})
+    void historyStillReturnsCalendarRecordsWhenSecondaryStorageFails(String failure) throws IOException {
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        InMemoryBookingHistoryStore history = spy(new InMemoryBookingHistoryStore());
+        ExternalServiceException unavailable = new ExternalServiceException("History unavailable");
+        if (failure.equals("READ") || failure.equals("ALL")) {
+            doThrow(unavailable).when(history).list(any(), any(), any());
+            doThrow(unavailable).when(history).listByPhone(any(), anyInt());
+        }
+        if (failure.equals("WRITE") || failure.equals("ALL")) doThrow(unavailable).when(history).upsert(any(), anyLong());
+        if (failure.equals("CLEANUP") || failure.equals("ALL")) doThrow(unavailable).when(history).deleteOlderThan(any());
+        LocalDate today = LocalDate.now(ZONE);
+        Event event = calendar.createEvent(eventAt(today.minusDays(15).atTime(12, 0).atZone(ZONE), "CONFIRMED"));
+        ServicoService service = serviceWith(calendar, new AppProperties(), history);
+
+        assertEquals(event.getId(), service.listHistoryAdmin(owner(), today.minusDays(29), today, null, null).get(0).getEventId());
+        assertEquals(event.getId(), service.listPublicBookingsByPhone(PHONE).get(0).getEventId());
+
+        doCallRealMethod().when(history).upsert(any(), anyLong());
+        doCallRealMethod().when(history).list(any(), any(), any());
+        doCallRealMethod().when(history).listByPhone(any(), anyInt());
+        doCallRealMethod().when(history).deleteOlderThan(any());
+        service.listHistoryAdmin(owner(), today.minusDays(29), today, null, null);
+        assertEquals(event.getId(), history.listByPhone(PHONE, 10).get(0).getEventId());
+    }
+
+    @Test
+    void historyAndPublicLookupUseStoredRecordsWhenCalendarIsUnavailable() throws IOException {
+        DummyCalendarClient calendar = spy(new DummyCalendarClient());
+        InMemoryBookingHistoryStore history = new InMemoryBookingHistoryStore();
+        LocalDate today = LocalDate.now(ZONE);
+        ServicoResponse stored = storedBooking(
+                "stored-booking",
+                today.minusDays(5).atTime(12, 0).atZone(ZONE).toInstant(),
+                PHONE,
+                "CONFIRMED");
+        history.upsert(stored, Instant.now().getEpochSecond());
+        doThrow(new IOException("Calendar unavailable")).when(calendar).listBookingEvents(any(), any());
+        doThrow(new IOException("Calendar unavailable")).when(calendar).listEventsByPhone(any(), any(), eq(PHONE));
+        ServicoService service = serviceWith(calendar, new AppProperties(), history);
+
+        assertEquals("stored-booking",
+                service.listHistoryAdmin(owner(), today.minusDays(29), today, null, null).get(0).getEventId());
+        assertEquals("stored-booking", service.listPublicBookingsByPhone(PHONE).get(0).getEventId());
+    }
+
+    @Test
+    void futureBookingCancelledTodayAppearsInHistoryWithoutIncludingActiveFutureBookings() throws IOException {
+        DummyCalendarClient calendar = new DummyCalendarClient();
+        InMemoryBookingHistoryStore history = spy(new InMemoryBookingHistoryStore());
+        ServicoService service = serviceWith(calendar, new AppProperties(), history);
+        LocalDate today = LocalDate.now(ZONE);
+        LocalDate eventDate = today.plusMonths(5);
+        Event event = calendar.createEvent(eventAt(eventDate.atTime(12, 0).atZone(ZONE), "CONFIRMED"));
+        calendar.createEvent(eventAt(today.plusDays(4).atTime(12, 0).atZone(ZONE), "CONFIRMED"));
+        doThrow(new ExternalServiceException("History unavailable")).when(history).upsert(any(), anyLong());
+        service.cancelPublicBooking(event.getId(), PHONE);
+        doCallRealMethod().when(history).upsert(any(), anyLong());
+
+        List<ServicoResponse> result = service.listHistoryAdmin(owner(), today.minusDays(29), today, null, null);
+
+        assertEquals(1, result.size());
+        assertEquals(event.getId(), result.get(0).getEventId());
+        assertEquals("CANCELLED", result.get(0).getStatus());
+        assertFalse(service.listPublicBookingsByPhone(PHONE).stream()
+                .anyMatch(item -> event.getId().equals(item.getEventId())));
+        assertTrue(service.listAllAdmin(eventDate, eventDate).isEmpty());
+        assertEquals(event.getId(), history.listByPhone(PHONE, 10).get(0).getEventId());
+        ServicoService restored = serviceWith(new DummyCalendarClient(), new AppProperties(), history);
+        assertEquals(event.getId(), restored.listHistoryAdmin(owner(), today.minusDays(29), today, null, null).get(0).getEventId());
+    }
 
     @Test
     void createsAndFindsAllBookingsByNormalizedPhoneWithoutAManageToken() throws IOException {
@@ -159,7 +274,7 @@ class PublicBookingFlowTest {
         clearInvocations(calendar);
         cancelForAudience(service, event.getId(), audience);
 
-        assertEquals("CANCELLED", service.listPublicBookingsByPhone(PHONE).get(0).getStatus());
+        assertTrue(service.listPublicBookingsByPhone(PHONE).isEmpty());
         assertEquals(cancellationAt, calendar.getEvent(event.getId()).getExtendedProperties().getPrivate().get("cancellationAt"));
         verify(calendar, never()).cancelEvent(any(), any(), any());
         assertTrue(calendar.freeBusy(new com.google.api.client.util.DateTime(start.toInstant().toEpochMilli()),
@@ -184,7 +299,7 @@ class PublicBookingFlowTest {
 
         assertEquals("CANCELLED", calendar.getEvent(event.getId()).getExtendedProperties().getPrivate().get("status"));
         doCallRealMethod().when(history).listByPhone(any(), anyInt());
-        assertEquals("CANCELLED", service.listPublicBookingsByPhone(PHONE).get(0).getStatus());
+        assertTrue(service.listPublicBookingsByPhone(PHONE).isEmpty());
         doCallRealMethod().when(history).upsert(any(), anyLong());
         doCallRealMethod().when(pending).deleteByEventId(any());
         cancelForAudience(service, event.getId(), audience);

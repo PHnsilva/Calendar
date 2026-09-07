@@ -40,6 +40,10 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
 bootJar {
     archiveBaseName.set('backend-app')
     archiveVersion.set(version)

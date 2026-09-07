@@ -83,14 +83,11 @@ public class SupabaseBookingHistoryStore implements BookingHistoryStore {
             return List.of();
         }
         List<ServicoResponse> out = new ArrayList<>();
-        long from = fromInclusive.getEpochSecond();
-        long to = toExclusive.getEpochSecond();
         for (Map row : rows) {
-            long start = longv(row.get("start_epoch"));
-            if (start < from || start >= to) {
-                continue;
+            ServicoResponse booking = map(row);
+            if (BookingHistoryStore.isInPeriod(booking, fromInclusive, toExclusive)) {
+                out.add(booking);
             }
-            out.add(map(row));
         }
         return out;
     }

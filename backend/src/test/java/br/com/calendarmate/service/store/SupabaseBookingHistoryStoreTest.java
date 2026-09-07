@@ -21,6 +21,22 @@ import static org.mockito.Mockito.when;
 
 class SupabaseBookingHistoryStoreTest {
     @Test
+    void includesFutureAppointmentsCancelledInTheRequestedHistoryPeriod() {
+        SupabaseClient client = mock(SupabaseClient.class);
+        when(client.select("booking_history_records", null, 1000, "start_epoch.desc"))
+                .thenReturn(List.of(
+                        Map.of("event_id", "future-cancelled", "start_epoch", 4000L, "status", "CANCELLED", "cancellation_at", 2000L),
+                        Map.of("event_id", "future-active", "start_epoch", 4000L, "status", "CONFIRMED"),
+                        Map.of("event_id", "outside-period", "start_epoch", 500L, "status", "CANCELLED", "cancellation_at", 600L)));
+        SupabaseBookingHistoryStore store = new SupabaseBookingHistoryStore(client, null);
+
+        List<ServicoResponse> result = store.list(Instant.ofEpochSecond(1000), Instant.ofEpochSecond(3000), null);
+
+        assertEquals(1, result.size());
+        assertEquals("future-cancelled", result.get(0).getEventId());
+    }
+
+    @Test
     void listsEveryRequestedPhoneRecordUsingTheNormalizedPhoneFilter() {
         SupabaseClient client = mock(SupabaseClient.class);
         when(client.select("booking_history_records", Map.of("client_phone", "31999999999"), 1000, "start_epoch.desc"))

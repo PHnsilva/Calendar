@@ -384,8 +384,7 @@ class ServicoServiceTest {
         mvc.perform(get("/api/servicos/admin/{eventId}", expected.getId())
                         .header("X-ADMIN-SESSION", sessionToken)
                         .header("X-ADMIN-WORKSPACE", "ADMIN"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"));
+                .andExpect(status().isNotFound());
     }
 
     @Test

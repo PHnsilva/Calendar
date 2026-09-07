@@ -163,11 +163,12 @@ public class ServicoService {
         }
 
         String token = tokenUtil.generate(created.getId(), req.getClientEmail());
-        pendingStore.deleteByEventId(created.getId());
 
         ServicoResponse servico = mapEventToResponse(created);
         servico.setStatus("CONFIRMED");
-        persistBookingSnapshot(servico);
+        // Confirmed creations do not have a pending record. Once the calendar
+        // commits, a secondary history failure must not turn success into an error.
+        syncBookingSnapshot(servico);
 
         ServicoCreateResponse out = new ServicoCreateResponse();
         out.setServico(servico);
@@ -187,7 +188,7 @@ public class ServicoService {
         }
 
         Event e = calendar.getEvent(vt.getEventId());
-        if (e == null || "cancelled".equalsIgnoreCase(e.getStatus())) {
+        if (e == null || isCancelledBooking(e)) {
             throw new NotFoundException("Agendamento não encontrado");
         }
 
@@ -253,6 +254,7 @@ public class ServicoService {
         cleanupExpiredPendings();
 
         return listEventsByPhone(phone).stream()
+                .filter(event -> !isCancelledBooking(event))
                 .map(this::mapEventToResponse)
                 .collect(Collectors.toList());
     }
@@ -260,14 +262,40 @@ public class ServicoService {
     public List<PublicBookingResponse> listPublicBookingsByPhone(String phoneDigits) throws IOException {
         String phone = normalizePhone(phoneDigits);
         log.info("Public booking lookup attempted phone={}", fingerprint(phone));
-        cleanupExpiredPendings();
+        try {
+            cleanupExpiredPendings();
+        } catch (IOException ex) {
+            // Stored history can still satisfy the lookup when the calendar is down.
+            log.warn("Pending cleanup unavailable during public lookup; continuing with available records", ex);
+        }
 
-        List<ServicoResponse> live = listEventsByPhone(phone).stream()
-                .map(this::mapEventToResponse)
-                .toList();
-        List<ServicoResponse> stored = bookingHistoryStore.listByPhone(phone, 1000);
+        List<ServicoResponse> live = List.of();
+        IOException calendarFailure = null;
+        try {
+            live = listEventsByPhone(phone).stream()
+                    .map(this::mapEventToResponse)
+                    .toList();
+        } catch (IOException ex) {
+            calendarFailure = ex;
+            log.warn("Public calendar lookup unavailable; using stored records", ex);
+        }
+
+        List<ServicoResponse> stored;
+        ExternalServiceException historyFailure = null;
+        try {
+            stored = bookingHistoryStore.listByPhone(phone, 1000);
+        } catch (ExternalServiceException ex) {
+            historyFailure = ex;
+            log.warn("Public history lookup unavailable; using calendar records code={}", ex.getErrorCode());
+            stored = List.of();
+        }
+        if (calendarFailure != null && historyFailure != null) {
+            throw calendarFailure;
+        }
+
         List<PublicBookingResponse> result = mergeBookingRecords(live, stored).stream()
                 .filter(item -> phone.equals(normalizePhoneOrBlank(item.getClientPhone())))
+                .filter(item -> !"CANCELLED".equalsIgnoreCase(item.getStatus()))
                 .sorted(Comparator.comparing(ServicoResponse::getStart, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(this::toPublicBooking)
                 .toList();
@@ -581,6 +609,7 @@ public class ServicoService {
 
         return events.stream()
                 .filter(e -> !isExpiredPending(privateExt(e)))
+                .filter(e -> !isCancelledBooking(e))
                 .filter(this::isActiveAdminBooking)
                 .filter(e -> canPrincipalAccessEvent(principal, e))
                 .filter(e -> matchesAdminStatus(e, normalizedStatus))
@@ -591,8 +620,6 @@ public class ServicoService {
 
     public List<ServicoResponse> listHistoryAdmin(AdminPrincipal principal, LocalDate fromDate, LocalDate toDate, String status, String city)
             throws IOException {
-        syncBookingHistory();
-
         Instant retentionStart = historyRetentionStartInstant();
         Instant historyEnd = LocalDate.now(ZONE).plusDays(1).atStartOfDay(ZONE).toInstant();
 
@@ -612,15 +639,41 @@ public class ServicoService {
         String normalizedStatus = normalizeAdminStatus(status);
         String normalizedCity = normalizeAdminCity(city);
 
-        List<ServicoResponse> stored = bookingHistoryStore.list(from, to, assignedProviderId);
-        List<ServicoResponse> live = listBookingEventsBetween(
-                ZonedDateTime.ofInstant(from, ZONE),
-                ZonedDateTime.ofInstant(to, ZONE)).stream()
-                .filter(event -> canPrincipalAccessEvent(principal, event))
-                .map(this::mapEventToResponse)
-                .toList();
+        List<ServicoResponse> stored;
+        ExternalServiceException historyFailure = null;
+        try {
+            stored = bookingHistoryStore.list(from, to, assignedProviderId);
+        } catch (ExternalServiceException ex) {
+            historyFailure = ex;
+            log.warn("Admin history lookup unavailable; using calendar records code={}", ex.getErrorCode());
+            stored = List.of();
+        }
 
+        // Include future appointments cancelled during the requested period.
+        ZonedDateTime calendarEnd = firstDayOfMonth(ZonedDateTime.now(ZONE))
+                .plusMonths(props.getAdminBookingMaxFutureMonthsAhead() + 1L);
+        List<ServicoResponse> live = List.of();
+        IOException calendarFailure = null;
+        try {
+            live = listBookingEventsBetween(
+                    ZonedDateTime.ofInstant(retentionStart, ZONE), calendarEnd).stream()
+                    .filter(event -> !isExpiredPending(privateExt(event)))
+                    .filter(event -> canPrincipalAccessEvent(principal, event))
+                    .map(this::mapEventToResponse)
+                    .toList();
+            syncBookingHistory(live, retentionStart);
+        } catch (IOException ex) {
+            calendarFailure = ex;
+            log.warn("Admin history calendar lookup unavailable; using stored records", ex);
+        }
+        if (calendarFailure != null && historyFailure != null) {
+            throw calendarFailure;
+        }
+
+        Instant rangeFrom = from;
+        Instant rangeTo = to;
         return mergeBookingRecords(live, stored).stream()
+                .filter(item -> BookingHistoryStore.isInPeriod(item, rangeFrom, rangeTo))
                 .filter(item -> normalizedStatus.isBlank() || normalizedStatus.equalsIgnoreCase(item.getStatus()))
                 .filter(item -> normalizedCity.isBlank() || normalizedCity.equals(LocationNormalizer.normalizeCity(item.getClientCity())))
                 .sorted(Comparator.comparing(ServicoResponse::getStart, Comparator.nullsLast(Comparator.reverseOrder())))
@@ -639,6 +692,13 @@ public class ServicoService {
         return start != null && !start.isBefore(historyCutoffInstant());
     }
 
+    private boolean isCancelledBooking(Event event) {
+        if (event == null || "cancelled".equalsIgnoreCase(event.getStatus())) {
+            return true;
+        }
+        return "CANCELLED".equalsIgnoreCase(privateExt(event).getOrDefault("status", ""));
+    }
+
     private boolean canPrincipalAccessEvent(AdminPrincipal principal, Event event) {
         if (principal == null || principal.isOwner()) {
             return true;
@@ -647,26 +707,21 @@ public class ServicoService {
         return principal.getId().equals(ext.getOrDefault("assignedProviderId", ""));
     }
 
-    private void syncBookingHistory() throws IOException {
-        Instant retentionStart = historyRetentionStartInstant();
-        Instant historyEnd = historyCutoffInstant();
-        if (!retentionStart.isBefore(historyEnd)) {
-            return;
-        }
-
-        ZonedDateTime from = ZonedDateTime.ofInstant(retentionStart, ZONE);
-        ZonedDateTime to = ZonedDateTime.ofInstant(historyEnd, ZONE);
-        List<Event> events = listBookingEventsBetween(from, to);
+    private void syncBookingHistory(List<ServicoResponse> bookings, Instant retentionStart) {
         long archivedAt = Instant.now().getEpochSecond();
-
-        for (Event event : events) {
-            Map<String, String> ext = privateExt(event);
-            if (isExpiredPending(ext)) {
-                continue;
+        Instant activeCutoff = historyCutoffInstant();
+        try {
+            for (ServicoResponse booking : bookings) {
+                if ("CANCELLED".equalsIgnoreCase(booking.getStatus())
+                        || booking.getStart() != null && booking.getStart().isBefore(activeCutoff)) {
+                    bookingHistoryStore.upsert(booking, archivedAt);
+                }
             }
-            bookingHistoryStore.upsert(mapEventToResponse(event), archivedAt);
+            bookingHistoryStore.deleteOlderThan(retentionStart);
+        } catch (ExternalServiceException ex) {
+            // Calendar records remain durable and a later lookup retries syncing.
+            log.warn("Booking history sync unavailable code={}", ex.getErrorCode());
         }
-        bookingHistoryStore.deleteOlderThan(retentionStart);
     }
 
     private Instant historyCutoffInstant() {
@@ -722,7 +777,7 @@ public class ServicoService {
         if (!canPrincipalAccessEvent(principal, existing)) {
             throw new ForbiddenException("Agendamento não designado para este prestador");
         }
-        if (!isActiveAdminBooking(existing)) {
+        if (!isActiveAdminBooking(existing) || isCancelledBooking(existing)) {
             throw new NotFoundException("Agendamento não encontrado");
         }
         return mapEventToResponse(existing);
@@ -1066,6 +1121,15 @@ public class ServicoService {
         bookingHistoryStore.upsert(booking, Instant.now().getEpochSecond());
     }
 
+    private void syncBookingSnapshot(ServicoResponse booking) {
+        try {
+            persistBookingSnapshot(booking);
+        } catch (ExternalServiceException ex) {
+            log.warn("Booking history sync failed booking={} code={}",
+                    fingerprint(booking.getEventId()), ex.getErrorCode());
+        }
+    }
+
     private ServicoResponse cancelEventAndPreserveHistory(Event event, String source, ServicoResponse stored) throws IOException {
         ServicoResponse snapshot = mapEventToResponse(event);
         if ("CANCELLED".equalsIgnoreCase(snapshot.getStatus())) {
@@ -1090,12 +1154,7 @@ public class ServicoService {
     private void syncCancelledBooking(ServicoResponse booking) {
         // A secondary-store outage must not report a failed cancellation after
         // the calendar has already released the slot. Retrying repairs the stores.
-        try {
-            persistBookingSnapshot(booking);
-        } catch (ExternalServiceException ex) {
-            log.warn("Cancelled booking history sync failed booking={} code={}",
-                    fingerprint(booking.getEventId()), ex.getErrorCode());
-        }
+        syncBookingSnapshot(booking);
         try {
             pendingStore.deleteByEventId(booking.getEventId());
         } catch (ExternalServiceException ex) {

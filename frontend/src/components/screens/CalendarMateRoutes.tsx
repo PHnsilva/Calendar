@@ -1978,6 +1978,7 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
   const dayGroups = useMemo(() => groupBookingsByDate(periodBookings), [periodBookings]);
   const missingProviderCount = useMemo(() => periodBookings.filter(isWithoutProvider).length, [periodBookings]);
   const periodBlocksCount = useMemo(() => blocks.filter((block) => {
+    if (block.mode?.toUpperCase() === 'OPEN') return false;
     const start = block.start?.slice(0, 10) || block.end?.slice(0, 10) || '';
     return isDateInAdminAgendaRange(start, range);
   }).length, [blocks, range]);
@@ -2102,7 +2103,14 @@ function MiniMonth({
   selectedDate: string;
 }) {
   const grid = useMemo(() => getMonthGrid(monthStart), [monthStart]);
-  const blockedDates = useMemo(() => new Set(blocks.map((block) => block.start?.slice(0, 10) || block.end?.slice(0, 10)).filter(Boolean)), [blocks]);
+  const blockedDates = useMemo(() => new Set(blocks
+    .filter((block) => block.mode?.toUpperCase() !== 'OPEN')
+    .map((block) => block.start?.slice(0, 10) || block.end?.slice(0, 10))
+    .filter(Boolean)), [blocks]);
+  const openedDates = useMemo(() => new Set(blocks
+    .filter((block) => block.mode?.toUpperCase() === 'OPEN')
+    .map((block) => block.start?.slice(0, 10) || block.end?.slice(0, 10))
+    .filter(Boolean)), [blocks]);
   const label = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(toLocalDate(monthStart));
   return (
     <div className="wf-side-card wf-mini-month">
@@ -2112,20 +2120,20 @@ function MiniMonth({
         {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => <b key={d}>{d}</b>)}
         {grid.map((item) => {
           const manualBlock = blockedDates.has(item.iso);
+          const manualOpening = openedDates.has(item.iso);
           const scheduleBlock = is4x4UnavailableDate(item.iso, cycleStart);
-          const stateLabel = [manualBlock && 'bloqueio manual', scheduleBlock && 'indisponível pela escala 4x4'].filter(Boolean).join(' e ');
+          const stateLabel = [manualBlock && 'bloqueio manual', scheduleBlock && 'indisponível pela escala 4x4', manualOpening && 'com horários liberados'].filter(Boolean).join(' e ');
           return (
             <button
               key={item.iso}
               type="button"
               className={cx(manualBlock && 'has-block', scheduleBlock && 'has-schedule-block', item.iso === selectedDate && 'is-active', !item.isCurrentMonth && 'is-muted')}
-              disabled={scheduleBlock}
               onClick={() => onSelectDate(item.iso)}
               aria-label={`${item.iso}${stateLabel ? `, ${stateLabel}` : ''}`}
               aria-pressed={item.iso === selectedDate}
             >
               {item.day}
-              {manualBlock || scheduleBlock ? <i className="wf-mini-grid__markers" aria-hidden="true">{manualBlock ? <i className="wf-mini-grid__marker wf-mini-grid__marker--manual" /> : null}{scheduleBlock ? <i className="wf-mini-grid__marker wf-mini-grid__marker--schedule" /> : null}</i> : null}
+              {manualBlock || scheduleBlock || manualOpening ? <i className="wf-mini-grid__markers" aria-hidden="true">{manualBlock ? <i className="wf-mini-grid__marker wf-mini-grid__marker--manual" /> : null}{scheduleBlock ? <i className="wf-mini-grid__marker wf-mini-grid__marker--schedule" /> : null}{manualOpening ? <i className="wf-mini-grid__marker wf-mini-grid__marker--partial" /> : null}</i> : null}
             </button>
           );
         })}
@@ -3755,6 +3763,7 @@ function AdminBlockModal({ onClose }: { onClose: () => void }) {
   const { data: bootstrap } = usePublicBootstrap();
   const cycleStart = bootstrap?.schedule?.cycleStart;
   const scheduleUnavailable = is4x4UnavailableDate(date, cycleStart);
+  const isFullDayRule = !scheduleUnavailable && fullDay;
 
   const toggleTime = (time: string) => {
     setSelectedTimes((current) => current.includes(time) ? current.filter((item) => item !== time) : [...current, time].sort());
@@ -3762,27 +3771,24 @@ function AdminBlockModal({ onClose }: { onClose: () => void }) {
 
   const save = async () => {
     if (saving) return;
-    if (scheduleUnavailable) {
-      setError('Esse dia já está indisponível pela escala 4x4. Selecione um dia de trabalho.');
-      return;
-    }
     setSaving(true);
     setError('');
     setMessage('');
     try {
       await createAdminBlocks({
         entries: [{ date, times: selectedTimes }],
-        mode: fullDay ? 'full-day' : 'specific-hours',
+        mode: isFullDayRule ? 'full-day' : 'specific-hours',
+        ruleMode: scheduleUnavailable ? 'OPEN' : 'BLOCK',
         reason,
-        cancelConflictingBookings: cancelConflicts,
+        cancelConflictingBookings: !scheduleUnavailable && cancelConflicts,
       });
       await queryClient.invalidateQueries({ queryKey: ['wireframe-admin-blocks'] });
-      setMessage('Bloqueio salvo na agenda.');
+      setMessage(scheduleUnavailable ? 'Horários liberados na agenda.' : 'Bloqueio salvo na agenda.');
       window.setTimeout(onClose, 500);
     } catch (err) {
       setError(normalizeApiErrorMessage(err, {
         context: 'admin',
-        fallbackMessage: 'Não foi possível salvar o bloqueio. Tente novamente.',
+        fallbackMessage: scheduleUnavailable ? 'Não foi possível liberar os horários. Tente novamente.' : 'Não foi possível salvar o bloqueio. Tente novamente.',
       }));
     } finally {
       setSaving(false);
@@ -3791,11 +3797,11 @@ function AdminBlockModal({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      <ModalTitle icon="calendar-block" title="Bloquear agenda" text="Defina os dias e horários em que você ou sua equipe não estarão disponíveis." />
+      <ModalTitle icon="calendar-block" title="Bloquear agenda" text="Bloqueie períodos de trabalho ou libere horários específicos nos dias de folga da escala 4x4." />
       <div className="wf-admin-block-modal wf-admin-block-modal--wireframe">
         <section>
-          <strong>Selecione os dias para bloquear</strong>
-          <label className="wf-block-date-field">Data do bloqueio<input type="date" value={date} aria-invalid={scheduleUnavailable} onChange={(event) => { setDate(event.target.value); setDisplayMonthStart(startOfMonth(toLocalDate(event.target.value))); }} /></label>
+          <strong>Selecione o dia na agenda</strong>
+          <label className="wf-block-date-field">Data<input type="date" value={date} onChange={(event) => { setDate(event.target.value); setDisplayMonthStart(startOfMonth(toLocalDate(event.target.value))); setError(''); }} /></label>
           <MiniMonth
             blocks={blocks}
             cycleStart={cycleStart}
@@ -3804,21 +3810,23 @@ function AdminBlockModal({ onClose }: { onClose: () => void }) {
             onMonthChange={setDisplayMonthStart}
             onSelectDate={(selected) => { setDate(selected); setDisplayMonthStart(startOfMonth(toLocalDate(selected))); setError(''); }}
           />
-          <div className="wf-block-calendar-legend"><span><i className="wf-block-calendar-legend__manual" />Bloqueio manual</span><span><i className="wf-block-calendar-legend__schedule" />Escala 4x4</span></div>
-          {scheduleUnavailable ? <p className="booking-form__hint">Dia indisponível pela escala 4x4. Escolha um dia de trabalho para adicionar um bloqueio manual.</p> : null}
+          <div className="wf-block-calendar-legend"><span><i className="wf-block-calendar-legend__manual" />Bloqueio manual</span><span><i className="wf-block-calendar-legend__schedule" />Escala 4x4</span><span><i className="wf-block-calendar-legend__opening" />Horário liberado</span></div>
+          {scheduleUnavailable ? <p className="booking-form__hint">Dia indisponível pela escala 4x4. Selecione abaixo os horários que deseja liberar para agendamento.</p> : null}
           <div className="wf-block-legend"><span>Seleção manual</span><button type="button" onClick={() => { const today = toIsoDate(new Date()); setDate(today); setDisplayMonthStart(startOfMonth()); setSelectedTimes([]); setReason(''); setError(''); }}>Limpar seleção</button></div>
         </section>
         <section className="wf-admin-block-controls">
-          <label>Bloquear dia inteiro <input type="checkbox" checked={fullDay} onChange={(event) => setFullDay(event.target.checked)} /></label>
-          <strong>Selecione os horários para bloquear</strong>
-          <div className="wf-time-options">{modalTimeOptions.map((time) => <button type="button" key={time} className={selectedTimes.includes(time) ? 'is-selected' : ''} disabled={fullDay} onClick={() => toggleTime(time)}>{time}</button>)}</div>
-          <label className="wf-check-line"><input type="checkbox" checked={cancelConflicts} onChange={(event) => setCancelConflicts(event.target.checked)} /> Cancelar agendamentos conflitantes, se houver</label>
+          {scheduleUnavailable
+            ? <p className="booking-form__hint">A liberação vale apenas para os horários selecionados; os demais continuam bloqueados pela escala.</p>
+            : <label>Bloquear dia inteiro <input type="checkbox" checked={fullDay} onChange={(event) => setFullDay(event.target.checked)} /></label>}
+          <strong>{scheduleUnavailable ? 'Selecione os horários para liberar' : 'Selecione os horários para bloquear'}</strong>
+          <div className="wf-time-options">{modalTimeOptions.map((time) => <button type="button" key={time} className={selectedTimes.includes(time) ? 'is-selected' : ''} disabled={isFullDayRule} onClick={() => toggleTime(time)}>{time}</button>)}</div>
+          {!scheduleUnavailable ? <label className="wf-check-line"><input type="checkbox" checked={cancelConflicts} onChange={(event) => setCancelConflicts(event.target.checked)} /> Cancelar agendamentos conflitantes, se houver</label> : null}
           <label>Motivo / Observação<textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Ex.: treinamento, manutenção, folga etc." /></label>
         </section>
       </div>
       {error ? <p className="booking-form__error">{error}</p> : null}
       {message ? <p className="booking-form__hint">{message}</p> : null}
-      <ModalActions primary={saving ? 'Salvando...' : 'Salvar bloqueio'} secondary="Cancelar" primaryIcon="lock-green" onSecondary={onClose} onPrimary={save} disabledPrimary={saving || !date || scheduleUnavailable || (!fullDay && selectedTimes.length === 0)} />
+      <ModalActions primary={saving ? 'Salvando...' : scheduleUnavailable ? 'Salvar liberação' : 'Salvar bloqueio'} secondary="Cancelar" primaryIcon="lock-green" onSecondary={onClose} onPrimary={save} disabledPrimary={saving || !date || (!isFullDayRule && selectedTimes.length === 0)} />
     </>
   );
 }

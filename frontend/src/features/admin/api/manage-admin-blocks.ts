@@ -3,6 +3,7 @@ import type { AvailabilityBlockPreviewResponse, AvailabilityBlockResponse } from
 import { requireAdminSessionToken } from './admin-session';
 
 export type AdminBlockMode = 'full-day' | 'specific-hours';
+export type AdminAvailabilityRuleMode = 'BLOCK' | 'OPEN';
 
 export type AdminBlockEntry = {
   date: string;
@@ -20,6 +21,7 @@ type DayPayloadItem = {
 export type PreviewAdminBlocksInput = {
   entries: AdminBlockEntry[];
   mode: AdminBlockMode;
+  ruleMode?: AdminAvailabilityRuleMode;
   slotMinutes?: number;
   reason?: string;
 };
@@ -59,17 +61,25 @@ function normalizeEntries(entries: AdminBlockEntry[]) {
     .filter((entry) => entry.date);
 }
 
-function buildPayloads(entry: AdminBlockEntry, mode: AdminBlockMode, slotMinutes: number, reason?: string): DayPayloadItem[] {
+function buildPayloads(
+  entry: AdminBlockEntry,
+  mode: AdminBlockMode,
+  ruleMode: AdminAvailabilityRuleMode,
+  slotMinutes: number,
+  reason?: string,
+): DayPayloadItem[] {
+  const defaultReason = ruleMode === 'OPEN' ? 'Liberação manual da escala 4x4' : 'Bloqueio administrativo';
+
   if (mode === 'full-day') {
     return [
       {
         key: `${entry.date}-day`,
         date: entry.date,
         payload: {
-          mode: 'BLOCK',
+          mode: ruleMode,
           type: 'DAY',
           date: entry.date,
-          reason: reason?.trim() || 'Bloqueio administrativo',
+          reason: reason?.trim() || defaultReason,
         },
       },
     ];
@@ -81,19 +91,19 @@ function buildPayloads(entry: AdminBlockEntry, mode: AdminBlockMode, slotMinutes
     startTime,
     endTime: addMinutes(startTime, slotMinutes),
     payload: {
-      mode: 'BLOCK',
+      mode: ruleMode,
       type: 'SLOT',
       startAt: `${entry.date}T${startTime}:00`,
       endAt: `${entry.date}T${addMinutes(startTime, slotMinutes)}:00`,
-      reason: reason?.trim() || 'Bloqueio administrativo',
+      reason: reason?.trim() || defaultReason,
     },
   }));
 }
 
-export async function previewAdminBlocks({ entries, mode, slotMinutes = 60, reason }: PreviewAdminBlocksInput): Promise<AdminBlockPreviewItem[]> {
+export async function previewAdminBlocks({ entries, mode, ruleMode = 'BLOCK', slotMinutes = 60, reason }: PreviewAdminBlocksInput): Promise<AdminBlockPreviewItem[]> {
   const adminToken = requireAdminSessionToken();
   const normalizedEntries = normalizeEntries(entries);
-  const payloads: DayPayloadItem[] = normalizedEntries.flatMap((entry) => buildPayloads(entry, mode, slotMinutes, reason));
+  const payloads: DayPayloadItem[] = normalizedEntries.flatMap((entry) => buildPayloads(entry, mode, ruleMode, slotMinutes, reason));
 
   return Promise.all(
     payloads.map(async (item) => ({
@@ -106,18 +116,18 @@ export async function previewAdminBlocks({ entries, mode, slotMinutes = 60, reas
   );
 }
 
-export async function createAdminBlocks({ entries, mode, slotMinutes = 60, reason, cancelConflictingBookings = false }: CreateAdminBlocksInput): Promise<AvailabilityBlockResponse[]> {
+export async function createAdminBlocks({ entries, mode, ruleMode = 'BLOCK', slotMinutes = 60, reason, cancelConflictingBookings = false }: CreateAdminBlocksInput): Promise<AvailabilityBlockResponse[]> {
   const adminToken = requireAdminSessionToken();
   const normalizedEntries = normalizeEntries(entries);
 
   if (normalizedEntries.length === 0) {
-    throw new Error('Selecione pelo menos um dia para bloquear.');
+    throw new Error(ruleMode === 'OPEN' ? 'Selecione pelo menos um dia para liberar.' : 'Selecione pelo menos um dia para bloquear.');
   }
 
-  const payloads: DayPayloadItem[] = normalizedEntries.flatMap((entry) => buildPayloads(entry, mode, slotMinutes, reason));
+  const payloads: DayPayloadItem[] = normalizedEntries.flatMap((entry) => buildPayloads(entry, mode, ruleMode, slotMinutes, reason));
 
   if (mode === 'specific-hours' && payloads.length === 0) {
-    throw new Error('Selecione ao menos um horário para o bloqueio parcial.');
+    throw new Error(ruleMode === 'OPEN' ? 'Selecione ao menos um horário para liberar.' : 'Selecione ao menos um horário para o bloqueio parcial.');
   }
 
   return Promise.all(

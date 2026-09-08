@@ -11,6 +11,7 @@ import type { AdminMeResponse, AvailabilityBlockResponse, ServicoResponse } from
 vi.setConfig({ testTimeout: 30000 });
 
 const mocks = vi.hoisted(() => ({
+  createAdminBlocks: vi.fn(),
   listAdminBlocks: vi.fn(),
   useAdminBookings: vi.fn(),
   usePublicBootstrap: vi.fn(),
@@ -19,7 +20,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../features/admin/hooks/useAdminBookings', () => ({ useAdminBookings: mocks.useAdminBookings }));
 vi.mock('../../features/public-config/hooks/usePublicBootstrap', () => ({ usePublicBootstrap: mocks.usePublicBootstrap }));
 vi.mock('../../features/admin/api/manage-admin-blocks', () => ({
-  createAdminBlocks: vi.fn(),
+  createAdminBlocks: mocks.createAdminBlocks,
   deleteAdminBlock: vi.fn(),
   listAdminBlocks: mocks.listAdminBlocks,
 }));
@@ -86,10 +87,12 @@ beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   vi.setSystemTime(new Date(2026, 6, 18, 12));
   window.localStorage.clear();
+  mocks.createAdminBlocks.mockReset();
   mocks.listAdminBlocks.mockReset();
   mocks.useAdminBookings.mockReset();
   mocks.usePublicBootstrap.mockReset();
   mocks.listAdminBlocks.mockResolvedValue([manualBlock]);
+  mocks.createAdminBlocks.mockResolvedValue([]);
   mocks.useAdminBookings.mockReturnValue({
     data: [tomorrowBooking],
     isError: false,
@@ -162,12 +165,34 @@ describe('admin agenda flows', () => {
     fireEvent.click(screen.getByRole('button', { name: /Abrir calendário/i }));
     expect(await screen.findByRole('heading', { name: 'Bloquear agenda' })).toBeTruthy();
     const rotationDay = screen.getByRole('button', { name: /2026-07-23, indisponível pela escala 4x4/i }) as HTMLButtonElement;
-    expect(rotationDay.disabled).toBe(true);
+    expect(rotationDay.disabled).toBe(false);
     const adjacentMonthRotationDay = screen.getByRole('button', { name: /2026-08-01, indisponível pela escala 4x4/i }) as HTMLButtonElement;
-    expect(adjacentMonthRotationDay.disabled).toBe(true);
+    expect(adjacentMonthRotationDay.disabled).toBe(false);
     expect(await screen.findByRole('button', { name: /2026-07-20, bloqueio manual/i })).toBeTruthy();
 
     await waitFor(() => expect(mocks.listAdminBlocks).toHaveBeenCalledTimes(1));
+  });
+
+  it('releases selected hours on a day blocked by the 4x4 schedule', async () => {
+    await renderDashboard();
+
+    fireEvent.click(screen.getByRole('button', { name: /Abrir calendário/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /2026-07-23, indisponível pela escala 4x4/i }));
+
+    expect(screen.getByText(/selecione abaixo os horários que deseja liberar/i)).toBeTruthy();
+    expect(screen.getByText('Selecione os horários para liberar')).toBeTruthy();
+    expect(screen.queryByRole('checkbox', { name: /Bloquear dia inteiro/i })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: '09:00' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar liberação' }));
+
+    await waitFor(() => expect(mocks.createAdminBlocks).toHaveBeenCalledWith({
+      entries: [{ date: '2026-07-23', times: ['09:00'] }],
+      mode: 'specific-hours',
+      ruleMode: 'OPEN',
+      reason: '',
+      cancelConflictingBookings: false,
+    }));
   });
 
   it('keeps an authenticated API failure distinct from a login failure', async () => {

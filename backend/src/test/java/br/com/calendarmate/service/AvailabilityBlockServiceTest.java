@@ -12,6 +12,7 @@ import br.com.calendarmate.model.Servico;
 import br.com.calendarmate.service.store.InMemoryPendingStore;
 import com.google.api.services.calendar.model.Event;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AvailabilityBlockServiceTest {
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
@@ -70,6 +72,24 @@ class AvailabilityBlockServiceTest {
     }
 
     @Test
+    void openingRuleReleasesSpecificHourOnScheduleOffDay() throws IOException {
+        Fixture fixture = fixture();
+        LocalDate date = nextScheduleOffDay(fixture.properties.getScheduleCycleStart());
+        AvailabilityBlockCreateRequest request = createRequest(date, 9, 10);
+        request.setMode("OPEN");
+
+        AvailabilityBlockResponse created = fixture.service.create(request);
+        var allowed = new AvailabilityPolicyService(fixture.calendar, fixture.properties)
+                .resolveAllowedWindows(date);
+
+        assertEquals("OPEN", created.getMode());
+        assertEquals(1, allowed.size());
+        assertTrue(allowed.get(0).contains(new br.com.calendarmate.model.TimeWindow(
+                ZonedDateTime.of(date, LocalTime.of(9, 0), ZONE).toInstant(),
+                ZonedDateTime.of(date, LocalTime.of(10, 0), ZONE).toInstant())));
+    }
+
+    @Test
     void deletingManualRuleRejectsBookingIdsWithoutDeletingTheBooking() throws IOException {
         Fixture fixture = fixture();
         LocalDate date = LocalDate.now(ZONE).plusDays(1);
@@ -81,12 +101,13 @@ class AvailabilityBlockServiceTest {
 
     private Fixture fixture() {
         AppProperties properties = new AppProperties();
+        ReflectionTestUtils.setField(properties, "scheduleCycleStart", "2026-05-16");
         DummyCalendarClient calendar = new DummyCalendarClient();
         AdminBookingOpsService bookingOps = new AdminBookingOpsService(
                 calendar,
                 new InMemoryPendingStore(),
                 properties);
-        return new Fixture(calendar, new AvailabilityBlockService(calendar, properties, bookingOps));
+        return new Fixture(properties, calendar, new AvailabilityBlockService(calendar, properties, bookingOps));
     }
 
     private AvailabilityBlockPreviewRequest previewRequest(LocalDate date, int startHour, int endHour) {
@@ -126,6 +147,15 @@ class AvailabilityBlockServiceTest {
         return booking;
     }
 
-    private record Fixture(DummyCalendarClient calendar, AvailabilityBlockService service) {
+    private LocalDate nextScheduleOffDay(LocalDate cycleStart) {
+        ScheduleRules rules = new ScheduleRules(cycleStart);
+        LocalDate candidate = LocalDate.now(ZONE);
+        while (!rules.isOffDay(candidate)) {
+            candidate = candidate.plusDays(1);
+        }
+        return candidate;
+    }
+
+    private record Fixture(AppProperties properties, DummyCalendarClient calendar, AvailabilityBlockService service) {
     }
 }

@@ -61,6 +61,15 @@ function isFullDay(block: AvailabilityBlockResponse): boolean {
   return block.type?.toLowerCase() === 'day';
 }
 
+function isOpening(block: AvailabilityBlockResponse): boolean {
+  return block.mode?.toUpperCase() === 'OPEN';
+}
+
+function formatAvailabilityTime(block: AvailabilityBlockResponse): string {
+  const time = formatBlockTime(block);
+  return isOpening(block) ? `Liberado: ${time}` : time;
+}
+
 function normalize(value: string): string {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
@@ -84,7 +93,8 @@ function BlockCalendar({ blocks }: { blocks: AvailabilityBlockResponse[] }) {
   const [month, setMonth] = useState(() => new Date());
   const { data: bootstrap } = usePublicBootstrap();
   const grid = useMemo(() => buildMonthGrid(month), [month]);
-  const blockedDates = useMemo(() => new Set(blocks.map(blockDate).filter(Boolean)), [blocks]);
+  const blockedDates = useMemo(() => new Set(blocks.filter((block) => !isOpening(block)).map(blockDate).filter(Boolean)), [blocks]);
+  const openedDates = useMemo(() => new Set(blocks.filter(isOpening).map(blockDate).filter(Boolean)), [blocks]);
   const cycleStart = bootstrap?.schedule?.cycleStart;
   const label = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(month);
 
@@ -107,19 +117,25 @@ function BlockCalendar({ blocks }: { blocks: AvailabilityBlockResponse[] }) {
         </div>
         <div className={styles.calendarGrid}>
           {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => <b key={day}>{day}</b>)}
-          {grid.map((item) => (
-            <span
-              key={item.iso}
-              className={`${styles.calendarDay} ${!item.isCurrentMonth ? styles.calendarDayMuted : ''} ${is4x4UnavailableDate(item.iso, cycleStart) ? styles.calendarDayScheduleBlocked : ''} ${blockedDates.has(item.iso) ? styles.calendarDayBlocked : ''}`}
-              aria-label={`${item.iso}${is4x4UnavailableDate(item.iso, cycleStart) ? ', indisponível pela escala 4x4' : ''}${blockedDates.has(item.iso) ? ', com bloqueio manual' : ''}`}
-            >
-              {item.day}
-            </span>
-          ))}
+          {grid.map((item) => {
+            const scheduleBlocked = is4x4UnavailableDate(item.iso, cycleStart);
+            const manuallyBlocked = blockedDates.has(item.iso);
+            const manuallyOpened = openedDates.has(item.iso);
+            return (
+              <span
+                key={item.iso}
+                className={`${styles.calendarDay} ${!item.isCurrentMonth ? styles.calendarDayMuted : ''} ${scheduleBlocked ? styles.calendarDayScheduleBlocked : ''} ${manuallyBlocked ? styles.calendarDayBlocked : ''} ${manuallyOpened ? styles.calendarDayOpened : ''}`}
+                aria-label={`${item.iso}${scheduleBlocked ? ', indisponível pela escala 4x4' : ''}${manuallyBlocked ? ', com bloqueio manual' : ''}${manuallyOpened ? ', com horários liberados' : ''}`}
+              >
+                {item.day}
+              </span>
+            );
+          })}
         </div>
         <div className={styles.calendarLegends} aria-label="Legenda do calendário">
           <p className={styles.calendarLegend}>Bloqueio manual</p>
           <p className={`${styles.calendarLegend} ${styles.calendarLegendSchedule}`}>Escala 4x4</p>
+          <p className={`${styles.calendarLegend} ${styles.calendarLegendOpening}`}>Horário liberado</p>
         </div>
       </div>
     </section>
@@ -145,7 +161,7 @@ export function AdminBlocksPanel({
       const byProfessional = filters.professional === 'ALL' || filters.professional === 'ADMIN';
       const byFrom = !filters.from || !date || date >= filters.from;
       const byTo = !filters.to || !date || date <= filters.to;
-      const bySearch = !term || normalize(`${formatBlockDate(block)} ${formatBlockTime(block)} ${block.reason ?? ''} Administrativo`).includes(term);
+      const bySearch = !term || normalize(`${formatBlockDate(block)} ${formatAvailabilityTime(block)} ${block.reason ?? ''} Administrativo`).includes(term);
       return byProfessional && byFrom && byTo && bySearch;
     });
   }, [blocks, filters]);
@@ -156,7 +172,7 @@ export function AdminBlocksPanel({
   };
 
   const viewDetails = (block: AvailabilityBlockResponse) => {
-    window.alert(`${formatBlockDate(block)}\n${formatBlockTime(block)}\n${block.reason || 'Sem observação'}`);
+    window.alert(`${isOpening(block) ? 'Liberação de horário' : 'Bloqueio manual'}\n${formatBlockDate(block)}\n${formatBlockTime(block)}\n${block.reason || 'Sem observação'}`);
   };
 
   const filtersActive = Object.entries(filters).some(([key, value]) => key === 'professional' ? value !== 'ALL' : Boolean(value));
@@ -244,7 +260,7 @@ export function AdminBlocksPanel({
                     <tr key={block.blockId}>
                       <td data-label="Profissional"><span className={styles.tablePrimary}><AdminIcon className={styles.cellIcon} name="user" size={17} />Administrativo</span></td>
                       <td data-label="Data"><span className={styles.tablePrimary}><AdminIcon className={styles.cellIcon} name="calendar" size={17} />{formatBlockDate(block)}</span></td>
-                      <td data-label="Horário"><AdminStatusBadge tone={isFullDay(block) ? 'warning' : 'info'}>{formatBlockTime(block)}</AdminStatusBadge></td>
+                      <td data-label="Horário"><AdminStatusBadge tone={isOpening(block) ? 'success' : isFullDay(block) ? 'warning' : 'info'}>{formatAvailabilityTime(block)}</AdminStatusBadge></td>
                       <td data-label="Observação">{block.reason || 'Sem observação'}</td>
                       <td data-label="Ações">
                         <span className={styles.rowActions}>
@@ -271,7 +287,7 @@ export function AdminBlocksPanel({
               <div className={styles.detailRow} key={block.blockId}>
                 <span className={styles.detailIcon}><AdminIcon name="calendar" size={15} /></span>
                 <strong>{formatBlockDate(block)}</strong>
-                <AdminStatusBadge tone={isFullDay(block) ? 'warning' : 'info'}>{formatBlockTime(block)}</AdminStatusBadge>
+                <AdminStatusBadge tone={isOpening(block) ? 'success' : isFullDay(block) ? 'warning' : 'info'}>{formatAvailabilityTime(block)}</AdminStatusBadge>
               </div>
             )) : <p className={styles.cardCopy}>Nenhum horário bloqueado para exibir.</p>}
             <AdminButton icon="plus" tone="primary" onClick={onOpenEditor}>Adicionar horário</AdminButton>

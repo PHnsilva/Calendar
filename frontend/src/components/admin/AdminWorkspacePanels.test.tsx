@@ -90,14 +90,24 @@ describe('Admin workspace redesigned panels', () => {
     const onOpenEditor = vi.fn();
     render(
       <AdminBlocksPanel
-        blocks={[{
-          blockId: 'block-1',
-          mode: 'BLOCK',
-          type: 'SLOT',
-          start: '2026-07-14T09:00:00',
-          end: '2026-07-14T10:00:00',
-          reason: 'Treinamento da equipe',
-        }]}
+        blocks={[
+          {
+            blockId: 'block-1',
+            mode: 'BLOCK',
+            type: 'SLOT',
+            start: '2026-07-14T09:00:00',
+            end: '2026-07-14T10:00:00',
+            reason: 'Treinamento da equipe',
+          },
+          {
+            blockId: 'opening-1',
+            mode: 'OPEN',
+            type: 'SLOT',
+            start: '2026-07-15T09:00:00',
+            end: '2026-07-15T10:00:00',
+            reason: 'Atendimento extraordinário',
+          },
+        ]}
         deletingId=""
         hasAdminToken
         isError={false}
@@ -110,9 +120,11 @@ describe('Admin workspace redesigned panels', () => {
     expect(screen.getByRole('heading', { name: 'Bloqueios detalhados' })).toBeTruthy();
     expect(screen.getByRole('table')).toBeTruthy();
     expect(screen.getByText('Treinamento da equipe')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Detalhes/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Editar/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Excluir/i })).toBeTruthy();
+    expect(screen.getByText('Atendimento extraordinário')).toBeTruthy();
+    expect(screen.getAllByText('Liberado: 09:00 - 10:00').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /Detalhes/i })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /Editar/i })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /Excluir/i })).toHaveLength(2);
 
     fireEvent.change(screen.getByPlaceholderText('Data, horário ou observação'), { target: { value: 'não existe' } });
     fireEvent.click(screen.getByRole('button', { name: /Filtrar/i }));

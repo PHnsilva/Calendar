@@ -55,6 +55,16 @@ const tomorrowBooking: ServicoResponse = {
   status: 'CONFIRMED',
 };
 
+const nextMonthBooking: ServicoResponse = {
+  ...tomorrowBooking,
+  eventId: 'test-next-month',
+  start: '2026-08-05T12:00:00Z',
+  end: '2026-08-05T13:00:00Z',
+  clientFirstName: 'Teste',
+  clientLastName: 'Agosto',
+  clientPhone: '31900000001',
+};
+
 const manualBlock: AvailabilityBlockResponse = {
   blockId: 'manual-block-1',
   mode: 'BLOCK',
@@ -94,7 +104,7 @@ beforeEach(() => {
   mocks.listAdminBlocks.mockResolvedValue([manualBlock]);
   mocks.createAdminBlocks.mockResolvedValue([]);
   mocks.useAdminBookings.mockReturnValue({
-    data: [tomorrowBooking],
+    data: [tomorrowBooking, nextMonthBooking],
     isError: false,
     isFetching: false,
     isPending: false,
@@ -124,6 +134,9 @@ describe('admin agenda flows', () => {
 
     const period = screen.getByRole('combobox', { name: 'Período da agenda' });
     expect(period.closest('.wf-admin-week-agenda__week')?.querySelector('.wf-admin-week-agenda__select-chevron')).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Próximos 30 dias' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Próximo mês' })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: 'Este mês' })).toBeNull();
     period.focus();
     expect(document.activeElement).toBe(period);
 
@@ -158,9 +171,15 @@ describe('admin agenda flows', () => {
     const todaySummary = screen.getAllByText('Agendamentos').map((node) => node.closest('article')).find(Boolean);
     expect(todaySummary?.textContent).toContain('0hoje');
 
-    fireEvent.change(period, { target: { value: 'THIS_MONTH' } });
-    expect(mocks.useAdminBookings).toHaveBeenCalledWith({ from: '2026-07-01', to: '2026-07-31' }, true);
+    fireEvent.change(period, { target: { value: 'NEXT_30_DAYS' } });
+    expect(mocks.useAdminBookings).toHaveBeenCalledWith({ from: '2026-07-18', to: '2026-08-16' }, true);
     expect(await screen.findByText('Teste Amanhã')).toBeTruthy();
+    expect(await screen.findByText('Teste Agosto')).toBeTruthy();
+
+    fireEvent.change(period, { target: { value: 'NEXT_MONTH' } });
+    expect(mocks.useAdminBookings).toHaveBeenCalledWith({ from: '2026-08-01', to: '2026-08-31' }, true);
+    expect(screen.queryByText('Teste Amanhã')).toBeNull();
+    expect(await screen.findByText('Teste Agosto')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Abrir calendário/i }));
     expect(await screen.findByRole('heading', { name: 'Bloquear agenda' })).toBeTruthy();

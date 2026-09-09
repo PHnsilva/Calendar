@@ -1,4 +1,4 @@
-export type AdminAgendaRangeKey = "TODAY" | "NEXT_7_DAYS" | "THIS_MONTH";
+export type AdminAgendaRangeKey = "TODAY" | "NEXT_7_DAYS" | "NEXT_30_DAYS" | "NEXT_MONTH";
 
 export type AdminAgendaRange = {
   from: string;
@@ -44,16 +44,29 @@ export function getAdminAgendaRange(key: AdminAgendaRangeKey, reference = new Da
     };
   }
 
-  if (key === "THIS_MONTH") {
-    const from = new Date(today.getFullYear(), today.getMonth(), 1);
-    const to = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  if (key === "NEXT_30_DAYS") {
+    const to = new Date(today);
+    to.setDate(today.getDate() + 29);
+    return {
+      from: toIsoDate(today),
+      to: toIsoDate(to),
+      label: formatRangeLabel(today, to),
+      optionLabel: "Próximos 30 dias",
+      summaryLabel: "próximos 30 dias",
+      viewDescription: "Visão dos próximos 30 dias",
+    };
+  }
+
+  if (key === "NEXT_MONTH") {
+    const from = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const to = new Date(today.getFullYear(), today.getMonth() + 2, 0);
     return {
       from: toIsoDate(from),
       to: toIsoDate(to),
       label: formatRangeLabel(from, to),
-      optionLabel: "Este mês",
-      summaryLabel: "este mês",
-      viewDescription: "Visão dos agendamentos deste mês",
+      optionLabel: "Próximo mês",
+      summaryLabel: "próximo mês",
+      viewDescription: "Visão dos agendamentos do próximo mês",
     };
   }
 

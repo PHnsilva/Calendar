@@ -2007,7 +2007,8 @@ function AdminAppointmentsView({ setModal, setContext }: { setModal: (modal: Mod
           <select value={rangeKey} onChange={(event) => setRangeKey(event.target.value as AdminAgendaRangeKey)} aria-label="Período da agenda">
             <option value="TODAY">Hoje</option>
             <option value="NEXT_7_DAYS">Próximos 7 dias</option>
-            <option value="THIS_MONTH">Este mês</option>
+            <option value="NEXT_30_DAYS">Próximos 30 dias</option>
+            <option value="NEXT_MONTH">Próximo mês</option>
           </select>
           <AdminAgendaSelectChevron />
         </label>

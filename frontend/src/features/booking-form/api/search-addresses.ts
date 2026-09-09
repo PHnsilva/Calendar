@@ -8,7 +8,6 @@ const BACKEND_AUTOCOMPLETE_ENDPOINT = "/api/enderecos/autocomplete";
 const BACKEND_CITY_CONTEXT_ENDPOINT = "/api/enderecos/cidade";
 const DEFAULT_LIMIT = 20;
 const CITY_RADIUS_METERS = 30_000;
-const FALLBACK_MIN_RESULTS = 5;
 
 type GeoapifyResult = Record<string, unknown>;
 
@@ -238,11 +237,34 @@ function normalizeSearchVariant(query: string): string {
     .replace(/\s+/g, " ");
 }
 
-function getSearchQueryVariants(query: string): string[] {
+function includesNormalizedPart(value: string, part: string): boolean {
+  if (!part) return true;
+  return value === part || value.startsWith(`${part} `) || value.endsWith(` ${part}`) || value.includes(` ${part} `);
+}
+
+function addSelectedCityToQuery(query: string, cityContext: GeoapifyCityContext): string {
+  const parts = [query.trim()];
+  const normalizedQuery = normalizeForMatch(query);
+  const city = normalizeText(cityContext.name);
+  const normalizedCity = normalizeForMatch(city);
+  const state = normalizeUf(cityContext.state);
+
+  if (city && !includesNormalizedPart(normalizedQuery, normalizedCity)) {
+    parts.push(city);
+  }
+  if (state && !includesNormalizedPart(normalizedQuery, state.toLowerCase())) {
+    parts.push(state);
+  }
+
+  return parts.filter(Boolean).join(", ");
+}
+
+function getSearchQueryVariants(query: string, cityContext: GeoapifyCityContext): string[] {
   const normalized = normalizeSearchVariant(query);
   const streetOnly = normalizeSearchVariant(query.split(/\s+-\s+/)[0] ?? "");
-  const variants = [query.trim(), normalized, streetOnly].filter((item) => item.length >= 3);
-  return Array.from(new Set(variants));
+  const directVariants = Array.from(new Set([query.trim(), normalized, streetOnly].filter((item) => item.length >= 3)));
+  const contextualVariants = directVariants.map((item) => addSelectedCityToQuery(item, cityContext));
+  return Array.from(new Set([...directVariants, ...contextualVariants]));
 }
 
 export function extractGeoapifyResults(payload: GeoapifyAutocompleteResponse | null | undefined): GeoapifyResult[] {
@@ -327,6 +349,13 @@ function getCityCandidates(item: GeoapifyAddressSuggestion): string[] {
     .filter(Boolean);
 }
 
+function getAdministrativeCityCandidates(item: GeoapifyAddressSuggestion): string[] {
+  const raw = item.raw ?? {};
+  return [raw.municipality, raw.county]
+    .map(normalizeForMatch)
+    .filter(Boolean);
+}
+
 function getStateCandidates(item: GeoapifyAddressSuggestion): string[] {
   const raw = item.raw ?? {};
   const isoState = normalizeText(raw.iso3166_2).toUpperCase();
@@ -341,13 +370,15 @@ function cityMatchesSuggestion(item: GeoapifyAddressSuggestion, cityContext?: Ge
   const cityCandidates = getCityCandidates(item);
   const hasCityData = cityCandidates.length > 0;
   const cityMatches = cityCandidates.some((candidate) => candidate === selectedCity);
+  const administrativeCityMatches = getAdministrativeCityCandidates(item)
+    .some((candidate) => candidate === selectedCity);
 
   const selectedUf = normalizeUf(cityContext?.state);
   const resultUfCandidates = getStateCandidates(item);
   const hasStateData = resultUfCandidates.length > 0;
   const stateMatches = !selectedUf || !hasStateData || resultUfCandidates.includes(selectedUf);
 
-  if (hasCityData) return cityMatches && stateMatches;
+  if (hasCityData) return (cityMatches || administrativeCityMatches) && stateMatches;
   return stateMatches;
 }
 
@@ -463,7 +494,7 @@ export function buildGeoapifyAddressUrl(query: string, cityContext: GeoapifyCity
 function buildAddressSearchAttempts(query: string, cityContext: GeoapifyCityContext, apiKey: string): string[] {
   const filters = [buildGeoapifyPlaceFilter(cityContext), buildGeoapifyCircleFilter(cityContext)].filter(Boolean);
   const uniqueFilters = Array.from(new Set(filters.length > 0 ? filters : [buildGeoapifyFilter(cityContext)]));
-  const variants = getSearchQueryVariants(query);
+  const variants = getSearchQueryVariants(query, cityContext);
   const attempts: string[] = [];
 
   for (const variant of variants) {
@@ -631,10 +662,7 @@ async function searchAddressesDirectly(query: string, cityContext: GeoapifyCityC
     httpStatus = result.httpStatus;
 
     const uniqueCount = dedupeSuggestions(collected).length;
-    if (attempts.length <= 2 && uniqueCount > 0) {
-      break;
-    }
-    if (uniqueCount >= FALLBACK_MIN_RESULTS) {
+    if (uniqueCount > 0) {
       break;
     }
   }

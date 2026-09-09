@@ -13,6 +13,14 @@ const itabiritoContext: GeoapifyCityContext = {
   longitude: -43.8014,
 };
 
+const supportedCityContexts: GeoapifyCityContext[] = [
+  itabiritoContext,
+  { name: "Ouro Preto", state: "MG", placeId: "ouro-preto-place", latitude: -20.3856, longitude: -43.5035 },
+  { name: "Moeda", state: "MG", placeId: "moeda-place", latitude: -20.3331, longitude: -44.0525 },
+  { name: "Belo Horizonte", state: "MG", placeId: "belo-horizonte-place", latitude: -19.9167, longitude: -43.9345 },
+  { name: "Nova Lima", state: "MG", placeId: "nova-lima-place", latitude: -19.9856, longitude: -43.8467 },
+];
+
 beforeEach(() => {
   vi.resetModules();
   vi.stubEnv("VITE_GEOAPIFY_PUBLIC_KEY", "public-test-key");
@@ -195,6 +203,27 @@ describe("Geoapify address autocomplete", () => {
     expect(filtered[0]?.label).toBe("Rua Sem Cidade, 123, Centro");
   });
 
+  it("keeps a result when municipality identifies the selected city despite a neighboring city field", async () => {
+    const { filterSuggestionsBySelectedCity, normalizeGeoapifySuggestions } = await import("./search-addresses");
+    const normalized = normalizeGeoapifySuggestions({
+      results: [{
+        place_id: "moeda-rural-address",
+        formatted: "Estrada do Azevedo, Moeda - MG",
+        street: "Estrada do Azevedo",
+        city: "Belo Vale",
+        municipality: "Moeda",
+        state_code: "MG",
+        lat: -20.36,
+        lon: -44.08,
+      }],
+    });
+
+    const filtered = filterSuggestionsBySelectedCity(normalized, supportedCityContexts[2]);
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.placeId).toBe("moeda-rural-address");
+  });
+
   it("builds a short street number neighborhood label from formatted building results", async () => {
     const { normalizeGeoapifySuggestions } = await import("./search-addresses");
     const suggestions = normalizeGeoapifySuggestions({
@@ -218,7 +247,7 @@ describe("Geoapify address autocomplete", () => {
   });
 
   it("searches with a city place filter and parses data.results from mocked fetch", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({
       results: [{
         place_id: "result-1",
         formatted: "Rua Sao Jose, Itabirito - MG",
@@ -232,7 +261,7 @@ describe("Geoapify address autocomplete", () => {
     }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
-    }));
+    })));
     vi.stubGlobal("fetch", fetchMock);
 
     const { searchAddresses } = await import("./search-addresses");
@@ -286,5 +315,40 @@ describe("Geoapify address autocomplete", () => {
     expect(requestedUrls[2]?.searchParams.get("text")).toBe("Rua Benjamin Simoes, Agostinho Rodrigues");
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0]?.label).toBe("Rua Benjamin Simoes, Agostinho Rodrigues");
+  });
+
+  it.each(supportedCityContexts)("adds $name and UF when the short address query is not enough", async (cityContext) => {
+    const contextualResults = Array.from({ length: 5 }, (_, index) => ({
+      place_id: `${cityContext.name}-${index}`,
+      formatted: `Rua Central ${index + 1}, ${cityContext.name} - MG`,
+      street: "Rua Central",
+      housenumber: String(index + 1),
+      city: cityContext.name,
+      state_code: "MG",
+      lat: cityContext.latitude,
+      lon: cityContext.longitude,
+    }));
+    const emptyResponse = () => new Response(JSON.stringify({ results: [] }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(emptyResponse())
+      .mockResolvedValueOnce(emptyResponse())
+      .mockResolvedValueOnce(new Response(JSON.stringify({ results: contextualResults }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { searchAddresses } = await import("./search-addresses");
+    const suggestions = await searchAddresses("Rua Central", cityContext);
+    const requestedUrls = fetchMock.mock.calls.map((call) => new URL(String(call[0])));
+
+    expect(requestedUrls).toHaveLength(3);
+    expect(requestedUrls[0]?.searchParams.get("text")).toBe("Rua Central");
+    expect(requestedUrls[2]?.searchParams.get("text")).toBe(`Rua Central, ${cityContext.name}, MG`);
+    expect(suggestions).toHaveLength(5);
+    expect(suggestions.every((item) => item.city === cityContext.name)).toBe(true);
   });
 });

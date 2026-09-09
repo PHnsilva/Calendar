@@ -27,7 +27,6 @@ public class AddressAutocompleteService {
     private static final String AUTOCOMPLETE_ENDPOINT = "https://api.geoapify.com/v1/geocode/autocomplete";
     private static final int DEFAULT_LIMIT = 20;
     private static final int CITY_RADIUS_METERS = 30_000;
-    private static final int FALLBACK_MIN_RESULTS = 5;
 
     private static final Map<String, String> BRAZIL_STATE_TO_UF = Map.ofEntries(
             Map.entry("acre", "AC"),
@@ -129,10 +128,7 @@ public class AddressAutocompleteService {
 
                 collected.addAll(normalized);
                 int uniqueCount = dedupeSuggestions(collected).size();
-                if (uris.size() <= 2 && uniqueCount > 0) {
-                    break;
-                }
-                if (uniqueCount >= FALLBACK_MIN_RESULTS) {
+                if (uniqueCount > 0) {
                     break;
                 }
             }
@@ -219,7 +215,7 @@ public class AddressAutocompleteService {
         if (filters.isEmpty()) filters.add(buildFilter(cityContext));
 
         List<URI> uris = new ArrayList<>();
-        for (String variant : searchQueryVariants(query)) {
+        for (String variant : searchQueryVariants(query, cityContext)) {
             for (String filter : filters) {
                 uris.add(buildAutocompleteUri(variant, filter, apiKey));
             }
@@ -269,15 +265,47 @@ public class AddressAutocompleteService {
         return "";
     }
 
-    private List<String> searchQueryVariants(String query) {
-        List<String> variants = new ArrayList<>();
-        addSearchVariant(variants, clean(query));
-        addSearchVariant(variants, normalizeSearchVariant(query));
+    private List<String> searchQueryVariants(String query, AddressCityContextResponse cityContext) {
+        List<String> directVariants = new ArrayList<>();
+        addSearchVariant(directVariants, clean(query));
+        addSearchVariant(directVariants, normalizeSearchVariant(query));
         String[] parts = clean(query).split("\\s+-\\s+");
         if (parts.length > 0) {
-            addSearchVariant(variants, normalizeSearchVariant(parts[0]));
+            addSearchVariant(directVariants, normalizeSearchVariant(parts[0]));
+        }
+
+        List<String> variants = new ArrayList<>(directVariants);
+        for (String directVariant : directVariants) {
+            addSearchVariant(variants, addSelectedCityToQuery(directVariant, cityContext));
         }
         return variants;
+    }
+
+    private String addSelectedCityToQuery(String query, AddressCityContextResponse cityContext) {
+        List<String> parts = new ArrayList<>();
+        parts.add(clean(query));
+
+        String normalizedQuery = normalizeForMatch(query);
+        String city = clean(cityContext == null ? "" : cityContext.getName());
+        String normalizedCity = normalizeForMatch(city);
+        String state = normalizeUf(cityContext == null ? "" : cityContext.getState());
+
+        if (!city.isBlank() && !includesNormalizedPart(normalizedQuery, normalizedCity)) {
+            parts.add(city);
+        }
+        if (!state.isBlank() && !includesNormalizedPart(normalizedQuery, state.toLowerCase(Locale.ROOT))) {
+            parts.add(state);
+        }
+
+        return String.join(", ", parts.stream().filter((part) -> !part.isBlank()).toList());
+    }
+
+    private boolean includesNormalizedPart(String value, String part) {
+        if (part.isBlank()) return true;
+        return value.equals(part)
+                || value.startsWith(part + " ")
+                || value.endsWith(" " + part)
+                || value.contains(" " + part + " ");
     }
 
     private void addSearchVariant(List<String> variants, String value) {
@@ -510,6 +538,10 @@ public class AddressAutocompleteService {
 
         boolean hasCityData = !cityCandidates.isEmpty();
         boolean cityMatches = cityCandidates.stream().anyMatch(selectedCity::equals);
+        boolean administrativeCityMatches = List.of(
+                normalizeForMatch(raw.get("municipality")),
+                normalizeForMatch(raw.get("county"))
+        ).stream().filter((value) -> !value.isBlank()).anyMatch(selectedCity::equals);
 
         String selectedUf = normalizeUf(context.getState());
         List<String> ufCandidates = List.of(
@@ -522,7 +554,7 @@ public class AddressAutocompleteService {
         boolean stateMatches = selectedUf.isBlank() || !hasStateData || ufCandidates.contains(selectedUf);
 
         if (hasCityData) {
-            return cityMatches && stateMatches;
+            return (cityMatches || administrativeCityMatches) && stateMatches;
         }
         return stateMatches;
     }
